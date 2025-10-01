@@ -1,7 +1,48 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\interfaces\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\interfaces\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\implementations\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\implementations\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\util\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\util\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\interfaces\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\interfaces\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\implementations\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\implementations\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\helper\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\helper\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\hubs\\signalrs.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\hubs\\signalrs.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\enum\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\enum\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\dtos\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\dtos\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +50,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 118,
           "Children": [
             {
               "$type": "Bookmark",
@@ -482,6 +523,136 @@
             {
               "$type": "Bookmark",
               "Name": "ST:51:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Interfaces\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\Class.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Interfaces\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:48:29.278Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Implementations\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\Class.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Implementations\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:48:21.253Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Util\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Util\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Util\\Class.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Util\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:47:56.655Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Interfaces\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\Class.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Interfaces\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:47:49.57Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Implementations\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\Class.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Implementations\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:47:39.834Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Helper\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Helper\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Helper\\Class.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Helper\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:47:32.881Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Signalrs.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Hubs\\Signalrs.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Hubs\\Signalrs.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Hubs\\Signalrs.cs",
+              "RelativeToolTip": "SkillUp\\Hubs\\Signalrs.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:46:19.921Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Class.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:45:24.521Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:45:14.091Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Class.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\DTOs\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\DTOs\\Class.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\DTOs\\Class.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\DTOs\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-01T16:45:04.011Z",
+              "EditorCaption": ""
             }
           ]
         },
