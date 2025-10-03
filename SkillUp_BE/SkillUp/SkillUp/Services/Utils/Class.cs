@@ -1,4 +1,4 @@
-﻿namespace SkillUp.Repositories.Util
+﻿namespace SkillUp.Services.Util
 {
     public class Class
     {
