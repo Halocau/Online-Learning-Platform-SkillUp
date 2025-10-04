@@ -51,6 +51,8 @@ public partial class Account
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
     public virtual Role Role { get; set; } = null!;
 
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();

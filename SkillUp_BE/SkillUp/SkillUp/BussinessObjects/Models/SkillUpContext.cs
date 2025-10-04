@@ -63,6 +63,8 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<Rating> Ratings { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Section> Sections { get; set; }
@@ -75,8 +77,9 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<VoucherType> VoucherTypes { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
-
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("server =(local); database =SkillUp; uid=sa;pwd=123;Encrypt=false");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -565,6 +568,22 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Rating__CourseId__0E6E26BF");
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedUtc).HasColumnType("datetime");
+            entity.Property(e => e.ExpiresUtc).HasColumnType("datetime");
+            entity.Property(e => e.RevokedUtc).HasColumnType("datetime");
+            entity.Property(e => e.Token)
+                .HasMaxLength(450)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Account).WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RefreshTokens_Account");
         });
 
         modelBuilder.Entity<Role>(entity =>
