@@ -78,11 +78,11 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
 
-            var emailClaim = principal.Claims.FirstOrDefault(c => 
-                c.Type == "email" || 
-                c.Type == ClaimTypes.Email || 
+            var emailClaim = principal.Claims.FirstOrDefault(c =>
+                c.Type == "email" ||
+                c.Type == ClaimTypes.Email ||
                 c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value;
-            
+
             if (string.IsNullOrEmpty(emailClaim))
             {
                 return null;
@@ -144,11 +144,11 @@ namespace SkillUp.Services.Implementations
 
             var claims = new[]
             {
-        new Claim("userId", account.Id.ToString()),           
-        new Claim("email", account.Email),                    
-        new Claim("fullname", account.Fullname ?? account.Email), 
-        new Claim("roleId", account.RoleId.ToString()),       
-        new Claim("roleName", account.Role.Name),             
+        new Claim("userId", account.Id.ToString()),
+        new Claim("email", account.Email),
+        new Claim("fullname", account.Fullname ?? account.Email),
+        new Claim("roleId", account.RoleId.ToString()),
+        new Claim("roleName", account.Role.Name),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
 

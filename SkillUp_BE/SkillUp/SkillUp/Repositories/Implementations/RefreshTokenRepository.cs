@@ -22,9 +22,9 @@ namespace SkillUp.Repositories.Implementations
         public async Task<RefreshToken?> GetValidTokenByUserIdAsync(Guid userId, string token)
         {
             return await _context.RefreshTokens
-                .FirstOrDefaultAsync(rt => 
-                    rt.Token == token 
-                    && rt.AccountId == userId 
+                .FirstOrDefaultAsync(rt =>
+                    rt.Token == token
+                    && rt.AccountId == userId
                     && rt.RevokedUtc == null
                     && rt.ExpiresUtc > DateTime.UtcNow);
         }
