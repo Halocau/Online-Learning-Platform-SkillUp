@@ -1,11 +1,7 @@
-import TestTailwind from "./components/Test";
+import AppRouter from "./router/AppRouter";
 
 function App() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <TestTailwind />
-    </div>
-  );
+  return <AppRouter />;
 }
 
 export default App;
