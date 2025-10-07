@@ -1,7 +1,7 @@
 // src/routes/AppRouter.jsx
 import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Auth/Login";
-import Home from "../pages/Home";
+import Home from "../pages/Home/Home";
 import MainLayout from "../layouts/MainLayout";
 
 // Import role-based routes
