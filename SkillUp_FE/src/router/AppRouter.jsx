@@ -1,26 +1,35 @@
-import { Routes, Route } from 'react-router-dom';
+// src/routes/AppRouter.jsx
+import { Routes, Route } from "react-router-dom";
+import Login from "../pages/Auth/Login";
+import Home from "../pages/Home/Home";
+import MainLayout from "../layouts/MainLayout";
 
-// Import components
-import Login from '../pages/Auth/Login';
-import Home from '../pages/Home';
-import Layout from '../components/Layout/Layout';
+// Import role-based routes
+import AdminRoutes from "./AdminRoutes";
+import ModeratorRoutes from "./ModeratorRoutes";
 
 function AppRouter() {
   return (
-    <Routes>
-      {/* Auth Routes - KHÔNG có header/footer */}
-      <Route path="/login" element={<Login />} />
-      
-      {/* Public Routes - CÓ header/footer */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Home />} />
-      </Route>
-      
-      {/* Fallback - redirect về home */}
-      <Route path="*" element={<Layout />}>
-        <Route index element={<Home />} />
-      </Route>
-    </Routes>
+    <>
+      <Routes>
+        
+        <Route path="/login" element={<Login />} />
+
+        
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Home />} />
+        </Route>
+
+        
+        <Route path="/admin/*" element={<AdminRoutes />} />
+        <Route path="/mod/*" element={<ModeratorRoutes />} />
+
+        
+        <Route path="*" element={<MainLayout />}>
+          <Route index element={<Home />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 
