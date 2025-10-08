@@ -30,6 +30,9 @@ builder.Services.AddDbContext<SkillUpContext>(options =>
 // Add SignalR
 builder.Services.AddSignalR();
 
+// Add HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
 // Register Repositories
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
@@ -38,6 +41,7 @@ builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

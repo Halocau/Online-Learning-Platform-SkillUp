@@ -19,10 +19,9 @@ namespace SkillUp.BussinessObjects.DTOs.Auth
         [Required(ErrorMessage = "Họ tên là bắt buộc")]
         public string Fullname { get; set; } = null!;
 
-        public string? Phone { get; set; }
 
-        public string? Gender { get; set; }
-
-        public DateOnly? Dob { get; set; }
+        [Required(ErrorMessage = "Chức vụ là bắt buộc")]
+        [Range(1, int.MaxValue, ErrorMessage = "Chức vụ phải không được để trống")]
+        public int RoleId { get; set; }
     }
 }

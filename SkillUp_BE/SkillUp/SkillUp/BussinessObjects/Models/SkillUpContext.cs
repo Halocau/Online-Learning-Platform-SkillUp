@@ -17,8 +17,6 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<Account> Accounts { get; set; }
 
-    public virtual DbSet<AccountPermission> AccountPermissions { get; set; }
-
     public virtual DbSet<AnswerBank> AnswerBanks { get; set; }
 
     public virtual DbSet<Asset> Assets { get; set; }
@@ -59,8 +57,6 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<Permission> Permissions { get; set; }
 
-    public virtual DbSet<PermissionDetail> PermissionDetails { get; set; }
-
     public virtual DbSet<Post> Posts { get; set; }
 
     public virtual DbSet<PostImage> PostImages { get; set; }
@@ -80,6 +76,10 @@ public partial class SkillUpContext : DbContext
     public virtual DbSet<Rating> Ratings { get; set; }
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<RolePermission> RolePermissions { get; set; }
 
     public virtual DbSet<Section> Sections { get; set; }
 
@@ -131,21 +131,10 @@ public partial class SkillUpContext : DbContext
                 .HasMaxLength(15)
                 .IsUnicode(false)
                 .HasDefaultValue("Inactive");
-        });
 
-        modelBuilder.Entity<AccountPermission>(entity =>
-        {
-            entity.ToTable("AccountPermission");
-
-            entity.HasOne(d => d.Account).WithMany(p => p.AccountPermissions)
-                .HasForeignKey(d => d.AccountId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AccountPermission_Account");
-
-            entity.HasOne(d => d.Permission).WithMany(p => p.AccountPermissions)
-                .HasForeignKey(d => d.PermissionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_AccountPermission_Permission");
+            entity.HasOne(d => d.Role).WithMany(p => p.Accounts)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK_Account_Role");
         });
 
         modelBuilder.Entity<AnswerBank>(entity =>
@@ -458,8 +447,6 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Otp>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Otp__3214EC07");
-
             entity.ToTable("Otp");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
@@ -476,22 +463,10 @@ public partial class SkillUpContext : DbContext
         {
             entity.ToTable("Permission");
 
-            entity.Property(e => e.Name).HasMaxLength(255);
-        });
-
-        modelBuilder.Entity<PermissionDetail>(entity =>
-        {
-            entity.ToTable("PermissionDetail");
-
             entity.Property(e => e.ActionCode)
-                .HasMaxLength(50)
+                .HasMaxLength(15)
                 .IsUnicode(false);
             entity.Property(e => e.ActionName).HasMaxLength(255);
-
-            entity.HasOne(d => d.Permission).WithMany(p => p.PermissionDetails)
-                .HasForeignKey(d => d.PermissionId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_PermissionDetail_Permission");
         });
 
         modelBuilder.Entity<Post>(entity =>
@@ -688,6 +663,28 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RefreshTokens_Account");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.ToTable("Role");
+
+            entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.ToTable("RolePermission");
+
+            entity.HasOne(d => d.Permission).WithMany(p => p.RolePermissions)
+                .HasForeignKey(d => d.PermissionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RolePermission_Permission");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.RolePermissions)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RolePermission_Role");
         });
 
         modelBuilder.Entity<Section>(entity =>

@@ -33,8 +33,8 @@ namespace SkillUp.Services.Implementations
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
         {
-            var account = await _accountRepository.GetByEmailWithPermissionsAsync(request.Email);
-            if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "1")
+            var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(request.Email);
+            if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "Active")
             {
                 return null;
             }
@@ -94,8 +94,8 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
 
-            var account = await _accountRepository.GetByEmailWithPermissionsAsync(emailClaim);
-            if (account == null || account.Status != "1")
+            var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(emailClaim);
+            if (account == null || account.Status != "Active")
             {
                 return null;
             }
@@ -156,15 +156,22 @@ namespace SkillUp.Services.Implementations
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            // Add permissions as claims
-            if (account.AccountPermissions != null && account.AccountPermissions.Any())
+            // Add role and permissions as claims
+            if (account.Role != null)
             {
-                foreach (var accountPermission in account.AccountPermissions.Where(ap => ap.Licensed))
+                claims.Add(new Claim("roleId", account.Role.Id.ToString()));
+                claims.Add(new Claim("roleName", account.Role.Name));
+
+                if (account.Role.RolePermissions != null && account.Role.RolePermissions.Any())
                 {
-                    if (accountPermission.Permission != null)
+                    foreach (var rolePermission in account.Role.RolePermissions.Where(rp => rp.Licensed))
                     {
-                        claims.Add(new Claim("permission", accountPermission.Permission.Name ?? ""));
-                        claims.Add(new Claim("permissionId", accountPermission.PermissionId.ToString()));
+                        if (rolePermission.Permission != null)
+                        {
+                            claims.Add(new Claim("permission", rolePermission.Permission.ActionName));
+                            claims.Add(new Claim("permissionCode", rolePermission.Permission.ActionCode));
+                            claims.Add(new Claim("permissionId", rolePermission.Permission.Id.ToString()));
+                        }
                     }
                 }
             }
@@ -263,10 +270,8 @@ namespace SkillUp.Services.Implementations
                 Email = request.Email,
                 Password = hashedPassword,
                 Fullname = request.Fullname,
-                Phone = request.Phone,
-                Gender = request.Gender,
-                Dob = request.Dob,
-                Status = "0", // Pending verification
+                RoleId = request.RoleId,
+                Status = "InActive", // Pending verification
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -282,7 +287,7 @@ namespace SkillUp.Services.Implementations
             };
 
             await _otpRepository.AddAsync(otp);
-            
+
             // Save both Account and OTP together
             if (!await _accountRepository.SaveChangesAsync())
             {
@@ -300,39 +305,54 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request)
         {
+            Console.WriteLine($"[VerifyEmailAsync] START - Email: {request.Email}, Token: {request.Token}");
+
             // Get account
             var account = await _accountRepository.GetByEmailAsync(request.Email);
             if (account == null)
             {
+                Console.WriteLine("[VerifyEmailAsync] Account NOT FOUND");
                 return false;
             }
 
+            Console.WriteLine($"[VerifyEmailAsync] Account found - Status: {account.Status}");
+
             // If account is already active, return success (no need to verify again)
-            if (account.Status == "1")
+            if (account.Status == "Active")
             {
-                return true; // ✅ Already verified - this is success
+                Console.WriteLine("[VerifyEmailAsync] Account ALREADY ACTIVE - Returning TRUE");
+                return true; //  Already verified - this is success
             }
 
             // Get OTP record with valid token
             var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
             if (otp == null)
             {
+                Console.WriteLine("[VerifyEmailAsync] OTP NOT FOUND or EXPIRED");
                 return false; // Invalid or expired token
             }
 
+            Console.WriteLine($"[VerifyEmailAsync] OTP found - Id: {otp.Id}, Expiry: {otp.OtpExpiry}");
+
             // Activate account
-            account.Status = "1";
+            account.Status = "Active";
             await _accountRepository.UpdateAsync(account);
 
             // Delete OTP record
             await _otpRepository.DeleteAsync(otp);
 
-            // Save changes
-            if (!await _accountRepository.SaveChangesAsync() || !await _otpRepository.SaveChangesAsync())
+            // Save changes (both use same DbContext, so only need to save once)
+            var saved = await _accountRepository.SaveChangesAsync();
+
+            Console.WriteLine($"[VerifyEmailAsync] Save result: {saved}");
+
+            if (!saved)
             {
+                Console.WriteLine("[VerifyEmailAsync] SAVE FAILED");
                 return false;
             }
 
+            Console.WriteLine("[VerifyEmailAsync] SUCCESS - Returning TRUE");
             return true;
         }
 
@@ -346,7 +366,7 @@ namespace SkillUp.Services.Implementations
             }
 
             // Check if account is not activated yet
-            if (account.Status != "0")
+            if (account.Status != "InActive")
             {
                 return false;
             }

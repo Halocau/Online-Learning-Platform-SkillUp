@@ -27,7 +27,7 @@ public partial class Account
 
     public string Status { get; set; } = null!;
 
-    public virtual ICollection<AccountPermission> AccountPermissions { get; set; } = new List<AccountPermission>();
+    public int? RoleId { get; set; }
 
     public virtual Cart? Cart { get; set; }
 
@@ -50,6 +50,8 @@ public partial class Account
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+    public virtual Role? Role { get; set; }
 
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 

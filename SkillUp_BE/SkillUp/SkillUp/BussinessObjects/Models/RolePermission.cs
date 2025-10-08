@@ -3,17 +3,17 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class AccountPermission
+public partial class RolePermission
 {
     public int Id { get; set; }
 
-    public int PermissionId { get; set; }
+    public int RoleId { get; set; }
 
-    public Guid AccountId { get; set; }
+    public int PermissionId { get; set; }
 
     public bool Licensed { get; set; }
 
-    public virtual Account Account { get; set; } = null!;
-
     public virtual Permission Permission { get; set; } = null!;
+
+    public virtual Role Role { get; set; } = null!;
 }

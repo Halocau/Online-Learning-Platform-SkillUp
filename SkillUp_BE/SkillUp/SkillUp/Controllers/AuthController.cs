@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.ExceptionHandling;
@@ -10,10 +11,12 @@ namespace SkillUp.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService)
         {
             _authService = authService;
+            _currentUserService = currentUserService;
         }
 
         [HttpPost("login")]
@@ -115,12 +118,25 @@ namespace SkillUp.Controllers
 
 
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout([FromBody] Guid userId)
+        [Authorize] 
+        public async Task<IActionResult> Logout()
         {
             try
             {
+                // Lấy userId từ ICurrentUserService
+                var userId = _currentUserService.UserId;
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ",
+                        data = new List<object>()
+                    });
+                }
+
                 // call service logout
-                var result = await _authService.LogoutAsync(userId);
+                var result = await _authService.LogoutAsync(userId.Value);
 
                 // fail logout
                 if (!result)
@@ -205,6 +221,9 @@ namespace SkillUp.Controllers
         {
             try
             {
+                Console.WriteLine($"[VerifyEmail] Email: {email}");
+                Console.WriteLine($"[VerifyEmail] Token: {token}");
+
                 var request = new VerifyEmailRequestDto
                 {
                     Email = email,
@@ -214,9 +233,12 @@ namespace SkillUp.Controllers
                 // Call service verify email
                 var result = await _authService.VerifyEmailAsync(request);
 
+                Console.WriteLine($"[VerifyEmail] Result: {result}");
+
                 // Verification failed
                 if (!result)
                 {
+                    Console.WriteLine("[VerifyEmail] Returning FAILED HTML");
                     return Content(@"
                         <html>
                         <head><title>Xác thực thất bại</title></head>
@@ -230,6 +252,7 @@ namespace SkillUp.Controllers
                 }
 
                 // Verification success
+                Console.WriteLine("[VerifyEmail] Returning SUCCESS HTML");
                 return Content(@"
                     <html>
                     <head><title>Xác thực thành công</title></head>
@@ -244,6 +267,7 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[VerifyEmail] EXCEPTION: {ex.Message}");
                 return Content($@"
                     <html>
                     <head><title>Lỗi</title></head>

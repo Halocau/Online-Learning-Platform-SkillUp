@@ -28,6 +28,21 @@ namespace SkillUp.Services.Implementations
 
         public string? Fullname => _httpContextAccessor.HttpContext?.User?.FindFirst("fullname")?.Value;
 
+        public int? RoleId
+        {
+            get
+            {
+                var roleIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("roleId");
+                if (roleIdClaim != null && int.TryParse(roleIdClaim.Value, out var roleId))
+                {
+                    return roleId;
+                }
+                return null;
+            }
+        }
+
+        public string? RoleName => _httpContextAccessor.HttpContext?.User?.FindFirst("roleName")?.Value;
+
         public List<string> Permissions
         {
             get
@@ -35,6 +50,49 @@ namespace SkillUp.Services.Implementations
                 var claims = _httpContextAccessor.HttpContext?.User?.FindAll("permission");
                 return claims?.Select(c => c.Value).ToList() ?? new List<string>();
             }
+        }
+
+        public List<string> PermissionCodes
+        {
+            get
+            {
+                var claims = _httpContextAccessor.HttpContext?.User?.FindAll("permissionCode");
+                return claims?.Select(c => c.Value).ToList() ?? new List<string>();
+            }
+        }
+
+        public List<int> PermissionIds
+        {
+            get
+            {
+                var claims = _httpContextAccessor.HttpContext?.User?.FindAll("permissionId");
+                var ids = new List<int>();
+                
+                if (claims != null)
+                {
+                    foreach (var claim in claims)
+                    {
+                        if (int.TryParse(claim.Value, out var permissionId))
+                        {
+                            ids.Add(permissionId);
+                        }
+                    }
+                }
+                
+                return ids;
+            }
+        }
+
+        public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+        public bool HasPermission(string permissionName)
+        {
+            return Permissions.Any(p => p.Equals(permissionName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public bool HasPermissionCode(string permissionCode)
+        {
+            return PermissionCodes.Any(p => p.Equals(permissionCode, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
