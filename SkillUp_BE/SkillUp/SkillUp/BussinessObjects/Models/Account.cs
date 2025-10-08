@@ -9,8 +9,6 @@ public partial class Account
 
     public string Email { get; set; } = null!;
 
-    public int RoleId { get; set; }
-
     public string Password { get; set; } = null!;
 
     public string? Fullname { get; set; }
@@ -29,11 +27,11 @@ public partial class Account
 
     public string Status { get; set; } = null!;
 
+    public int? RoleId { get; set; }
+
     public virtual Cart? Cart { get; set; }
 
     public virtual ICollection<CommentReport> CommentReports { get; set; } = new List<CommentReport>();
-
-    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
@@ -41,9 +39,9 @@ public partial class Account
 
     public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
 
-    public virtual ICollection<News> News { get; set; } = new List<News>();
-
     public virtual ICollection<Notify> Notifies { get; set; } = new List<Notify>();
+
+    public virtual ICollection<Otp> Otps { get; set; } = new List<Otp>();
 
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
 
@@ -51,7 +49,9 @@ public partial class Account
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
-    public virtual Role Role { get; set; } = null!;
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+    public virtual Role? Role { get; set; }
 
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 

@@ -9,7 +9,7 @@ public partial class VoucherType
 
     public string Name { get; set; } = null!;
 
-    public int Percent { get; set; }
+    public int Percentage { get; set; }
 
     public virtual ICollection<Voucher> Vouchers { get; set; } = new List<Voucher>();
 }

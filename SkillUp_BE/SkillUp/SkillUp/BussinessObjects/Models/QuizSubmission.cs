@@ -19,6 +19,8 @@ public partial class QuizSubmission
 
     public virtual Account Account { get; set; } = null!;
 
+    public virtual ICollection<QuestionQuiz> QuestionQuizzes { get; set; } = new List<QuestionQuiz>();
+
     public virtual Quiz Quiz { get; set; } = null!;
 
     public virtual ICollection<QuizAnswerSubmission> QuizAnswerSubmissions { get; set; } = new List<QuizAnswerSubmission>();

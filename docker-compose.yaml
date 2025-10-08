@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  db:
+    image: "mcr.microsoft.com/mssql/server:2019-latest"  # image của SQL Server 2019
+    restart: always
+    container_name: mssqlserver         # tên container
+    environment:
+      MSSQL_DATABASE=SkillUp
+      MSSQL_SA_PASSWORD=Pass@123
+      ACCEPT_EULA=Y
+    ports:
+      - '1435:1433'

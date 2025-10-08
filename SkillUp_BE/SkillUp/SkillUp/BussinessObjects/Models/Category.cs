@@ -9,9 +9,9 @@ public partial class Category
 
     public string Name { get; set; } = null!;
 
-    public string Status { get; set; } = null!;
+    public bool? IsActive { get; set; }
 
     public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
 
-    public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
+    public virtual ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
 }

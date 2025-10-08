@@ -73,5 +73,22 @@ _[Ss]cripts
 *.nupkg
 *.ncrunchsolution
 *.dot[Cc]over
-appsettings.json
-appsettings.*.json
+
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# GitHub Copilot temporary files
+**/chat-editing-snapshot-text-model*
+*.copilot-snapshot
+
+# Rider
+.idea/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates

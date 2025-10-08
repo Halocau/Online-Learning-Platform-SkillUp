@@ -9,15 +9,13 @@ public partial class QuizAnswerSubmission
 
     public Guid SubmissionId { get; set; }
 
-    public Guid QuestionId { get; set; }
+    public Guid QuestionBankId { get; set; }
 
     public Guid SelectedAnswerId { get; set; }
 
     public bool? IsCorrect { get; set; }
 
-    public virtual Question Question { get; set; } = null!;
-
-    public virtual QuizAnswer SelectedAnswer { get; set; } = null!;
+    public virtual QuestionBank QuestionBank { get; set; } = null!;
 
     public virtual QuizSubmission Submission { get; set; } = null!;
 }

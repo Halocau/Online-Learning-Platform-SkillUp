@@ -19,9 +19,9 @@ public partial class Section
 
     public bool IsActive { get; set; }
 
-    public virtual Course Course { get; set; } = null!;
-
     public virtual ICollection<Lecture> Lectures { get; set; } = new List<Lecture>();
+
+    public virtual ICollection<QuestionBank> QuestionBanks { get; set; } = new List<QuestionBank>();
 
     public virtual ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
 }

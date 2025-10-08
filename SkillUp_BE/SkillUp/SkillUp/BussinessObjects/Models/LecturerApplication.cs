@@ -19,5 +19,7 @@ public partial class LecturerApplication
 
     public DateTime CreatedAt { get; set; }
 
+    public string? Description { get; set; }
+
     public virtual Account? Account { get; set; }
 }
