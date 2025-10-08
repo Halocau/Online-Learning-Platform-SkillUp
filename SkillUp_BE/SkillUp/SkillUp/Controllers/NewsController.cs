@@ -23,7 +23,7 @@ namespace SkillUp.Controllers
 			var newsDTO = news.Select(n => new NewsViewDTO
 			{
 				Id = n.Id,
-				AccountId = n.AccountId,
+				Email = n.Email,
 				Title = n.Title,
 				Contents = n.Contents,
 				Date = n.Date
@@ -47,7 +47,7 @@ namespace SkillUp.Controllers
 			var newsDTO = new NewsViewDTO
 			{
 				Id = news.Id,
-				AccountId = news.AccountId,
+				Email = news.Email,
 				Title = news.Title,
 				Contents = news.Contents,
 				Date = news.Date
@@ -74,7 +74,7 @@ namespace SkillUp.Controllers
 			var newsDTO = new NewsViewDTO
 			{
 				Id = createdNews.Id,
-				AccountId = createdNews.AccountId,
+				Email = createdNews.Email,
 				Title = createdNews.Title,
 				Contents = createdNews.Contents,
 				Date = DateOnly.FromDateTime(DateTime.Now)
@@ -92,7 +92,7 @@ namespace SkillUp.Controllers
 			var news = new News
 			{
 				Id = newsViewDTO.Id,
-				AccountId = newsViewDTO.AccountId,
+				Email = newsViewDTO.Email,
 				Title = newsViewDTO.Title,
 				Contents = newsViewDTO.Contents,
 				Date = newsViewDTO.Date
@@ -105,7 +105,7 @@ namespace SkillUp.Controllers
 			var newsDTO = new NewsViewDTO
 			{
 				Id = updatedNews.Id,
-				AccountId = updatedNews.AccountId,
+				Email = updatedNews.Email,
 				Title = updatedNews.Title,
 				Contents = updatedNews.Contents,
 				Date = updatedNews.Date

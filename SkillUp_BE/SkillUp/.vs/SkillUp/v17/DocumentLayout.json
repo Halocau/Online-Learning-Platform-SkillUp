@@ -3,6 +3,226 @@
   "WorkspaceRootPath": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\services\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\repositories\\implementations\\accountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\implementations\\accountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\repositories\\interfaces\\irefreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\interfaces\\irefreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\repositories\\implementations\\refreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\implementations\\refreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\services\\implementations\\newsservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\implementations\\newsservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\repositories\\interfaces\\inewsrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\interfaces\\inewsrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\services\\interfaces\\iauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\interfaces\\iauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\repositories\\implementations\\newsrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\implementations\\newsrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\repositories\\interfaces\\iaccountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\interfaces\\iaccountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\skillupcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\skillupcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\controllers\\newscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\controllers\\newscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\services\\interfaces\\inewsservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\interfaces\\inewsservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\account.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\account.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\accountpermission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\accountpermission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\answerbank.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\answerbank.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\asset.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\asset.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\banner.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\banner.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\commentreport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\commentreport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\course.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\course.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\courseimage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\courseimage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\enrollment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\enrollment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\forumcategory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\forumcategory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\lecture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\lecture.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\lecturerapplication.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\lecturerapplication.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\like.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\like.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\newimage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\newimage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\news.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\news.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\notify.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\notify.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\otp.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\otp.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\permission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\permission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\permissiondetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\permissiondetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\postimage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\postimage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\questionbank.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\questionbank.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\questionquiz.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\questionquiz.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\quiz.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\quiz.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\quizanswer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\quizanswer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\quizanswersubmission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\quizanswersubmission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\quizsubmission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\quizsubmission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\rating.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\rating.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\refreshtoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\refreshtoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\section.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\section.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\subcategory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\subcategory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\ticket.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\ticket.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\transaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\transaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\transactiondetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\transactiondetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\voucher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\voucher.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\models\\vouchertype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\models\\vouchertype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\enum\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\enum\\class.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\dtos\\newsviewdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\dtos\\newsviewdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\bussinessobjects\\dtos\\newscreatedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\bussinessobjects\\dtos\\newscreatedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|d:\\fpt codes\\sep\\online-learning-platform-skillup\\skillup_be\\skillup\\skillup\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -14,21 +234,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 129,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Program.cs",
-              "RelativeDocumentMoniker": "SkillUp\\Program.cs",
-              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Program.cs",
-              "RelativeToolTip": "SkillUp\\Program.cs",
-              "ViewState": "AgIAAB4AAAAAAAAAAAAAAAsAAABFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-08T09:05:58.518Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
@@ -519,11 +726,681 @@
             },
             {
               "$type": "Bookmark",
-              "Name": "ST:48:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
+              "Name": "ST:51:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:51:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "IRefreshTokenRepository.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:38:02.953Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "RefreshTokenRepository.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAcwBUAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:38:01.601Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "NewsService.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\NewsService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Implementations\\NewsService.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\NewsService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Implementations\\NewsService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAcwA0AAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:38:00.067Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "INewsRepository.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\INewsRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Interfaces\\INewsRepository.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\INewsRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Interfaces\\INewsRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:37:58.538Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "IAuthService.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAcwA4AAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:37:56.555Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "NewsRepository.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\NewsRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Implementations\\NewsRepository.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\NewsRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Implementations\\NewsRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:37:54.313Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\AuthService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Implementations\\AuthService.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\AuthService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Implementations\\AuthService.cs",
+              "ViewState": "AgIAAIgAAAAAAAAAAAAlwJUAAAA3AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:37:50.634Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AccountRepository.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAAAgwB4AAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:37:31.956Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "IAccountRepository.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:37:35.783Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "INewsService.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\INewsService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Interfaces\\INewsService.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\INewsService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Interfaces\\INewsService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:36:36.707Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "Category.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Category.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Category.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Category.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Category.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:58.558Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "Cart.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Cart.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Cart.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Cart.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Cart.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:58.067Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "CartItem.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\CartItem.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\CartItem.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\CartItem.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\CartItem.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:57.463Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "Banner.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Banner.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Banner.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Banner.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Banner.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:56.941Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "Asset.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Asset.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Asset.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Asset.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Asset.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:56.512Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "AnswerBank.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\AnswerBank.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\AnswerBank.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\AnswerBank.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\AnswerBank.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:55.97Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "AccountPermission.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\AccountPermission.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\AccountPermission.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\AccountPermission.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\AccountPermission.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:55.395Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "NewsController.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Controllers\\NewsController.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Controllers\\NewsController.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Controllers\\NewsController.cs",
+              "RelativeToolTip": "SkillUp\\Controllers\\NewsController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAGsAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:27:01.568Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "SkillUpContext.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\SkillUpContext.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\SkillUpContext.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\SkillUpContext.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\SkillUpContext.cs",
+              "ViewState": "AgIAABUBAAAAAAAAAAAcwCQBAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:28:28.269Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "Comment.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Comment.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Comment.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Comment.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Comment.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:59.139Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "CommentReport.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\CommentReport.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\CommentReport.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\CommentReport.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\CommentReport.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:59.625Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Account.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Account.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Account.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Account.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Account.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:33:43.115Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "Course.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Course.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Course.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Course.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Course.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:00.127Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "CourseImage.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\CourseImage.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\CourseImage.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\CourseImage.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\CourseImage.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:00.759Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "Enrollment.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Enrollment.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Enrollment.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Enrollment.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Enrollment.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:01.231Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "ForumCategory.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\ForumCategory.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\ForumCategory.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\ForumCategory.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\ForumCategory.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:01.84Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "Lecture.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Lecture.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Lecture.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Lecture.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Lecture.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:02.345Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "LecturerApplication.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\LecturerApplication.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\LecturerApplication.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\LecturerApplication.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\LecturerApplication.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:02.81Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "Like.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Like.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Like.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Like.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Like.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:03.337Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "NewImage.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\NewImage.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\NewImage.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\NewImage.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\NewImage.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:03.815Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "News.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\News.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\News.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\News.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\News.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:04.261Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "Notify.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Notify.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Notify.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Notify.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Notify.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:08.025Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "Otp.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Otp.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Otp.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Otp.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Otp.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:08.595Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "Permission.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Permission.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Permission.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Permission.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Permission.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:09.197Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "PermissionDetail.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\PermissionDetail.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\PermissionDetail.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\PermissionDetail.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\PermissionDetail.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:10.266Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "Post.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Post.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Post.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Post.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Post.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:11.606Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "PostImage.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\PostImage.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\PostImage.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\PostImage.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\PostImage.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:12.15Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "QuestionBank.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuestionBank.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\QuestionBank.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuestionBank.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\QuestionBank.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:12.695Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "QuestionQuiz.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuestionQuiz.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\QuestionQuiz.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuestionQuiz.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\QuestionQuiz.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:13.295Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 39,
+              "Title": "Quiz.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Quiz.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Quiz.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Quiz.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Quiz.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:13.831Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "QuizAnswer.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuizAnswer.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\QuizAnswer.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuizAnswer.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\QuizAnswer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:14.589Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "QuizAnswerSubmission.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuizAnswerSubmission.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\QuizAnswerSubmission.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuizAnswerSubmission.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\QuizAnswerSubmission.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:15.136Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 42,
+              "Title": "QuizSubmission.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuizSubmission.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\QuizSubmission.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\QuizSubmission.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\QuizSubmission.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:15.932Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 43,
+              "Title": "Rating.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Rating.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Rating.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Rating.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Rating.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:16.831Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 44,
+              "Title": "RefreshToken.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\RefreshToken.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\RefreshToken.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\RefreshToken.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\RefreshToken.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:17.496Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 45,
+              "Title": "Section.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Section.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Section.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Section.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Section.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:18.122Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 46,
+              "Title": "SubCategory.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\SubCategory.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\SubCategory.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\SubCategory.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\SubCategory.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:20.935Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 47,
+              "Title": "Ticket.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Ticket.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Ticket.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Ticket.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Ticket.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:21.622Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 48,
+              "Title": "Transaction.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Transaction.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Transaction.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Transaction.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Transaction.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:22.253Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 49,
+              "Title": "TransactionDetail.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\TransactionDetail.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\TransactionDetail.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\TransactionDetail.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\TransactionDetail.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:22.762Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 50,
+              "Title": "Voucher.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Voucher.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\Voucher.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\Voucher.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\Voucher.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:23.379Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 51,
+              "Title": "VoucherType.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\VoucherType.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Models\\VoucherType.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Models\\VoucherType.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Models\\VoucherType.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:35:23.91Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 52,
+              "Title": "Class.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\Enum\\Class.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:34:27.087Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 54,
+              "Title": "NewsCreateDTO.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\DTOs\\NewsCreateDTO.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\DTOs\\NewsCreateDTO.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\DTOs\\NewsCreateDTO.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\DTOs\\NewsCreateDTO.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:26:40.672Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 53,
+              "Title": "NewsViewDTO.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\DTOs\\NewsViewDTO.cs",
+              "RelativeDocumentMoniker": "SkillUp\\BussinessObjects\\DTOs\\NewsViewDTO.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\BussinessObjects\\DTOs\\NewsViewDTO.cs",
+              "RelativeToolTip": "SkillUp\\BussinessObjects\\DTOs\\NewsViewDTO.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:26:28.936Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 55,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Program.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Program.cs",
+              "ToolTip": "D:\\FPT codes\\SEP\\Online-Learning-Platform-SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Program.cs",
+              "RelativeToolTip": "SkillUp\\Program.cs",
+              "ViewState": "AgIAAB4AAAAAAAAAAAAAAAsAAABFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-08T09:05:58.518Z"
             }
           ]
         },

@@ -29,17 +29,15 @@ public partial class Course
 
     public int? CategoryId { get; set; }
 
-    public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
-
     public virtual Category? Category { get; set; }
 
     public virtual ICollection<CourseImage> CourseImages { get; set; } = new List<CourseImage>();
 
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
-    public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+    public virtual ICollection<QuestionBank> QuestionBanks { get; set; } = new List<QuestionBank>();
 
-    public virtual ICollection<Section> Sections { get; set; } = new List<Section>();
+    public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
     public virtual ICollection<Voucher> Vouchers { get; set; } = new List<Voucher>();
 }

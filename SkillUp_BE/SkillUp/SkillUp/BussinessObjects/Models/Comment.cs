@@ -21,8 +21,6 @@ public partial class Comment
 
     public string EntityType { get; set; } = null!;
 
-    public virtual Account Account { get; set; } = null!;
-
     public virtual ICollection<CommentReport> CommentReports { get; set; } = new List<CommentReport>();
 
     public virtual ICollection<Comment> InverseParentComment { get; set; } = new List<Comment>();

@@ -3,15 +3,15 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class QuizAnswer
+public partial class QuestionQuiz
 {
     public Guid Id { get; set; }
 
     public Guid QuestionBankId { get; set; }
 
-    public string? AnswerName { get; set; }
-
-    public bool IsCorrect { get; set; }
+    public Guid QuizId { get; set; }
 
     public virtual QuestionBank QuestionBank { get; set; } = null!;
+
+    public virtual QuizSubmission Quiz { get; set; } = null!;
 }

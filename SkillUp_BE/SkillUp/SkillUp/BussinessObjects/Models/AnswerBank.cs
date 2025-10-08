@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class QuizAnswer
+public partial class AnswerBank
 {
     public Guid Id { get; set; }
 

@@ -9,6 +9,8 @@ public partial class Post
 
     public Guid AccountId { get; set; }
 
+    public int ForumCategoryId { get; set; }
+
     public string Title { get; set; } = null!;
 
     public string Contents { get; set; } = null!;
@@ -19,11 +21,9 @@ public partial class Post
 
     public string Status { get; set; } = null!;
 
-    public int CategoryId { get; set; }
-
     public virtual Account Account { get; set; } = null!;
 
-    public virtual Category Category { get; set; } = null!;
+    public virtual ForumCategory ForumCategory { get; set; } = null!;
 
     public virtual ICollection<PostImage> PostImages { get; set; } = new List<PostImage>();
 }
