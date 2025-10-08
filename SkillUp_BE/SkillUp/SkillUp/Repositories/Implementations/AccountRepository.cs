@@ -25,10 +25,11 @@ namespace SkillUp.Repositories.Implementations
                 .FirstOrDefaultAsync(a => a.Email == email);
         }
 
-        public async Task<Account?> GetByEmailWithRoleAsync(string email)
+        public async Task<Account?> GetByEmailWithPermissionsAsync(string email)
         {
             return await _context.Accounts
-                .Include(a => a.Role)
+                .Include(a => a.AccountPermissions)
+                    .ThenInclude(ap => ap.Permission)
                 .FirstOrDefaultAsync(a => a.Email == email);
         }
 

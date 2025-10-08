@@ -12,6 +12,12 @@ namespace SkillUp.Services.Interfaces
 
         public Task<bool> LogoutAsync(Guid userId);
 
+        public Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request);
+
+        public Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request);
+
+        public Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request);
+
         public string GenerateAccessToken(Account account);
 
         public string GenerateRefreshToken();

@@ -64,7 +64,7 @@ namespace SkillUp.Controllers
             }
         }
 
-     
+
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
@@ -113,7 +113,7 @@ namespace SkillUp.Controllers
             }
         }
 
-       
+
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([FromBody] Guid userId)
         {
@@ -138,6 +138,158 @@ namespace SkillUp.Controllers
                 {
                     code = 200,
                     message = "Đăng xuất thành công",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                // Call service register
+                var result = await _authService.RegisterAsync(request);
+
+                // Registration failed (email exists)
+                if (result == null)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Email đã tồn tại hoặc có lỗi xảy ra",
+                        data = new List<object>()
+                    });
+                }
+
+                // Registration success
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
+                    data = new List<object> { result }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpGet("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string email, [FromQuery] string token)
+        {
+            try
+            {
+                var request = new VerifyEmailRequestDto
+                {
+                    Email = email,
+                    Token = token
+                };
+
+                // Call service verify email
+                var result = await _authService.VerifyEmailAsync(request);
+
+                // Verification failed
+                if (!result)
+                {
+                    return Content(@"
+                        <html>
+                        <head><title>Xác thực thất bại</title></head>
+                        <body style='font-family: Arial; text-align: center; padding: 50px;'>
+                            <h1 style='color: #f44336;'>❌ Xác thực thất bại</h1>
+                            <p>Link xác thực không hợp lệ hoặc đã hết hạn.</p>
+                            <p>Vui lòng yêu cầu gửi lại email xác thực.</p>
+                        </body>
+                        </html>
+                    ", "text/html");
+                }
+
+                // Verification success
+                return Content(@"
+                    <html>
+                    <head><title>Xác thực thành công</title></head>
+                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
+                        <h1 style='color: #4CAF50;'>✅ Xác thực thành công!</h1>
+                        <p>Tài khoản của bạn đã được kích hoạt.</p>
+                        <p>Bạn có thể đăng nhập ngay bây giờ.</p>
+                        <a href='/login' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>Đăng nhập</a>
+                    </body>
+                    </html>
+                ", "text/html");
+            }
+            catch (Exception ex)
+            {
+                return Content($@"
+                    <html>
+                    <head><title>Lỗi</title></head>
+                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
+                        <h1 style='color: #f44336;'>❌ Có lỗi xảy ra</h1>
+                        <p>{ex.Message}</p>
+                    </body>
+                    </html>
+                ", "text/html");
+            }
+        }
+
+        [HttpPost("resend-otp")]
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                // Call service resend verification email
+                var result = await _authService.ResendVerifyEmailAsync(request);
+
+                // Resend failed
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể gửi lại email xác thực. Email không tồn tại hoặc tài khoản đã được kích hoạt",
+                        data = new List<object>()
+                    });
+                }
+
+                // Resend success
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Email xác thực đã được gửi lại thành công",
                     data = new List<object>()
                 });
             }

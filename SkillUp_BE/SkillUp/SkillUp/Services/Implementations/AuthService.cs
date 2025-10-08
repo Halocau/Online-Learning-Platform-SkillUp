@@ -14,20 +14,26 @@ namespace SkillUp.Services.Implementations
     {
         private readonly IAccountRepository _accountRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
+        private readonly IOtpRepository _otpRepository;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
         public AuthService(IAccountRepository accountRepository,
                             IRefreshTokenRepository refreshTokenRepository,
-                             IConfiguration configuration)
+                            IOtpRepository otpRepository,
+                             IConfiguration configuration,
+                             IEmailService emailService)
         {
             _accountRepository = accountRepository;
             _refreshTokenRepository = refreshTokenRepository;
+            _otpRepository = otpRepository;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
         {
-            var account = await _accountRepository.GetByEmailWithRoleAsync(request.Email);
+            var account = await _accountRepository.GetByEmailWithPermissionsAsync(request.Email);
             if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "1")
             {
                 return null;
@@ -88,7 +94,7 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
 
-            var account = await _accountRepository.GetByEmailWithRoleAsync(emailClaim);
+            var account = await _accountRepository.GetByEmailWithPermissionsAsync(emailClaim);
             if (account == null || account.Status != "1")
             {
                 return null;
@@ -142,15 +148,26 @@ namespace SkillUp.Services.Implementations
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-        new Claim("userId", account.Id.ToString()),
-        new Claim("email", account.Email),
-        new Claim("fullname", account.Fullname ?? account.Email),
-        new Claim("roleId", account.RoleId.ToString()),
-        new Claim("roleName", account.Role.Name),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
+                new Claim("userId", account.Id.ToString()),
+                new Claim("email", account.Email),
+                new Claim("fullname", account.Fullname ?? account.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            // Add permissions as claims
+            if (account.AccountPermissions != null && account.AccountPermissions.Any())
+            {
+                foreach (var accountPermission in account.AccountPermissions.Where(ap => ap.Licensed))
+                {
+                    if (accountPermission.Permission != null)
+                    {
+                        claims.Add(new Claim("permission", accountPermission.Permission.Name ?? ""));
+                        claims.Add(new Claim("permissionId", accountPermission.PermissionId.ToString()));
+                    }
+                }
+            }
 
             var token = new JwtSecurityToken(
                 issuer: issuer,
@@ -222,6 +239,154 @@ namespace SkillUp.Services.Implementations
             {
                 return false;
             }
+        }
+
+        public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
+        {
+            // Check if email already exists
+            if (await _accountRepository.ExistsByEmailAsync(request.Email))
+            {
+                return null;
+            }
+
+            // Hash password
+            var hashedPassword = HashPassword(request.Password);
+
+            // Generate secure verify token (32 bytes = 64 hex characters)
+            var verifyToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+            var tokenExpiry = DateTime.UtcNow.AddHours(24); // 24 hours expiry
+
+            // Create account
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = request.Email,
+                Password = hashedPassword,
+                Fullname = request.Fullname,
+                Phone = request.Phone,
+                Gender = request.Gender,
+                Dob = request.Dob,
+                Status = "0", // Pending verification
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _accountRepository.AddAsync(account);
+
+            // Create OTP record
+            var otp = new Otp
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                OtpLink = verifyToken,
+                OtpExpiry = tokenExpiry
+            };
+
+            await _otpRepository.AddAsync(otp);
+            
+            // Save both Account and OTP together
+            if (!await _accountRepository.SaveChangesAsync())
+            {
+                return null;
+            }
+
+            // Send verify email with link
+            await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, request.Fullname);
+
+            return new RegisterResponseDto
+            {
+                Email = request.Email
+            };
+        }
+
+        public async Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request)
+        {
+            // Get account
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null)
+            {
+                return false;
+            }
+
+            // If account is already active, return success (no need to verify again)
+            if (account.Status == "1")
+            {
+                return true; // ✅ Already verified - this is success
+            }
+
+            // Get OTP record with valid token
+            var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
+            if (otp == null)
+            {
+                return false; // Invalid or expired token
+            }
+
+            // Activate account
+            account.Status = "1";
+            await _accountRepository.UpdateAsync(account);
+
+            // Delete OTP record
+            await _otpRepository.DeleteAsync(otp);
+
+            // Save changes
+            if (!await _accountRepository.SaveChangesAsync() || !await _otpRepository.SaveChangesAsync())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request)
+        {
+            // Get account by email
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null)
+            {
+                return false;
+            }
+
+            // Check if account is not activated yet
+            if (account.Status != "0")
+            {
+                return false;
+            }
+
+            // Generate new verify token (32 bytes = 64 hex characters)
+            var verifyToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+            var tokenExpiry = DateTime.UtcNow.AddHours(24); // 24 hours expiry
+
+            // Get existing OTP record
+            var existingOtp = await _otpRepository.GetByAccountIdAsync(account.Id);
+
+            if (existingOtp != null)
+            {
+                // Update existing OTP
+                existingOtp.OtpLink = verifyToken;
+                existingOtp.OtpExpiry = tokenExpiry;
+                await _otpRepository.UpdateAsync(existingOtp);
+            }
+            else
+            {
+                // Create new OTP record
+                var otp = new Otp
+                {
+                    Id = Guid.NewGuid(),
+                    AccountId = account.Id,
+                    OtpLink = verifyToken,
+                    OtpExpiry = tokenExpiry
+                };
+                await _otpRepository.AddAsync(otp);
+            }
+
+            if (!await _otpRepository.SaveChangesAsync())
+            {
+                return false;
+            }
+
+            // Send verify email with link
+            await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, account.Fullname ?? request.Email);
+
+            return true;
         }
     }
 }

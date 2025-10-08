@@ -6,7 +6,7 @@ namespace SkillUp.Repositories.Interfaces
     {
         Task<Account?> GetByIdAsync(Guid id);
         Task<Account?> GetByEmailAsync(string email);
-        Task<Account?> GetByEmailWithRoleAsync(string email);
+        Task<Account?> GetByEmailWithPermissionsAsync(string email);
         Task<bool> ExistsByEmailAsync(string email);
         Task AddAsync(Account account);
         Task UpdateAsync(Account account);
