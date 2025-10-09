@@ -18,6 +18,8 @@ namespace SkillUp.Services.Interfaces
 
         public Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request);
 
+        public Task<GoogleLoginResponseDto?> GoogleLoginAsync(GoogleLoginRequestDto request);
+
         public string GenerateAccessToken(Account account);
 
         public string GenerateRefreshToken();

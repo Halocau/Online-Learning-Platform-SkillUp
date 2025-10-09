@@ -67,7 +67,7 @@ namespace SkillUp.Services.Implementations
             {
                 var claims = _httpContextAccessor.HttpContext?.User?.FindAll("permissionId");
                 var ids = new List<int>();
-                
+
                 if (claims != null)
                 {
                     foreach (var claim in claims)
@@ -78,7 +78,7 @@ namespace SkillUp.Services.Implementations
                         }
                     }
                 }
-                
+
                 return ids;
             }
         }

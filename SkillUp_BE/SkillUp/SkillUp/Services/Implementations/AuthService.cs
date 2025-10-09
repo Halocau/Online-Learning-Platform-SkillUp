@@ -408,5 +408,128 @@ namespace SkillUp.Services.Implementations
 
             return true;
         }
+
+        public async Task<GoogleLoginResponseDto?> GoogleLoginAsync(GoogleLoginRequestDto request)
+        {
+            try
+            {
+                // 1. Verify Google ID Token
+                var googleClientId = _configuration["GoogleAuth:ClientId"];
+                if (string.IsNullOrEmpty(googleClientId))
+                {
+                    throw new Exception("Google ClientId chưa được cấu hình");
+                }
+
+                var payload = await Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(request.IdToken, new Google.Apis.Auth.GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { googleClientId }
+                });
+
+                // 2. Lấy thông tin từ Google payload
+                var email = payload.Email;
+                var fullname = payload.Name;
+                var avatar = payload.Picture;
+                var googleId = payload.Subject; // Google User ID
+
+                // 3. Kiểm tra user đã tồn tại chưa (dựa vào email)
+                var existingAccount = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email);
+
+                bool isNewUser = false;
+                Account account;
+
+                if (existingAccount == null)
+                {
+                    // 4. Tạo tài khoản mới nếu chưa tồn tại
+                    account = new Account
+                    {
+                        Id = Guid.NewGuid(),
+                        Email = email,
+                        Fullname = fullname,
+                        Avatar = avatar,
+                        Password = HashPassword(Guid.NewGuid().ToString()), // Random password vì login bằng Google
+                        Status = "Active", // Tự động active vì Google đã verify email
+                        RoleId = request.DefaultRoleId, // Default là Student
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _accountRepository.AddAsync(account);
+                    await _accountRepository.SaveChangesAsync();
+
+                    // Load lại account với Role và Permissions
+                    account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email) ?? account;
+
+                    isNewUser = true;
+                }
+                else
+                {
+                    // 5. User đã tồn tại
+                    account = existingAccount;
+
+                    // Check status
+                    if (account.Status == "InActive")
+                    {
+                        // Nếu tài khoản đang pending verify, tự động active vì Google đã verify
+                        account.Status = "Active";
+                        await _accountRepository.UpdateAsync(account);
+                        await _accountRepository.SaveChangesAsync();
+                    }
+                    else if (account.Status == "Banned")
+                    {
+                        return null; // Tài khoản bị ban
+                    }
+
+                    // Cập nhật avatar nếu chưa có
+                    if (string.IsNullOrEmpty(account.Avatar) && !string.IsNullOrEmpty(avatar))
+                    {
+                        account.Avatar = avatar;
+                        await _accountRepository.UpdateAsync(account);
+                        await _accountRepository.SaveChangesAsync();
+                    }
+                }
+
+                // 6. Generate tokens
+                var accessToken = GenerateAccessToken(account);
+                var refreshToken = GenerateRefreshToken();
+
+                // 7. Save refresh token to database
+                var refreshTokenEntity = new RefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    AccountId = account.Id,
+                    Token = refreshToken,
+                    CreatedUtc = DateTime.UtcNow,
+                    ExpiresUtc = DateTime.UtcNow.AddDays(7),
+                    RevokedUtc = null
+                };
+
+                await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+                await _refreshTokenRepository.SaveChangesAsync();
+
+                // 8. Return response
+                return new GoogleLoginResponseDto
+                {
+                    UserId = account.Id,
+                    Email = account.Email,
+                    Fullname = account.Fullname ?? email,
+                    Avatar = account.Avatar,
+                    IsNewUser = isNewUser,
+                    Token = new TokenDto
+                    {
+                        AccessToken = accessToken,
+                        RefreshToken = refreshToken
+                    }
+                };
+            }
+            catch (Google.Apis.Auth.InvalidJwtException)
+            {
+                // Token không hợp lệ
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GoogleLogin Error]: {ex.Message}");
+                return null;
+            }
+        }
     }
 }

@@ -118,7 +118,7 @@ namespace SkillUp.Controllers
 
 
         [HttpPost("logout")]
-        [Authorize] 
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
             try
@@ -315,6 +315,58 @@ namespace SkillUp.Controllers
                     code = 200,
                     message = "Email xác thực đã được gửi lại thành công",
                     data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                // Call service Google login
+                var result = await _authService.GoogleLoginAsync(request);
+
+                // Google login failed (invalid token or banned account)
+                if (result == null)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token Google không hợp lệ hoặc tài khoản đã bị khóa",
+                        data = new List<object>()
+                    });
+                }
+
+                // Google login success
+                var message = result.IsNewUser
+                    ? "Đăng ký và đăng nhập bằng Google thành công"
+                    : "Đăng nhập bằng Google thành công";
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = message,
+                    data = new List<object> { result }
                 });
             }
             catch (Exception ex)
