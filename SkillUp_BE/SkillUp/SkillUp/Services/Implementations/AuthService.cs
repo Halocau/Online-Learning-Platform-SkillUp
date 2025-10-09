@@ -1,3 +1,4 @@
+using Google.Apis.Auth;
 using Microsoft.IdentityModel.Tokens;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
@@ -420,7 +421,7 @@ namespace SkillUp.Services.Implementations
                     throw new Exception("Google ClientId chưa được cấu hình");
                 }
 
-                var payload = await Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(request.IdToken, new Google.Apis.Auth.GoogleJsonWebSignature.ValidationSettings
+                var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings
                 {
                     Audience = new[] { googleClientId }
                 });

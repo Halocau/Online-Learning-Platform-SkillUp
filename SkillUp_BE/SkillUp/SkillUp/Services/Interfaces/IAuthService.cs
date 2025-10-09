@@ -1,5 +1,6 @@
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
+using System.Security.Claims;
 
 namespace SkillUp.Services.Interfaces
 {
@@ -24,7 +25,7 @@ namespace SkillUp.Services.Interfaces
 
         public string GenerateRefreshToken();
 
-        public System.Security.Claims.ClaimsPrincipal? GetPrincipalFromToken(string token);
+        public ClaimsPrincipal? GetPrincipalFromToken(string token);
 
         public string HashPassword(string password);
 

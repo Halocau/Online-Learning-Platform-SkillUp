@@ -7,8 +7,60 @@
       "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\controllers\\valuescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\controllers\\valuescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\implementations\\refreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\implementations\\refreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\implementations\\accountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\implementations\\accountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\implementations\\otprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\implementations\\otprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\interfaces\\iaccountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\interfaces\\iaccountrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\interfaces\\iotprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\interfaces\\iotprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\repositories\\interfaces\\irefreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\repositories\\interfaces\\irefreshtokenrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\interfaces\\iemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\interfaces\\iemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\interfaces\\icurrentuserservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\interfaces\\icurrentuserservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\interfaces\\iauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\interfaces\\iauthservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\implementations\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\implementations\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\implementations\\currentuserservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\implementations\\currentuserservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\services\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\services\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|g:\\skillup\\skillup_be\\skillup\\skillup\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E2CBA359-3252-4A80-A0F2-282782286402}|SkillUp\\SkillUp.csproj|solutionrelative:skillup\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -494,15 +546,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "AuthService.cs",
-              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\AuthService.cs",
-              "RelativeDocumentMoniker": "SkillUp\\Services\\Implementations\\AuthService.cs",
-              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\AuthService.cs",
-              "RelativeToolTip": "SkillUp\\Services\\Implementations\\AuthService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 14,
+              "Title": "Program.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Program.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Program.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Program.cs",
+              "RelativeToolTip": "SkillUp\\Program.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAAcAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-08T18:54:25.738Z",
+              "WhenOpened": "2025-10-09T16:19:27.517Z",
               "EditorCaption": ""
             },
             {
@@ -513,9 +565,178 @@
               "RelativeDocumentMoniker": "SkillUp\\Controllers\\AuthController.cs",
               "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Controllers\\AuthController.cs",
               "RelativeToolTip": "SkillUp\\Controllers\\AuthController.cs",
-              "ViewState": "AgIAAHcAAAAAAAAAAAAwwHgAAAAPAAAAAAAAAA==",
+              "ViewState": "AgIAAGkBAAAAAAAAAAAuwH8BAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-08T18:54:21.508Z",
+              "WhenOpened": "2025-10-09T16:19:20.761Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ValuesController.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Controllers\\ValuesController.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Controllers\\ValuesController.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Controllers\\ValuesController.cs",
+              "RelativeToolTip": "SkillUp\\Controllers\\ValuesController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:19:19.268Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "IRefreshTokenRepository.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Interfaces\\IRefreshTokenRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:19:15.074Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "IOtpRepository.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IOtpRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Interfaces\\IOtpRepository.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IOtpRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Interfaces\\IOtpRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:19:11.127Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "IAccountRepository.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Interfaces\\IAccountRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:19:08.045Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "RefreshTokenRepository.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Implementations\\RefreshTokenRepository.cs",
+              "ViewState": "AgIAACYAAAAAAAAAAAAxwEEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:19:04.248Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "OtpRepository.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\OtpRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Implementations\\OtpRepository.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\OtpRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Implementations\\OtpRepository.cs",
+              "ViewState": "AgIAABwAAAAAAAAAAAAAADYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:19:01.281Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "AccountRepository.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "RelativeToolTip": "SkillUp\\Repositories\\Implementations\\AccountRepository.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAAADsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:18:58.169Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\AuthService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Implementations\\AuthService.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\AuthService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Implementations\\AuthService.cs",
+              "ViewState": "AgIAAPoBAAAAAAAAAAAwwBgCAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:18:53.497Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "CurrentUserService.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\CurrentUserService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Implementations\\CurrentUserService.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\CurrentUserService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Implementations\\CurrentUserService.cs",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAQwGIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:18:50.215Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "EmailService.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\EmailService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Implementations\\EmailService.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Implementations\\EmailService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Implementations\\EmailService.cs",
+              "ViewState": "AgIAAH4AAAAAAAAAAAAwwJwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:18:47.481Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "IAuthService.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Interfaces\\IAuthService.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAkwCIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:18:32.666Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "ICurrentUserService.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\ICurrentUserService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Interfaces\\ICurrentUserService.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\ICurrentUserService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Interfaces\\ICurrentUserService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:18:29.81Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "IEmailService.cs",
+              "DocumentMoniker": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\IEmailService.cs",
+              "RelativeDocumentMoniker": "SkillUp\\Services\\Interfaces\\IEmailService.cs",
+              "ToolTip": "G:\\SkillUp\\SkillUp_BE\\SkillUp\\SkillUp\\Services\\Interfaces\\IEmailService.cs",
+              "RelativeToolTip": "SkillUp\\Services\\Interfaces\\IEmailService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-09T16:18:16.726Z",
               "EditorCaption": ""
             }
           ]

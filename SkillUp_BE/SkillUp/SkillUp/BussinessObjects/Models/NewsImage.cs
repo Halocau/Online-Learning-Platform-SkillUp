@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class NewImage
+public partial class NewsImage
 {
     public Guid Id { get; set; }
 
-    public Guid NewId { get; set; }
+    public Guid NewsId { get; set; }
 
     public string ImageUrl { get; set; } = null!;
 
-    public virtual News New { get; set; } = null!;
+    public virtual News News { get; set; } = null!;
 }

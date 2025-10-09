@@ -47,9 +47,9 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<Like> Likes { get; set; }
 
-    public virtual DbSet<NewImage> NewImages { get; set; }
-
     public virtual DbSet<News> News { get; set; }
+
+    public virtual DbSet<NewsImage> NewsImages { get; set; }
 
     public virtual DbSet<Notify> Notifies { get; set; }
 
@@ -97,7 +97,7 @@ public partial class SkillUpContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("server=(local);database=SkillUp;uid=sa;pwd=123;Encrypt=false");
+        => optionsBuilder.UseSqlServer("Server=(local);Database=SkillUp;User Id=sa;Password=123;Encrypt=False");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -398,20 +398,6 @@ public partial class SkillUpContext : DbContext
                 .HasConstraintName("FK_Like_Comment");
         });
 
-        modelBuilder.Entity<NewImage>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__NewImage__3214EC07A76F4C1B");
-
-            entity.ToTable("NewImage");
-
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-
-            entity.HasOne(d => d.New).WithMany(p => p.NewImages)
-                .HasForeignKey(d => d.NewId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_NewImage_News");
-        });
-
         modelBuilder.Entity<News>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__News__3214EC075ED16F6C");
@@ -421,6 +407,20 @@ public partial class SkillUpContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false);
             entity.Property(e => e.Title).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<NewsImage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__NewImage__3214EC07A76F4C1B");
+
+            entity.ToTable("NewsImage");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+            entity.HasOne(d => d.News).WithMany(p => p.NewsImages)
+                .HasForeignKey(d => d.NewsId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_NewImage_News");
         });
 
         modelBuilder.Entity<Notify>(entity =>
@@ -543,6 +543,11 @@ public partial class SkillUpContext : DbContext
                 .HasConstraintName("FK_QuestionQuiz_QuestionBank");
 
             entity.HasOne(d => d.Quiz).WithMany(p => p.QuestionQuizzes)
+                .HasForeignKey(d => d.QuizId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_QuestionQuiz_Quiz");
+
+            entity.HasOne(d => d.QuizNavigation).WithMany(p => p.QuestionQuizzes)
                 .HasForeignKey(d => d.QuizId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_QuestionQuiz_QuizSubmission");
@@ -707,7 +712,6 @@ public partial class SkillUpContext : DbContext
         {
             entity.ToTable("SubCategory");
 
-            entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Name).HasMaxLength(255);
 
             entity.HasOne(d => d.Category).WithMany(p => p.SubCategories)
@@ -760,10 +764,12 @@ public partial class SkillUpContext : DbContext
             entity.ToTable("TransactionDetail");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.CourseId)
-                .HasMaxLength(10)
-                .IsFixedLength();
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+
+            entity.HasOne(d => d.Course).WithMany(p => p.TransactionDetails)
+                .HasForeignKey(d => d.CourseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TransactionDetail_Course");
 
             entity.HasOne(d => d.Transaction).WithMany(p => p.TransactionDetails)
                 .HasForeignKey(d => d.TransactionId)
@@ -790,8 +796,8 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.CourseId)
                 .HasConstraintName("FK_Voucher_Course");
 
-            entity.HasOne(d => d.VourcherTypeNavigation).WithMany(p => p.Vouchers)
-                .HasForeignKey(d => d.VourcherType)
+            entity.HasOne(d => d.VoucherTypeNavigation).WithMany(p => p.Vouchers)
+                .HasForeignKey(d => d.VoucherType)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Voucher_VoucherType");
         });

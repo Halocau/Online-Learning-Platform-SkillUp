@@ -15,5 +15,5 @@ public partial class News
 
     public DateOnly? Date { get; set; }
 
-    public virtual ICollection<NewImage> NewImages { get; set; } = new List<NewImage>();
+    public virtual ICollection<NewsImage> NewsImages { get; set; } = new List<NewsImage>();
 }

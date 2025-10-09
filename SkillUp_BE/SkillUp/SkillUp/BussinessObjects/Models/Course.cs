@@ -39,5 +39,7 @@ public partial class Course
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
+    public virtual ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
+
     public virtual ICollection<Voucher> Vouchers { get; set; } = new List<Voucher>();
 }

@@ -13,5 +13,7 @@ public partial class QuestionQuiz
 
     public virtual QuestionBank QuestionBank { get; set; } = null!;
 
-    public virtual QuizSubmission Quiz { get; set; } = null!;
+    public virtual Quiz Quiz { get; set; } = null!;
+
+    public virtual QuizSubmission QuizNavigation { get; set; } = null!;
 }

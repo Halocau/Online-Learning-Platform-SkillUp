@@ -9,7 +9,7 @@ public partial class Voucher
 
     public Guid? CourseId { get; set; }
 
-    public int VourcherType { get; set; }
+    public int VoucherType { get; set; }
 
     public string CouponCode { get; set; } = null!;
 
@@ -23,5 +23,5 @@ public partial class Voucher
 
     public virtual Course? Course { get; set; }
 
-    public virtual VoucherType VourcherTypeNavigation { get; set; } = null!;
+    public virtual VoucherType VoucherTypeNavigation { get; set; } = null!;
 }
