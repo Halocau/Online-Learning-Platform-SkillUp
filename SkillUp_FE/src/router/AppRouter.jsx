@@ -1,6 +1,7 @@
 // src/routes/AppRouter.jsx
 import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Auth/Login";
+import Register from "../pages/Auth/Register";
 import Home from "../pages/Home/Home";
 import MainLayout from "../layouts/MainLayout";
 
@@ -13,7 +14,8 @@ function AppRouter() {
     <>
       <Routes>
         
-        <Route path="/login" element={<Login />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/register" element={<Register />} />
 
         
         <Route path="/" element={<MainLayout />}>
