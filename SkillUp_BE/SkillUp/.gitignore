@@ -92,3 +92,12 @@ _[Ss]cripts
 *.user
 *.userosscache
 *.sln.docstates
+
+# Visual Studio build files
+**/bin/
+**/obj/
+*.bin
+*.vsidx
+*.db
+*.db-shm
+*.db-wal
