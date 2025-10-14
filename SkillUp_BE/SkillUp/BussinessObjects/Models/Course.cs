@@ -39,8 +39,6 @@ public partial class Course
 
     public virtual Lecturer Lecturer { get; set; } = null!;
 
-    public virtual ICollection<QuestionBank> QuestionBanks { get; set; } = new List<QuestionBank>();
-
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
     public virtual ICollection<ReportCourse> ReportCourses { get; set; } = new List<ReportCourse>();

@@ -11,8 +11,6 @@ public partial class QuestionBank
 
     public Guid LecturerId { get; set; }
 
-    public Guid CourseId { get; set; }
-
     public string Title { get; set; } = null!;
 
     public string Description { get; set; } = null!;
@@ -24,8 +22,6 @@ public partial class QuestionBank
     public bool IsActive { get; set; }
 
     public virtual ICollection<AnswerBank> AnswerBanks { get; set; } = new List<AnswerBank>();
-
-    public virtual Course Course { get; set; } = null!;
 
     public virtual Lecturer Lecturer { get; set; } = null!;
 

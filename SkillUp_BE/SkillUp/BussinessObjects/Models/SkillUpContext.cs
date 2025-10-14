@@ -618,11 +618,6 @@ public partial class SkillUpContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Course).WithMany(p => p.QuestionBanks)
-                .HasForeignKey(d => d.CourseId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_QuestionBank_Course");
-
             entity.HasOne(d => d.Lecturer).WithMany(p => p.QuestionBanks)
                 .HasForeignKey(d => d.LecturerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
