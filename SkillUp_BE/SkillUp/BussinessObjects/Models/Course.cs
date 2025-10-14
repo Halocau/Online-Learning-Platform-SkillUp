@@ -27,21 +27,29 @@ public partial class Course
 
     public DateTime UpdatedAt { get; set; }
 
-    public int? CategoryId { get; set; }
+    public int? SubCategoryId { get; set; }
+
+    public Guid LecturerId { get; set; }
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
-
-    public virtual Category? Category { get; set; }
 
     public virtual ICollection<CourseImage> CourseImages { get; set; } = new List<CourseImage>();
 
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
+    public virtual Lecturer Lecturer { get; set; } = null!;
+
     public virtual ICollection<QuestionBank> QuestionBanks { get; set; } = new List<QuestionBank>();
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
+    public virtual ICollection<ReportCourse> ReportCourses { get; set; } = new List<ReportCourse>();
+
     public virtual ICollection<Section> Sections { get; set; } = new List<Section>();
+
+    public virtual ICollection<StudentProgress> StudentProgresses { get; set; } = new List<StudentProgress>();
+
+    public virtual SubCategory? SubCategory { get; set; }
 
     public virtual ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
 

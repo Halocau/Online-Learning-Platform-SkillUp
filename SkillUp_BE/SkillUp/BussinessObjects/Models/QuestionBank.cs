@@ -9,7 +9,7 @@ public partial class QuestionBank
 
     public Guid SectionId { get; set; }
 
-    public Guid AccountId { get; set; }
+    public Guid LecturerId { get; set; }
 
     public Guid CourseId { get; set; }
 
@@ -23,11 +23,11 @@ public partial class QuestionBank
 
     public bool IsActive { get; set; }
 
-    public virtual Account Account { get; set; } = null!;
-
     public virtual ICollection<AnswerBank> AnswerBanks { get; set; } = new List<AnswerBank>();
 
     public virtual Course Course { get; set; } = null!;
+
+    public virtual Lecturer Lecturer { get; set; } = null!;
 
     public virtual ICollection<QuestionQuiz> QuestionQuizzes { get; set; } = new List<QuestionQuiz>();
 

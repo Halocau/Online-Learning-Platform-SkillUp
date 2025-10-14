@@ -23,6 +23,8 @@ public partial class Post
 
     public virtual Account Account { get; set; } = null!;
 
+    public virtual ICollection<CommentPost> CommentPosts { get; set; } = new List<CommentPost>();
+
     public virtual ForumCategory ForumCategory { get; set; } = null!;
 
     public virtual ICollection<PostImage> PostImages { get; set; } = new List<PostImage>();

@@ -7,11 +7,11 @@ public partial class Asset
 {
     public Guid Id { get; set; }
 
-    public Guid LectureId { get; set; }
+    public Guid LessonId { get; set; }
 
     public string? Url { get; set; }
 
     public bool IsActive { get; set; }
 
-    public virtual Lecture Lecture { get; set; } = null!;
+    public virtual Lesson Lesson { get; set; } = null!;
 }

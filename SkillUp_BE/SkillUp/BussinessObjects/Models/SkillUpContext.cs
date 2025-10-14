@@ -29,9 +29,13 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
-    public virtual DbSet<Comment> Comments { get; set; }
+    public virtual DbSet<CommentLesson> CommentLessons { get; set; }
 
-    public virtual DbSet<CommentReport> CommentReports { get; set; }
+    public virtual DbSet<CommentPost> CommentPosts { get; set; }
+
+    public virtual DbSet<CommentReportLesson> CommentReportLessons { get; set; }
+
+    public virtual DbSet<CommentReportPost> CommentReportPosts { get; set; }
 
     public virtual DbSet<Course> Courses { get; set; }
 
@@ -41,11 +45,15 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<ForumCategory> ForumCategories { get; set; }
 
-    public virtual DbSet<Lecture> Lectures { get; set; }
+    public virtual DbSet<Lecturer> Lecturers { get; set; }
 
     public virtual DbSet<LecturerApplication> LecturerApplications { get; set; }
 
-    public virtual DbSet<Like> Likes { get; set; }
+    public virtual DbSet<Lesson> Lessons { get; set; }
+
+    public virtual DbSet<LikeCommentLesson> LikeCommentLessons { get; set; }
+
+    public virtual DbSet<LikeCommentPost> LikeCommentPosts { get; set; }
 
     public virtual DbSet<News> News { get; set; }
 
@@ -75,11 +83,17 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public virtual DbSet<ReportCourse> ReportCourses { get; set; }
+
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<RolePermission> RolePermissions { get; set; }
 
     public virtual DbSet<Section> Sections { get; set; }
+
+    public virtual DbSet<Student> Students { get; set; }
+
+    public virtual DbSet<StudentProgress> StudentProgresses { get; set; }
 
     public virtual DbSet<SubCategory> SubCategories { get; set; }
 
@@ -157,8 +171,8 @@ public partial class SkillUpContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
 
-            entity.HasOne(d => d.Lecture).WithMany(p => p.Assets)
-                .HasForeignKey(d => d.LectureId)
+            entity.HasOne(d => d.Lesson).WithMany(p => p.Assets)
+                .HasForeignKey(d => d.LessonId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Asset_Lecture");
         });
@@ -183,14 +197,14 @@ public partial class SkillUpContext : DbContext
 
             entity.ToTable("Cart");
 
-            entity.HasIndex(e => e.AccountId, "UQ__Cart__349DA5A799245AEB").IsUnique();
+            entity.HasIndex(e => e.StudentId, "UQ__Cart__349DA5A799245AEB").IsUnique();
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-            entity.HasOne(d => d.Account).WithOne(p => p.Cart)
-                .HasForeignKey<Cart>(d => d.AccountId)
+            entity.HasOne(d => d.Student).WithOne(p => p.Cart)
+                .HasForeignKey<Cart>(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Cart_Account");
+                .HasConstraintName("FK_Cart_Student");
         });
 
         modelBuilder.Entity<CartItem>(entity =>
@@ -217,28 +231,35 @@ public partial class SkillUpContext : DbContext
 
             entity.ToTable("Category");
 
-            entity.Property(e => e.IsActive)
-                .IsRequired()
-                .HasDefaultValueSql("('Active')");
             entity.Property(e => e.Name).HasMaxLength(255);
         });
 
-        modelBuilder.Entity<Comment>(entity =>
+        modelBuilder.Entity<CommentLesson>(entity =>
+        {
+            entity.ToTable("CommentLesson");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.ParentComment).WithMany(p => p.InverseParentComment)
+                .HasForeignKey(d => d.ParentCommentId)
+                .HasConstraintName("FK_CommentLesson_CommentLesson");
+        });
+
+        modelBuilder.Entity<CommentPost>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Comment__3214EC07A957FFD4");
 
-            entity.ToTable("Comment");
+            entity.ToTable("CommentPost");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.EntityType)
-                .HasMaxLength(50)
-                .IsUnicode(false);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.Comments)
+            entity.HasOne(d => d.Account).WithMany(p => p.CommentPosts)
                 .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Comment_Account");
@@ -246,11 +267,16 @@ public partial class SkillUpContext : DbContext
             entity.HasOne(d => d.ParentComment).WithMany(p => p.InverseParentComment)
                 .HasForeignKey(d => d.ParentCommentId)
                 .HasConstraintName("FK_Comment_Comment");
+
+            entity.HasOne(d => d.Post).WithMany(p => p.CommentPosts)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentPost_Post");
         });
 
-        modelBuilder.Entity<CommentReport>(entity =>
+        modelBuilder.Entity<CommentReportLesson>(entity =>
         {
-            entity.ToTable("CommentReport");
+            entity.ToTable("CommentReportLesson");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
@@ -259,13 +285,37 @@ public partial class SkillUpContext : DbContext
                 .HasMaxLength(15)
                 .IsUnicode(false);
 
-            entity.HasOne(d => d.Account).WithMany(p => p.CommentReports)
+            entity.HasOne(d => d.Account).WithMany(p => p.CommentReportLessons)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentReportLesson_Account");
+
+            entity.HasOne(d => d.CommentLesson).WithMany(p => p.CommentReportLessons)
+                .HasForeignKey(d => d.CommentLessonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentReportLesson_CommentLesson");
+        });
+
+        modelBuilder.Entity<CommentReportPost>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_CommentReport");
+
+            entity.ToTable("CommentReportPost");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.Property(e => e.Status)
+                .HasMaxLength(15)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Account).WithMany(p => p.CommentReportPosts)
                 .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CommentReport_Account");
 
-            entity.HasOne(d => d.Comment).WithMany(p => p.CommentReports)
-                .HasForeignKey(d => d.CommentId)
+            entity.HasOne(d => d.CommentPost).WithMany(p => p.CommentReportPosts)
+                .HasForeignKey(d => d.CommentPostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CommentReport_Comment");
         });
@@ -293,9 +343,14 @@ public partial class SkillUpContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Category).WithMany(p => p.Courses)
-                .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK_Course_Category");
+            entity.HasOne(d => d.Lecturer).WithMany(p => p.Courses)
+                .HasForeignKey(d => d.LecturerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Course_Lecturer");
+
+            entity.HasOne(d => d.SubCategory).WithMany(p => p.Courses)
+                .HasForeignKey(d => d.SubCategoryId)
+                .HasConstraintName("FK_Course_SubCategory");
         });
 
         modelBuilder.Entity<CourseImage>(entity =>
@@ -318,7 +373,7 @@ public partial class SkillUpContext : DbContext
 
             entity.ToTable("Enrollment");
 
-            entity.HasIndex(e => new { e.AccountId, e.CourseId }, "UQ__Enrollme__580F72BD9A06D074").IsUnique();
+            entity.HasIndex(e => new { e.StudentId, e.CourseId }, "UQ__Enrollme__580F72BD9A06D074").IsUnique();
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CompletedAt).HasColumnType("datetime");
@@ -326,15 +381,15 @@ public partial class SkillUpContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.Enrollments)
-                .HasForeignKey(d => d.AccountId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Enrollment_Account");
-
             entity.HasOne(d => d.Course).WithMany(p => p.Enrollments)
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Enrollment_Course");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.Enrollments)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Enrollment_Student");
         });
 
         modelBuilder.Entity<ForumCategory>(entity =>
@@ -344,26 +399,18 @@ public partial class SkillUpContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(255);
         });
 
-        modelBuilder.Entity<Lecture>(entity =>
+        modelBuilder.Entity<Lecturer>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Lecture__3214EC07B6B95360");
+            entity.ToTable("Lecturer");
 
-            entity.ToTable("Lecture");
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Profession).HasMaxLength(255);
+            entity.Property(e => e.Title).HasMaxLength(255);
 
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.Type).HasMaxLength(50);
-            entity.Property(e => e.UpdatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-
-            entity.HasOne(d => d.Section).WithMany(p => p.Lectures)
-                .HasForeignKey(d => d.SectionId)
+            entity.HasOne(d => d.Account).WithMany(p => p.Lecturers)
+                .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Lecture_Section");
+                .HasConstraintName("FK_Lecturer_Account");
         });
 
         modelBuilder.Entity<LecturerApplication>(entity =>
@@ -380,28 +427,71 @@ public partial class SkillUpContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("CV");
             entity.Property(e => e.Degree).IsUnicode(false);
+            entity.Property(e => e.Profession).HasMaxLength(255);
             entity.Property(e => e.Reason).HasMaxLength(255);
             entity.Property(e => e.Status)
                 .HasMaxLength(10)
                 .IsUnicode(false)
                 .HasDefaultValue("Pending");
+            entity.Property(e => e.Title).HasMaxLength(255);
 
             entity.HasOne(d => d.Account).WithMany(p => p.LecturerApplications)
                 .HasForeignKey(d => d.AccountId)
                 .HasConstraintName("FK_LecturerApplication_Account");
         });
 
-        modelBuilder.Entity<Like>(entity =>
+        modelBuilder.Entity<Lesson>(entity =>
         {
-            entity.ToTable("Like");
+            entity.HasKey(e => e.Id).HasName("PK__Lecture__3214EC07B6B95360");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.Likes)
+            entity.ToTable("Lesson");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.Type).HasMaxLength(50);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Section).WithMany(p => p.Lessons)
+                .HasForeignKey(d => d.SectionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Lecture_Section");
+        });
+
+        modelBuilder.Entity<LikeCommentLesson>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LikeLesson");
+
+            entity.ToTable("LikeCommentLesson");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.LikeCommentLessons)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_LikeLesson_Account");
+
+            entity.HasOne(d => d.CommentLesson).WithMany(p => p.LikeCommentLessons)
+                .HasForeignKey(d => d.CommentLessonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_LikeLesson_CommentLesson");
+        });
+
+        modelBuilder.Entity<LikeCommentPost>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_Like");
+
+            entity.ToTable("LikeCommentPost");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.LikeCommentPosts)
                 .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Like_Account");
 
-            entity.HasOne(d => d.Comment).WithMany(p => p.Likes)
-                .HasForeignKey(d => d.CommentId)
+            entity.HasOne(d => d.CommentPost).WithMany(p => p.LikeCommentPosts)
+                .HasForeignKey(d => d.CommentPostId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Like_Comment");
         });
@@ -528,15 +618,15 @@ public partial class SkillUpContext : DbContext
             entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.QuestionBanks)
-                .HasForeignKey(d => d.AccountId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_QuestionBank_Account");
-
             entity.HasOne(d => d.Course).WithMany(p => p.QuestionBanks)
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_QuestionBank_Course");
+
+            entity.HasOne(d => d.Lecturer).WithMany(p => p.QuestionBanks)
+                .HasForeignKey(d => d.LecturerId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_QuestionBank_Lecturer");
 
             entity.HasOne(d => d.Section).WithMany(p => p.QuestionBanks)
                 .HasForeignKey(d => d.SectionId)
@@ -620,15 +710,15 @@ public partial class SkillUpContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.QuizSubmissions)
-                .HasForeignKey(d => d.AccountId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_QuizSubmission_Account");
-
             entity.HasOne(d => d.Quiz).WithMany(p => p.QuizSubmissions)
                 .HasForeignKey(d => d.QuizId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_QuizSubmission_Quiz");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.QuizSubmissions)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_QuizSubmission_Student");
         });
 
         modelBuilder.Entity<Rating>(entity =>
@@ -641,15 +731,15 @@ public partial class SkillUpContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
 
-            entity.HasOne(d => d.Account).WithMany(p => p.Ratings)
-                .HasForeignKey(d => d.AccountId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Rating_Account");
-
             entity.HasOne(d => d.Course).WithMany(p => p.Ratings)
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Rating_Course");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.Ratings)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Rating_Student");
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>
@@ -666,6 +756,24 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RefreshTokens_Account");
+        });
+
+        modelBuilder.Entity<ReportCourse>(entity =>
+        {
+            entity.ToTable("ReportCourse");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Course).WithMany(p => p.ReportCourses)
+                .HasForeignKey(d => d.CourseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReportCourse_Course");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.ReportCourses)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReportCourse_Student1");
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -709,6 +817,43 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Section_Course");
+        });
+
+        modelBuilder.Entity<Student>(entity =>
+        {
+            entity.ToTable("Student");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+
+            entity.HasOne(d => d.Account).WithMany(p => p.Students)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Student_Account");
+        });
+
+        modelBuilder.Entity<StudentProgress>(entity =>
+        {
+            entity.ToTable("StudentProgress");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+
+            entity.HasOne(d => d.Course).WithMany(p => p.StudentProgresses)
+                .HasForeignKey(d => d.CourseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_StudentProgress_Course");
+
+            entity.HasOne(d => d.Lesson).WithMany(p => p.StudentProgresses)
+                .HasForeignKey(d => d.LessonId)
+                .HasConstraintName("FK_StudentProgress_Lesson");
+
+            entity.HasOne(d => d.Quiz).WithMany(p => p.StudentProgresses)
+                .HasForeignKey(d => d.QuizId)
+                .HasConstraintName("FK_StudentProgress_Quiz");
+
+            entity.HasOne(d => d.Student).WithMany(p => p.StudentProgresses)
+                .HasForeignKey(d => d.StudentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_StudentProgress_Student");
         });
 
         modelBuilder.Entity<SubCategory>(entity =>

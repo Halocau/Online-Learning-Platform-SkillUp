@@ -14,4 +14,6 @@ public partial class SubCategory
     public bool IsActive { get; set; }
 
     public virtual Category Category { get; set; } = null!;
+
+    public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
 }

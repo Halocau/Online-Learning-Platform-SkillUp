@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SkillUp.BussinessObjects.Models;
-using SkillUp.Repositories.Implementations;
-using SkillUp.Repositories.Interfaces;
-using SkillUp.Services.Implementations;
-using SkillUp.Services.Interfaces;
+//using SkillUp.BussinessObjects.Models;
+//using SkillUp.Repositories.Implementations;
+//using SkillUp.Repositories.Interfaces;
+//using SkillUp.Services.Implementations;
+//using SkillUp.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
@@ -22,10 +22,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add DbContext
-builder.Services.AddDbContext<SkillUpContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+//builder.Services.AddDbContext<SkillUpContext>(options =>
+//{
+//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+//});
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -34,14 +34,14 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 
 // Register Repositories
-builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IOtpRepository, OtpRepository>();
+//builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+//builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+//builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 
-// Register Services
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+//// Register Services
+//builder.Services.AddScoped<IAuthService, AuthService>();
+//builder.Services.AddScoped<IEmailService, EmailService>();
+//builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

@@ -21,5 +21,9 @@ public partial class LecturerApplication
 
     public string? Description { get; set; }
 
+    public string? Title { get; set; }
+
+    public string? Profession { get; set; }
+
     public virtual Account? Account { get; set; }
 }

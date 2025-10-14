@@ -21,7 +21,7 @@ public partial class Section
 
     public virtual Course Course { get; set; } = null!;
 
-    public virtual ICollection<Lecture> Lectures { get; set; } = new List<Lecture>();
+    public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
 
     public virtual ICollection<QuestionBank> QuestionBanks { get; set; } = new List<QuestionBank>();
 
