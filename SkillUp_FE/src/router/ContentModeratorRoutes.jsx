@@ -1,16 +1,17 @@
 // src/routes/ModeratorRoutes.jsx
 import { Routes, Route } from "react-router-dom";
-import ModeratorLayout from "../layouts/ModeratorLayout";
+import ModeratorLayout from "../layouts/ContentModeratorLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 // Import moderator pages
-import ModDashboard from "../pages/moderator/ModDashboard";
-import TicketManage from "@/pages/moderator/TicketManage";
-import NewsManage from "@/pages/moderator/NewsManage";
-import CommentReport from "@/pages/moderator/CommentReport";
+import ModDashboard from "../pages/contentmoderator/ModDashboard";
+import TicketManage from "@/pages/contentmoderator/TicketManage";
+import NewsManage from "@/pages/contentmoderator/NewsManage";
+import CommentReport from "@/pages/contentmoderator/CommentReport";
+import ContentModeratorDashboard from "../pages/contentmoderator/ModDashboard";
 
 
-const ModeratorRoutes = () => {
+const ContentModeratorRoutes = () => {
   return (
     <Routes>
       <Route
@@ -21,7 +22,7 @@ const ModeratorRoutes = () => {
         //   </ProtectedRoute>
         }
       >
-        <Route index element={<ModDashboard />} />
+        <Route index element={<ContentModeratorDashboard />} />
         <Route path="news" element={<NewsManage />} />
         <Route path="tickets" element={<TicketManage />} />
         <Route path="cmt" element={<CommentReport />} />
@@ -31,4 +32,4 @@ const ModeratorRoutes = () => {
   );
 };
 
-export default ModeratorRoutes;
+export default ContentModeratorRoutes;

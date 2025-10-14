@@ -6,7 +6,8 @@ import MainLayout from "../layouts/MainLayout";
 
 // Import role-based routes
 import AdminRoutes from "./AdminRoutes";
-import ModeratorRoutes from "./ModeratorRoutes";
+import ContentModeratorRoutes from "./ContentModeratorRoutes";
+import SystemModeratorRoutes from "./SystemModeratorRoutes";
 
 function AppRouter() {
   return (
@@ -22,7 +23,8 @@ function AppRouter() {
 
         
         <Route path="/admin/*" element={<AdminRoutes />} />
-        <Route path="/mod/*" element={<ModeratorRoutes />} />
+        <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
+        <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
 
         
         <Route path="*" element={<MainLayout />}>

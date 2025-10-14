@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { FileText, MessageSquare, LogOut, Menu, X, Layout, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function ModeratorLayout() {
+export default function SystemModeratorLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
 
@@ -14,10 +14,8 @@ export default function ModeratorLayout() {
   };
 
   const menuItems = [
-    { label: "Dashboard", icon: <LayoutDashboard />, path: "/mod/" },
-    { label: "Manage News", icon: <FileText />, path: "/mod/news" },
-    { label: "Tickets Request", icon: <MessageSquare />, path: "/mod/tickets" },
-    { label: "Comment Reports", icon: <MessageSquare />, path: "/mod/cmt" },
+    { label: "Dashboard", icon: <LayoutDashboard />, path: "/sysmod" },
+    { label: "Account Management", icon: <FileText />, path: "/sysmod" }
   ];
 
   return (
@@ -29,7 +27,7 @@ export default function ModeratorLayout() {
       >
         <div className="flex items-center justify-between px-4 h-16 border-b">
           <span className="text-xl font-bold text-indigo-600">
-            {collapsed ? "SU" : "SkillUp Mod"}
+            {collapsed ? "SU" : "SkillUp SystemMod"}
           </span>
           <button
             onClick={() => setCollapsed(!collapsed)}

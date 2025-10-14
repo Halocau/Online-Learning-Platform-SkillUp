@@ -1,4 +1,4 @@
-export default function ModeratorDashboard() {
+export default function ContentModeratorDashboard() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4">Moderator Dashboard</h2>
