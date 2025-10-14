@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class CommentReport
+public partial class CommentReportPost
 {
     public Guid Id { get; set; }
 
@@ -15,9 +15,9 @@ public partial class CommentReport
 
     public Guid AccountId { get; set; }
 
-    public Guid CommentId { get; set; }
+    public Guid CommentPostId { get; set; }
 
     public virtual Account Account { get; set; } = null!;
 
-    public virtual Comment Comment { get; set; } = null!;
+    public virtual CommentPost CommentPost { get; set; } = null!;
 }

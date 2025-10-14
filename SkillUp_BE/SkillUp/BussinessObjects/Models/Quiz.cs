@@ -26,4 +26,6 @@ public partial class Quiz
     public virtual ICollection<QuizSubmission> QuizSubmissions { get; set; } = new List<QuizSubmission>();
 
     public virtual Section Section { get; set; } = null!;
+
+    public virtual ICollection<StudentProgress> StudentProgresses { get; set; } = new List<StudentProgress>();
 }

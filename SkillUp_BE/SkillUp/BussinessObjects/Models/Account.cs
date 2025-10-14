@@ -29,17 +29,19 @@ public partial class Account
 
     public int? RoleId { get; set; }
 
-    public virtual Cart? Cart { get; set; }
+    public virtual ICollection<CommentPost> CommentPosts { get; set; } = new List<CommentPost>();
 
-    public virtual ICollection<CommentReport> CommentReports { get; set; } = new List<CommentReport>();
+    public virtual ICollection<CommentReportLesson> CommentReportLessons { get; set; } = new List<CommentReportLesson>();
 
-    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
-
-    public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+    public virtual ICollection<CommentReportPost> CommentReportPosts { get; set; } = new List<CommentReportPost>();
 
     public virtual ICollection<LecturerApplication> LecturerApplications { get; set; } = new List<LecturerApplication>();
 
-    public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+    public virtual ICollection<Lecturer> Lecturers { get; set; } = new List<Lecturer>();
+
+    public virtual ICollection<LikeCommentLesson> LikeCommentLessons { get; set; } = new List<LikeCommentLesson>();
+
+    public virtual ICollection<LikeCommentPost> LikeCommentPosts { get; set; } = new List<LikeCommentPost>();
 
     public virtual ICollection<Notify> Notifies { get; set; } = new List<Notify>();
 
@@ -47,15 +49,11 @@ public partial class Account
 
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
 
-    public virtual ICollection<QuestionBank> QuestionBanks { get; set; } = new List<QuestionBank>();
-
-    public virtual ICollection<QuizSubmission> QuizSubmissions { get; set; } = new List<QuizSubmission>();
-
-    public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
-
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
     public virtual Role? Role { get; set; }
+
+    public virtual ICollection<Student> Students { get; set; } = new List<Student>();
 
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 

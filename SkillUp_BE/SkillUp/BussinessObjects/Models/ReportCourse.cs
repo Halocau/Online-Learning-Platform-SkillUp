@@ -3,19 +3,17 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class Rating
+public partial class ReportCourse
 {
-    public int Id { get; set; }
-
-    public Guid StudentId { get; set; }
+    public Guid Id { get; set; }
 
     public Guid CourseId { get; set; }
 
-    public string? Contents { get; set; }
+    public Guid StudentId { get; set; }
 
-    public int? Star { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public string? Description { get; set; }
 
     public virtual Course Course { get; set; } = null!;
 

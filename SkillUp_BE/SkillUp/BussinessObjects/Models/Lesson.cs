@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class Lecture
+public partial class Lesson
 {
     public Guid Id { get; set; }
 
@@ -24,4 +24,6 @@ public partial class Lecture
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
 
     public virtual Section Section { get; set; } = null!;
+
+    public virtual ICollection<StudentProgress> StudentProgresses { get; set; } = new List<StudentProgress>();
 }

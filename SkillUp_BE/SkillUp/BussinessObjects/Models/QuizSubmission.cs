@@ -9,7 +9,7 @@ public partial class QuizSubmission
 
     public Guid QuizId { get; set; }
 
-    public Guid AccountId { get; set; }
+    public Guid StudentId { get; set; }
 
     public decimal? Score { get; set; }
 
@@ -17,9 +17,9 @@ public partial class QuizSubmission
 
     public DateTime? EndedAt { get; set; }
 
-    public virtual Account Account { get; set; } = null!;
-
     public virtual Quiz Quiz { get; set; } = null!;
 
     public virtual ICollection<QuizAnswerSubmission> QuizAnswerSubmissions { get; set; } = new List<QuizAnswerSubmission>();
+
+    public virtual Student Student { get; set; } = null!;
 }
