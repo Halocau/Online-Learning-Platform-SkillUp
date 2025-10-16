@@ -13,9 +13,9 @@ const AdminRoutes = () => {
       <Route
         path="/"
         element={
-        //   <ProtectedRoute allowedRoles={["Admin"]}>  --> Tạm thời đóng ProtectedRoute để test
+          <ProtectedRoute allowedRoles={["Admin"]}>
             <AdminLayout />
-        //   </ProtectedRoute>
+          </ProtectedRoute>
         }
       >
         <Route index element={<Dashboard />} />

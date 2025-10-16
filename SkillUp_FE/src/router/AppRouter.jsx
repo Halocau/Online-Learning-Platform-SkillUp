@@ -7,6 +7,7 @@ import MainLayout from "../layouts/MainLayout";
 // Import role-based routes
 import AdminRoutes from "./AdminRoutes";
 import ModeratorRoutes from "./ModeratorRoutes";
+import StudentRoutes from "./StudentRoutes";
 
 function AppRouter() {
   return (
@@ -23,6 +24,7 @@ function AppRouter() {
         
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/mod/*" element={<ModeratorRoutes />} />
+        <Route path="/student/*" element={<StudentRoutes />} />
 
         
         <Route path="*" element={<MainLayout />}>

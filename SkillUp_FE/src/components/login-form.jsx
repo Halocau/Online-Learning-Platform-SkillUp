@@ -29,7 +29,7 @@ export function LoginForm({
       // Gửi ID Token lên backend
       const response = await axios.post(getApiUrl(API_ENDPOINTS.GOOGLE_LOGIN), {
         idToken: credentialResponse.credential,
-        defaultRoleId: 1  // 1 = Student role
+        defaultRoleId: 5  // 5 = Admin role
       })
 
       console.log('✅ Response:', response.data)
