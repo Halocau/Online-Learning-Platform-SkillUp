@@ -16,7 +16,6 @@ function AppRouter() {
         
         <Route path="/login" element={<Login />} />
 
-        
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
         </Route>
