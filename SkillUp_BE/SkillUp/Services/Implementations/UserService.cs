@@ -31,5 +31,24 @@ namespace SkillUp.Services.Implementations
             };
             return userProfileDTO;
         }
+
+        public async Task<bool> UpdateProfileAsync(Guid userId, UpdateProfileDTO updateProfileDTO)
+        {
+            var user = await _accountRepository.GetByIdAsync (userId);
+
+            if (user == null) {
+                 return false;
+            }
+            user.Fullname = updateProfileDTO.Fullname ?? user.Fullname;
+            user.Phone = updateProfileDTO.Phone ?? user.Phone;
+            user.Gender = updateProfileDTO.Gender ?? user.Gender;
+            user.Description = updateProfileDTO.Description ?? user.Description;
+            if (updateProfileDTO.Dob.HasValue)
+            {
+                user.Dob = updateProfileDTO.Dob.Value;
+            }
+            await _accountRepository.UpdateAsync(user);
+            return await _accountRepository.SaveChangesAsync();
+        }
     }
 }
