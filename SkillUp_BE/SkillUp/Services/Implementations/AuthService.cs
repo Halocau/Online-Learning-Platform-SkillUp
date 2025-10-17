@@ -34,6 +34,7 @@ namespace SkillUp.Services.Implementations
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
         {
+            // Validate credentials and account status in one query
             var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(request.Email);
             if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "Active")
             {
@@ -42,19 +43,7 @@ namespace SkillUp.Services.Implementations
 
             var accessToken = GenerateAccessToken(account);
             var refreshToken = GenerateRefreshToken();
-
-            var refreshTokenEntity = new RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                Token = refreshToken,
-                AccountId = account.Id,
-                CreatedUtc = DateTime.Now,
-                ExpiresUtc = DateTime.Now.AddDays(7),
-                RevokedUtc = null
-            };
-
-            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
-            await _refreshTokenRepository.SaveChangesAsync();
+            await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
 
             return new LoginResponseDto
             {
@@ -65,6 +54,7 @@ namespace SkillUp.Services.Implementations
 
         public async Task<RefreshTokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto request)
         {
+            // Validate expired token without checking lifetime
             var principal = GetPrincipalFromToken(request.AccessToken);
             if (principal == null)
             {
@@ -83,11 +73,7 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
 
-            var emailClaim = principal.Claims.FirstOrDefault(c =>
-                c.Type == "email" ||
-                c.Type == ClaimTypes.Email ||
-                c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value;
-
+            var emailClaim = principal.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
             if (string.IsNullOrEmpty(emailClaim))
             {
                 return null;
@@ -99,25 +85,13 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
 
+            // Revoke old refresh token before issuing new one
             refreshTokenEntity.RevokedUtc = DateTime.Now;
             await _refreshTokenRepository.UpdateAsync(refreshTokenEntity);
 
             var newAccessToken = GenerateAccessToken(account);
             var newRefreshToken = GenerateRefreshToken();
-
-            var newRefreshTokenEntity = new RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                Token = newRefreshToken,
-                AccountId = account.Id,
-                CreatedUtc = DateTime.Now,
-                ExpiresUtc = DateTime.Now.AddDays(7),
-                RevokedUtc = null
-            };
-
-            await _refreshTokenRepository.AddAsync(newRefreshTokenEntity);
-            await _refreshTokenRepository.SaveChangesAsync();
-
+            await CreateRefreshTokenEntityAsync(account.Id, newRefreshToken);
 
             return new RefreshTokenResponseDto
             {
@@ -153,7 +127,7 @@ namespace SkillUp.Services.Implementations
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            // Add role and permissions as claims
+            // Include role and licensed permissions for authorization
             if (account.Role != null)
             {
                 claims.Add(new Claim("roleId", account.Role.Id.ToString()));
@@ -192,6 +166,25 @@ namespace SkillUp.Services.Implementations
             return Convert.ToBase64String(randomNumber);
         }
 
+        // Helper method to reduce duplicate refresh token creation code
+        private async Task<RefreshToken> CreateRefreshTokenEntityAsync(Guid accountId, string token)
+        {
+            var refreshTokenEntity = new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                Token = token,
+                AccountId = accountId,
+                CreatedUtc = DateTime.Now,
+                ExpiresUtc = DateTime.Now.AddDays(7),
+                RevokedUtc = null
+            };
+
+            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+            await _refreshTokenRepository.SaveChangesAsync();
+
+            return refreshTokenEntity;
+        }
+
         public ClaimsPrincipal? GetPrincipalFromToken(string token)
         {
             try
@@ -203,7 +196,7 @@ namespace SkillUp.Services.Implementations
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidateLifetime = false,
+                    ValidateLifetime = false, // Allow expired tokens for refresh flow
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtSettings["Issuer"],
                     ValidAudience = jwtSettings["Audience"],
@@ -247,20 +240,16 @@ namespace SkillUp.Services.Implementations
 
         public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
         {
-            // Check if email already exists
             if (await _accountRepository.ExistsByEmailAsync(request.Email))
             {
                 return null;
             }
 
-            // Hash password
             var hashedPassword = HashPassword(request.Password);
+            var verifyToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+            var tokenExpiry = DateTime.Now.AddHours(24);
 
-            // Generate secure verify token (32 bytes = 64 hex characters)
-            var verifyToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
-            var tokenExpiry = DateTime.Now.AddHours(24); 
-
-            // Create account
+            // Create account in pending state until email verification
             var account = new Account
             {
                 Id = Guid.NewGuid(),
@@ -268,30 +257,30 @@ namespace SkillUp.Services.Implementations
                 Password = hashedPassword,
                 Fullname = request.Fullname,
                 RoleId = request.RoleId,
-                Status = "InActive", // Pending verification
+                Status = "InActive",
                 CreatedAt = DateTime.Now
             };
 
             await _accountRepository.AddAsync(account);
 
-            // Create OTP record
             var otp = new Otp
             {
                 Id = Guid.NewGuid(),
                 AccountId = account.Id,
                 OtpLink = verifyToken,
-                OtpExpiry = tokenExpiry
+                OtpExpiry = tokenExpiry,
+                IsUsed = false,
+                UsedAt = null
             };
 
             await _otpRepository.AddAsync(otp);
 
-            // Save both Account and OTP together
+            // Save both entities in one transaction
             if (!await _accountRepository.SaveChangesAsync())
             {
                 return null;
             }
 
-            // Send verify email with link
             await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, request.Fullname);
 
             return new RegisterResponseDto
@@ -302,34 +291,32 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request)
         {
-            // Get account
             var account = await _accountRepository.GetByEmailAsync(request.Email);
             if (account == null)
             {
                 return false;
             }
 
-            // If account is already active, return success (no need to verify again)
+            // Already verified, return success
             if (account.Status == "Active")
             {
                 return true;
             }
 
-            // Get OTP record with valid token
             var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
-            if (otp == null)
+            if (otp == null || otp.IsUsed)
             {
                 return false;
             }
 
-            // Activate account
+            // Mark OTP as used for audit trail
             account.Status = "Active";
+            otp.IsUsed = true;
+            otp.UsedAt = DateTime.Now;
+
             await _accountRepository.UpdateAsync(account);
+            await _otpRepository.UpdateAsync(otp);
 
-            // Delete OTP record
-            await _otpRepository.DeleteAsync(otp);
-
-            // Save changes
             var saved = await _accountRepository.SaveChangesAsync();
             if (!saved)
             {
@@ -341,42 +328,37 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request)
         {
-            // Get account by email
+            // Only allow resend for unverified accounts
             var account = await _accountRepository.GetByEmailAsync(request.Email);
-            if (account == null)
+            if (account == null || account.Status != "InActive")
             {
                 return false;
             }
 
-            // Check if account is not activated yet
-            if (account.Status != "InActive")
-            {
-                return false;
-            }
+            var verifyToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+            var tokenExpiry = DateTime.Now.AddHours(24);
 
-            // Generate new verify token (32 bytes = 64 hex characters)
-            var verifyToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
-            var tokenExpiry = DateTime.Now.AddHours(24); // 24 hours expiry (giờ Việt Nam)
-
-            // Get existing OTP record
             var existingOtp = await _otpRepository.GetByAccountIdAsync(account.Id);
 
+            // Update existing OTP or create new one
             if (existingOtp != null)
             {
-                // Update existing OTP
                 existingOtp.OtpLink = verifyToken;
                 existingOtp.OtpExpiry = tokenExpiry;
+                existingOtp.IsUsed = false;
+                existingOtp.UsedAt = null;
                 await _otpRepository.UpdateAsync(existingOtp);
             }
             else
             {
-                // Create new OTP record
                 var otp = new Otp
                 {
                     Id = Guid.NewGuid(),
                     AccountId = account.Id,
                     OtpLink = verifyToken,
-                    OtpExpiry = tokenExpiry
+                    OtpExpiry = tokenExpiry,
+                    IsUsed = false,
+                    UsedAt = null
                 };
                 await _otpRepository.AddAsync(otp);
             }
@@ -386,7 +368,6 @@ namespace SkillUp.Services.Implementations
                 return false;
             }
 
-            // Send verify email with link
             await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, account.Fullname ?? request.Email);
 
             return true;
@@ -396,7 +377,7 @@ namespace SkillUp.Services.Implementations
         {
             try
             {
-                // 1. Verify Google ID Token
+                // Verify Google ID token
                 var googleClientId = _configuration["GoogleAuth:ClientId"];
                 if (string.IsNullOrEmpty(googleClientId))
                 {
@@ -408,87 +389,73 @@ namespace SkillUp.Services.Implementations
                     Audience = new[] { googleClientId }
                 });
 
-                // 2. Lấy thông tin từ Google payload
                 var email = payload.Email;
                 var fullname = payload.Name;
                 var avatar = payload.Picture;
-                var googleId = payload.Subject; // Google User ID
 
-                // 3. Kiểm tra user đã tồn tại chưa (dựa vào email)
                 var existingAccount = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email);
 
                 bool isNewUser = false;
                 Account account;
 
+                // Create new account if not exists
                 if (existingAccount == null)
                 {
-                    // 4. Tạo tài khoản mới nếu chưa tồn tại
                     account = new Account
                     {
                         Id = Guid.NewGuid(),
                         Email = email,
                         Fullname = fullname,
                         Avatar = avatar,
-                        Password = HashPassword(Guid.NewGuid().ToString()), // Random password vì login bằng Google
-                        Status = "Active", // Tự động active vì Google đã verify email
-                        RoleId = request.DefaultRoleId, // Default là Student
+                        Password = HashPassword(Guid.NewGuid().ToString()), // Random password for Google auth
+                        Status = "Active", // Auto-activate since Google verified email
+                        RoleId = request.DefaultRoleId,
                         CreatedAt = DateTime.Now
                     };
 
                     await _accountRepository.AddAsync(account);
                     await _accountRepository.SaveChangesAsync();
 
-                    // Load lại account với Role và Permissions
+                    // Reload account with role and permissions for token generation
                     account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email) ?? account;
 
                     isNewUser = true;
                 }
                 else
                 {
-                    // 5. User đã tồn tại
                     account = existingAccount;
 
-                    // Check status
-                    if (account.Status == "InActive")
+                    if (account.Status == "Banned")
                     {
-                        // Nếu tài khoản đang pending verify, tự động active vì Google đã verify
-                        account.Status = "Active";
-                        await _accountRepository.UpdateAsync(account);
-                        await _accountRepository.SaveChangesAsync();
-                    }
-                    else if (account.Status == "Banned")
-                    {
-                        return null; // Tài khoản bị ban
+                        return null;
                     }
 
-                    // Cập nhật avatar nếu chưa có
+                    // Batch updates to minimize database calls
+                    var needUpdate = false;
+
+                    if (account.Status == "InActive")
+                    {
+                        account.Status = "Active";
+                        needUpdate = true;
+                    }
+
                     if (string.IsNullOrEmpty(account.Avatar) && !string.IsNullOrEmpty(avatar))
                     {
                         account.Avatar = avatar;
+                        needUpdate = true;
+                    }
+
+                    if (needUpdate)
+                    {
                         await _accountRepository.UpdateAsync(account);
                         await _accountRepository.SaveChangesAsync();
                     }
                 }
 
-                // 6. Generate tokens
                 var accessToken = GenerateAccessToken(account);
                 var refreshToken = GenerateRefreshToken();
+                await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
 
-                // 7. Save refresh token to database
-                var refreshTokenEntity = new RefreshToken
-                {
-                    Id = Guid.NewGuid(),
-                    AccountId = account.Id,
-                    Token = refreshToken,
-                    CreatedUtc = DateTime.Now,
-                    ExpiresUtc = DateTime.Now.AddDays(7),
-                    RevokedUtc = null
-                };
-
-                await _refreshTokenRepository.AddAsync(refreshTokenEntity);
-                await _refreshTokenRepository.SaveChangesAsync();
-
-                // 8. Return response
                 return new GoogleLoginResponseDto
                 {
                     UserId = account.Id,

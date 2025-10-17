@@ -550,6 +550,7 @@ public partial class SkillUpContext : DbContext
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.OtpExpiry).HasColumnType("datetime");
             entity.Property(e => e.OtpLink).HasMaxLength(100);
+            entity.Property(e => e.UsedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Account).WithMany(p => p.Otps)
                 .HasForeignKey(d => d.AccountId)

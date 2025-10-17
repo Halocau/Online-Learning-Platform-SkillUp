@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Nhập JWT token vào ô bên dưới. Ví dụ: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'"
+        Description = "Nhập JWT token vào ô bên dưới."
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
