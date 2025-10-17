@@ -48,8 +48,8 @@ namespace SkillUp.Services.Implementations
                 Id = Guid.NewGuid(),
                 Token = refreshToken,
                 AccountId = account.Id,
-                CreatedUtc = DateTime.UtcNow,
-                ExpiresUtc = DateTime.UtcNow.AddDays(7),
+                CreatedUtc = DateTime.Now,
+                ExpiresUtc = DateTime.Now.AddDays(7),
                 RevokedUtc = null
             };
 
@@ -59,9 +59,7 @@ namespace SkillUp.Services.Implementations
             return new LoginResponseDto
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                AccessTokenExpires = DateTime.UtcNow.AddHours(1),
-                RefreshTokenExpires = refreshTokenEntity.ExpiresUtc
+                RefreshToken = refreshToken
             };
         }
 
@@ -101,7 +99,7 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
 
-            refreshTokenEntity.RevokedUtc = DateTime.UtcNow;
+            refreshTokenEntity.RevokedUtc = DateTime.Now;
             await _refreshTokenRepository.UpdateAsync(refreshTokenEntity);
 
             var newAccessToken = GenerateAccessToken(account);
@@ -112,8 +110,8 @@ namespace SkillUp.Services.Implementations
                 Id = Guid.NewGuid(),
                 Token = newRefreshToken,
                 AccountId = account.Id,
-                CreatedUtc = DateTime.UtcNow,
-                ExpiresUtc = DateTime.UtcNow.AddDays(7),
+                CreatedUtc = DateTime.Now,
+                ExpiresUtc = DateTime.Now.AddDays(7),
                 RevokedUtc = null
             };
 
@@ -126,9 +124,7 @@ namespace SkillUp.Services.Implementations
                 Tokens = new TokenDto
                 {
                     AccessToken = newAccessToken,
-                    RefreshToken = newRefreshToken,
-                    AccessTokenExpires = DateTime.UtcNow.AddHours(1),
-                    RefreshTokenExpires = newRefreshTokenEntity.ExpiresUtc
+                    RefreshToken = newRefreshToken
                 }
             };
         }
@@ -181,7 +177,7 @@ namespace SkillUp.Services.Implementations
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.Now.AddMinutes(15),
                 signingCredentials: credentials
             );
 
@@ -207,7 +203,7 @@ namespace SkillUp.Services.Implementations
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidateLifetime = false, // Không validate expiry để có thể refresh
+                    ValidateLifetime = false,
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtSettings["Issuer"],
                     ValidAudience = jwtSettings["Audience"],
@@ -262,7 +258,7 @@ namespace SkillUp.Services.Implementations
 
             // Generate secure verify token (32 bytes = 64 hex characters)
             var verifyToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
-            var tokenExpiry = DateTime.UtcNow.AddHours(24); // 24 hours expiry
+            var tokenExpiry = DateTime.Now.AddHours(24); 
 
             // Create account
             var account = new Account
@@ -273,7 +269,7 @@ namespace SkillUp.Services.Implementations
                 Fullname = request.Fullname,
                 RoleId = request.RoleId,
                 Status = "InActive", // Pending verification
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             await _accountRepository.AddAsync(account);
@@ -306,34 +302,25 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request)
         {
-            Console.WriteLine($"[VerifyEmailAsync] START - Email: {request.Email}, Token: {request.Token}");
-
             // Get account
             var account = await _accountRepository.GetByEmailAsync(request.Email);
             if (account == null)
             {
-                Console.WriteLine("[VerifyEmailAsync] Account NOT FOUND");
                 return false;
             }
-
-            Console.WriteLine($"[VerifyEmailAsync] Account found - Status: {account.Status}");
 
             // If account is already active, return success (no need to verify again)
             if (account.Status == "Active")
             {
-                Console.WriteLine("[VerifyEmailAsync] Account ALREADY ACTIVE - Returning TRUE");
-                return true; //  Already verified - this is success
+                return true;
             }
 
             // Get OTP record with valid token
             var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
             if (otp == null)
             {
-                Console.WriteLine("[VerifyEmailAsync] OTP NOT FOUND or EXPIRED");
-                return false; // Invalid or expired token
+                return false;
             }
-
-            Console.WriteLine($"[VerifyEmailAsync] OTP found - Id: {otp.Id}, Expiry: {otp.OtpExpiry}");
 
             // Activate account
             account.Status = "Active";
@@ -342,18 +329,13 @@ namespace SkillUp.Services.Implementations
             // Delete OTP record
             await _otpRepository.DeleteAsync(otp);
 
-            // Save changes (both use same DbContext, so only need to save once)
+            // Save changes
             var saved = await _accountRepository.SaveChangesAsync();
-
-            Console.WriteLine($"[VerifyEmailAsync] Save result: {saved}");
-
             if (!saved)
             {
-                Console.WriteLine("[VerifyEmailAsync] SAVE FAILED");
                 return false;
             }
 
-            Console.WriteLine("[VerifyEmailAsync] SUCCESS - Returning TRUE");
             return true;
         }
 
@@ -374,7 +356,7 @@ namespace SkillUp.Services.Implementations
 
             // Generate new verify token (32 bytes = 64 hex characters)
             var verifyToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
-            var tokenExpiry = DateTime.UtcNow.AddHours(24); // 24 hours expiry
+            var tokenExpiry = DateTime.Now.AddHours(24); // 24 hours expiry (giờ Việt Nam)
 
             // Get existing OTP record
             var existingOtp = await _otpRepository.GetByAccountIdAsync(account.Id);
@@ -450,7 +432,7 @@ namespace SkillUp.Services.Implementations
                         Password = HashPassword(Guid.NewGuid().ToString()), // Random password vì login bằng Google
                         Status = "Active", // Tự động active vì Google đã verify email
                         RoleId = request.DefaultRoleId, // Default là Student
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = DateTime.Now
                     };
 
                     await _accountRepository.AddAsync(account);
@@ -498,8 +480,8 @@ namespace SkillUp.Services.Implementations
                     Id = Guid.NewGuid(),
                     AccountId = account.Id,
                     Token = refreshToken,
-                    CreatedUtc = DateTime.UtcNow,
-                    ExpiresUtc = DateTime.UtcNow.AddDays(7),
+                    CreatedUtc = DateTime.Now,
+                    ExpiresUtc = DateTime.Now.AddDays(7),
                     RevokedUtc = null
                 };
 
@@ -523,12 +505,10 @@ namespace SkillUp.Services.Implementations
             }
             catch (Google.Apis.Auth.InvalidJwtException)
             {
-                // Token không hợp lệ
                 return null;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"[GoogleLogin Error]: {ex.Message}");
                 return null;
             }
         }
