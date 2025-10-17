@@ -69,12 +69,10 @@ namespace SkillUp.Services.Implementations
                     await client.DisconnectAsync(true);
                 }
 
-                Console.WriteLine($"OTP email sent successfully to {toEmail}");
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Failed to send email: {ex.Message}");
                 return false;
             }
         }
@@ -142,13 +140,10 @@ namespace SkillUp.Services.Implementations
                     await client.DisconnectAsync(true);
                 }
 
-                Console.WriteLine($"✅ Verify email sent successfully to {toEmail}");
-                Console.WriteLine($"🔗 Verify link: {verifyLink}");
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"❌ Failed to send email: {ex.Message}");
                 return false;
             }
         }

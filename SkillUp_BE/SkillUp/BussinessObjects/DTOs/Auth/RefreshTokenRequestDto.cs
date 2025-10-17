@@ -2,9 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SkillUp.BussinessObjects.DTOs.Auth
 {
-    /// <summary>
-    /// DTO gửi lên khi làm mới token
-    /// </summary>
+
     public class RefreshTokenRequestDto
     {
         [Required(ErrorMessage = "Access Token là bắt buộc")]

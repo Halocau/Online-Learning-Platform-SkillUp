@@ -34,10 +34,8 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                // call service login
                 var result = await _authService.LoginAsync(request);
 
-                // fail login
                 if (result == null)
                 {
                     return Unauthorized(new APIReturn
@@ -48,7 +46,6 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                // Login success
                 return Ok(new APIReturn
                 {
                     code = 200,
@@ -123,7 +120,6 @@ namespace SkillUp.Controllers
         {
             try
             {
-                // Lấy userId từ ICurrentUserService
                 var userId = _currentUserService.UserId;
                 if (!userId.HasValue)
                 {
@@ -135,10 +131,8 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                // call service logout
                 var result = await _authService.LogoutAsync(userId.Value);
 
-                // fail logout
                 if (!result)
                 {
                     return BadRequest(new APIReturn
@@ -149,7 +143,6 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                // Logout success
                 return Ok(new APIReturn
                 {
                     code = 200,
@@ -166,6 +159,36 @@ namespace SkillUp.Controllers
                     data = new List<object>()
                 });
             }
+        }
+
+        /// <summary>
+        /// Test endpoint để kiểm tra JWT token có còn hợp lệ không
+        /// </summary>
+        [HttpGet("test-token")]
+        [Authorize]
+        public IActionResult TestToken()
+        {
+            var userId = _currentUserService.UserId;
+            var email = _currentUserService.Email;
+            var fullname = _currentUserService.Fullname;
+            var roleId = _currentUserService.RoleId;
+
+            return Ok(new APIReturn
+            {
+                code = 200,
+                message = "Token hợp lệ",
+                data = new List<object>
+                {
+                    new
+                    {
+                        userId,
+                        email,
+                        fullname,
+                        roleId,
+                        timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    }
+                }
+            });
         }
 
         [HttpPost("register")]
@@ -221,24 +244,16 @@ namespace SkillUp.Controllers
         {
             try
             {
-                Console.WriteLine($"[VerifyEmail] Email: {email}");
-                Console.WriteLine($"[VerifyEmail] Token: {token}");
-
                 var request = new VerifyEmailRequestDto
                 {
                     Email = email,
                     Token = token
                 };
 
-                // Call service verify email
                 var result = await _authService.VerifyEmailAsync(request);
 
-                Console.WriteLine($"[VerifyEmail] Result: {result}");
-
-                // Verification failed
                 if (!result)
                 {
-                    Console.WriteLine("[VerifyEmail] Returning FAILED HTML");
                     return Content(@"
                         <html>
                         <head><title>Xác thực thất bại</title></head>
@@ -251,8 +266,6 @@ namespace SkillUp.Controllers
                     ", "text/html");
                 }
 
-                // Verification success
-                Console.WriteLine("[VerifyEmail] Returning SUCCESS HTML");
                 return Content(@"
                     <html>
                     <head><title>Xác thực thành công</title></head>
@@ -267,7 +280,6 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[VerifyEmail] EXCEPTION: {ex.Message}");
                 return Content($@"
                     <html>
                     <head><title>Lỗi</title></head>
