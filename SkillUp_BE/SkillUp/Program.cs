@@ -96,6 +96,9 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Map SignalR Hub
+//app.MapHub<SkillUp.Hubs.CommentHub>("/hubs/comment");
+
 app.MapControllers();
 
 app.Run();
