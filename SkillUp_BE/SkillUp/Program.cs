@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Configuration;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Common;
 using SkillUp.Services.Implementations;
 using SkillUp.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
@@ -78,7 +80,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
-
+builder.Services.AddScoped<CloudinaryService>();
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -106,6 +108,11 @@ builder.Services.AddAuthentication(options =>
         RoleClaimType = "roleName"
     };
 });
+
+// cloudinary 
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("CloudinarySettings"));
+
 
 builder.Services.AddAuthorization();
 
