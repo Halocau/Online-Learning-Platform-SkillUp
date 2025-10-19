@@ -4,6 +4,7 @@ using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
 using SkillUp.BussinessObjects.DTOs.News;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.ExceptionHandling;
 
 namespace SkillUp.Controllers
 {
@@ -12,105 +13,178 @@ namespace SkillUp.Controllers
 	public class NewsController : ControllerBase
 	{
 		private readonly INewsService _newsService;
-		public NewsController(INewsService newsService)
+		private readonly ICurrentUserService _currentUserService;
+		public NewsController(INewsService newsService, ICurrentUserService currentUserService)
 		{
 			_newsService = newsService;
+			_currentUserService = currentUserService;
 		}
 		[HttpGet("all-news")]
 		public async Task<IActionResult> GetAllNews()
 		{
-			var news = await _newsService.GetAllNews();
-			var newsDTO = news.Select(n => new NewsViewDTO
+			try
 			{
-				Id = n.Id,
-				Email = n.Email,
-				Title = n.Title,
-				Contents = n.Contents,
-				Date = n.Date
-			}).ToList();
-			/*if (newsDTO == null || !newsDTO.Any())
-			{
-				return NotFound("No news found.");
-			}*/
+				var news = await _newsService.GetAllNews();
+				var newsDTO = news.Select(n => new NewsViewDTO
+				{
+					Id = n.Id,
+					Email = n.Email,
+					Title = n.Title,
+					Contents = n.Contents,
+					Date = n.Date
+				}).ToList();
+				if (newsDTO == null || !newsDTO.Any())
+				{
+					return NotFound(new APIReturn
+					{
+						code = 404,
+						message = "Không có tin tức nào!",
+						data = new List<object>()
+					});
+				}
 
-			return Ok(newsDTO);
+				return Ok(new APIReturn
+				{
+					code = 200,
+					message = "Lấy tin tức thành công!",
+					data = new List<object>(newsDTO)
+				});
+			} catch (Exception ex)
+			{
+				return StatusCode(500, new APIReturn
+				{
+					code = 500,
+					message = "Có lỗi xảy ra: " + ex.Message,
+					data = new List<object>()
+				});
+			}
 		}
 
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetNewsById(Guid id)
+		{
+			try
 			{
-			var news = await _newsService.GetNewsById(id);
-			if (news == null)
+				var news = await _newsService.GetNewsById(id);
+				if (news == null)
+				{
+					return NotFound($"Không tìm thấy tin tức!");
+				}
+				var newsDTO = new NewsViewDTO
+				{
+					Id = news.Id,
+					Email = news.Email,
+					Title = news.Title,
+					Contents = news.Contents,
+					Date = news.Date
+				};
+				return Ok(new APIReturn
+				{
+					code = 200,
+					message = "Lấy tin tức thành công!",
+					data = new List<object> { newsDTO }
+				});
+			} catch (Exception ex)
 			{
-				return NotFound($"News with ID {id} not found.");
+				return StatusCode(500, new APIReturn
+				{
+					code = 500,
+					message = "Có lỗi xảy ra: " + ex.Message,
+					data = new List<object>()
+				});
 			}
-			var newsDTO = new NewsViewDTO
-			{
-				Id = news.Id,
-				Email = news.Email,
-				Title = news.Title,
-				Contents = news.Contents,
-				Date = news.Date
-			};
-			return Ok(newsDTO);
 		}
 
 		[HttpPost("create-news")]
 		public async Task<IActionResult> CreateNews([FromForm] NewsCreateDTO newsCreateDTO)
 		{
-			if (newsCreateDTO == null)
+			try
 			{
-				return BadRequest("News data is null.");
+				if (newsCreateDTO == null)
+				{
+					return BadRequest("Thông tin không hợp lệ!");
+				}
+				var news = new News
+				{
+					Id = Guid.NewGuid(),
+					Email = "_currentUserService.Email",
+					Title = newsCreateDTO.Title,
+					Contents = newsCreateDTO.Contents,
+					Date = DateOnly.FromDateTime(DateTime.Now)
+				};
+				var createdNews = await _newsService.CreateNews(news);
+				var newsDTO = new NewsViewDTO
+				{
+					Id = createdNews.Id,
+					Email = createdNews.Email,
+					Title = createdNews.Title,
+					Contents = createdNews.Contents,
+					Date = DateOnly.FromDateTime(DateTime.Now)
+				};
+				return Ok(new APIReturn
+				{
+					code = 201,
+					message = "Tạo tin tức thành công!",
+					data = new List<object> { newsDTO }
+				});
 			}
-			var news = new News
+			catch (Exception ex)
 			{
-				Id = Guid.NewGuid(),
-				Email = "placeholding@gmail.com",
-				Title = newsCreateDTO.Title,
-				Contents = newsCreateDTO.Contents,
-				Date = DateOnly.FromDateTime(DateTime.Now)
-			};
-			var createdNews = await _newsService.CreateNews(news);
-			var newsDTO = new NewsViewDTO
-			{
-				Id = createdNews.Id,
-				Email = createdNews.Email,
-				Title = createdNews.Title,
-				Contents = createdNews.Contents,
-				Date = DateOnly.FromDateTime(DateTime.Now)
-			};
-			return CreatedAtAction(nameof(GetNewsById), new { id = newsDTO.Id }, newsDTO);
+				return StatusCode(500, new APIReturn
+				{
+					code = 500,
+					message = "Có lỗi xảy ra: " + ex.Message,
+					data = new List<object>()
+				});
+			}
 		}
 
 		[HttpPut("update-news")]
-		public async Task<IActionResult> UpdateNews([FromForm] NewsViewDTO newsViewDTO)
+		public async Task<IActionResult> UpdateNews([FromForm] NewsUpdateDTO newsUpdateDTO)
 		{
-			if (newsViewDTO == null || newsViewDTO.Id == Guid.Empty)
+			try
 			{
-				return BadRequest("Invalid news data.");
+				if (newsUpdateDTO == null || newsUpdateDTO.Id == Guid.Empty)
+				{
+					return BadRequest("Thông tin không hợp lệ!");
+				}
+				var news = new News
+				{
+					Id = newsUpdateDTO.Id,
+					Email = _currentUserService.Email,
+					Title = newsUpdateDTO.Title,
+					Contents = newsUpdateDTO.Contents,
+					Date = DateOnly.FromDateTime(DateTime.Now)
+				};
+				var updatedNews = await _newsService.UpdateNews(news);
+				if (updatedNews == null)
+				{
+					return NotFound($"Không tìm thấy tin tức!");
+				}
+				var newsDTO = new NewsViewDTO
+				{
+					Id = updatedNews.Id,
+					Email = updatedNews.Email,
+					Title = updatedNews.Title,
+					Contents = updatedNews.Contents,
+					Date = updatedNews.Date
+				};
+				return Ok(new APIReturn
+				{
+					code = 200,
+					message = "Cập nhật tin tức thành công!",
+					data = new List<object> { newsDTO }
+				});
 			}
-			var news = new News
+			catch (Exception ex)
 			{
-				Id = newsViewDTO.Id,
-				Email = "newsViewDTO.Email",
-				Title = newsViewDTO.Title,
-				Contents = newsViewDTO.Contents,
-				Date = newsViewDTO.Date
-			};
-			var updatedNews = await _newsService.UpdateNews(news);
-			if (updatedNews == null)
-			{
-				return NotFound($"News with ID {newsViewDTO.Id} not found.");
+				return StatusCode(500, new APIReturn
+				{
+					code = 500,
+					message = "Có lỗi xảy ra: " + ex.Message,
+					data = new List<object>()
+				});
 			}
-			var newsDTO = new NewsViewDTO
-			{
-				Id = updatedNews.Id,
-				Email = "updatedNews.Email",
-				Title = updatedNews.Title,
-				Contents = updatedNews.Contents,
-				Date = updatedNews.Date
-			};
-			return Ok(newsDTO);
 		}
 
 		[HttpDelete("delete-news/{id}")]
@@ -119,10 +193,15 @@ namespace SkillUp.Controllers
 			var deletedNews = await _newsService.DeleteNews(id);
 			if (deletedNews == null)
 			{
-				return NotFound($"News with ID {id} not found.");
+				return NotFound($"Không tìm thấy tin tức!");
 			}
 
-			return NoContent();
+			return Ok(new APIReturn
+			{
+				code = 200,
+				message = "Xóa tin tức thành công!",
+				data = new List<object>()
+			});
 		}
 	}
 }
