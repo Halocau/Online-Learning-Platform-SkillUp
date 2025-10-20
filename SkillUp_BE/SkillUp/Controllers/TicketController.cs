@@ -23,6 +23,16 @@ namespace SkillUp.Controllers
 			try
 			{
 				var tickets = await _ticketService.GetAllTickets();
+				var ticketsDTO = tickets.Select(t => new
+				{
+					Id = t.Id,
+					t.Title,
+					t.Contents,
+					t.Status,
+					t.Response,
+					t.CreatedAt,
+					AccountEmail = t.Account != null ? t.Account.Email : null
+				}).ToList();
 				if (tickets == null || !tickets.Any())
 				{
 					return NotFound(new APIReturn
