@@ -14,20 +14,17 @@ function AppRouter() {
   return (
     <>
       <Routes>
-        
         <Route path="/login" element={<Login />} />
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
         </Route>
 
-        
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
         <Route path="/student/*" element={<StudentRoutes />} />
 
-        
         <Route path="*" element={<MainLayout />}>
           <Route index element={<Home />} />
         </Route>

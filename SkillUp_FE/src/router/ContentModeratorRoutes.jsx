@@ -17,9 +17,9 @@ const ContentModeratorRoutes = () => {
       <Route
         path="/"
         element={
-          <ProtectedRoute allowedRoles={["Moderator"]}>
+          // <ProtectedRoute allowedRoles={["Moderator"]}>
             <ModeratorLayout />
-          </ProtectedRoute>
+          // </ProtectedRoute>
         }
       >
         <Route index element={<ContentModeratorDashboard />} />

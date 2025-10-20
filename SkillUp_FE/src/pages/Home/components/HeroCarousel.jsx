@@ -1,79 +1,57 @@
-// src/components/HeroCarousel.jsx
+// src/components/home/HeroSection.jsx
+import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import { Button } from "@/components/ui/button";
+import "swiper/css/autoplay";
+import { Autoplay, Pagination } from "swiper/modules";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
-export default function HeroCarousel() {
+export default function HeroSection() {
   const slides = [
     {
-      title: "Master tomorrow's skills today",
-      subtitle:
-        "Power up your AI, career, and life skills with the most up-to-date, expert-led learning.",
-      image:
-        "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=1600&q=80",
-      button1: "Get started",
-      
+      title: "Upgrade Your Skills Anytime, Anywhere",
+      desc: "Join thousands of learners around the world mastering new technologies.",
+      img: "../../../assets/react.svg",
     },
     {
-      title: "Boost your career with tech skills",
-      subtitle: "Learn coding, design, marketing, and more from top mentors.",
-      image:
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80",
-      button1: "Explore Courses",
-      
+      title: "Teach on SkillUp",
+      desc: "Empower others by sharing your knowledge and experience.",
+      img: "/assets/hero2.png",
     },
   ];
 
   return (
-    <section id="hero-section" className="w-full">
+    <section className="bg-gray">
       <Swiper
-        modules={[Navigation, Pagination, Autoplay]}
-        navigation
-        pagination={{ clickable: true }}
+        modules={[Autoplay, Pagination]}
         autoplay={{ delay: 4000 }}
+        pagination={{ clickable: true }}
         loop
-        className="rounded-3xl overflow-hidden"
+        className="w-full h-[500px]"
       >
         {slides.map((slide, index) => (
           <SwiperSlide key={index}>
-            <div
-              className="relative h-[500px] flex items-center justify-center text-white"
-              style={{
-                backgroundImage: `url(${slide.image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {/* Dark gradient overlay for better readability */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
-
-              <motion.div
-                className="relative z-10 text-center max-w-2xl px-4"
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-              >
-                <h1 className="text-4xl md:text-5xl font-extrabold mb-4 drop-shadow-lg">
+            <div className="flex flex-col md:flex-row items-center justify-between px-8 md:px-16 h-full">
+              <div className="max-w-xl space-y-4">
+                <h1 className="text-4xl md:text-5xl font-bold text-black">
                   {slide.title}
                 </h1>
-                <p className="text-lg mb-6 opacity-90">{slide.subtitle}</p>
-
-                <div className="flex flex-wrap justify-center gap-4">
-                  <Button
-                    size="lg"
-                    className="bg-white text-indigo-600 font-semibold hover:bg-indigo-50"
-                  >
-                    <Link to="/login">{slide.button1}</Link>
-                    
-                  </Button>
-                  
+                <p className="text-gray-600">{slide.desc}</p>
+                <div className="flex gap-3 mt-4">
+                  <button className="bg-[#FFD500] hover:bg-[#E5C100] text-black px-6 py-3 rounded-xl font-medium shadow-md">
+                    Get Started
+                  </button>
+                  <button className="border border-black text-black hover:bg-black hover:text-white px-6 py-3 rounded-xl transition-colors">
+                    Become an Instructor
+                  </button>
                 </div>
-              </motion.div>
+              </div>
+              <img
+                src={slide.img}
+                alt="Hero"
+                className="hidden md:block w-[400px]"
+              />
             </div>
           </SwiperSlide>
         ))}
