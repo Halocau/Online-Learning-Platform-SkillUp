@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SkillUp.BussinessObjects.DTOs.Ticket;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.ExceptionHandling;
 using SkillUp.Services.Interfaces;
@@ -23,22 +24,21 @@ namespace SkillUp.Controllers
 			try
 			{
 				var tickets = await _ticketService.GetAllTickets();
-				var ticketsDTO = tickets.Select(t => new
+				var ticketsDTO = tickets.Select(t => new TicketViewModDTO
 				{
-					Id = t.Id,
-					t.Title,
-					t.Contents,
-					t.Status,
-					t.Response,
-					t.CreatedAt,
-					AccountEmail = t.Account != null ? t.Account.Email : null
+					TicketCode = t.TicketCode,
+					Title = t.Title,
+					Contents = t.Contents,
+					AccountName = t.Account != null ? t.Account.Fullname : "N/A",
+					CreatedAt = t.CreatedAt,
+					Status = t.Status
 				}).ToList();
 				if (tickets == null || !tickets.Any())
 				{
-					return NotFound(new APIReturn
+					return Ok(new APIReturn
 					{
-						code = 404,
-						message = "Không tìm thấy ticket nào!",
+						code = 200,
+						message = "Không có ticket nào!",
 						data = new List<object>()
 					});
 				}
@@ -46,7 +46,7 @@ namespace SkillUp.Controllers
 				{
 					code = 200,
 					message = "Lấy ticket thành công!",
-					data = new List<object> { tickets }
+					data = new List<object> { ticketsDTO }
 				});
 			}
 			catch (Exception ex)
@@ -61,6 +61,15 @@ namespace SkillUp.Controllers
 			try
 			{
 				var tickets = await _ticketService.GetSolvedTickets();
+				var ticketsDTO = tickets.Select(t => new TicketViewModDTO
+				{
+					TicketCode = t.TicketCode,
+					Title = t.Title,
+					Contents = t.Contents,
+					AccountName = t.Account != null ? t.Account.Fullname : "N/A",
+					CreatedAt = t.CreatedAt,
+					Status = t.Status
+				}).ToList();
 				if (tickets == null || !tickets.Any())
 				{
 					return NotFound(new APIReturn
@@ -74,7 +83,7 @@ namespace SkillUp.Controllers
 				{
 					code = 200,
 					message = "Lấy ticket đã giải quyết thành công!",
-					data = new List<object> { tickets }
+					data = new List<object> { ticketsDTO }
 				});
 			}
 			catch (Exception ex)
@@ -98,11 +107,20 @@ namespace SkillUp.Controllers
 						data = new List<object>()
 					});
 				}
+				var ticketsDTO = tickets.Select(t => new TicketViewModDTO
+				{
+					TicketCode = t.TicketCode,
+					Title = t.Title,
+					Contents = t.Contents,
+					AccountName = t.Account != null ? t.Account.Fullname : "N/A",
+					CreatedAt = t.CreatedAt,
+					Status = t.Status
+				}).ToList();
 				return Ok(new APIReturn
 				{
 					code = 200,
 					message = "Lấy ticket chưa giải quyết thành công!",
-					data = new List<object> { tickets }
+					data = new List<object> { ticketsDTO }
 				});
 			}
 			catch (Exception ex)
@@ -111,12 +129,49 @@ namespace SkillUp.Controllers
 			}
 		}
 
-		[HttpGet("{id}")]
-		public async Task<IActionResult> GetTicketById(Guid id)
+		[HttpGet("account-tickets/{id}")]
+		public async Task<IActionResult> GetTicketsByAccountId(Guid id)
 		{
 			try
 			{
-				var ticket = await _ticketService.GetTicketById(id);
+				var tickets = await _ticketService.GetTicketsByAccountId(id);
+				if (tickets == null || !tickets.Any())
+				{
+					return NotFound(new APIReturn
+					{
+						code = 404,
+						message = "Không tìm thấy ticket nào!",
+						data = new List<object>()
+					});
+				}
+				var ticketsDTO = tickets.Select(t => new TicketViewUserDTO
+				{
+					TicketCode = t.TicketCode,
+					Title = t.Title,
+					Contents = t.Contents,
+					CreatedAt = t.CreatedAt,
+					Response = t.Response,
+					Status = t.Status
+				}).ToList();
+				return Ok(new APIReturn
+				{
+					code = 200,
+					message = "Lấy ticket thành công!",
+					data = new List<object> { ticketsDTO }
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new { message = "Có lỗi xảy ra: " + ex.Message });
+			}
+		}
+
+		[HttpGet("{code}")]
+		public async Task<IActionResult> GetTicketByCode(string code)
+		{
+			try
+			{
+				var ticket = await _ticketService.GetTicketByCode(code);
 				if (ticket == null)
 				{
 					return NotFound(new APIReturn
@@ -126,11 +181,20 @@ namespace SkillUp.Controllers
 						data = new List<object>()
 					});
 				}
+				var ticketsDTO = new TicketViewModDTO
+				{
+					TicketCode = ticket.TicketCode,
+					Title = ticket.Title,
+					Contents = ticket.Contents,
+					AccountName = ticket.Account != null ? ticket.Account.Fullname : "N/A",
+					CreatedAt = ticket.CreatedAt,
+					Status = ticket.Status
+				};
 				return Ok(new APIReturn
 				{
 					code = 200,
 					message = "Lấy ticket thành công!",
-					data = new List<object> { ticket }
+					data = new List<object> { ticketsDTO }
 				});
 			}
 			catch (Exception ex)
@@ -140,16 +204,44 @@ namespace SkillUp.Controllers
 		}
 
 		[HttpPost("create-ticket")]
-		public async Task<IActionResult> CreateTicket([FromForm] Ticket ticket)
+		public async Task<IActionResult> CreateTicket([FromForm] TicketCreateDTO ticketCreateDTO)
 		{
 			try
 			{
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "Dữ liệu không hợp lệ!",
+						data = new List<object>()
+					});
+				}
+				var ticket = new Ticket
+				{
+					Id = Guid.NewGuid(),
+					TicketCode = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper(),
+					Title = ticketCreateDTO.Title,
+					Contents = ticketCreateDTO.Contents,
+					CreatedAt = DateTime.Now,
+					Status = "Pending",
+					Response = null,
+					AccountId = (Guid)_currentUserService.UserId!
+				};
 				var createdTicket = await _ticketService.CreateTicket(ticket);
+				var createdTicketDTO = new TicketViewUserDTO
+				{
+					TicketCode = createdTicket.TicketCode,
+					Title = createdTicket.Title,
+					Contents = createdTicket.Contents,
+					CreatedAt = createdTicket.CreatedAt,
+					Status = createdTicket.Status
+				};
 				return Ok(new APIReturn
 				{
 					code = 200,
 					message = "Tạo ticket thành công!",
-					data = new List<object> { createdTicket }
+					data = new List<object> { createdTicketDTO }
 				});
 			}
 			catch (Exception ex)
@@ -159,16 +251,51 @@ namespace SkillUp.Controllers
 		}
 
 		[HttpPut("update-ticket")]
-		public async Task<IActionResult> UpdateTicket([FromForm] Ticket ticket)
+		public async Task<IActionResult> UpdateTicket([FromForm] TicketUpdateDTO ticketUpdateDTO)
 		{
 			try
 			{
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "Dữ liệu không hợp lệ!",
+						data = new List<object>()
+					});
+				}
+				var existingTicket = await _ticketService.GetTicketByCode(ticketUpdateDTO.Code);
+				Ticket ticket = new Ticket
+				{
+					Id = existingTicket.Id,
+					Title = existingTicket.Title,
+					Contents = ticketUpdateDTO.Contents,
+					CreatedAt = DateTime.Now
+				};
 				var updatedTicket = await _ticketService.UpdateTicket(ticket);
+				if (updatedTicket == null)
+				{
+					return NotFound(new APIReturn
+					{
+						code = 404,
+						message = "Không tìm thấy ticket để cập nhật!",
+						data = new List<object>()
+					});
+				}
+				TicketViewModDTO updatedTicketDTO = new TicketViewModDTO
+				{
+					TicketCode = updatedTicket.TicketCode,
+					Title = updatedTicket.Title,
+					Contents = updatedTicket.Contents,
+					AccountName = updatedTicket.Account != null ? updatedTicket.Account.Fullname : "N/A",
+					CreatedAt = updatedTicket.CreatedAt,
+					Status = updatedTicket.Status
+				};
 				return Ok(new APIReturn
 				{
 					code = 200,
 					message = "Cập nhật ticket thành công!",
-					data = new List<object> { updatedTicket }
+					data = new List<object> { updatedTicketDTO }
 				});
 			}
 			catch (Exception ex)
@@ -178,11 +305,11 @@ namespace SkillUp.Controllers
 		}
 
 		[HttpPut("resolve-ticket")]
-		public async Task<IActionResult> ResolveTicket([FromForm] Guid id, [FromForm] bool decision, [FromForm] string response)
+		public async Task<IActionResult> ResolveTicket([FromBody] ResolveTicketDTO resolveTicketDTO)
 		{
 			try
 			{
-				var ticket = await _ticketService.GetTicketById(id);
+				var ticket = await _ticketService.GetTicketByCode(resolveTicketDTO.Code);
 				if (ticket == null)
 				{
 					return NotFound(new APIReturn
@@ -192,12 +319,20 @@ namespace SkillUp.Controllers
 						data = new List<object>()
 					});
 				}
-				var resolvedTicket = await _ticketService.ResolveTicket(ticket, decision, response);
+				var resolvedTicket = await _ticketService.ResolveTicket(ticket, resolveTicketDTO.Decision, resolveTicketDTO.Response);
+
+				ResolveTicketDTO resolvedTicketDTO = new ResolveTicketDTO
+				{
+					Code = resolvedTicket.TicketCode,
+					Decision = resolveTicketDTO.Decision,
+					Response = resolvedTicket.Response
+				};
+
 				return Ok(new APIReturn
 				{
 					code = 200,
 					message = "Giải quyết ticket thành công!",
-					data = new List<object> { resolvedTicket }
+					data = new List<object> { resolvedTicketDTO }
 				});
 			}
 			catch (Exception ex)

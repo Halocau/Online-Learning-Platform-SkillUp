@@ -30,13 +30,22 @@ namespace SkillUp.Repositories.Implementations
 		{
 			return await _context.Tickets
 				.Include(t => t.Account)
+				.Where(t => t.Status == "Pending")
 				.ToListAsync();
 		}
 
-		public async Task<Ticket> GetTicketById(Guid id)
+		public async Task<IEnumerable<Ticket>> GetTicketsByAccountId(Guid id)
+		{
+			return await _context.Tickets
+				.Include(t => t.Account)
+				.Where(t => t.AccountId == id)
+				.ToListAsync();
+		}
+
+		public async Task<Ticket> GetTicketByCode(string code)
 		{
 			return await _context.Tickets.
-				Include(t => t.Account).FirstOrDefaultAsync(t => t.Id == id);
+				Include(t => t.Account).FirstOrDefaultAsync(t => t.TicketCode == code);
 		}
 
 		public async Task<Ticket> CreateTicket(Ticket ticket)
@@ -63,7 +72,7 @@ namespace SkillUp.Repositories.Implementations
 
 		public async Task<Ticket> ResolveTicket(Ticket ticket, bool decision, string response)
 		{
-			var existingTicket = await _context.Tickets.Include(t => t.Account)
+			var existingTicket = await _context.Tickets
 				.FirstOrDefaultAsync(t => t.Id == ticket.Id);
 			if (existingTicket == null)
 			{

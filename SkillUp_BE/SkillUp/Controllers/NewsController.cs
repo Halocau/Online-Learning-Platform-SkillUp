@@ -35,9 +35,9 @@ namespace SkillUp.Controllers
 				}).ToList();
 				if (newsDTO == null || !newsDTO.Any())
 				{
-					return NotFound(new APIReturn
+					return Ok(new APIReturn
 					{
-						code = 404,
+						code = 200,
 						message = "Không có tin tức nào!",
 						data = new List<object>()
 					});
@@ -68,7 +68,12 @@ namespace SkillUp.Controllers
 				var news = await _newsService.GetNewsById(id);
 				if (news == null)
 				{
-					return NotFound($"Không tìm thấy tin tức!");
+					return NotFound(new APIReturn
+					{
+						code = 404,
+						message = "Không tìm thấy tin tức nào!",
+						data = new List<object>()
+					});
 				}
 				var newsDTO = new NewsViewDTO
 				{
@@ -100,14 +105,19 @@ namespace SkillUp.Controllers
 		{
 			try
 			{
-				if (newsCreateDTO == null)
+				if (!ModelState.IsValid)
 				{
-					return BadRequest("Thông tin không hợp lệ!");
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "Thông tin không hợp lệ!",
+						data = new List<object>()
+					});
 				}
 				var news = new News
 				{
 					Id = Guid.NewGuid(),
-					Email = "_currentUserService.Email",
+					Email = _currentUserService.Email,
 					Title = newsCreateDTO.Title,
 					Contents = newsCreateDTO.Contents,
 					Date = DateOnly.FromDateTime(DateTime.Now)
@@ -144,9 +154,14 @@ namespace SkillUp.Controllers
 		{
 			try
 			{
-				if (newsUpdateDTO == null || newsUpdateDTO.Id == Guid.Empty)
+				if (!ModelState.IsValid)
 				{
-					return BadRequest("Thông tin không hợp lệ!");
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "Thông tin không hợp lệ!",
+						data = new List<object>()
+					});
 				}
 				var news = new News
 				{
@@ -159,7 +174,12 @@ namespace SkillUp.Controllers
 				var updatedNews = await _newsService.UpdateNews(news);
 				if (updatedNews == null)
 				{
-					return NotFound($"Không tìm thấy tin tức!");
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "Cập nhật tin tức thất bại!",
+						data = new List<object>()
+					});
 				}
 				var newsDTO = new NewsViewDTO
 				{
@@ -193,7 +213,12 @@ namespace SkillUp.Controllers
 			var deletedNews = await _newsService.DeleteNews(id);
 			if (deletedNews == null)
 			{
-				return NotFound($"Không tìm thấy tin tức!");
+				return NotFound(new APIReturn
+				{
+					code = 404,
+					message = "Không tìm thấy tin tức để xóa!",
+					data = new List<object>()
+				});
 			}
 
 			return Ok(new APIReturn
