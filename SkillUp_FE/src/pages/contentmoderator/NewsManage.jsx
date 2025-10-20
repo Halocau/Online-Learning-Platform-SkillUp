@@ -24,7 +24,9 @@ export default function NewsManage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">News Management</h2>
-        
+        <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
+          <PlusCircle size={18} /> Add News
+        </Button>
       </div>
 
       <FilterBar filters={newsFilters} onSearch={(v) => console.log("search:", v)} />

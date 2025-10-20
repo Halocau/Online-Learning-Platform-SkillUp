@@ -16,7 +16,6 @@ export default function FilterBar({ filters = [], onSearch, onFilterChange }) {
         }}
         className="w-[250px]"
       />
-      
       {filters.map((f) => (
         <Select key={f.key} onValueChange={(v) => onFilterChange(f.key, v)}>
           <SelectTrigger className="w-[180px]">
@@ -30,9 +29,7 @@ export default function FilterBar({ filters = [], onSearch, onFilterChange }) {
             ))}
           </SelectContent>
         </Select>
-        
       ))}
-      
     </div>
   );
 }

@@ -1,6 +1,7 @@
 export const newsColumns = [
   { key: "title", title: "Title" },
   { key: "category", title: "Category" },
+  { key: "content", title: "Content" },
   { key: "date", title: "Date" },
   {
     key: "status",
@@ -37,5 +38,6 @@ export const newsFilters = [
 export const newsFields = [
   { name: "title", label: "Title" },
   { name: "category", label: "Category" },
+  { name: "content", label: "Content", type: "textarea" },
   { name: "status", label: "Status" },
 ];
