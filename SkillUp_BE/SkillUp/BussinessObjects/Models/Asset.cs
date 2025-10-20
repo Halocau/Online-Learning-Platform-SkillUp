@@ -13,5 +13,7 @@ public partial class Asset
 
     public bool IsActive { get; set; }
 
+    public string? Contents { get; set; }
+
     public virtual Lesson Lesson { get; set; } = null!;
 }

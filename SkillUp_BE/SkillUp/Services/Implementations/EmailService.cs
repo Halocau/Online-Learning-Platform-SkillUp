@@ -8,10 +8,12 @@ namespace SkillUp.Services.Implementations
     public class EmailService : Interfaces.IEmailService
     {
         private readonly IConfiguration _configuration;
+        private readonly string _frontendUrl;
 
         public EmailService(IConfiguration configuration)
         {
             _configuration = configuration;
+            _frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
         }
 
         public async Task<bool> SendOtpEmailAsync(string toEmail, string otpCode, string fullname)
@@ -69,12 +71,10 @@ namespace SkillUp.Services.Implementations
                     await client.DisconnectAsync(true);
                 }
 
-                Console.WriteLine($"OTP email sent successfully to {toEmail}");
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"Failed to send email: {ex.Message}");
                 return false;
             }
         }
@@ -142,13 +142,83 @@ namespace SkillUp.Services.Implementations
                     await client.DisconnectAsync(true);
                 }
 
-                Console.WriteLine($"✅ Verify email sent successfully to {toEmail}");
-                Console.WriteLine($"🔗 Verify link: {verifyLink}");
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Console.WriteLine($"❌ Failed to send email: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SendResetPasswordEmailAsync(string toEmail, string resetToken, string fullname)
+        {
+            try
+            {
+                var emailSettings = _configuration.GetSection("Email");
+                var fromEmail = emailSettings["From"];
+                var smtpServer = emailSettings["Smtp"];
+                var smtpPort = int.Parse(emailSettings["Port"] ?? "587");
+                var smtpPassword = emailSettings["Password"];
+
+                var resetPasswordLink = $"{_frontendUrl}/reset-password?email={Uri.EscapeDataString(toEmail)}&token={resetToken}";
+
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress("SkillUp", fromEmail));
+                message.To.Add(new MailboxAddress(fullname, toEmail));
+                message.Subject = "Khôi phục mật khẩu SkillUp";
+
+                var bodyBuilder = new BodyBuilder
+                {
+                    HtmlBody = $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                        <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
+                            <h2 style='color: #4CAF50; text-align: center;'>SkillUp</h2>
+                            <h3>Xin chào {fullname},</h3>
+                            <p>Chúng tôi nhận được yêu cầu khôi phục mật khẩu cho tài khoản của bạn. Để đặt lại mật khẩu, vui lòng click vào nút bên dưới:</p>
+                            
+                            <div style='text-align: center; margin: 30px 0;'>
+                                <a href='{resetPasswordLink}' 
+                                   style='background-color: #4CAF50; 
+                                          color: white; 
+                                          padding: 12px 30px; 
+                                          text-decoration: none; 
+                                          border-radius: 5px;
+                                          font-weight: bold;'>
+                                    Đặt lại mật khẩu
+                                </a>
+                            </div>
+                            
+                            <p><strong>Lưu ý:</strong></p>
+                            <ul>
+                                <li>Link này chỉ có hiệu lực trong <strong>1 giờ</strong></li>
+                                <li>Nếu bạn không yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này</li>
+                                <li>Không chia sẻ link này với bất kỳ ai</li>
+                            </ul>
+                            
+                            <hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>
+                            <p style='text-align: center; color: #666; font-size: 14px;'>
+                                Email này được gửi tự động. Vui lòng không trả lời.
+                            </p>
+                        </div>
+                    </body>
+                    </html>"
+                };
+
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using (var client = new SmtpClient())
+                {
+                    await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+                    await client.AuthenticateAsync(fromEmail, smtpPassword);
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
+                }
+
+                return true;
+            }
+            catch (Exception)
+            {
                 return false;
             }
         }

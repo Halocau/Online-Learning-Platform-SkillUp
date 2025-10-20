@@ -4,5 +4,6 @@ namespace SkillUp.Services.Interfaces
     {
         Task<bool> SendOtpEmailAsync(string toEmail, string otpCode, string fullname);
         Task<bool> SendVerifyEmailAsync(string toEmail, string verifyToken, string fullname);
+        Task<bool> SendResetPasswordEmailAsync(string toEmail, string resetToken, string fullname);
     }
 }
