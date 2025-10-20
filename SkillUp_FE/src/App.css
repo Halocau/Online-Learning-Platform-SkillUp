@@ -134,7 +134,7 @@
 /* Success (teal gradient) */
 .Toastify__toast--success {
   /* Softer mint green gradient */
-  background: linear-gradient(135deg, #34d399 0%, #6ee7b7 100%);
+ 
   color: #064e3b; /* deep green text for better contrast on light tone */
   border: 1px solid rgba(6, 78, 59, 0.15);
 }

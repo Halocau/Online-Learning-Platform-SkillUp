@@ -48,9 +48,9 @@ export function LoginForm({
 
         // Thông báo thành công
         if (userData.isNewUser) {
-          toast.success('🎉 Đăng ký thành công! Chào mừng bạn đến với SkillUp!')
+          toast.success('Đăng ký thành công! Chào mừng bạn đến với SkillUp!')
         } else {
-          toast.success('✅ Đăng nhập Google thành công!')
+          toast.success('Đăng nhập Google thành công!')
         }
 
         // Lấy user info từ localStorage để navigate
@@ -63,7 +63,7 @@ export function LoginForm({
         }, 1000)
       }
     } catch (error) {
-      console.error('❌ Login failed:', error)       
+      console.error(' Login failed:', error)       
         if (error.response?.data?.message) {
           setErrorMsg('Đăng nhập thất bại: ' + error.response.data.message)
         } else {
@@ -86,7 +86,7 @@ export function LoginForm({
         password: formData.password
       })
 
-      console.log('✅ Login Response:', response.data)
+      console.log('Login Response:', response.data)
 
       if (response.data.code === 200) {
         const { accessToken, refreshToken } = response.data.data[0]
@@ -95,7 +95,7 @@ export function LoginForm({
         saveUserFromToken(accessToken, refreshToken)
 
         // Thông báo thành công
-        toast.success('✅ Đăng nhập thành công!')
+        toast.success('Đăng nhập thành công!')
 
         // Lấy user info từ localStorage để navigate
         const user = JSON.parse(localStorage.getItem('user'))
@@ -109,7 +109,7 @@ export function LoginForm({
         setErrorMsg(response.data.message || 'Đăng nhập thất bại')
       }
     } catch (error) {
-      console.error('❌ Login failed:', error)
+      console.error('Login failed:', error)
       
       if (error.response?.data?.message) {
         setErrorMsg(error.response.data.message)
@@ -229,7 +229,7 @@ export function LoginForm({
             <GoogleLogin
               onSuccess={handleGoogleLogin}
               onError={() => {
-                console.log('❌ Google Login Failed')
+                console.log('Google Login Failed')
                 setErrorMsg('Đăng nhập Google thất bại. Vui lòng thử lại.')
               }}
               text="continue_with"
