@@ -8,6 +8,6 @@ namespace SkillUp.BussinessObjects.DTOs.Auth
         [Required(ErrorMessage = "IdToken là bắt buộc")]
         public string IdToken { get; set; } = string.Empty;
 
-        public int DefaultRoleId { get; set; } = 1;
+        public int DefaultRoleId { get; set; } = 5;
     }
 }

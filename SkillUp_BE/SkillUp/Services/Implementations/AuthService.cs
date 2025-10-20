@@ -34,21 +34,19 @@ namespace SkillUp.Services.Implementations
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
         {
-            // Validate credentials and account status in one query
             var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(request.Email);
             if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "Active")
             {
                 return null;
             }
 
-            var accessToken = GenerateAccessToken(account);
-            var refreshToken = GenerateRefreshToken();
-            await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
+            // generate access tokens and refresh token
+            var token = await GenerateAndSaveTokensAsync(account);
 
             return new LoginResponseDto
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
+                AccessToken = token.AccessToken,
+                RefreshToken = token.RefreshToken
             };
         }
 
@@ -89,17 +87,11 @@ namespace SkillUp.Services.Implementations
             refreshTokenEntity.RevokedUtc = DateTime.Now;
             await _refreshTokenRepository.UpdateAsync(refreshTokenEntity);
 
-            var newAccessToken = GenerateAccessToken(account);
-            var newRefreshToken = GenerateRefreshToken();
-            await CreateRefreshTokenEntityAsync(account.Id, newRefreshToken);
+            var token = await GenerateAndSaveTokensAsync(account);
 
             return new RefreshTokenResponseDto
             {
-                Tokens = new TokenDto
-                {
-                    AccessToken = newAccessToken,
-                    RefreshToken = newRefreshToken
-                }
+                Tokens = token,
             };
         }
 
@@ -109,116 +101,9 @@ namespace SkillUp.Services.Implementations
             return await _refreshTokenRepository.SaveChangesAsync();
         }
 
-        public string GenerateAccessToken(Account account)
-        {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
-            var issuer = jwtSettings["Issuer"] ?? "SkillUp";
-            var audience = jwtSettings["Audience"] ?? "SkillUpUsers";
 
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            var claims = new List<Claim>
-            {
-                new Claim("userId", account.Id.ToString()),
-                new Claim("email", account.Email),
-                new Claim("fullname", account.Fullname ?? account.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
 
-            // Include role and licensed permissions for authorization
-            if (account.Role != null)
-            {
-                claims.Add(new Claim("roleId", account.Role.Id.ToString()));
-                claims.Add(new Claim("roleName", account.Role.Name));
-
-                if (account.Role.RolePermissions != null && account.Role.RolePermissions.Any())
-                {
-                    foreach (var rolePermission in account.Role.RolePermissions.Where(rp => rp.Licensed))
-                    {
-                        if (rolePermission.Permission != null)
-                        {
-                            claims.Add(new Claim("permission", rolePermission.Permission.ActionName));
-                            claims.Add(new Claim("permissionCode", rolePermission.Permission.ActionCode));
-                            claims.Add(new Claim("permissionId", rolePermission.Permission.Id.ToString()));
-                        }
-                    }
-                }
-            }
-
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(15),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public string GenerateRefreshToken()
-        {
-            var randomNumber = new byte[64];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
-        }
-
-        // Helper method to reduce duplicate refresh token creation code
-        private async Task<RefreshToken> CreateRefreshTokenEntityAsync(Guid accountId, string token)
-        {
-            var refreshTokenEntity = new RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                Token = token,
-                AccountId = accountId,
-                CreatedUtc = DateTime.Now,
-                ExpiresUtc = DateTime.Now.AddDays(7),
-                RevokedUtc = null
-            };
-
-            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
-            await _refreshTokenRepository.SaveChangesAsync();
-
-            return refreshTokenEntity;
-        }
-
-        public ClaimsPrincipal? GetPrincipalFromToken(string token)
-        {
-            try
-            {
-                var jwtSettings = _configuration.GetSection("JwtSettings");
-                var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
-
-                var tokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = false, // Allow expired tokens for refresh flow
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-                };
-
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-
-                if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-                    !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return null;
-                }
-
-                return principal;
-            }
-            catch
-            {
-                return null;
-            }
-        }
 
 
         public string HashPassword(string password)
@@ -232,7 +117,7 @@ namespace SkillUp.Services.Implementations
             {
                 return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
             }
-            catch
+            catch (Exception ex)
             {
                 return false;
             }
@@ -452,9 +337,7 @@ namespace SkillUp.Services.Implementations
                     }
                 }
 
-                var accessToken = GenerateAccessToken(account);
-                var refreshToken = GenerateRefreshToken();
-                await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
+                var token = await GenerateAndSaveTokensAsync(account);
 
                 return new GoogleLoginResponseDto
                 {
@@ -465,8 +348,8 @@ namespace SkillUp.Services.Implementations
                     IsNewUser = isNewUser,
                     Token = new TokenDto
                     {
-                        AccessToken = accessToken,
-                        RefreshToken = refreshToken
+                        AccessToken = token.AccessToken,
+                        RefreshToken = token.RefreshToken
                     }
                 };
             }
@@ -479,5 +362,217 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
         }
+
+        public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequestDto request)
+        {
+            // Kiểm tra email tồn tại và đã xác thực
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null || account.Status != "Active")
+            {
+                return false;
+            }
+
+            // Tạo reset token với prefix RPW_ để phân biệt với token xác thực email
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var resetToken = "RPW_" + Convert.ToBase64String(tokenBytes);
+            var tokenExpiry = DateTime.Now.AddHours(1); // Token có hiệu lực 1 giờ
+
+            // Lưu OTP reset password
+            var otp = new Otp
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                OtpLink = resetToken,
+                OtpExpiry = tokenExpiry,
+                IsUsed = false,
+                UsedAt = null
+            };
+
+            await _otpRepository.AddAsync(otp);
+            if (!await _otpRepository.SaveChangesAsync())
+            {
+                return false;
+            }
+
+            // Gửi email reset password
+            await _emailService.SendResetPasswordEmailAsync(
+                request.Email,
+                resetToken,
+                account.Fullname ?? request.Email
+            );
+
+            return true;
+        }
+
+        public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request)
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(request.Email) ||
+                string.IsNullOrEmpty(request.Token) ||
+                string.IsNullOrEmpty(request.NewPassword))
+            {
+                return false;
+            }
+
+            // Kiểm tra email tồn tại
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null)
+            {
+                return false;
+            }
+
+            // Kiểm tra token reset password
+            var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
+            if (otp == null || otp.IsUsed || !request.Token.StartsWith("RPW_") ||
+                otp.OtpExpiry < DateTime.Now)
+            {
+                return false;
+            }
+
+            // Cập nhật mật khẩu mới
+            account.Password = HashPassword(request.NewPassword);
+            await _accountRepository.UpdateAsync(account);
+
+            // Đánh dấu OTP đã sử dụng
+            otp.IsUsed = true;
+            otp.UsedAt = DateTime.Now;
+            await _otpRepository.UpdateAsync(otp);
+
+            // Thu hồi tất cả refresh token của user này
+            await _refreshTokenRepository.RevokeAllUserTokensAsync(account.Id);
+
+            // Lưu các thay đổi
+            return !await _accountRepository.SaveChangesAsync();
+
+        }
+
+
+        //TOKEN GENERATION
+        #region token generation
+        private async Task<TokenDto> GenerateAndSaveTokensAsync(Account account)
+        {
+            var accessToken = GenerateAccessToken(account);
+            var refreshToken = GenerateRefreshToken();
+            await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
+
+            return new TokenDto { AccessToken = accessToken, RefreshToken = refreshToken };
+        }
+
+        public string GenerateAccessToken(Account account)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
+            var issuer = jwtSettings["Issuer"] ?? "SkillUp";
+            var audience = jwtSettings["Audience"] ?? "SkillUpUsers";
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+            {
+                new Claim("userId", account.Id.ToString()),
+                new Claim("email", account.Email),
+                new Claim("fullname", account.Fullname ?? account.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            // Include role and licensed permissions for authorization
+            if (account.Role != null)
+            {
+                claims.Add(new Claim("roleId", account.Role.Id.ToString()));
+                claims.Add(new Claim("roleName", account.Role.Name));
+
+                if (account.Role.RolePermissions != null && account.Role.RolePermissions.Any())
+                {
+                    foreach (var rolePermission in account.Role.RolePermissions.Where(rp => rp.Licensed))
+                    {
+                        if (rolePermission.Permission != null)
+                        {
+                            claims.Add(new Claim("permission", rolePermission.Permission.ActionName));
+                            claims.Add(new Claim("permissionCode", rolePermission.Permission.ActionCode));
+                            claims.Add(new Claim("permissionId", rolePermission.Permission.Id.ToString()));
+                        }
+                    }
+                }
+            }
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(15),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+
+        // Helper method to reduce duplicate refresh token creation code
+        private async Task<RefreshToken> CreateRefreshTokenEntityAsync(Guid accountId, string token)
+        {
+            var refreshTokenEntity = new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                Token = token,
+                AccountId = accountId,
+                CreatedUtc = DateTime.Now,
+                ExpiresUtc = DateTime.Now.AddDays(7),
+                RevokedUtc = null
+            };
+
+            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+            await _refreshTokenRepository.SaveChangesAsync();
+
+            return refreshTokenEntity;
+        }
+
+        public string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        // get info user from JWT access token
+        public ClaimsPrincipal? GetPrincipalFromToken(string token)
+        {
+            try
+            {
+                var jwtSettings = _configuration.GetSection("JwtSettings"); //get JWT settings from appsettings.json
+                var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
+
+                //pipeline 
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = false, // cho phép token hết hạn
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings["Issuer"],// người cấp
+                    ValidAudience = jwtSettings["Audience"],// người dùng
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)) // chìa bí mật
+                };
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+
+                // Chỉ chấp nhận JWT chuẩn và đúng thuật toán
+                if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+                    !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return null;
+                }
+
+                return principal;
+            }
+            catch
+            {
+                //token ko hợp lệ
+                return null;
+            }
+        }
+        #endregion
     }
 }
