@@ -60,24 +60,28 @@ function Header() {
             </form>
           </div>
 
-          <nav className="hidden lg:flex items-center">
-            <button className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors">
-              Khám phá
-            </button>
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center space-x-1">
+            <Link to="/" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+              Trang chủ
+            </Link>
+            <Link to="/forum" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+              Diễn đàn
+            </Link>
+            {isAuthenticated && user?.role === 'Student' && (
+              <Link to="/dashboard" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+                Dashboard
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link to="/ticket" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+                Ticket
+              </Link>
+            )}
           </nav>
 
           {/* Right Menu - Responsive */}
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-            
-            {/* Business Link - Hidden on small screens */}
-            <Link to="/business" className="hidden md:block text-gray-700 hover:text-[#FFD54F] font-medium transition-colors text-sm">
-              SkillUp Business
-            </Link>
-            
-            {/* Teach Link - Hidden on mobile */}
-            <Link to="/teach" className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm">
-              Giảng dạy
-            </Link>
             
             {/* Cart */}
             <Link to="/cart" className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2">
