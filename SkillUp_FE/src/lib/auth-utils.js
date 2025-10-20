@@ -51,8 +51,9 @@ export const getRedirectPath = (role) => {
     case 'Moderator':
       return '/mod/dashboard'
     case 'Student':
+      return '/'  
     case 'Teacher':
-      return '/'  // Student và Teacher về trang Home
+      return '/teacher/dashboard'  
     default:
       return '/'
   }
