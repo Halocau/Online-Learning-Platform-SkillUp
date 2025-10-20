@@ -70,7 +70,7 @@ namespace SkillUp.Repositories.Implementations
 				return null;
 			}
 			existingTicket.Status = decision ? "Accepted" : "Rejected";
-			/*existingTicket.Response = response;*/
+			existingTicket.Response = response;
 			existingTicket.CreatedAt = DateTime.Now;
 			await _context.SaveChangesAsync();
 			return existingTicket;
