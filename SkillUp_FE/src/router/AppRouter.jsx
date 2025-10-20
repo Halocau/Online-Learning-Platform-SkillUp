@@ -8,6 +8,7 @@ import MainLayout from "../layouts/MainLayout";
 import AdminRoutes from "./AdminRoutes";
 import ContentModeratorRoutes from "./ContentModeratorRoutes";
 import SystemModeratorRoutes from "./SystemModeratorRoutes";
+import StudentRoutes from "./StudentRoutes";
 
 function AppRouter() {
   return (
@@ -16,7 +17,6 @@ function AppRouter() {
         
         <Route path="/login" element={<Login />} />
 
-        
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
         </Route>
@@ -25,6 +25,7 @@ function AppRouter() {
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
+        <Route path="/student/*" element={<StudentRoutes />} />
 
         
         <Route path="*" element={<MainLayout />}>
