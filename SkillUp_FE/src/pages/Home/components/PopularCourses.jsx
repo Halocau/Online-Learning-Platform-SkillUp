@@ -71,7 +71,7 @@ export default function PopularCourses() {
                   />
                   <h3 className="text-lg font-semibold">{course.title}</h3>
                   <p className="text-gray-500 mt-2">{course.desc}</p>
-                  <Button variant="outline" className="mt-4">
+                  <Button variant="outline" className="mt-4 hover:bg-[#FFD500]">
                     View Course
                   </Button>
                 </motion.div>

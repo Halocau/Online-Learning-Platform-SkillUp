@@ -1,3 +1,4 @@
+
 // src/components/CourseSlider.jsx
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
@@ -28,7 +29,7 @@ export default function CourseSlider({ title, courses }) {
                 <h3 className="text-lg font-semibold">{course.title}</h3>
                 <p className="text-gray-500 text-sm">{course.instructor}</p>
                 <p className="text-indigo-600 font-bold mt-2">{course.price}</p>
-                <Button variant="outline" className="mt-3 w-full">
+                <Button variant="outline" className="mt-4 hover:bg-[#FFD500] w-full">
                   View Course
                 </Button>
               </div>
