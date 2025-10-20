@@ -34,24 +34,36 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                var result = await _authService.LoginAsync(request);
+                try
+                {
+                    var result = await _authService.LoginAsync(request);
 
-                if (result == null)
+                    if (result == null)
+                    {
+                        return Unauthorized(new APIReturn
+                        {
+                            code = 401,
+                            message = "Email hoặc mật khẩu không đúng",
+                            data = new List<object>()
+                        });
+                    }
+
+                    return Ok(new APIReturn
+                    {
+                        code = 200,
+                        message = "Đăng nhập thành công",
+                        data = new List<object> { result }
+                    });
+                }
+                catch (Exception)
                 {
                     return Unauthorized(new APIReturn
                     {
                         code = 401,
-                        message = "Email hoặc mật khẩu không đúng",
+                        message = "Tài khoản chưa được kích hoạt",
                         data = new List<object>()
                     });
                 }
-
-                return Ok(new APIReturn
-                {
-                    code = 200,
-                    message = "Đăng nhập thành công",
-                    data = new List<object> { result }
-                });
             }
             catch (Exception ex)
             {
@@ -207,10 +219,10 @@ namespace SkillUp.Controllers
                 }
 
                 // Call service register
-                var result = await _authService.RegisterAsync(request);
+                var success = await _authService.RegisterAsync(request);
 
                 // Registration failed (email exists)
-                if (result == null)
+                if (!success)
                 {
                     return BadRequest(new APIReturn
                     {
@@ -220,12 +232,12 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                // Registration success
+                // Registration success - return empty data array (email returned to client is not necessary)
                 return Ok(new APIReturn
                 {
                     code = 200,
                     message = "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
-                    data = new List<object> { result }
+                    data = new List<object>()
                 });
             }
             catch (Exception ex)

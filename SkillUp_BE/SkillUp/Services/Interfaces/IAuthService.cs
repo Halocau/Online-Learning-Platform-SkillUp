@@ -13,7 +13,7 @@ namespace SkillUp.Services.Interfaces
 
         public Task<bool> LogoutAsync(Guid userId);
 
-        public Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request);
+        public Task<bool> RegisterAsync(RegisterRequestDto request);
 
         public Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request);
 
@@ -33,7 +33,7 @@ namespace SkillUp.Services.Interfaces
 
         public Task<bool> ForgotPasswordAsync(ForgotPasswordRequestDto request);
 
-      
+
         public Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request);
     }
 }

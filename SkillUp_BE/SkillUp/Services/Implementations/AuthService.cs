@@ -35,9 +35,20 @@ namespace SkillUp.Services.Implementations
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
         {
             var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(request.Email);
-            if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "Active")
+
+            if (account == null || !VerifyPassword(request.Password, account.Password))
             {
                 return null;
+            }
+
+
+            if (string.Equals(account.Status, "InActive"))
+            {
+                throw new Exception("Tài khoản chưa được kích hoạt !");
+            }
+            if (string.Equals(account.Status, "Banned"))
+            {
+                throw new Exception("Tài khoản của bạn đã bị cấm !");
             }
 
             // generate access tokens and refresh token
@@ -123,11 +134,11 @@ namespace SkillUp.Services.Implementations
             }
         }
 
-        public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
+        public async Task<bool> RegisterAsync(RegisterRequestDto request)
         {
             if (await _accountRepository.ExistsByEmailAsync(request.Email))
             {
-                return null;
+                return false;
             }
 
             var hashedPassword = HashPassword(request.Password);
@@ -160,18 +171,13 @@ namespace SkillUp.Services.Implementations
 
             await _otpRepository.AddAsync(otp);
 
-            // Save both entities in one transaction
             if (!await _accountRepository.SaveChangesAsync())
             {
-                return null;
+                return false;
             }
 
             await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, request.Fullname);
-
-            return new RegisterResponseDto
-            {
-                Email = request.Email
-            };
+            return true;
         }
 
         public async Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request)
