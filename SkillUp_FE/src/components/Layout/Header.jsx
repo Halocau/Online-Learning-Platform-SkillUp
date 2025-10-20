@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo_skillup.png';
+
 function Header() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
   
-  const isAuthenticated = localStorage.getItem('token') !== null;
+  // Kiểm tra authentication và lấy user info
+  const accessToken = localStorage.getItem('accessToken');
+  const isAuthenticated = accessToken !== null;
+  const user = isAuthenticated ? JSON.parse(localStorage.getItem('user') || '{}') : null;
   
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    setShowDropdown(false);
     navigate('/');
   };
 
@@ -80,16 +88,83 @@ function Header() {
 
             {/* Auth Buttons */}
             {isAuthenticated ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-700">U</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="hidden sm:block text-gray-700 hover:text-purple-600 font-medium transition-colors text-sm"
-                >
-                  Đăng xuất
+              <div className="relative flex items-center space-x-3">
+                {/* Notification Bell */}
+                <button className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2 relative">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
                 </button>
+
+                {/* User Avatar with Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+                  >
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-md">
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt={user.fullname} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-white font-semibold text-sm sm:text-base">
+                          {user?.fullname?.charAt(0).toUpperCase() || 'U'}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showDropdown && (
+                    <>
+                      {/* Backdrop to close dropdown */}
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setShowDropdown(false)}
+                      ></div>
+                      
+                      {/* Dropdown Content */}
+                      <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
+                        {/* User Info */}
+                        <div className="px-4 py-3 border-b border-gray-200">
+                          <p className="text-sm font-semibold text-gray-900">{user?.fullname || 'User'}</p>
+                          <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                          {user?.role && (
+                            <p className="text-xs text-purple-600 font-medium mt-1">{user.role}</p>
+                          )}
+                        </div>
+
+                        {/* Menu Items */}
+                        <div className="py-1">
+                          <Link
+                            to="/profile"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowDropdown(false)}
+                          >
+                            Hồ sơ của tôi
+                          </Link>
+                          <Link
+                            to="/my-courses"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowDropdown(false)}
+                          >
+                            Khóa học của tôi
+                          </Link>
+                          
+                        </div>
+
+                        {/* Logout */}
+                        <div className="border-t border-gray-200 pt-1">
+                          <button
+                            onClick={handleLogout}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium"
+                          >
+                            Đăng xuất
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             ) : (
               <>
