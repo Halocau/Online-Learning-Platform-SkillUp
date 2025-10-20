@@ -38,3 +38,22 @@ export const saveUserFromToken = (accessToken, refreshToken) => {
   
   return true
 }
+
+/**
+ * Navigate user theo role sau khi login
+ * @param {string} role - Role của user (Admin, Moderator, Student, Teacher)
+ * @returns {string} Path to navigate
+ */
+export const getRedirectPath = (role) => {
+  switch (role) {
+    case 'Admin':
+      return '/admin/dashboard'
+    case 'Moderator':
+      return '/mod/dashboard'
+    case 'Student':
+    case 'Teacher':
+      return '/'  // Student và Teacher về trang Home
+    default:
+      return '/'
+  }
+}
