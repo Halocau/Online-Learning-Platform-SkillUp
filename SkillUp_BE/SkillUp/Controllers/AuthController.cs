@@ -391,5 +391,95 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                var result = await _authService.ForgotPasswordAsync(request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Email không tồn tại hoặc chưa được xác thực",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn.",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                var result = await _authService.ResetPasswordAsync(request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Token không hợp lệ hoặc đã hết hạn",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới.",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }

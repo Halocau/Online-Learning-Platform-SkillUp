@@ -30,5 +30,10 @@ namespace SkillUp.Services.Interfaces
         public string HashPassword(string password);
 
         public bool VerifyPassword(string password, string hashedPassword);
+
+        public Task<bool> ForgotPasswordAsync(ForgotPasswordRequestDto request);
+
+      
+        public Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request);
     }
 }
