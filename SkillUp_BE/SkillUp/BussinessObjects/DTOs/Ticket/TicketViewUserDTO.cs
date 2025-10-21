@@ -1,11 +1,7 @@
-﻿namespace SkillUp.BussinessObjects.DTOs.News
+﻿namespace SkillUp.BussinessObjects.DTOs.Ticket
 {
-	public class TicketViewModDTO
+	public class TicketViewUserDTO
 	{
-		public Guid Id { get; set; }
-
-		public string? AccountName { get; set; }
-
 		public string? Title { get; set; }
 
 		public string? Contents { get; set; }
@@ -15,5 +11,7 @@
 		public string? Status { get; set; }
 
 		public string? Response { get; set; }
+
+		public string TicketCode { get; set; } = null!;
 	}
 }

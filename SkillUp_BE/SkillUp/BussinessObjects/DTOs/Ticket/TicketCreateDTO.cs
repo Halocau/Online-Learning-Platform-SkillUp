@@ -1,4 +1,4 @@
-﻿namespace SkillUp.BussinessObjects.DTOs.News
+﻿namespace SkillUp.BussinessObjects.DTOs.Ticket
 {
 	public class TicketCreateDTO
 	{
