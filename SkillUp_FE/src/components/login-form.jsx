@@ -85,8 +85,6 @@ export function LoginForm({
         password: formData.password
       })
 
-      console.log('Login Response:', response.data)
-
       if (response.data.code === 200) {
         const { accessToken, refreshToken } = response.data.data[0]
 
