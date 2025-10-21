@@ -3,7 +3,6 @@ import { Routes, Route } from "react-router-dom";
 import Login from "../pages/Auth/Login";
 import Register from "../pages/Auth/Register";
 import VerifyEmail from "../pages/Auth/VerifyEmail";
-import VerifyEmailHandler from "../pages/Auth/VerifyEmailHandler";
 import ResendVerification from "../pages/Auth/ResendVerification";
 import Home from "../pages/Home/Home";
 import MainLayout from "../layouts/MainLayout";
@@ -21,7 +20,6 @@ function AppRouter() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/verify-email" element={<VerifyEmailHandler />} />
         <Route path="/verify-email-result" element={<VerifyEmail />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
 
