@@ -90,7 +90,7 @@ namespace SkillUp.Services.Implementations
                 var smtpPassword = emailSettings["Password"];
 
                 // Generate verify link (Update this URL to your frontend URL)
-                var verifyLink = $"http://localhost:5173/verify-email?email={Uri.EscapeDataString(toEmail)}&token={Uri.EscapeDataString(verifyToken)}";
+                var verifyLink = $"http://localhost:5120/api/auth/verify-email?email={Uri.EscapeDataString(toEmail)}&token={Uri.EscapeDataString(verifyToken)}";
 
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress("SkillUp Platform", fromEmail));
