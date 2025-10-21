@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.ExceptionHandling;
 using SkillUp.Services.Interfaces;
+using SkillUp.Repositories.Interfaces;
 
 namespace SkillUp.Controllers
 {
@@ -12,11 +13,19 @@ namespace SkillUp.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IConfiguration _configuration;
+        private readonly IAccountRepository _accountRepository;
 
-        public AuthController(IAuthService authService, ICurrentUserService currentUserService)
+        public AuthController(
+            IAuthService authService, 
+            ICurrentUserService currentUserService, 
+            IConfiguration configuration,
+            IAccountRepository accountRepository)
         {
             _authService = authService;
             _currentUserService = currentUserService;
+            _configuration = configuration;
+            _accountRepository = accountRepository;
         }
 
         [HttpPost("login")]
@@ -262,9 +271,9 @@ namespace SkillUp.Controllers
                     Token = token
                 };
 
-                var result = await _authService.VerifyEmailAsync(request);
+                var success = await _authService.VerifyEmailAsync(request);
 
-                if (!result)
+                if (!success)
                 {
                     return Content(@"
                         <html>
@@ -278,14 +287,45 @@ namespace SkillUp.Controllers
                     ", "text/html");
                 }
 
-                return Content(@"
+                // Check if user is Lecturer (RoleId = 4) by querying account
+                var account = await _accountRepository.GetByEmailAsync(email);
+                bool isLecturer = account?.RoleId == 4;
+
+                var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+
+                // Lecturer: redirect to apply CV page
+                if (isLecturer)
+                {
+                    var applyUrl = $"{frontendUrl}/apply-cv?email={Uri.EscapeDataString(email)}";
+                    return Content($@"
+                        <html>
+                        <head>
+                            <title>Xác thực thành công</title>
+                            <meta http-equiv='refresh' content='3;url={applyUrl}'>
+                        </head>
+                        <body style='font-family: Arial; text-align: center; padding: 50px;'>
+                            <h1 style='color: #4CAF50;'>✅ Xác thực email thành công!</h1>
+                            <p>Email đã được xác thực. Vui lòng nộp CV để hoàn tất đăng ký làm giảng viên.</p>
+                            <p style='margin-top: 20px; color: #666;'>Bạn sẽ được chuyển hướng đến trang nộp CV trong 3 giây...</p>
+                            <a href='{applyUrl}' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #2196F3; color: white; text-decoration: none; border-radius: 5px;'>Nộp CV ngay</a>
+                        </body>
+                        </html>
+                    ", "text/html");
+                }
+
+                // Student and others: redirect to login page
+                var loginUrl = $"{frontendUrl}/login";
+                return Content($@"
                     <html>
-                    <head><title>Xác thực thành công</title></head>
+                    <head>
+                        <title>Xác thực thành công</title>
+                        <meta http-equiv='refresh' content='3;url={loginUrl}'>
+                    </head>
                     <body style='font-family: Arial; text-align: center; padding: 50px;'>
                         <h1 style='color: #4CAF50;'>✅ Xác thực thành công!</h1>
-                        <p>Tài khoản của bạn đã được kích hoạt.</p>
-                        <p>Bạn có thể đăng nhập ngay bây giờ.</p>
-                        <a href='/login' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>Đăng nhập</a>
+                        <p>Tài khoản của bạn đã được kích hoạt. Bạn có thể đăng nhập ngay bây giờ.</p>
+                        <p style='margin-top: 20px; color: #666;'>Bạn sẽ được chuyển hướng đến trang đăng nhập trong 3 giây...</p>
+                        <a href='{loginUrl}' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>Đăng nhập</a>
                     </body>
                     </html>
                 ", "text/html");
@@ -480,6 +520,52 @@ namespace SkillUp.Controllers
                 {
                     code = 200,
                     message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới.",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+
+        [HttpPost("apply-cv")]
+        public async Task<IActionResult> ApplyCV([FromForm] ApplyCvRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                var result = await _authService.ApplyCvAsync(request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể nộp CV. Email không tồn tại, đã nộp CV trước đó, hoặc tài khoản không phải là giảng viên.",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Nộp CV thành công. Vui lòng chờ admin phê duyệt để kích hoạt tài khoản.",
                     data = new List<object>()
                 });
             }
