@@ -5,7 +5,7 @@ using SkillUp.Services.Common;
 namespace SkillUp.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class UploadController : ControllerBase
     {
         private readonly CloudinaryService _cloudinaryService;
