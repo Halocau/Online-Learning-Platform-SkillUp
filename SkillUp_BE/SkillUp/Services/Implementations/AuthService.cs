@@ -212,12 +212,12 @@ namespace SkillUp.Services.Implementations
 
             // Student (RoleId = 5) and others: -> "Active"
             // Lecturer (RoleId = 4): -> InActive -> moderator applly CV
-            bool isLecturer = account.RoleId == 4;
+            //bool isLecturer = account.RoleId == 4;
 
-            if (!isLecturer)
-            {
-                account.Status = "Active";
-            }
+            //if (!isLecturer)
+            //{
+            //    account.Status = "Active";
+            //}
 
             // Mark OTP as used
             otp.IsUsed = true;
