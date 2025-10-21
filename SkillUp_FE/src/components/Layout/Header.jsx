@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo_skillup.png';
+import { axiosInstance, API_ENDPOINTS } from '@/config/api';
+import { toast } from 'react-toastify';
 
 function Header() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,12 +14,23 @@ function Header() {
   const isAuthenticated = accessToken !== null;
   const user = isAuthenticated ? JSON.parse(localStorage.getItem('user') || '{}') : null;
   
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    setShowDropdown(false);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      // Gọi API logout để revoke RefreshToken
+      // Backend lấy userId từ JWT token qua [Authorize]
+      await axiosInstance.post(API_ENDPOINTS.LOGOUT);    
+    } catch {
+      // Ignore error
+    } finally {
+      // Xóa token ở client
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      
+      setShowDropdown(false);
+      toast.success('Đăng xuất thành công!');
+      navigate('/');
+    }
   };
 
   const handleSearch = (e) => {
@@ -60,24 +73,28 @@ function Header() {
             </form>
           </div>
 
-          <nav className="hidden lg:flex items-center">
-            <button className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors">
-              Khám phá
-            </button>
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center space-x-1">
+            <Link to="/" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+              Trang chủ
+            </Link>
+            <Link to="/forum" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+              Diễn đàn
+            </Link>
+            {isAuthenticated && user?.role === 'Student' && (
+              <Link to="/dashboard" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+                Dashboard
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link to="/ticket" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
+                Ticket
+              </Link>
+            )}
           </nav>
 
           {/* Right Menu - Responsive */}
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-            
-            {/* Business Link - Hidden on small screens */}
-            <Link to="/business" className="hidden md:block text-gray-700 hover:text-[#FFD54F] font-medium transition-colors text-sm">
-              SkillUp Business
-            </Link>
-            
-            {/* Teach Link - Hidden on mobile */}
-            <Link to="/teach" className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm">
-              Giảng dạy
-            </Link>
             
             {/* Cart */}
             <Link to="/cart" className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2">

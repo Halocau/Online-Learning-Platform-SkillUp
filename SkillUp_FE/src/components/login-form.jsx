@@ -5,8 +5,7 @@ import { Label } from "@/components/ui/label"
 import { GoogleLogin } from '@react-oauth/google'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { getApiUrl, API_ENDPOINTS } from '@/config/api'
+import { axiosInstance, API_ENDPOINTS } from '@/config/api'
 import { saveUserFromToken, getRedirectPath } from '@/lib/auth-utils'
 import { toast } from 'react-toastify'
 
@@ -27,15 +26,12 @@ export function LoginForm({
   const handleGoogleLogin = async (credentialResponse) => {
     try {
       setLoading(true)
-      console.log('🔑 Google ID Token:', credentialResponse.credential)
 
       // Gửi ID Token lên backend
-      const response = await axios.post(getApiUrl(API_ENDPOINTS.GOOGLE_LOGIN), {
+      const response = await axiosInstance.post(API_ENDPOINTS.GOOGLE_LOGIN, {
         idToken: credentialResponse.credential,
         defaultRoleId: 5  
       })
-
-      console.log('✅ Response:', response.data)
 
       if (response.data.code === 200) {
         const userData = response.data.data[0]
@@ -63,7 +59,7 @@ export function LoginForm({
         }, 1000)
       }
     } catch (error) {
-      console.error(' Login failed:', error)       
+      console.error('Login failed:', error)       
         if (error.response?.data?.message) {
           setErrorMsg('Đăng nhập thất bại: ' + error.response.data.message)
         } else {
@@ -81,12 +77,10 @@ export function LoginForm({
     setLoading(true)
 
     try {
-      const response = await axios.post(getApiUrl(API_ENDPOINTS.LOGIN), {
+      const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, {
         email: formData.email,
         password: formData.password
       })
-
-      console.log('Login Response:', response.data)
 
       if (response.data.code === 200) {
         const { accessToken, refreshToken } = response.data.data[0]
@@ -229,7 +223,6 @@ export function LoginForm({
             <GoogleLogin
               onSuccess={handleGoogleLogin}
               onError={() => {
-                console.log('Google Login Failed')
                 setErrorMsg('Đăng nhập Google thất bại. Vui lòng thử lại.')
               }}
               text="continue_with"

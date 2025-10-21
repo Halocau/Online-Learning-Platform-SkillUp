@@ -23,9 +23,13 @@ namespace SkillUp.Services.Implementations
 		{
 			return await _ticketRepository.GetPendingTickets();
 		}
-		public async Task<Ticket> GetTicketById(Guid id)
+		public async Task<IEnumerable<Ticket>> GetTicketsByAccountId(Guid accountId)
 		{
-			return await _ticketRepository.GetTicketById(id);
+			return await _ticketRepository.GetTicketsByAccountId(accountId);
+		}
+		public async Task<Ticket> GetTicketByCode(string code)
+		{
+			return await _ticketRepository.GetTicketByCode(code);
 		}
 		public async Task<Ticket> CreateTicket(Ticket ticket)
 		{

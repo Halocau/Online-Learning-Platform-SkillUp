@@ -7,7 +7,8 @@ namespace SkillUp.Repositories.Interfaces
 		Task<IEnumerable<Ticket>> GetAllTickets();
 		Task<IEnumerable<Ticket>> GetSolvedTickets();
 		Task<IEnumerable<Ticket>> GetPendingTickets();
-		Task<Ticket> GetTicketById(Guid id);
+		Task<IEnumerable<Ticket>> GetTicketsByAccountId(Guid id);
+		Task<Ticket> GetTicketByCode(string code);
 		Task<Ticket> CreateTicket(Ticket ticket);
 		Task<Ticket> UpdateTicket(Ticket ticket);
 		Task<Ticket> ResolveTicket(Ticket ticket, bool decision, string response);

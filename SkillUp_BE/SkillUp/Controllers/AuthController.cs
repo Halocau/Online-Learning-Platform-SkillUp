@@ -14,10 +14,8 @@ namespace SkillUp.Controllers
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IConfiguration _configuration;
-        public AuthController(
-            IAuthService authService,
-            ICurrentUserService currentUserService,
-            IConfiguration configuration)
+
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IConfiguration configuration)
         {
             _authService = authService;
             _currentUserService = currentUserService;
@@ -259,84 +257,43 @@ namespace SkillUp.Controllers
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string email, [FromQuery] string token)
         {
-            try
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
             {
-                var request = new VerifyEmailRequestDto
-                {
-                    Email = email,
-                    Token = token
-                };
-
-                var success = await _authService.VerifyEmailAsync(request);
-
-                if (!success)
-                {
-                    return Content(@"
-                        <html>
-                        <head><title>Xác thực thất bại</title></head>
-                        <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                            <h1 style='color: #f44336;'>❌ Xác thực thất bại</h1>
-                            <p>Link xác thực không hợp lệ hoặc đã hết hạn.</p>
-                            <p>Vui lòng yêu cầu gửi lại email xác thực.</p>
-                        </body>
-                        </html>
-                    ", "text/html");
-                }
-
-                // Check if user is Lecturer (RoleId = 4) via service helper
-                var roleId = await _authService.GetRoleIdByEmailAsync(email);
-                bool isLecturer = roleId.HasValue && roleId.Value == 4;
-
-                var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
-
-                // Lecturer: redirect to apply CV page
-                if (isLecturer)
-                {
-                    var applyUrl = $"{frontendUrl}/apply-cv?email={Uri.EscapeDataString(email)}";
-                    return Content($@"
-                        <html>
-                        <head>
-                            <title>Xác thực thành công</title>
-                            <meta http-equiv='refresh' content='3;url={applyUrl}'>
-                        </head>
-                        <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                            <h1 style='color: #4CAF50;'>✅ Xác thực email thành công!</h1>
-                            <p>Email đã được xác thực. Vui lòng nộp CV để hoàn tất đăng ký làm giảng viên.</p>
-                            <p style='margin-top: 20px; color: #666;'>Bạn sẽ được chuyển hướng đến trang nộp CV trong 3 giây...</p>
-                            <a href='{applyUrl}' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #2196F3; color: white; text-decoration: none; border-radius: 5px;'>Nộp CV ngay</a>
-                        </body>
-                        </html>
-                    ", "text/html");
-                }
-
-                // Student and others: redirect to login page
-                var loginUrl = $"{frontendUrl}/login";
-                return Content($@"
-                    <html>
-                    <head>
-                        <title>Xác thực thành công</title>
-                        <meta http-equiv='refresh' content='3;url={loginUrl}'>
-                    </head>
-                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                        <h1 style='color: #4CAF50;'>✅ Xác thực thành công!</h1>
-                        <p>Tài khoản của bạn đã được kích hoạt. Bạn có thể đăng nhập ngay bây giờ.</p>
-                        <p style='margin-top: 20px; color: #666;'>Bạn sẽ được chuyển hướng đến trang đăng nhập trong 3 giây...</p>
-                        <a href='{loginUrl}' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>Đăng nhập</a>
-                    </body>
-                    </html>
-                ", "text/html");
+                return Redirect($"{frontendUrl}/verify-email-result?status=error&message={Uri.EscapeDataString("Thiếu thông tin xác thực")}");
             }
-            catch (Exception ex)
+
+            var request = new VerifyEmailRequestDto
             {
-                return Content($@"
-                    <html>
-                    <head><title>Lỗi</title></head>
-                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                        <h1 style='color: #f44336;'>❌ Có lỗi xảy ra</h1>
-                        <p>{ex.Message}</p>
-                    </body>
-                    </html>
-                ", "text/html");
+                Email = email,
+                Token = token
+            };
+            //var roleId = await _authService.GetRoleIdByEmailAsync(email);
+            //bool isLecturer = roleId.HasValue && roleId.Value == 4;
+            //bool isStudent = roleId.HasValue && roleId.Value == 5;
+
+            //if (isLecturer)
+            //{
+            //    var applyUrl = $"{frontendUrl}/apply-cv?email={Uri.EscapeDataString(email)}";
+            //    return Redirect(applyUrl);
+            //}
+
+            //if (isStudent)
+            //{
+            //    var loginUrl = $"{frontendUrl}/login";
+            //    return Redirect(loginUrl);
+            //}
+
+            var result = await _authService.VerifyEmailAsync(request);
+
+            if (result)
+            {
+                return Redirect($"{frontendUrl}/verify-email-result?status=success&message={Uri.EscapeDataString("Xác thực email thành công!")}");
+            }
+            else
+            {
+                return Redirect($"{frontendUrl}/verify-email-result?status=error&message={Uri.EscapeDataString("Link xác thực không hợp lệ hoặc đã hết hạn")}");
             }
         }
 
