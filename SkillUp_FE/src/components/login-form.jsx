@@ -5,8 +5,7 @@ import { Label } from "@/components/ui/label"
 import { GoogleLogin } from '@react-oauth/google'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { getApiUrl, API_ENDPOINTS } from '@/config/api'
+import { axiosInstance, API_ENDPOINTS } from '@/config/api'
 import { saveUserFromToken, getRedirectPath } from '@/lib/auth-utils'
 import { toast } from 'react-toastify'
 
@@ -30,7 +29,7 @@ export function LoginForm({
       console.log('🔑 Google ID Token:', credentialResponse.credential)
 
       // Gửi ID Token lên backend
-      const response = await axios.post(getApiUrl(API_ENDPOINTS.GOOGLE_LOGIN), {
+      const response = await axiosInstance.post(API_ENDPOINTS.GOOGLE_LOGIN, {
         idToken: credentialResponse.credential,
         defaultRoleId: 5  
       })
@@ -81,7 +80,7 @@ export function LoginForm({
     setLoading(true)
 
     try {
-      const response = await axios.post(getApiUrl(API_ENDPOINTS.LOGIN), {
+      const response = await axiosInstance.post(API_ENDPOINTS.LOGIN, {
         email: formData.email,
         password: formData.password
       })
