@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo_skillup.png';
+import { axiosInstance, API_ENDPOINTS } from '@/config/api';
+import { toast } from 'react-toastify';
 
 function Header() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,12 +14,23 @@ function Header() {
   const isAuthenticated = accessToken !== null;
   const user = isAuthenticated ? JSON.parse(localStorage.getItem('user') || '{}') : null;
   
-  const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    setShowDropdown(false);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      // Gọi API logout để revoke RefreshToken
+      // Backend lấy userId từ JWT token qua [Authorize]
+      await axiosInstance.post(API_ENDPOINTS.LOGOUT);    
+    } catch (error) {
+      console.error('Lỗi khi logout:', error);     
+    } finally {
+      // Xóa token ở client
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      
+      setShowDropdown(false);
+      toast.success('Đăng xuất thành công!');
+      navigate('/');
+    }
   };
 
   const handleSearch = (e) => {

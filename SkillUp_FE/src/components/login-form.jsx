@@ -34,7 +34,7 @@ export function LoginForm({
         defaultRoleId: 5  
       })
 
-      console.log('✅ Response:', response.data)
+      console.log('Response:', response.data)
 
       if (response.data.code === 200) {
         const userData = response.data.data[0]
