@@ -119,6 +119,15 @@ namespace SkillUp.Services.Implementations
             return await _refreshTokenRepository.SaveChangesAsync();
         }
 
+        // Return RoleId for a given email, or null if account not found
+        public async Task<int?> GetRoleIdByEmailAsync(string email)
+        {
+            var account = await _accountRepository.GetByEmailAsync(email);
+            if (account == null)
+                return null;
+            return account.RoleId;
+        }
+
 
 
 

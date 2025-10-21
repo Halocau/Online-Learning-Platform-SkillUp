@@ -21,6 +21,9 @@ namespace SkillUp.Services.Interfaces
 
         public Task<GoogleLoginResponseDto?> GoogleLoginAsync(GoogleLoginRequestDto request);
 
+    // Helper to get role id by email so controllers don't need repository access
+    public Task<int?> GetRoleIdByEmailAsync(string email);
+
         public string GenerateAccessToken(Account account);
 
         public string GenerateRefreshToken();

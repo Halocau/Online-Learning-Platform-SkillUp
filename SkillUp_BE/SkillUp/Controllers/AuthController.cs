@@ -14,18 +14,14 @@ namespace SkillUp.Controllers
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IConfiguration _configuration;
-        private readonly IAccountRepository _accountRepository;
-
         public AuthController(
-            IAuthService authService, 
-            ICurrentUserService currentUserService, 
-            IConfiguration configuration,
-            IAccountRepository accountRepository)
+            IAuthService authService,
+            ICurrentUserService currentUserService,
+            IConfiguration configuration)
         {
             _authService = authService;
             _currentUserService = currentUserService;
             _configuration = configuration;
-            _accountRepository = accountRepository;
         }
 
         [HttpPost("login")]
@@ -287,9 +283,9 @@ namespace SkillUp.Controllers
                     ", "text/html");
                 }
 
-                // Check if user is Lecturer (RoleId = 4) by querying account
-                var account = await _accountRepository.GetByEmailAsync(email);
-                bool isLecturer = account?.RoleId == 4;
+                // Check if user is Lecturer (RoleId = 4) via service helper
+                var roleId = await _authService.GetRoleIdByEmailAsync(email);
+                bool isLecturer = roleId.HasValue && roleId.Value == 4;
 
                 var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
 
