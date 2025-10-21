@@ -6,8 +6,7 @@ export const decodeToken = (token) => {
     if (!token) return null
     const decoded = jwtDecode(token)
     return decoded
-  } catch (error) {
-    console.error('Error decoding token:', error)
+  } catch {
     return null
   }
 }
@@ -17,7 +16,6 @@ export const saveUserFromToken = (accessToken, refreshToken) => {
   const decoded = decodeToken(accessToken)
   
   if (!decoded) {
-    console.error('Cannot decode token')
     return false
   }
 

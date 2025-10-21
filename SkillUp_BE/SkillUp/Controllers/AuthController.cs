@@ -12,11 +12,13 @@ namespace SkillUp.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, ICurrentUserService currentUserService)
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IConfiguration configuration)
         {
             _authService = authService;
             _currentUserService = currentUserService;
+            _configuration = configuration;
         }
 
         [HttpPost("login")]
@@ -242,53 +244,28 @@ namespace SkillUp.Controllers
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string email, [FromQuery] string token)
         {
-            try
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
             {
-                var request = new VerifyEmailRequestDto
-                {
-                    Email = email,
-                    Token = token
-                };
-
-                var result = await _authService.VerifyEmailAsync(request);
-
-                if (!result)
-                {
-                    return Content(@"
-                        <html>
-                        <head><title>Xác thực thất bại</title></head>
-                        <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                            <h1 style='color: #f44336;'>❌ Xác thực thất bại</h1>
-                            <p>Link xác thực không hợp lệ hoặc đã hết hạn.</p>
-                            <p>Vui lòng yêu cầu gửi lại email xác thực.</p>
-                        </body>
-                        </html>
-                    ", "text/html");
-                }
-
-                return Content(@"
-                    <html>
-                    <head><title>Xác thực thành công</title></head>
-                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                        <h1 style='color: #4CAF50;'>✅ Xác thực thành công!</h1>
-                        <p>Tài khoản của bạn đã được kích hoạt.</p>
-                        <p>Bạn có thể đăng nhập ngay bây giờ.</p>
-                        <a href='/login' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>Đăng nhập</a>
-                    </body>
-                    </html>
-                ", "text/html");
+                return Redirect($"{frontendUrl}/verify-email-result?status=error&message={Uri.EscapeDataString("Thiếu thông tin xác thực")}");
             }
-            catch (Exception ex)
+
+            var request = new VerifyEmailRequestDto
             {
-                return Content($@"
-                    <html>
-                    <head><title>Lỗi</title></head>
-                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                        <h1 style='color: #f44336;'>❌ Có lỗi xảy ra</h1>
-                        <p>{ex.Message}</p>
-                    </body>
-                    </html>
-                ", "text/html");
+                Email = email,
+                Token = token
+            };
+
+            var result = await _authService.VerifyEmailAsync(request);
+
+            if (result)
+            {
+                return Redirect($"{frontendUrl}/verify-email-result?status=success&message={Uri.EscapeDataString("Xác thực email thành công!")}");
+            }
+            else
+            {
+                return Redirect($"{frontendUrl}/verify-email-result?status=error&message={Uri.EscapeDataString("Link xác thực không hợp lệ hoặc đã hết hạn")}");
             }
         }
 

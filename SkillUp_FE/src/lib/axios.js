@@ -89,14 +89,11 @@ axiosInstance.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       
       if (!refreshToken) {
-        console.error('Không có refresh token, đang logout...');
         handleLogout();
         return Promise.reject(error);
       }
 
       try {
-        console.log('🔄 Token hết hạn, đang tự động refresh...');
-        
         // Gọi API refresh token
         const response = await axios.post(
           `${API_BASE_URL}${API_ENDPOINTS.REFRESH_TOKEN}`,
@@ -113,8 +110,6 @@ axiosInstance.interceptors.response.use(
         // Lưu token mới
         saveUserFromToken(newAccessToken, newRefreshToken);
         
-        console.log('✅ Refresh token thành công!');
-        
         // Update token cho request ban đầu
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         
@@ -126,7 +121,6 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
         
       } catch (refreshError) {
-        console.error('Refresh token thất bại, đang logout...');
         processQueue(refreshError, null);
         isRefreshing = false;
         handleLogout();

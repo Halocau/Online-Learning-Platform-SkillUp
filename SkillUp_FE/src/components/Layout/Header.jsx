@@ -19,8 +19,8 @@ function Header() {
       // Gọi API logout để revoke RefreshToken
       // Backend lấy userId từ JWT token qua [Authorize]
       await axiosInstance.post(API_ENDPOINTS.LOGOUT);    
-    } catch (error) {
-      console.error('Lỗi khi logout:', error);     
+    } catch {
+      // Ignore error
     } finally {
       // Xóa token ở client
       localStorage.removeItem('accessToken');
