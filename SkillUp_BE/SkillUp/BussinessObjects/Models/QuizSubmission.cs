@@ -17,6 +17,10 @@ public partial class QuizSubmission
 
     public DateTime? EndedAt { get; set; }
 
+    public DateTime? Starttime { get; set; }
+
+    public DateTime? Endtime { get; set; }
+
     public virtual Quiz Quiz { get; set; } = null!;
 
     public virtual ICollection<QuizAnswerSubmission> QuizAnswerSubmissions { get; set; } = new List<QuizAnswerSubmission>();

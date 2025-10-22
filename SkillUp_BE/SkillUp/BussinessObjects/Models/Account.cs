@@ -51,6 +51,8 @@ public partial class Account
 
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
+    public virtual ICollection<ReportPost> ReportPosts { get; set; } = new List<ReportPost>();
+
     public virtual Role? Role { get; set; }
 
     public virtual ICollection<Student> Students { get; set; } = new List<Student>();
