@@ -141,14 +141,6 @@ function Header() {
                       
                       {/* Dropdown Content */}
                       <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
-                        {/* User Info */}
-                        <div className="px-4 py-3 border-b border-gray-200">
-                          <p className="text-sm font-semibold text-gray-900">{user?.fullname || 'User'}</p>
-                          <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                          {user?.role && (
-                            <p className="text-xs text-purple-600 font-medium mt-1">{user.role}</p>
-                          )}
-                        </div>
 
                         {/* Menu Items */}
                         <div className="py-1">

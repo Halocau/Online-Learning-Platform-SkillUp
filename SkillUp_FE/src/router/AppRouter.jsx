@@ -5,6 +5,7 @@ import Register from "../pages/Auth/Register";
 import VerifyEmail from "../pages/Auth/VerifyEmail";
 import ResendVerification from "../pages/Auth/ResendVerification";
 import Home from "../pages/Home/Home";
+import MyProfile from "../pages/Profile/MyProfile";
 import MainLayout from "../layouts/MainLayout";
 
 // Import role-based routes
@@ -22,6 +23,7 @@ function AppRouter() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify-email-result" element={<VerifyEmail />} />
         <Route path="/resend-verification" element={<ResendVerification />} />
+        <Route path="/profile" element={<MyProfile />} />
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
