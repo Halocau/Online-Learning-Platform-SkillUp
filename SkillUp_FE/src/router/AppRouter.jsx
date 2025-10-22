@@ -9,7 +9,7 @@ import AdminRoutes from "./AdminRoutes";
 import ContentModeratorRoutes from "./ContentModeratorRoutes";
 import SystemModeratorRoutes from "./SystemModeratorRoutes";
 import StudentRoutes from "./StudentRoutes";
-import CreatePost from "@/pages/forum/CreatePost";
+import ForumRoutes from "./ForumRoute";
 
 function AppRouter() {
   return (
@@ -19,6 +19,7 @@ function AppRouter() {
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
+          <Route path="/forum/*" element={<ForumRoutes />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />
@@ -26,11 +27,9 @@ function AppRouter() {
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
         <Route path="/student/*" element={<StudentRoutes />} />
 
-        <Route path="*" element={<MainLayout />}>
-          <Route index element={<Home />} />
-        </Route>
+        
 
-        <Route path="/forum" element={<CreatePost/>} />
+
       </Routes>
     </>
   );
