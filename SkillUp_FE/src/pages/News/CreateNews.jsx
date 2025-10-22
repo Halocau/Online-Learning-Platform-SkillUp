@@ -179,20 +179,23 @@ const CreateNews = () => {
         image_caption: true,
         image_advtab: true,
         automatic_uploads: true,
-        images_upload_handler: async function (blobInfo, success, failure) {
-          try {
-            const formData = new FormData();
-            formData.append('image', blobInfo.blob(), blobInfo.filename());
-            
-            const response = await axiosInstance.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
-              headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
-            success(response.data.data[0].url);
-          } catch (err) {
-            failure('Image upload failed');
-          }
-        }
+        images_upload_handler: async function (blobInfo) {
+      try {
+        const formData = new FormData();
+        formData.append('image', blobInfo.blob(), blobInfo.filename());
+
+        const response = await axiosInstance.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        // On success, return the URL of the uploaded image
+        return response.data.data[0].url;
+
+      } catch (err) {
+        // On failure, throw an error with a message
+        throw new Error('Image upload failed. Error: ' + err.message);
+      }
+    }
       }}
       value={contents}
       onEditorChange={(newContent) => setContents(newContent)}
