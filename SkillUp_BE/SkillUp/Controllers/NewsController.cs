@@ -1,15 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using SkillUp.Repositories.Interfaces;
-using SkillUp.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.News;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.ExceptionHandling;
+using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Interfaces;
+using System.Security.Claims;
 
 namespace SkillUp.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	/*[Authorize]*/
 	public class NewsController : ControllerBase
 	{
 		private readonly INewsService _newsService;
@@ -100,9 +103,11 @@ namespace SkillUp.Controllers
 			}
 		}
 
+		
 		[HttpPost("create-news")]
-		public async Task<IActionResult> CreateNews([FromForm] NewsCreateDTO newsCreateDTO)
+		public async Task<IActionResult> CreateNews([FromBody] NewsCreateDTO newsCreateDTO)
 		{
+			var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
 			try
 			{
 				if (!ModelState.IsValid)

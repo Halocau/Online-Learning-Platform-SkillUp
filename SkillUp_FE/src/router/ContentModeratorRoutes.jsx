@@ -8,6 +8,7 @@ import ModDashboard from "../pages/contentmoderator/ModDashboard";
 import TicketManage from "@/pages/contentmoderator/TicketManage";
 import NewsManage from "@/pages/contentmoderator/NewsManage";
 import CommentReport from "@/pages/contentmoderator/CommentReport";
+import CreateNews from "@/pages/News/CreateNews";
 import ContentModeratorDashboard from "../pages/contentmoderator/ModDashboard";
 
 
@@ -24,6 +25,7 @@ const ContentModeratorRoutes = () => {
       >
         <Route index element={<ContentModeratorDashboard />} />
         <Route path="news" element={<NewsManage />} />
+        <Route path="createnews" element={<CreateNews />} />
         <Route path="tickets" element={<TicketManage />} />
         <Route path="cmt" element={<CommentReport />} />
         // Routes chức năng khác
