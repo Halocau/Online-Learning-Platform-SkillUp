@@ -27,6 +27,23 @@ namespace SkillUp.Repositories.Implementations
                 .FirstOrDefaultAsync(x => x.AccountId == accountId);
         }
 
+        public async Task<LecturerApplication> GetLatestByAccountIdAsync(Guid accountId)
+        {
+            return await _context.LecturerApplications
+                .Include(x => x.Account)
+                .Where(x => x.AccountId == accountId)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<LecturerApplication>> GetAllByAccountIdAsync(Guid accountId)
+        {
+            return await _context.LecturerApplications
+                .Where(x => x.AccountId == accountId)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<List<LecturerApplication>> GetAllAsync()
         {
             return await _context.LecturerApplications
@@ -47,15 +64,18 @@ namespace SkillUp.Repositories.Implementations
         public async Task<LecturerApplication> AddAsync(LecturerApplication application)
         {
             _context.LecturerApplications.Add(application);
-            await _context.SaveChangesAsync();
             return application;
         }
 
         public async Task<LecturerApplication> UpdateAsync(LecturerApplication application)
         {
             _context.Entry(application).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
             return application;
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> DeleteAsync(Guid id)

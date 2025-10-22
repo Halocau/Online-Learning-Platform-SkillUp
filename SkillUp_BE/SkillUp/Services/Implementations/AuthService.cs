@@ -17,26 +17,20 @@ namespace SkillUp.Services.Implementations
         private readonly IAccountRepository _accountRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IOtpRepository _otpRepository;
-        private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
-        private readonly CloudinaryService _cloudinaryService;
 
         public AuthService(IAccountRepository accountRepository,
                             IRefreshTokenRepository refreshTokenRepository,
                             IOtpRepository otpRepository,
-                            ILecturerApplicationRepository lecturerApplicationRepository,
                             IConfiguration configuration,
-                            IEmailService emailService,
-                            CloudinaryService cloudinaryService)
+                            IEmailService emailService)
         {
             _accountRepository = accountRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _otpRepository = otpRepository;
-            _lecturerApplicationRepository = lecturerApplicationRepository;
             _configuration = configuration;
             _emailService = emailService;
-            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
@@ -210,11 +204,9 @@ namespace SkillUp.Services.Implementations
                 return false;
             }
 
-            // Student (RoleId = 5) and others: -> "Active"
-            // Lecturer (RoleId = 4): -> InActive -> moderator applly CV
-            //bool isLecturer = account.RoleId == 4;
+            bool isLecturer = account.RoleId == 4;
 
-            account.Status = "Active";
+            account.Status = isLecturer ? "Pending" : "Active";
 
             // Mark OTP as used
             otp.IsUsed = true;
@@ -460,43 +452,6 @@ namespace SkillUp.Services.Implementations
             return !await _accountRepository.SaveChangesAsync();
 
         }
-        public async Task<bool> ApplyCvAsync(ApplyCvRequestDto request)
-        {
-            // Get account by email
-            var account = await _accountRepository.GetByEmailAsync(request.Email);
-            if (account == null || account.RoleId != 4)
-            {
-                return false;
-            }
-
-            // Check if already applied
-            var existingApplication = await _lecturerApplicationRepository.GetByAccountIdAsync(account.Id);
-            if (existingApplication != null)
-            {
-                return false; // Already applied
-            }
-
-            // Upload files to Cloudinary
-            var cvUrl = await _cloudinaryService.UploadPdfAsync(request.CvFile, "skillup/lecturerApplication/cv");
-            var degreeUrl = await _cloudinaryService.UploadImageAsync(request.DegreeFile, "skillup/lecturerApplication/degrees");
-
-            // Create lecturer application
-            var application = new LecturerApplication
-            {
-                Id = Guid.NewGuid(),
-                AccountId = account.Id,
-                Cv = cvUrl,
-                Degree = degreeUrl,
-                Description = request.Description,
-                Title = request.Title,
-                Profession = request.Profession,
-                Status = "Pending",
-                CreatedAt = DateTime.Now
-            };
-
-            var result = await _lecturerApplicationRepository.AddAsync(application);
-            return result != null;
-        }
 
         //TOKEN GENERATION
         #region token generation
@@ -524,6 +479,7 @@ namespace SkillUp.Services.Implementations
                 new Claim("userId", account.Id.ToString()),
                 new Claim("email", account.Email),
                 new Claim("fullname", account.Fullname ?? account.Email),
+                new Claim("status", account.Status),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
