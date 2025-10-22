@@ -155,8 +155,7 @@ const CreateNews = () => {
               size="large"
             />
           </div>
-
-          {/* TinyMCE Editor */}
+          
           {/* TinyMCE Editor */}
           <div>
             <label className="text-sm font-medium mb-1 block">Contents</label>
@@ -175,6 +174,7 @@ const CreateNews = () => {
           'alignright alignjustify | bullist numlist outdent indent | ' +
           'removeformat | image media link | fullscreen',
         content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+        element_format: 'xhtml',
         file_picker_types: 'image',
         image_caption: true,
         image_advtab: true,
