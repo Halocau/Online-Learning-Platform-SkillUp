@@ -214,10 +214,7 @@ namespace SkillUp.Services.Implementations
             // Lecturer (RoleId = 4): -> InActive -> moderator applly CV
             //bool isLecturer = account.RoleId == 4;
 
-            //if (!isLecturer)
-            //{
-            //    account.Status = "Active";
-            //}
+            account.Status = "Active";
 
             // Mark OTP as used
             otp.IsUsed = true;
