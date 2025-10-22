@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,28 +17,45 @@ namespace SkillUp.Services.Implementations
         private readonly IAccountRepository _accountRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IOtpRepository _otpRepository;
+        private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly CloudinaryService _cloudinaryService;
 
         public AuthService(IAccountRepository accountRepository,
                             IRefreshTokenRepository refreshTokenRepository,
                             IOtpRepository otpRepository,
-                             IConfiguration configuration,
-                             IEmailService emailService)
+                            ILecturerApplicationRepository lecturerApplicationRepository,
+                            IConfiguration configuration,
+                            IEmailService emailService,
+                            CloudinaryService cloudinaryService)
         {
             _accountRepository = accountRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _otpRepository = otpRepository;
+            _lecturerApplicationRepository = lecturerApplicationRepository;
             _configuration = configuration;
             _emailService = emailService;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
         {
             var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(request.Email);
-            if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "Active")
+
+            if (account == null || !VerifyPassword(request.Password, account.Password))
             {
                 return null;
+            }
+
+
+            if (string.Equals(account.Status, "InActive"))
+            {
+                throw new Exception("Tài khoản chưa được kích hoạt !");
+            }
+            if (string.Equals(account.Status, "Banned"))
+            {
+                throw new Exception("Tài khoản của bạn đã bị cấm !");
             }
 
             // generate access tokens and refresh token
@@ -101,6 +119,15 @@ namespace SkillUp.Services.Implementations
             return await _refreshTokenRepository.SaveChangesAsync();
         }
 
+        // Return RoleId for a given email, or null if account not found
+        public async Task<int?> GetRoleIdByEmailAsync(string email)
+        {
+            var account = await _accountRepository.GetByEmailAsync(email);
+            if (account == null)
+                return null;
+            return account.RoleId;
+        }
+
 
 
 
@@ -123,11 +150,11 @@ namespace SkillUp.Services.Implementations
             }
         }
 
-        public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
+        public async Task<bool> RegisterAsync(RegisterRequestDto request)
         {
             if (await _accountRepository.ExistsByEmailAsync(request.Email))
             {
-                return null;
+                return false;
             }
 
             var hashedPassword = HashPassword(request.Password);
@@ -160,18 +187,13 @@ namespace SkillUp.Services.Implementations
 
             await _otpRepository.AddAsync(otp);
 
-            // Save both entities in one transaction
             if (!await _accountRepository.SaveChangesAsync())
             {
-                return null;
+                return false;
             }
 
             await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, request.Fullname);
-
-            return new RegisterResponseDto
-            {
-                Email = request.Email
-            };
+            return true;
         }
 
         public async Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request)
@@ -182,33 +204,26 @@ namespace SkillUp.Services.Implementations
                 return false;
             }
 
-            // Already verified, return success
-            if (account.Status == "Active")
-            {
-                return true;
-            }
-
             var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
             if (otp == null || otp.IsUsed)
             {
                 return false;
             }
 
-            // Mark OTP as used for audit trail
+            // Student (RoleId = 5) and others: -> "Active"
+            // Lecturer (RoleId = 4): -> InActive -> moderator applly CV
+            //bool isLecturer = account.RoleId == 4;
+
             account.Status = "Active";
+
+            // Mark OTP as used
             otp.IsUsed = true;
             otp.UsedAt = DateTime.Now;
 
             await _accountRepository.UpdateAsync(account);
             await _otpRepository.UpdateAsync(otp);
 
-            var saved = await _accountRepository.SaveChangesAsync();
-            if (!saved)
-            {
-                return false;
-            }
-
-            return true;
+            return await _accountRepository.SaveChangesAsync();
         }
 
         public async Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request)
@@ -445,7 +460,43 @@ namespace SkillUp.Services.Implementations
             return !await _accountRepository.SaveChangesAsync();
 
         }
+        public async Task<bool> ApplyCvAsync(ApplyCvRequestDto request)
+        {
+            // Get account by email
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null || account.RoleId != 4)
+            {
+                return false;
+            }
 
+            // Check if already applied
+            var existingApplication = await _lecturerApplicationRepository.GetByAccountIdAsync(account.Id);
+            if (existingApplication != null)
+            {
+                return false; // Already applied
+            }
+
+            // Upload files to Cloudinary
+            var cvUrl = await _cloudinaryService.UploadPdfAsync(request.CvFile, "skillup/lecturerApplication/cv");
+            var degreeUrl = await _cloudinaryService.UploadImageAsync(request.DegreeFile, "skillup/lecturerApplication/degrees");
+
+            // Create lecturer application
+            var application = new LecturerApplication
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                Cv = cvUrl,
+                Degree = degreeUrl,
+                Description = request.Description,
+                Title = request.Title,
+                Profession = request.Profession,
+                Status = "Pending",
+                CreatedAt = DateTime.Now
+            };
+
+            var result = await _lecturerApplicationRepository.AddAsync(application);
+            return result != null;
+        }
 
         //TOKEN GENERATION
         #region token generation
@@ -573,6 +624,8 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
         }
+
+
         #endregion
     }
 }
