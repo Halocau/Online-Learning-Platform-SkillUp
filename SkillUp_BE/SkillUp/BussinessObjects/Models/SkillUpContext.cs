@@ -109,7 +109,7 @@ public partial class SkillUpContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=(local);Database=SkillUp;User Id=sa;Password=123;Encrypt=False");
+        => optionsBuilder.UseSqlServer("server=(local);database=SkillUp;uid=sa;pwd=123;Encrypt=false");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -875,6 +875,9 @@ public partial class SkillUpContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Status).HasMaxLength(15);
+            entity.Property(e => e.TicketCode)
+                .HasMaxLength(6)
+                .IsUnicode(false);
             entity.Property(e => e.Title).HasMaxLength(255);
 
             entity.HasOne(d => d.Account).WithMany(p => p.Tickets)

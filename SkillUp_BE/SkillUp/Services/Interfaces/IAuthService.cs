@@ -13,13 +13,16 @@ namespace SkillUp.Services.Interfaces
 
         public Task<bool> LogoutAsync(Guid userId);
 
-        public Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request);
+        public Task<bool> RegisterAsync(RegisterRequestDto request);
 
         public Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request);
 
         public Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request);
 
         public Task<GoogleLoginResponseDto?> GoogleLoginAsync(GoogleLoginRequestDto request);
+
+    // Helper to get role id by email so controllers don't need repository access
+    public Task<int?> GetRoleIdByEmailAsync(string email);
 
         public string GenerateAccessToken(Account account);
 
@@ -30,5 +33,11 @@ namespace SkillUp.Services.Interfaces
         public string HashPassword(string password);
 
         public bool VerifyPassword(string password, string hashedPassword);
+
+        public Task<bool> ForgotPasswordAsync(ForgotPasswordRequestDto request);
+
+        public Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request);
+
+        public Task<bool> ApplyCvAsync(ApplyCvRequestDto request);
     }
 }

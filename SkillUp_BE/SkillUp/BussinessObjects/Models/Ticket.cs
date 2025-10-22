@@ -17,5 +17,9 @@ public partial class Ticket
 
     public string? Status { get; set; }
 
+    public string? Response { get; set; }
+
+    public string TicketCode { get; set; } = null!;
+
     public virtual Account Account { get; set; } = null!;
 }

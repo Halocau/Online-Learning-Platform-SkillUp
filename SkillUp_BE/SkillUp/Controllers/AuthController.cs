@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.ExceptionHandling;
 using SkillUp.Services.Interfaces;
+using SkillUp.Repositories.Interfaces;
 
 namespace SkillUp.Controllers
 {
@@ -12,11 +13,13 @@ namespace SkillUp.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, ICurrentUserService currentUserService)
+        public AuthController(IAuthService authService, ICurrentUserService currentUserService, IConfiguration configuration)
         {
             _authService = authService;
             _currentUserService = currentUserService;
+            _configuration = configuration;
         }
 
         [HttpPost("login")]
@@ -34,24 +37,36 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                var result = await _authService.LoginAsync(request);
+                try
+                {
+                    var result = await _authService.LoginAsync(request);
 
-                if (result == null)
+                    if (result == null)
+                    {
+                        return Unauthorized(new APIReturn
+                        {
+                            code = 401,
+                            message = "Email hoặc mật khẩu không đúng",
+                            data = new List<object>()
+                        });
+                    }
+
+                    return Ok(new APIReturn
+                    {
+                        code = 200,
+                        message = "Đăng nhập thành công",
+                        data = new List<object> { result }
+                    });
+                }
+                catch (Exception)
                 {
                     return Unauthorized(new APIReturn
                     {
                         code = 401,
-                        message = "Email hoặc mật khẩu không đúng",
+                        message = "Tài khoản chưa được kích hoạt",
                         data = new List<object>()
                     });
                 }
-
-                return Ok(new APIReturn
-                {
-                    code = 200,
-                    message = "Đăng nhập thành công",
-                    data = new List<object> { result }
-                });
             }
             catch (Exception ex)
             {
@@ -207,10 +222,10 @@ namespace SkillUp.Controllers
                 }
 
                 // Call service register
-                var result = await _authService.RegisterAsync(request);
+                var success = await _authService.RegisterAsync(request);
 
                 // Registration failed (email exists)
-                if (result == null)
+                if (!success)
                 {
                     return BadRequest(new APIReturn
                     {
@@ -220,12 +235,12 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                // Registration success
+                // Registration success - return empty data array (email returned to client is not necessary)
                 return Ok(new APIReturn
                 {
                     code = 200,
                     message = "Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
-                    data = new List<object> { result }
+                    data = new List<object>()
                 });
             }
             catch (Exception ex)
@@ -242,53 +257,43 @@ namespace SkillUp.Controllers
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string email, [FromQuery] string token)
         {
-            try
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
             {
-                var request = new VerifyEmailRequestDto
-                {
-                    Email = email,
-                    Token = token
-                };
-
-                var result = await _authService.VerifyEmailAsync(request);
-
-                if (!result)
-                {
-                    return Content(@"
-                        <html>
-                        <head><title>Xác thực thất bại</title></head>
-                        <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                            <h1 style='color: #f44336;'>❌ Xác thực thất bại</h1>
-                            <p>Link xác thực không hợp lệ hoặc đã hết hạn.</p>
-                            <p>Vui lòng yêu cầu gửi lại email xác thực.</p>
-                        </body>
-                        </html>
-                    ", "text/html");
-                }
-
-                return Content(@"
-                    <html>
-                    <head><title>Xác thực thành công</title></head>
-                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                        <h1 style='color: #4CAF50;'>✅ Xác thực thành công!</h1>
-                        <p>Tài khoản của bạn đã được kích hoạt.</p>
-                        <p>Bạn có thể đăng nhập ngay bây giờ.</p>
-                        <a href='/login' style='display: inline-block; margin-top: 20px; padding: 10px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px;'>Đăng nhập</a>
-                    </body>
-                    </html>
-                ", "text/html");
+                return Redirect($"{frontendUrl}/verify-email-result?status=error&message={Uri.EscapeDataString("Thiếu thông tin xác thực")}");
             }
-            catch (Exception ex)
+
+            var request = new VerifyEmailRequestDto
             {
-                return Content($@"
-                    <html>
-                    <head><title>Lỗi</title></head>
-                    <body style='font-family: Arial; text-align: center; padding: 50px;'>
-                        <h1 style='color: #f44336;'>❌ Có lỗi xảy ra</h1>
-                        <p>{ex.Message}</p>
-                    </body>
-                    </html>
-                ", "text/html");
+                Email = email,
+                Token = token
+            };
+            //var roleId = await _authService.GetRoleIdByEmailAsync(email);
+            //bool isLecturer = roleId.HasValue && roleId.Value == 4;
+            //bool isStudent = roleId.HasValue && roleId.Value == 5;
+
+            //if (isLecturer)
+            //{
+            //    var applyUrl = $"{frontendUrl}/apply-cv?email={Uri.EscapeDataString(email)}";
+            //    return Redirect(applyUrl);
+            //}
+
+            //if (isStudent)
+            //{
+            //    var loginUrl = $"{frontendUrl}/login";
+            //    return Redirect(loginUrl);
+            //}
+
+            var result = await _authService.VerifyEmailAsync(request);
+
+            if (result)
+            {
+                return Redirect($"{frontendUrl}/verify-email-result?status=success&message={Uri.EscapeDataString("Xác thực email thành công!")}");
+            }
+            else
+            {
+                return Redirect($"{frontendUrl}/verify-email-result?status=error&message={Uri.EscapeDataString("Link xác thực không hợp lệ hoặc đã hết hạn")}");
             }
         }
 
@@ -379,6 +384,142 @@ namespace SkillUp.Controllers
                     code = 200,
                     message = message,
                     data = new List<object> { result }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                var result = await _authService.ForgotPasswordAsync(request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Email không tồn tại hoặc chưa được xác thực",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư của bạn.",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                var result = await _authService.ResetPasswordAsync(request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Token không hợp lệ hoặc đã hết hạn",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới.",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+
+        [HttpPost("apply-cv")]
+        public async Task<IActionResult> ApplyCV([FromForm] ApplyCvRequestDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                var result = await _authService.ApplyCvAsync(request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể nộp CV. Email không tồn tại, đã nộp CV trước đó, hoặc tài khoản không phải là giảng viên.",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Nộp CV thành công. Vui lòng chờ admin phê duyệt để kích hoạt tài khoản.",
+                    data = new List<object>()
                 });
             }
             catch (Exception ex)

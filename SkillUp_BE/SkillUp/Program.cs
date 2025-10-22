@@ -72,7 +72,10 @@ builder.Services.AddHttpContextAccessor();
 // Register Repositories
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRepository>();
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
+builder.Services.AddScoped<INewsRepository, NewsRepository>();
+builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 
 
 // Register Services
@@ -81,6 +84,10 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<INewsService, NewsService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationService>();
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -142,6 +149,9 @@ app.UseCors("AllowAll");
 // Use Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Map SignalR Hub
+//app.MapHub<SkillUp.Hubs.CommentHub>("/hubs/comment");
 
 app.MapControllers();
 

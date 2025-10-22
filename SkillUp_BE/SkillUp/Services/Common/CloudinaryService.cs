@@ -1,5 +1,7 @@
-﻿using CloudinaryDotNet;
+﻿using System;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using SkillUp.Configuration;
 
@@ -36,6 +38,35 @@ namespace SkillUp.Services.Common
             var result = await _cloudinary.UploadAsync(uploadParams);
 
             if (result.StatusCode == System.Net.HttpStatusCode.OK)
+                return result.SecureUrl.ToString();
+
+            throw new Exception($"Upload failed: {result.Error?.Message}");
+        }
+
+
+        public async Task<string> UploadPdfAsync(IFormFile file, string? folderName = "skillup/files")
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File is empty.");
+
+            // Basic PDF validation by content type or file extension
+            var isPdf = string.Equals(file.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase)
+                        || file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+            if (!isPdf)
+                throw new ArgumentException("Only PDF files are allowed.");
+
+            await using var stream = file.OpenReadStream();
+
+            var uploadParams = new RawUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = folderName
+            };
+
+            var result = await _cloudinary.UploadAsync(uploadParams);
+
+            if (result.StatusCode == System.Net.HttpStatusCode.OK || result.StatusCode == System.Net.HttpStatusCode.Created)
                 return result.SecureUrl.ToString();
 
             throw new Exception($"Upload failed: {result.Error?.Message}");

@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,39 +17,54 @@ namespace SkillUp.Services.Implementations
         private readonly IAccountRepository _accountRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly IOtpRepository _otpRepository;
+        private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly CloudinaryService _cloudinaryService;
 
         public AuthService(IAccountRepository accountRepository,
                             IRefreshTokenRepository refreshTokenRepository,
                             IOtpRepository otpRepository,
-                             IConfiguration configuration,
-                             IEmailService emailService)
+                            ILecturerApplicationRepository lecturerApplicationRepository,
+                            IConfiguration configuration,
+                            IEmailService emailService,
+                            CloudinaryService cloudinaryService)
         {
             _accountRepository = accountRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _otpRepository = otpRepository;
+            _lecturerApplicationRepository = lecturerApplicationRepository;
             _configuration = configuration;
             _emailService = emailService;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
         {
-            // Validate credentials and account status in one query
             var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(request.Email);
-            if (account == null || !VerifyPassword(request.Password, account.Password) || account.Status != "Active")
+
+            if (account == null || !VerifyPassword(request.Password, account.Password))
             {
                 return null;
             }
 
-            var accessToken = GenerateAccessToken(account);
-            var refreshToken = GenerateRefreshToken();
-            await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
+
+            if (string.Equals(account.Status, "InActive"))
+            {
+                throw new Exception("Tài khoản chưa được kích hoạt !");
+            }
+            if (string.Equals(account.Status, "Banned"))
+            {
+                throw new Exception("Tài khoản của bạn đã bị cấm !");
+            }
+
+            // generate access tokens and refresh token
+            var token = await GenerateAndSaveTokensAsync(account);
 
             return new LoginResponseDto
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken
+                AccessToken = token.AccessToken,
+                RefreshToken = token.RefreshToken
             };
         }
 
@@ -89,17 +105,11 @@ namespace SkillUp.Services.Implementations
             refreshTokenEntity.RevokedUtc = DateTime.Now;
             await _refreshTokenRepository.UpdateAsync(refreshTokenEntity);
 
-            var newAccessToken = GenerateAccessToken(account);
-            var newRefreshToken = GenerateRefreshToken();
-            await CreateRefreshTokenEntityAsync(account.Id, newRefreshToken);
+            var token = await GenerateAndSaveTokensAsync(account);
 
             return new RefreshTokenResponseDto
             {
-                Tokens = new TokenDto
-                {
-                    AccessToken = newAccessToken,
-                    RefreshToken = newRefreshToken
-                }
+                Tokens = token,
             };
         }
 
@@ -109,116 +119,18 @@ namespace SkillUp.Services.Implementations
             return await _refreshTokenRepository.SaveChangesAsync();
         }
 
-        public string GenerateAccessToken(Account account)
+        // Return RoleId for a given email, or null if account not found
+        public async Task<int?> GetRoleIdByEmailAsync(string email)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
-            var issuer = jwtSettings["Issuer"] ?? "SkillUp";
-            var audience = jwtSettings["Audience"] ?? "SkillUpUsers";
-
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
-            {
-                new Claim("userId", account.Id.ToString()),
-                new Claim("email", account.Email),
-                new Claim("fullname", account.Fullname ?? account.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            // Include role and licensed permissions for authorization
-            if (account.Role != null)
-            {
-                claims.Add(new Claim("roleId", account.Role.Id.ToString()));
-                claims.Add(new Claim("roleName", account.Role.Name));
-
-                if (account.Role.RolePermissions != null && account.Role.RolePermissions.Any())
-                {
-                    foreach (var rolePermission in account.Role.RolePermissions.Where(rp => rp.Licensed))
-                    {
-                        if (rolePermission.Permission != null)
-                        {
-                            claims.Add(new Claim("permission", rolePermission.Permission.ActionName));
-                            claims.Add(new Claim("permissionCode", rolePermission.Permission.ActionCode));
-                            claims.Add(new Claim("permissionId", rolePermission.Permission.Id.ToString()));
-                        }
-                    }
-                }
-            }
-
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(15),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public string GenerateRefreshToken()
-        {
-            var randomNumber = new byte[64];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomNumber);
-            return Convert.ToBase64String(randomNumber);
-        }
-
-        // Helper method to reduce duplicate refresh token creation code
-        private async Task<RefreshToken> CreateRefreshTokenEntityAsync(Guid accountId, string token)
-        {
-            var refreshTokenEntity = new RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                Token = token,
-                AccountId = accountId,
-                CreatedUtc = DateTime.Now,
-                ExpiresUtc = DateTime.Now.AddDays(7),
-                RevokedUtc = null
-            };
-
-            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
-            await _refreshTokenRepository.SaveChangesAsync();
-
-            return refreshTokenEntity;
-        }
-
-        public ClaimsPrincipal? GetPrincipalFromToken(string token)
-        {
-            try
-            {
-                var jwtSettings = _configuration.GetSection("JwtSettings");
-                var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
-
-                var tokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = false, // Allow expired tokens for refresh flow
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-                };
-
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-
-                if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-                    !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return null;
-                }
-
-                return principal;
-            }
-            catch
-            {
+            var account = await _accountRepository.GetByEmailAsync(email);
+            if (account == null)
                 return null;
-            }
+            return account.RoleId;
         }
+
+
+
+
 
 
         public string HashPassword(string password)
@@ -232,17 +144,17 @@ namespace SkillUp.Services.Implementations
             {
                 return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
             }
-            catch
+            catch (Exception ex)
             {
                 return false;
             }
         }
 
-        public async Task<RegisterResponseDto?> RegisterAsync(RegisterRequestDto request)
+        public async Task<bool> RegisterAsync(RegisterRequestDto request)
         {
             if (await _accountRepository.ExistsByEmailAsync(request.Email))
             {
-                return null;
+                return false;
             }
 
             var hashedPassword = HashPassword(request.Password);
@@ -275,18 +187,13 @@ namespace SkillUp.Services.Implementations
 
             await _otpRepository.AddAsync(otp);
 
-            // Save both entities in one transaction
             if (!await _accountRepository.SaveChangesAsync())
             {
-                return null;
+                return false;
             }
 
             await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, request.Fullname);
-
-            return new RegisterResponseDto
-            {
-                Email = request.Email
-            };
+            return true;
         }
 
         public async Task<bool> VerifyEmailAsync(VerifyEmailRequestDto request)
@@ -297,33 +204,26 @@ namespace SkillUp.Services.Implementations
                 return false;
             }
 
-            // Already verified, return success
-            if (account.Status == "Active")
-            {
-                return true;
-            }
-
             var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
             if (otp == null || otp.IsUsed)
             {
                 return false;
             }
 
-            // Mark OTP as used for audit trail
+            // Student (RoleId = 5) and others: -> "Active"
+            // Lecturer (RoleId = 4): -> InActive -> moderator applly CV
+            //bool isLecturer = account.RoleId == 4;
+
             account.Status = "Active";
+
+            // Mark OTP as used
             otp.IsUsed = true;
             otp.UsedAt = DateTime.Now;
 
             await _accountRepository.UpdateAsync(account);
             await _otpRepository.UpdateAsync(otp);
 
-            var saved = await _accountRepository.SaveChangesAsync();
-            if (!saved)
-            {
-                return false;
-            }
-
-            return true;
+            return await _accountRepository.SaveChangesAsync();
         }
 
         public async Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request)
@@ -452,9 +352,7 @@ namespace SkillUp.Services.Implementations
                     }
                 }
 
-                var accessToken = GenerateAccessToken(account);
-                var refreshToken = GenerateRefreshToken();
-                await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
+                var token = await GenerateAndSaveTokensAsync(account);
 
                 return new GoogleLoginResponseDto
                 {
@@ -465,8 +363,8 @@ namespace SkillUp.Services.Implementations
                     IsNewUser = isNewUser,
                     Token = new TokenDto
                     {
-                        AccessToken = accessToken,
-                        RefreshToken = refreshToken
+                        AccessToken = token.AccessToken,
+                        RefreshToken = token.RefreshToken
                     }
                 };
             }
@@ -479,5 +377,255 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
         }
+
+        public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequestDto request)
+        {
+            // Kiểm tra email tồn tại và đã xác thực
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null || account.Status != "Active")
+            {
+                return false;
+            }
+
+            // Tạo reset token với prefix RPW_ để phân biệt với token xác thực email
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var resetToken = "RPW_" + Convert.ToBase64String(tokenBytes);
+            var tokenExpiry = DateTime.Now.AddHours(1); // Token có hiệu lực 1 giờ
+
+            // Lưu OTP reset password
+            var otp = new Otp
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                OtpLink = resetToken,
+                OtpExpiry = tokenExpiry,
+                IsUsed = false,
+                UsedAt = null
+            };
+
+            await _otpRepository.AddAsync(otp);
+            if (!await _otpRepository.SaveChangesAsync())
+            {
+                return false;
+            }
+
+            // Gửi email reset password
+            await _emailService.SendResetPasswordEmailAsync(
+                request.Email,
+                resetToken,
+                account.Fullname ?? request.Email
+            );
+
+            return true;
+        }
+
+        public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request)
+        {
+            // Validate input
+            if (string.IsNullOrEmpty(request.Email) ||
+                string.IsNullOrEmpty(request.Token) ||
+                string.IsNullOrEmpty(request.NewPassword))
+            {
+                return false;
+            }
+
+            // Kiểm tra email tồn tại
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null)
+            {
+                return false;
+            }
+
+            // Kiểm tra token reset password
+            var otp = await _otpRepository.GetByAccountEmailAndTokenAsync(request.Email, request.Token);
+            if (otp == null || otp.IsUsed || !request.Token.StartsWith("RPW_") ||
+                otp.OtpExpiry < DateTime.Now)
+            {
+                return false;
+            }
+
+            // Cập nhật mật khẩu mới
+            account.Password = HashPassword(request.NewPassword);
+            await _accountRepository.UpdateAsync(account);
+
+            // Đánh dấu OTP đã sử dụng
+            otp.IsUsed = true;
+            otp.UsedAt = DateTime.Now;
+            await _otpRepository.UpdateAsync(otp);
+
+            // Thu hồi tất cả refresh token của user này
+            await _refreshTokenRepository.RevokeAllUserTokensAsync(account.Id);
+
+            // Lưu các thay đổi
+            return !await _accountRepository.SaveChangesAsync();
+
+        }
+        public async Task<bool> ApplyCvAsync(ApplyCvRequestDto request)
+        {
+            // Get account by email
+            var account = await _accountRepository.GetByEmailAsync(request.Email);
+            if (account == null || account.RoleId != 4)
+            {
+                return false;
+            }
+
+            // Check if already applied
+            var existingApplication = await _lecturerApplicationRepository.GetByAccountIdAsync(account.Id);
+            if (existingApplication != null)
+            {
+                return false; // Already applied
+            }
+
+            // Upload files to Cloudinary
+            var cvUrl = await _cloudinaryService.UploadPdfAsync(request.CvFile, "skillup/lecturerApplication/cv");
+            var degreeUrl = await _cloudinaryService.UploadImageAsync(request.DegreeFile, "skillup/lecturerApplication/degrees");
+
+            // Create lecturer application
+            var application = new LecturerApplication
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                Cv = cvUrl,
+                Degree = degreeUrl,
+                Description = request.Description,
+                Title = request.Title,
+                Profession = request.Profession,
+                Status = "Pending",
+                CreatedAt = DateTime.Now
+            };
+
+            var result = await _lecturerApplicationRepository.AddAsync(application);
+            return result != null;
+        }
+
+        //TOKEN GENERATION
+        #region token generation
+        private async Task<TokenDto> GenerateAndSaveTokensAsync(Account account)
+        {
+            var accessToken = GenerateAccessToken(account);
+            var refreshToken = GenerateRefreshToken();
+            await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
+
+            return new TokenDto { AccessToken = accessToken, RefreshToken = refreshToken };
+        }
+
+        public string GenerateAccessToken(Account account)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
+            var issuer = jwtSettings["Issuer"] ?? "SkillUp";
+            var audience = jwtSettings["Audience"] ?? "SkillUpUsers";
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+            {
+                new Claim("userId", account.Id.ToString()),
+                new Claim("email", account.Email),
+                new Claim("fullname", account.Fullname ?? account.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            // Include role and licensed permissions for authorization
+            if (account.Role != null)
+            {
+                claims.Add(new Claim("roleId", account.Role.Id.ToString()));
+                claims.Add(new Claim("roleName", account.Role.Name));
+
+                if (account.Role.RolePermissions != null && account.Role.RolePermissions.Any())
+                {
+                    foreach (var rolePermission in account.Role.RolePermissions.Where(rp => rp.Licensed))
+                    {
+                        if (rolePermission.Permission != null)
+                        {
+                            claims.Add(new Claim("permission", rolePermission.Permission.ActionName));
+                            claims.Add(new Claim("permissionCode", rolePermission.Permission.ActionCode));
+                            claims.Add(new Claim("permissionId", rolePermission.Permission.Id.ToString()));
+                        }
+                    }
+                }
+            }
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(15),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+
+        // Helper method to reduce duplicate refresh token creation code
+        private async Task<RefreshToken> CreateRefreshTokenEntityAsync(Guid accountId, string token)
+        {
+            var refreshTokenEntity = new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                Token = token,
+                AccountId = accountId,
+                CreatedUtc = DateTime.Now,
+                ExpiresUtc = DateTime.Now.AddDays(7),
+                RevokedUtc = null
+            };
+
+            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+            await _refreshTokenRepository.SaveChangesAsync();
+
+            return refreshTokenEntity;
+        }
+
+        public string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        // get info user from JWT access token
+        public ClaimsPrincipal? GetPrincipalFromToken(string token)
+        {
+            try
+            {
+                var jwtSettings = _configuration.GetSection("JwtSettings"); //get JWT settings from appsettings.json
+                var secretKey = jwtSettings["SecretKey"] ?? throw new ArgumentNullException("JWT SecretKey not configured");
+
+                //pipeline 
+                var tokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = false, // cho phép token hết hạn
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings["Issuer"],// người cấp
+                    ValidAudience = jwtSettings["Audience"],// người dùng
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)) // chìa bí mật
+                };
+
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+
+                // Chỉ chấp nhận JWT chuẩn và đúng thuật toán
+                if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+                    !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return null;
+                }
+
+                return principal;
+            }
+            catch
+            {
+                //token ko hợp lệ
+                return null;
+            }
+        }
+
+
+        #endregion
     }
 }
