@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import { Camera, Mail, Phone, Calendar, FileText, User as UserIcon } from 'lucide-react';
 import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
-
+import { Lock } from 'lucide-react';
 function MyProfile() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -19,7 +19,12 @@ function MyProfile() {
     dob: '',
     description: ''
   });
-
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
   // Lấy thông tin profile khi component mount
   useEffect(() => {
     fetchProfile();
@@ -60,7 +65,45 @@ function MyProfile() {
       [name]: value
     }));
   };
+  // xử lý thay đổi mật khẩu
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
+  // Xử lý submit form đổi mật khẩu
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+      toast.error('Mật khẩu mới và mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+    
+      const response = await axiosInstance.post('/auth/change-password', passwordData);
+      
+      if (response.data.code === 200) {
+        toast.success('Đổi mật khẩu thành công!');
+        // Reset form
+        setPasswordData({
+          oldPassword: '',
+          newPassword: '',
+          confirmNewPassword: ''
+        });
+      }
+    } catch (error) {
+      console.error('Change password error:', error);
+      toast.error(error.response?.data?.message || 'Đổi mật khẩu thất bại');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
   // Xử lý cập nhật profile
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -329,6 +372,77 @@ function MyProfile() {
                 </form>
               </CardContent>
             </Card>
+            <Card className="shadow-lg">
+            <CardHeader className="border-b border-gray-200">
+              <CardTitle className="text-2xl font-bold">Đổi mật khẩu</CardTitle>
+            </CardHeader>
+            
+            <CardContent className="pt-6">
+              <form onSubmit={handleChangePassword} className="space-y-6">
+                {/* Mật khẩu cũ */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-gray-600 flex items-center gap-1">
+                    <Lock className="w-4 h-4" />
+                    Mật khẩu cũ
+                  </Label>
+                  <Input
+                    name="oldPassword"
+                    type="password"
+                    value={passwordData.oldPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập mật khẩu cũ của bạn"
+                    required
+                    className="border-gray-300"
+                  />
+                </div>
+
+                {/* Mật khẩu mới */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-gray-600 flex items-center gap-1">
+                    <Lock className="w-4 h-4" />
+                    Mật khẩu mới
+                  </Label>
+                  <Input
+                    name="newPassword"
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)"
+                    required
+                    className="border-gray-300"
+                  />
+                </div>
+
+                {/* Xác nhận mật khẩu mới */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-gray-600 flex items-center gap-1">
+                    <Lock className="w-4 h-4" />
+                    Xác nhận mật khẩu mới
+                  </Label>
+                  <Input
+                    name="confirmNewPassword"
+                    type="password"
+                    value={passwordData.confirmNewPassword}
+                    onChange={handlePasswordChange}
+                    placeholder="Nhập lại mật khẩu mới"
+                    required
+                    className="border-gray-300"
+                  />
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end pt-4 border-t border-gray-200">
+                  <Button
+                    type="submit"
+                    disabled={passwordLoading}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-8"
+                  >
+                    {passwordLoading ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
           </div>
         </div>
       </div>
