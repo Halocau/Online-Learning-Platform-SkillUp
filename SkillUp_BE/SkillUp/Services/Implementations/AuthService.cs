@@ -581,6 +581,34 @@ namespace SkillUp.Services.Implementations
             }
         }
 
+        public async Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request)
+        {
+            var acc = await _accountRepository.GetByIdAsync(userId);
+            if (acc == null)
+            {
+                return false;
+            }
+            bool checkOldPassword;
+            try
+            {
+                checkOldPassword = BCrypt.Net.BCrypt.Verify(request.OldPassword, acc.Password);
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+            if (!checkOldPassword)
+            {
+                return false;
+            }
+
+            var newPasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            acc.Password = newPasswordHash;
+            await _accountRepository.UpdateAsync(acc);
+            return await _accountRepository.SaveChangesAsync();
+        }
+
 
         #endregion
     }

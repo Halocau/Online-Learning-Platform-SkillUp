@@ -37,5 +37,9 @@ namespace SkillUp.Services.Interfaces
         public Task<bool> ForgotPasswordAsync(ForgotPasswordRequestDto request);
 
         public Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request);
+
+        public Task<bool> ApplyCvAsync(ApplyCvRequestDto request);
+
+        public Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request);
     }
 }
