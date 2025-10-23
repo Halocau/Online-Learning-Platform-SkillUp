@@ -176,36 +176,6 @@ namespace SkillUp.Controllers
             }
         }
 
-        /// <summary>
-        /// Test endpoint để kiểm tra JWT token có còn hợp lệ không
-        /// </summary>
-        [HttpGet("test-token")]
-        [Authorize]
-        public IActionResult TestToken()
-        {
-            var userId = _currentUserService.UserId;
-            var email = _currentUserService.Email;
-            var fullname = _currentUserService.Fullname;
-            var roleId = _currentUserService.RoleId;
-
-            return Ok(new APIReturn
-            {
-                code = 200,
-                message = "Token hợp lệ",
-                data = new List<object>
-                {
-                    new
-                    {
-                        userId,
-                        email,
-                        fullname,
-                        roleId,
-                        timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                    }
-                }
-            });
-        }
-
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
@@ -473,52 +443,6 @@ namespace SkillUp.Controllers
                 {
                     code = 200,
                     message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới.",
-                    data = new List<object>()
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new APIReturn
-                {
-                    code = 500,
-                    message = $"Có lỗi xảy ra: {ex.Message}",
-                    data = new List<object>()
-                });
-            }
-        }
-
-
-        [HttpPost("apply-cv")]
-        public async Task<IActionResult> ApplyCV([FromForm] ApplyCvRequestDto request)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(new APIReturn
-                    {
-                        code = 400,
-                        message = "Dữ liệu không hợp lệ",
-                        data = new List<object> { ModelState }
-                    });
-                }
-
-                var result = await _authService.ApplyCvAsync(request);
-
-                if (!result)
-                {
-                    return BadRequest(new APIReturn
-                    {
-                        code = 400,
-                        message = "Không thể nộp CV. Email không tồn tại, đã nộp CV trước đó, hoặc tài khoản không phải là giảng viên.",
-                        data = new List<object>()
-                    });
-                }
-
-                return Ok(new APIReturn
-                {
-                    code = 200,
-                    message = "Nộp CV thành công. Vui lòng chờ admin phê duyệt để kích hoạt tài khoản.",
                     data = new List<object>()
                 });
             }

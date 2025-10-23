@@ -1,4 +1,4 @@
-using SkillUp.BussinessObjects.DTOs.Auth;
+using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
@@ -9,22 +9,32 @@ namespace SkillUp.Services.Implementations
     public class LecturerApplicationService : ILecturerApplicationService
     {
         private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
+        private readonly IAccountRepository _accountRepository;
         private readonly CloudinaryService _cloudinaryService;
 
         public LecturerApplicationService(
             ILecturerApplicationRepository lecturerApplicationRepository,
+            IAccountRepository accountRepository,
             CloudinaryService cloudinaryService)
         {
             _lecturerApplicationRepository = lecturerApplicationRepository;
+            _accountRepository = accountRepository;
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task<LecturerApplication> ApplyCvAsync(ApplyCvRequestDto request, Guid accountId)
+        public async Task<bool> ApplyCvAsync(Guid accountId, ApplyCvRequestDto request)
         {
-            // Upload CV file
+            // Check if user is a lecturer (roleId = 4)
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null || account.RoleId != 4)
+            {
+                return false;
+            }
+
+            // Upload CV file to Cloudinary
             var cvUrl = await _cloudinaryService.UploadPdfAsync(request.CvFile, "skillup/lecturers/cv");
 
-            // Upload Degree image
+            // Upload Degree image to Cloudinary
             var degreeUrl = await _cloudinaryService.UploadImageAsync(request.DegreeFile, "skillup/lecturers/degrees");
 
             var application = new LecturerApplication
@@ -37,15 +47,110 @@ namespace SkillUp.Services.Implementations
                 Title = request.Title,
                 Profession = request.Profession,
                 Status = "Pending",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
-            return await _lecturerApplicationRepository.AddAsync(application);
+            var result = await _lecturerApplicationRepository.AddAsync(application);
+            return result != null && await _lecturerApplicationRepository.SaveChangesAsync();
         }
 
-        public async Task<LecturerApplication> GetApplicationByAccountIdAsync(Guid accountId)
+        public async Task<List<LecturerApplicationResponseDto>> GetMyApplicationsAsync(Guid accountId)
         {
-            return await _lecturerApplicationRepository.GetByAccountIdAsync(accountId);
+            // Check if user is a lecturer (roleId = 4)
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null || account.RoleId != 4)
+            {
+                return new List<LecturerApplicationResponseDto>();
+            }
+
+            var applications = await _lecturerApplicationRepository.GetAllByAccountIdAsync(accountId);
+
+            return applications.Select(app => new LecturerApplicationResponseDto
+            {
+                Cv = app.Cv ?? string.Empty,
+                Degree = app.Degree ?? string.Empty,
+                Title = app.Title ?? string.Empty,
+                Profession = app.Profession ?? string.Empty,
+                Description = app.Description,
+                Status = app.Status,
+                RejectReason = app.Reason,
+                CreatedAt = app.CreatedAt,
+                UpdatedAt = null // Sẽ thêm sau khi update database
+            }).OrderByDescending(x => x.CreatedAt).ToList();
+        }
+
+        public async Task<bool> UpdateApplicationAsync(Guid accountId, Guid applicationId, UpdateCvRequestDto request)
+        {
+            // Check if user is a lecturer (roleId = 4)
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null || account.RoleId != 4)
+            {
+                return false;
+            }
+
+            var application = await _lecturerApplicationRepository.GetByIdAsync(applicationId);
+
+            if (application == null || application.AccountId != accountId)
+                return false;
+
+            // Only allow update if status is Pending or Rejected
+            if (application.Status != "Pending" && application.Status != "Rejected")
+                return false;
+
+            // Update CV file if provided
+            if (request.CvFile != null)
+            {
+                var cvUrl = await _cloudinaryService.UploadPdfAsync(request.CvFile, "skillup/lecturers/cv");
+                application.Cv = cvUrl;
+            }
+
+            // Update Degree file if provided
+            if (request.DegreeFile != null)
+            {
+                var degreeUrl = await _cloudinaryService.UploadImageAsync(request.DegreeFile, "skillup/lecturers/degrees");
+                application.Degree = degreeUrl;
+            }
+
+            // Update other fields if provided
+            if (!string.IsNullOrEmpty(request.Title))
+                application.Title = request.Title;
+
+            if (!string.IsNullOrEmpty(request.Profession))
+                application.Profession = request.Profession;
+
+            if (request.Description != null)
+                application.Description = request.Description;
+
+            // Reset status to Pending if was Rejected
+            if (application.Status == "Rejected")
+            {
+                application.Status = "Pending";
+                application.Reason = null;
+            }
+
+            await _lecturerApplicationRepository.UpdateAsync(application);
+            return await _lecturerApplicationRepository.SaveChangesAsync();
+        }
+
+        public async Task<LecturerApplicationResponseDto?> GetApplicationByIdAsync(Guid applicationId)
+        {
+            var application = await _lecturerApplicationRepository.GetByIdAsync(applicationId);
+
+            if (application == null)
+                return null;
+
+            return new LecturerApplicationResponseDto
+            {
+                Cv = application.Cv ?? string.Empty,
+                Degree = application.Degree ?? string.Empty,
+                Title = application.Title ?? string.Empty,
+                Profession = application.Profession ?? string.Empty,
+                Description = application.Description,
+                Status = application.Status,
+                RejectReason = application.Reason,
+                CreatedAt = application.CreatedAt,
+                UpdatedAt = null
+            };
         }
     }
 }

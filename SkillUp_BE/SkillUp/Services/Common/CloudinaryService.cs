@@ -49,7 +49,6 @@ namespace SkillUp.Services.Common
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File is empty.");
 
-            // Basic PDF validation by content type or file extension
             var isPdf = string.Equals(file.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase)
                         || file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
 
@@ -57,19 +56,38 @@ namespace SkillUp.Services.Common
                 throw new ArgumentException("Only PDF files are allowed.");
 
             await using var stream = file.OpenReadStream();
+            // important: make sure stream position is at start
+            if (stream.CanSeek)
+                stream.Position = 0;
 
             var uploadParams = new RawUploadParams
             {
                 File = new FileDescription(file.FileName, stream),
-                Folder = folderName
+                Folder = folderName,
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true
             };
 
             var result = await _cloudinary.UploadAsync(uploadParams);
 
-            if (result.StatusCode == System.Net.HttpStatusCode.OK || result.StatusCode == System.Net.HttpStatusCode.Created)
-                return result.SecureUrl.ToString();
+            // extra sanity checks
+            if (result == null)
+                throw new Exception("Upload returned null result.");
+
+            if (result.StatusCode == System.Net.HttpStatusCode.OK ||
+                result.StatusCode == System.Net.HttpStatusCode.Created)
+            {
+                var pdfUrl = _cloudinary.Api.UrlImgUp
+                                 .ResourceType("raw")
+                                 .BuildUrl(result.PublicId + ".pdf");
+
+                return pdfUrl;
+            }
 
             throw new Exception($"Upload failed: {result.Error?.Message}");
         }
+
+
     }
 }
