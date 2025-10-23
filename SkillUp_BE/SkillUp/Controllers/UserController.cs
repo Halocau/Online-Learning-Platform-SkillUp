@@ -102,5 +102,53 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpPost("upload-avatar")]
+        public async Task<IActionResult> UploadAvatar([FromForm] IFormFile avatar)
+        {
+            try
+            {
+                var userId = _currentUserService.UserId;
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var avatarUrl = await _userService.UpdateAvatarAsync(userId.Value, avatar);
+
+                if (string.IsNullOrEmpty(avatarUrl))
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể cập nhật ảnh đại diện. Vui lòng kiểm tra định dạng hoặc dung lượng tệp.",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Cập nhật ảnh đại diện thành công",
+                    data = new List<object> { new { avatarUrl } }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+
+
     }
 }
