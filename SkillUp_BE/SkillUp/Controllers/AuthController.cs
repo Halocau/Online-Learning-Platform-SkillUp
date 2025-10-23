@@ -176,36 +176,6 @@ namespace SkillUp.Controllers
             }
         }
 
-        /// <summary>
-        /// Test endpoint để kiểm tra JWT token có còn hợp lệ không
-        /// </summary>
-        [HttpGet("test-token")]
-        [Authorize]
-        public IActionResult TestToken()
-        {
-            var userId = _currentUserService.UserId;
-            var email = _currentUserService.Email;
-            var fullname = _currentUserService.Fullname;
-            var roleId = _currentUserService.RoleId;
-
-            return Ok(new APIReturn
-            {
-                code = 200,
-                message = "Token hợp lệ",
-                data = new List<object>
-                {
-                    new
-                    {
-                        userId,
-                        email,
-                        fullname,
-                        roleId,
-                        timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-                    }
-                }
-            });
-        }
-
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {

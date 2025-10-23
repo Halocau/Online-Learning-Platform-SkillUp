@@ -22,9 +22,7 @@ namespace SkillUp.Controllers
             _currentUserService = currentUserService;
         }
 
-        /// <summary>
-        /// Apply CV for lecturer position (first time or reapply)
-        /// </summary>
+  
         [HttpPost("apply")]
         public async Task<IActionResult> ApplyCv([FromForm] ApplyCvRequestDto request)
         {
@@ -81,9 +79,7 @@ namespace SkillUp.Controllers
             }
         }
 
-        /// <summary>
-        /// Get all my applications
-        /// </summary>
+     
         [HttpGet("my-applications")]
         public async Task<IActionResult> GetMyApplications()
         {
@@ -120,9 +116,6 @@ namespace SkillUp.Controllers
             }
         }
 
-        /// <summary>
-        /// Update application by ID
-        /// </summary>
         [HttpPut("{applicationId}")]
         public async Task<IActionResult> UpdateApplication(Guid applicationId, [FromForm] UpdateCvRequestDto request)
         {
@@ -169,9 +162,7 @@ namespace SkillUp.Controllers
             }
         }
 
-        /// <summary>
-        /// Get application by ID
-        /// </summary>
+     
         [HttpGet("{applicationId}")]
         public async Task<IActionResult> GetApplicationById(Guid applicationId)
         {
