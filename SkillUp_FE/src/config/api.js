@@ -14,6 +14,13 @@ export const API_ENDPOINTS = {
 
     NEWS_CREATE: '/News/create-news',
     UPLOAD_IMAGE: '/upload/image',
+
+    // Ticket endpoints
+    ALL_TICKETS: '/Ticket/all-tickets',
+    MY_TICKETS: '/Ticket/my-tickets',
+    CREATE_TICKET: '/Ticket/create',
+    GET_TICKET: '/Ticket',
+    DETAIL_TICKET: '/Ticket/detail',
 };
 
 

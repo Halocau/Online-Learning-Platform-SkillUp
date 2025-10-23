@@ -13,6 +13,8 @@ import ContentModeratorRoutes from "./ContentModeratorRoutes";
 import SystemModeratorRoutes from "./SystemModeratorRoutes";
 import StudentRoutes from "./StudentRoutes";
 import CreatePost from "@/pages/forum/CreatePost";
+import TicketList from "@/pages/ticket/TicketList";
+import TicketDetail from "@/pages/ticket/TicketDetail";
 
 function AppRouter() {
   return (
@@ -32,11 +34,15 @@ function AppRouter() {
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
         <Route path="/student/*" element={<StudentRoutes />} />
 
+        {/* Ticket routes - accessible by all authenticated users */}
+        <Route path="/ticket" element={<TicketList />} />
+        <Route path="/ticket/:ticketCode" element={<TicketDetail />} />
+
         <Route path="*" element={<MainLayout />}>
           <Route index element={<Home />} />
         </Route>
 
-        <Route path="/forum" element={<CreatePost/>} />
+        <Route path="/forum" element={<CreatePost />} />
       </Routes>
     </>
   );

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdA Ticket Detail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Reset & Global --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7f8fc;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        /* --- Header / Navbar (GIỮ NGUYÊN) --- */
+        .header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .search-bar {
+            display: flex;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            overflow: hidden;
+            width: 300px;
+        }
+
+        .search-bar input {
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .search-bar button {
+            border: none;
+            background-color: #fdd835;
+            color: #333;
+            padding: 0 15px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            font-weight: 500;
+            color: #555;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #000;
+        }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-nav span {
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .user-avatar img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+        }
+
+        /* --- Main Content (BỐ CỤC TỔNG) --- */
+        .main-content {
+            display: block; 
+            max-width: 1300px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Tiêu đề "Support Ticket" */
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .support-ticket-info h2 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #222;
+            font-weight: 700;
+        }
+
+        .support-ticket-info p {
+            font-size: 1rem;
+            color: #777;
+        }
+        
+        .breadcrumb-link {
+            color: #555;
+            transition: color 0.3s;
+        }
+        .breadcrumb-link:hover {
+            color: #fbc02d;
+            text-decoration: underline;
+        }
+        
+        .btn-back {
+            background-color: #f1f3f5;
+            color: #333;
+            font-weight: 600;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background-color: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        /* Div mới bọc sidebar và content-right */
+        .ticket-layout-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+
+        /* --- Sidebar (GIỮ NGUYÊN STYLE) --- */
+        .sidebar {
+            flex-basis: 260px;
+            flex-shrink: 0;
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            height: fit-content;
+            border: 1px solid #eef0f4;
+        }
+
+        .sidebar h3 {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            color: #222;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            padding: 0;
+            margin-bottom: 30px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover:not(.active) {
+            background-color: #f5f7fa;
+            color: #222;
+            transform: translateX(3px);
+        }
+
+        .sidebar-menu a.active {
+            background-color: #fdd835;
+            color: #222;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(253, 216, 53, 0.3);
+        }
+        
+        .btn-create-ticket {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px;
+            background-color: #fdd835;
+            color: #333;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 10px;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            border: none;
+        }
+
+        .btn-create-ticket:hover {
+            background-color: #fbc02d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(253, 216, 53, 0.4);
+        }
+        
+        .btn-create-ticket span {
+            font-size: 1.2rem;
+        }
+
+        /* ======== GIAO DIỆN TICKET DETAIL (CSS MỚI) ======== */
+
+        .content-right {
+            flex-grow: 1;
+        }
+
+        /* Bố cục 2 cột cho phần detail */
+        .ticket-detail-layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        /* Cột chính bên trái (nội dung) */
+        .ticket-main-content {
+            flex-grow: 1;
+        }
+
+        /* Cột phụ bên phải (thông tin) */
+        .ticket-metadata-sidebar {
+            flex-basis: 320px; /* Rộng hơn sidebar chính */
+            flex-shrink: 0;
+        }
+
+        /* Thẻ hiển thị thông tin */
+        .metadata-card {
+            background: #fff;
+            border: 1px solid #eef0f4;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .metadata-card h4 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+        
+        .meta-label {
+            color: #777;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: #333;
+            text-align: right;
+        }
+
+        /* Huy hiệu trạng thái */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-processing { /* "Đang xử lý" */
+            background-color: #e0f0ff;
+            color: #007bff;
+        }
+        
+        .status-closed { /* "Đã đóng" */
+            background-color: #f1f3f5;
+            color: #555;
+        }
+
+        /* Nút Đóng Ticket */
+        .btn-close-ticket {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f1f3f5;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-close-ticket:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Thẻ hiển thị nội dung chat */
+        .ticket-card {
+            background: #fff;
+            border: 1px solid #eef0f4;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            overflow: hidden; /* Để bo góc card-header */
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #f7f9fa;
+            border-bottom: 1px solid #eef0f4;
+        }
+        
+        .card-header span:first-child {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-header .timestamp {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .card-body {
+            padding: 20px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #444;
+        }
+
+        /* Phân biệt phản hồi của support */
+        .support-response .card-header {
+            background-color: #fff9e0; /* Nền vàng nhạt */
+        }
+        
+        .support-response .card-header span:first-child {
+            color: #d4ac00; /* Chữ vàng đậm */
+        }
+
+        /* Tiêu đề cho các phản hồi */
+        .response-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        /* Hộp Gửi phản hồi mới */
+        .new-response-box {
+            background: #fff;
+            border: 1px solid #eef0f4;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            padding: 20px;
+        }
+
+        .new-response-box h4 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .new-response-box textarea {
+            width: 100%;
+            height: 120px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            resize: vertical;
+            margin-bottom: 15px;
+            outline-color: #fdd835;
+        }
+
+        .btn-submit-response {
+            padding: 12px 28px;
+            background-color: #fdd835;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-submit-response:hover {
+            background-color: #fbc02d;
+            box-shadow: 0 4px 15px rgba(253, 216, 53, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        /* --- Footer (GIỮ NGUYÊN) --- */
+        .footer {
+            background-color: #1a1a1a;
+            color: #ccc;
+            padding: 60px 0;
+            margin-top: 50px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .footer-logo .logo {
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .footer-logo p {
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .newsletter-form {
+            display: flex;
+            border-radius: 50px;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .newsletter-form input {
+            border: none;
+            background: none;
+            padding: 10px 15px;
+            color: #fff;
+            outline: none;
+            width: 100%;
+        }
+
+        .newsletter-form button {
+            border: none;
+            background-color: #fdd835;
+            color: #333;
+            padding: 0 15px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .footer-links h4 {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .footer-links ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <nav class="navbar">
+            <div class="logo">EdA</div>
+            
+            <div class="search-bar">
+                <input type="text" placeholder="What do you want to learn">
+                <button type="submit">➔</button>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">Dashboard</a></li>
+                <li><a href="#">My Courses</a></li>
+                <li><a href="#">Ticket</a></li>
+            </ul>
+            
+            <div class="user-nav">
+                <span class="cart-icon">🛒</span>
+                <span class="notification-icon">🔔</span>
+                <div class="user-avatar">
+                    <img src="https://via.placeholder.com/40" alt="User Avatar">
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+
+        <div class="content-header">
+            <div class="support-ticket-info">
+                <h2>Lỗi không thêm vào được giỏ hàng</h2>
+                <p>
+                    <a href="#" class="breadcrumb-link">My Tickets</a> / EDA-12345
+                </p> 
+            </div>
+            <a href="#" class="btn-back">❮ Quay lại</a>
+        </div>
+
+        <div class="ticket-layout-container">
+
+            <aside class="sidebar">
+                <h3>Ticket center</h3>
+                <nav class="sidebar-menu">
+                    <a href="#">Danh sách</a>
+                    <a href="#" class="active">My Tickets</a>
+                    <a href="#">Assigned to me</a>
+                    <a href="#">All ticket</a>
+                </nav>
+                <a href="#" class="btn-create-ticket"><span>➕</span> Tạo ticket</a>
+            </aside>
+
+            <div class="content-right">
+                
+                <div class="ticket-detail-layout">
+
+                    <div class="ticket-main-content">
+
+                        <div class="ticket-card user-post">
+                            <div class="card-header">
+                                <span>Bạn đã gửi</span>
+                                <span class="timestamp">23/10/2025 14:15</span>
+                            </div>
+                            <div class="card-body">
+                                <p>Chào đội ngũ EdA,
+                                <br><br>
+                                Tôi đang cố gắng mua khóa học "ReactJS Toàn Tập" nhưng khi bấm nút "Thêm vào giỏ hàng", trang web không có phản hồi gì cả. Tôi đã thử tải lại trang và xóa cache trình duyệt nhưng vẫn không được.
+                                <br><br>
+                                Vui lòng kiểm tra giúp tôi. Cảm ơn.</p>
+                            </div>
+                        </div>
+
+                        <h4 class="response-title">Phản hồi</h4>
+
+                        <div class="ticket-card support-response">
+                            <div class="card-header">
+                                <span>EdA Support</span>
+                                <span class="timestamp">23/10/2025 14:30</span>
+                            </div>
+                            <div class="card-body">
+                                <p>Chào bạn,
+                                <br><br>
+                                Cảm ơn bạn đã báo cáo. Đội ngũ kỹ thuật của chúng tôi đã ghi nhận và đang tiến hành kiểm tra. Lỗi này dường như chỉ ảnh hưởng đến một số tài khoản và chúng tôi sẽ khắc phục sớm nhất có thể.
+                                <br><br>
+                                Chúng tôi sẽ cập nhật ngay khi có thông tin mới. Xin lỗi vì sự bất tiện này!</p>
+                            </div>
+                        </div>
+
+                        <div class="new-response-box">
+                            <h4>Gửi phản hồi mới</h4>
+                            <textarea placeholder="Nhập nội dung trả lời của bạn..."></textarea>
+                            <button class="btn-submit-response">Gửi phản hồi</button>
+                        </div>
+
+                    </div>
+
+                    <div class="ticket-metadata-sidebar">
+                        <div class="metadata-card">
+                            <h4>Thông tin ticket</h4>
+                            
+                            <div class="meta-item">
+                                <span class="meta-label">Mã Ticket:</span>
+                                <span class="meta-value">EDA-12345</span>
+                            </div>
+                            
+                            <div class="meta-item">
+                                <span class="meta-label">Ngày tạo:</span>
+                                <span class="meta-value">23/10/2025</span>
+                            </div>
+
+                            <div class="meta-item">
+                                <span class="meta-label">Trạng thái:</span>
+                                <span class="meta-value">
+                                    <span class="status-badge status-processing">Đang xử lý</span>
+                                </span>
+                            </div>
+                            
+                            <button class="btn-close-ticket">Đóng Ticket này</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <div class="logo">EdA</div>
+                <p>Get started now try our product</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Enter your email here">
+                    <button type="submit">➔</button>
+                </form>
+            </div>
+            
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Courses</a></li>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-links">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help center</a></li>
+                    <li><a href="#">FAQs</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Report a Problem</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            © 2025 EdA. All rights reserved.
+        </div>
+    </footer>
+
+</body>
+</html>
