@@ -110,13 +110,8 @@ public partial class SkillUpContext : DbContext
     public virtual DbSet<VoucherType> VoucherTypes { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            var ConnectionString = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetConnectionString("DefaultConnection");
-            optionsBuilder.UseSqlServer(ConnectionString);
-        }
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=(local);Database=SkillUp;User Id=sa;Password=123;Encrypt=False");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -708,12 +703,10 @@ public partial class SkillUpContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.EndedAt).HasColumnType("datetime");
-            entity.Property(e => e.Endtime).HasColumnType("datetime");
             entity.Property(e => e.Score).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.StartedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Starttime).HasColumnType("datetime");
 
             entity.HasOne(d => d.Quiz).WithMany(p => p.QuizSubmissions)
                 .HasForeignKey(d => d.QuizId)
