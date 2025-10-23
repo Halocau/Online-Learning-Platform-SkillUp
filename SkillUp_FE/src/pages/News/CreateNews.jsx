@@ -26,7 +26,7 @@ const CreateNews = () => {
 
         // Test the token and get user info
         const response = await axiosInstance.get(API_ENDPOINTS.TEST_TOKEN);
-        
+
         if (response.data.code === 200) {
           const userData = response.data.data[0];
           if (!userData.email) {
@@ -95,9 +95,9 @@ const CreateNews = () => {
       console.log('Sending news data:', newsData); // For debugging
 
       const response = await axiosInstance.post(API_ENDPOINTS.NEWS_CREATE, newsData)
-      
+
       console.log('Server response:', response.data); // For debugging
-      
+
       if (response.data.code === 201) {
         message.success(response.data.message || "News created successfully!");
         setTitle("");
@@ -107,7 +107,7 @@ const CreateNews = () => {
       }
     } catch (error) {
       console.error('Error response:', error.response?.data); // For debugging
-      
+
       switch (error.response?.status) {
         case 400:
           message.error(error.response.data?.message || "Invalid input data");
@@ -155,51 +155,51 @@ const CreateNews = () => {
               size="large"
             />
           </div>
-          
+
           {/* TinyMCE Editor */}
           <div>
             <label className="text-sm font-medium mb-1 block">Contents</label>
           </div>
           <Editor
-      apiKey='tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i'
-      init={{
-        height: 500,
-        plugins: [
-          'anchor', 'autolink', 'charmap', 'codesample', 'emoticons',
-          'image', 'link', 'lists', 'media', 'searchreplace',
-          'table', 'visualblocks', 'wordcount', 'fullscreen'
-        ],
-        toolbar: 'undo redo | blocks | ' +
-          'bold italic underline strikethrough | alignleft aligncenter ' +
-          'alignright alignjustify | bullist numlist outdent indent | ' +
-          'removeformat | image media link | fullscreen',
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-        element_format: 'xhtml',
-        file_picker_types: 'image',
-        image_caption: true,
-        image_advtab: true,
-        automatic_uploads: true,
-        images_upload_handler: async function (blobInfo) {
-      try {
-        const formData = new FormData();
-        formData.append('image', blobInfo.blob(), blobInfo.filename());
+            apiKey='tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i'
+            init={{
+              height: 500,
+              plugins: [
+                'anchor', 'autolink', 'charmap', 'codesample', 'emoticons',
+                'image', 'link', 'lists', 'media', 'searchreplace',
+                'table', 'visualblocks', 'wordcount', 'fullscreen'
+              ],
+              toolbar: 'undo redo | blocks | ' +
+                'bold italic underline strikethrough | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | image media link | fullscreen',
+              content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+              element_format: 'xhtml',
+              file_picker_types: 'image',
+              image_caption: true,
+              image_advtab: true,
+              automatic_uploads: true,
+              images_upload_handler: async function (blobInfo) {
+                try {
+                  const formData = new FormData();
+                  formData.append('image', blobInfo.blob(), blobInfo.filename());
 
-        const response = await axiosInstance.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+                  const response = await axiosInstance.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                  });
 
-        // On success, return the URL of the uploaded image
-        return response.data.data[0].url;
+                  // On success, return the URL of the uploaded image
+                  return response.data.data[0].url;
 
-      } catch (err) {
-        // On failure, throw an error with a message
-        throw new Error('Image upload failed. Error: ' + err.message);
-      }
-    }
-      }}
-      value={contents}
-      onEditorChange={(newContent) => setContents(newContent)}
-    />
+                } catch (err) {
+                  // On failure, throw an error with a message
+                  throw new Error('Image upload failed. Error: ' + err.message);
+                }
+              }
+            }}
+            value={contents}
+            onEditorChange={(newContent) => setContents(newContent)}
+          />
 
           {/* Submit Button */}
           <Button

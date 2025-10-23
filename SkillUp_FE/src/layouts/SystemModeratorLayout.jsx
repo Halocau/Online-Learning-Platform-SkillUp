@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { FileText, MessageSquare, LogOut, Menu, X, Layout, LayoutDashboard } from "lucide-react";
+import { FileText, MessageSquare, LogOut, Menu, X, Layout, LayoutDashboard, TableOfContents } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SystemModeratorLayout() {
@@ -15,7 +15,8 @@ export default function SystemModeratorLayout() {
 
   const menuItems = [
     { label: "Dashboard", icon: <LayoutDashboard />, path: "/sysmod" },
-    { label: "Account Management", icon: <FileText />, path: "/sysmod" }
+    { label: "Account Management", icon: <FileText />, path: "/sysmod" },
+    { label: "Category Management", icon: <TableOfContents />, path: "/sysmod/category" },
   ];
 
   return (

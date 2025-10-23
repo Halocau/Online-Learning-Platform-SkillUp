@@ -6,7 +6,7 @@ import ProtectedRoute from "./ProtectedRoute";
 // Import moderator pages
 import ModDashboard from "../pages/contentmoderator/ModDashboard";
 import SystemModeratorLayout from "@/layouts/SystemModeratorLayout";
-
+import CategoryManage from "@/pages/systemModerator/CategoryManage";
 
 
 const SystemModeratorRoutes = () => {
@@ -21,6 +21,7 @@ const SystemModeratorRoutes = () => {
         }
       >
         <Route index element={<ModDashboard />} />
+        <Route path="category" element={<CategoryManage />} />
         
         // Routes chức năng khác
       </Route>

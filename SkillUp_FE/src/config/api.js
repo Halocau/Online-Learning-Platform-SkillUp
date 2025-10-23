@@ -14,6 +14,12 @@ export const API_ENDPOINTS = {
 
     NEWS_CREATE: '/News/create-news',
     UPLOAD_IMAGE: '/upload/image',
+
+    CATEGORY_LIST: '/Category/GetAll',
+    CATEGORY_CREATE: '/Category/Create',
+    CATEGORY_UPDATE: '/Category/Update',
+    CATEGORY_DELETE: '/Category/Delete',
+    CATEGORY_ID: '/Category/GetById/{id}',
 };
 
 
