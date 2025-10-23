@@ -40,6 +40,6 @@ namespace SkillUp.Services.Interfaces
 
         public Task<bool> ApplyCvAsync(ApplyCvRequestDto request);
 
-        Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request);
+        public Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request);
     }
 }
