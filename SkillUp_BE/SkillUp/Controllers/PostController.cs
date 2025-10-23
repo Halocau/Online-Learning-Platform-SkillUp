@@ -95,50 +95,80 @@ namespace SkillUp.Controllers
                 data = response
             });
         }
-    
-    //Get all pót
-    [HttpGet("view-all")]
-    public async Task<IActionResult> ViewAllPosts([FromQuery] bool includeInactive = false)
-    {
-        var query = _context.Posts
-            .Include(p => p.Account)
-            .Include(p => p.ForumCategory)
-            .Include(p => p.CommentPosts)
-            .Include(p => p.PostImages)
-            .AsQueryable();
 
-        // Chỉ lấy bài "Active" nếu không yêu cầu khác
-        if (!includeInactive)
-            query = query.Where(p => p.Status == "Active");
-
-        var posts = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
-
-        // Map sang DTO
-        var postDtos = posts.Select(p => new PostDto
+        [HttpGet("view-all")]
+        public async Task<IActionResult> ViewAllPosts()
         {
-            Id = p.Id,
-            AccountId = p.AccountId,
-            ForumCategoryId = p.ForumCategoryId,
-            Title = p.Title,
-            Contents = p.Contents,
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt,
-            Status = p.Status,
-            AccountName = p.Account.Email, // hoặc p.Account.FullName nếu có
-            ForumCategoryName = p.ForumCategory.Name,
-            CommentCount = p.CommentPosts.Count,
-            PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
-        }).ToList();
+            var posts = await _context.Posts
+                .Include(p => p.Account)
+                .Include(p => p.ForumCategory)
+                .Include(p => p.CommentPosts)
+                .Include(p => p.PostImages)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
 
-        return Ok(new
+            var postDtos = posts.Select(p => new PostDto
+            {
+                Id = p.Id,
+                AccountId = p.AccountId,
+                ForumCategoryId = p.ForumCategoryId,
+                Title = p.Title,
+                Contents = p.Contents,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                Status = p.Status,
+                AccountName = p.Account.Email, // hoặc Fullname
+                ForumCategoryName = p.ForumCategory.Name,
+                CommentCount = p.CommentPosts.Count,
+                PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
+            }).ToList();
+
+            return Ok(new
+            {
+                message = "Get all posts successfully",
+                total = postDtos.Count,
+                data = postDtos
+            });
+        }
+
+
+        // 2️⃣ Get only active posts
+        [HttpGet("view-active")]
+        public async Task<IActionResult> ViewActivePosts()
         {
-            message = "Get all posts successfully",
-            total = postDtos.Count,
-            data = postDtos
-        });
-    }
+            var posts = await _context.Posts
+                .Where(p => p.Status == "Active")
+                .Include(p => p.Account)
+                .Include(p => p.ForumCategory)
+                .Include(p => p.CommentPosts)
+                .Include(p => p.PostImages)
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            var postDtos = posts.Select(p => new PostDto
+            {
+                Id = p.Id,
+                AccountId = p.AccountId,
+                ForumCategoryId = p.ForumCategoryId,
+                Title = p.Title,
+                Contents = p.Contents,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                Status = p.Status,
+                AccountName = p.Account.Fullname,
+                ForumCategoryName = p.ForumCategory.Name,
+                CommentCount = p.CommentPosts.Count,
+                PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
+            }).ToList();
+
+            return Ok(new
+            {
+                message = "Get active posts successfully",
+                total = postDtos.Count,
+                data = postDtos
+            });
+        }
+
         // ✅ VIEW MY POSTS (lọc theo AccountId)
         [HttpGet("my-posts/{accountId}")]
         public async Task<IActionResult> ViewMyPosts(Guid accountId, [FromQuery] bool includeInactive = false)
