@@ -506,49 +506,6 @@ namespace SkillUp.Controllers
         }
 
 
-        [HttpPost("apply-cv")]
-        public async Task<IActionResult> ApplyCV([FromForm] ApplyCvRequestDto request)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(new APIReturn
-                    {
-                        code = 400,
-                        message = "Dữ liệu không hợp lệ",
-                        data = new List<object> { ModelState }
-                    });
-                }
-
-                var result = await _authService.ApplyCvAsync(request);
-
-                if (!result)
-                {
-                    return BadRequest(new APIReturn
-                    {
-                        code = 400,
-                        message = "Không thể nộp CV. Email không tồn tại, đã nộp CV trước đó, hoặc tài khoản không phải là giảng viên.",
-                        data = new List<object>()
-                    });
-                }
-
-                return Ok(new APIReturn
-                {
-                    code = 200,
-                    message = "Nộp CV thành công. Vui lòng chờ admin phê duyệt để kích hoạt tài khoản.",
-                    data = new List<object>()
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new APIReturn
-                {
-                    code = 500,
-                    message = $"Có lỗi xảy ra: {ex.Message}",
-                    data = new List<object>()
-                });
-            }
-        }
+        
     }
 }
