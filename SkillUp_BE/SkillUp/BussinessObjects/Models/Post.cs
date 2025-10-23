@@ -28,4 +28,6 @@ public partial class Post
     public virtual ForumCategory ForumCategory { get; set; } = null!;
 
     public virtual ICollection<PostImage> PostImages { get; set; } = new List<PostImage>();
+
+    public virtual ICollection<ReportPost> ReportPosts { get; set; } = new List<ReportPost>();
 }

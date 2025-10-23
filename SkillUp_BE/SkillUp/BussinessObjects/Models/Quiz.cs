@@ -21,6 +21,8 @@ public partial class Quiz
 
     public int? PassPercent { get; set; }
 
+    public int? Timer { get; set; }
+
     public virtual ICollection<QuestionQuiz> QuestionQuizzes { get; set; } = new List<QuestionQuiz>();
 
     public virtual ICollection<QuizSubmission> QuizSubmissions { get; set; } = new List<QuizSubmission>();

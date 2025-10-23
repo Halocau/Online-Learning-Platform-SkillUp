@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace SkillUp.BussinessObjects.Models;
 
-public partial class ReportCourse
+public partial class ReportPost
 {
     public Guid Id { get; set; }
 
-    public Guid CourseId { get; set; }
+    public Guid PostId { get; set; }
 
-    public Guid StudentId { get; set; }
+    public Guid AccountId { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
@@ -17,7 +17,7 @@ public partial class ReportCourse
 
     public string Status { get; set; } = null!;
 
-    public virtual Course Course { get; set; } = null!;
+    public virtual Account Account { get; set; } = null!;
 
-    public virtual Student Student { get; set; } = null!;
+    public virtual Post Post { get; set; } = null!;
 }

@@ -85,6 +85,8 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<ReportCourse> ReportCourses { get; set; }
 
+    public virtual DbSet<ReportPost> ReportPosts { get; set; }
+
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<RolePermission> RolePermissions { get; set; }
@@ -108,8 +110,13 @@ public partial class SkillUpContext : DbContext
     public virtual DbSet<VoucherType> VoucherTypes { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("server=(local);database=SkillUp;uid=sa;pwd=123;Encrypt=false");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            var ConnectionString = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build().GetConnectionString("DefaultConnection");
+            optionsBuilder.UseSqlServer(ConnectionString);
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -701,10 +708,12 @@ public partial class SkillUpContext : DbContext
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.EndedAt).HasColumnType("datetime");
+            entity.Property(e => e.Endtime).HasColumnType("datetime");
             entity.Property(e => e.Score).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.StartedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Starttime).HasColumnType("datetime");
 
             entity.HasOne(d => d.Quiz).WithMany(p => p.QuizSubmissions)
                 .HasForeignKey(d => d.QuizId)
@@ -760,6 +769,9 @@ public partial class SkillUpContext : DbContext
 
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(15)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Course).WithMany(p => p.ReportCourses)
                 .HasForeignKey(d => d.CourseId)
@@ -770,6 +782,27 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ReportCourse_Student1");
+        });
+
+        modelBuilder.Entity<ReportPost>(entity =>
+        {
+            entity.ToTable("ReportPost");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Status)
+                .HasMaxLength(15)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Account).WithMany(p => p.ReportPosts)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReportPost_Account");
+
+            entity.HasOne(d => d.Post).WithMany(p => p.ReportPosts)
+                .HasForeignKey(d => d.PostId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReportPost_Post");
         });
 
         modelBuilder.Entity<Role>(entity =>

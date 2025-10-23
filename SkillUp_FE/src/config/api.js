@@ -11,6 +11,9 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: '/auth/verify-email',
     RESEND_OTP: '/auth/resend-otp',
     TEST_TOKEN: '/auth/test-token',
+
+    NEWS_CREATE: '/News/create-news',
+    UPLOAD_IMAGE: '/upload/image',
 };
 
 
