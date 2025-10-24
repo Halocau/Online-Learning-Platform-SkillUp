@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { axiosInstance } from '@/config/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,10 +25,25 @@ function MyProfile() {
     newPassword: '',
     confirmNewPassword: ''
   });
+  
+  // Avatar upload states
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const fileInputRef = useRef(null);
   // Lấy thông tin profile khi component mount
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  // Cleanup preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Gọi API lấy profile
   const fetchProfile = async () => {
@@ -125,6 +140,88 @@ function MyProfile() {
     }
   };
 
+  // Xử lý chọn file avatar
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Vui lòng chọn file ảnh hợp lệ');
+        return;
+      }    
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Kích thước file không được vượt quá 5MB');
+        return;
+      } 
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      await handleUploadAvatar(file);
+    }
+  };
+
+  // Xử lý upload avatar
+  const handleUploadAvatar = async (file = selectedFile) => {
+    if (!file) {
+      toast.error('Vui lòng chọn ảnh để upload');
+      return;
+    }
+
+    try {
+      setAvatarLoading(true);
+      
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const response = await axiosInstance.post('/user/upload-avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      if (response.data.code === 200) {
+        toast.success('Cập nhật ảnh đại diện thành công!');
+        
+        const newAvatarUrl = response.data.data[0].avatarUrl;
+        setProfile(prev => ({
+          ...prev,
+          avatar: newAvatarUrl
+        }));
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    } catch (error) {
+      console.error('Upload avatar error:', error);
+      toast.error(error.response?.data?.message || 'Upload ảnh đại diện thất bại');
+      
+      // Reset states on error
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
+
+  // Xử lý click camera button
+  const handleCameraClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   // Loading state
   if (loading && !profile) {
     return (
@@ -153,7 +250,13 @@ function MyProfile() {
                 {/* Avatar */}
                 <div className="text-center">
                   <div className="relative inline-block">
-                    {profile?.avatar ? (
+                    {previewUrl ? (
+                      <img 
+                        src={previewUrl} 
+                        alt="Preview"
+                        className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl"
+                      />
+                    ) : profile?.avatar ? (
                       <img 
                         src={profile.avatar} 
                         alt={profile.fullname}
@@ -166,10 +269,32 @@ function MyProfile() {
                     )}
                     
                     {/* Camera Icon */}
-                    <button className="absolute bottom-2 right-2 bg-yellow-400 hover:bg-yellow-500 rounded-full p-2 shadow-lg transition-all">
+                    <button 
+                      onClick={handleCameraClick}
+                      className="absolute bottom-2 right-2 bg-yellow-400 hover:bg-yellow-500 rounded-full p-2 shadow-lg transition-all"
+                    >
                       <Camera className="w-4 h-4 text-white" />
                     </button>
+                    
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
                   </div>
+                  
+                  {/* Loading indicator */}
+                  {avatarLoading && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500"></div>
+                        Đang cập nhật ảnh đại diện...
+                      </div>
+                    </div>
+                  )}
                   
                   <h2 className="mt-4 text-xl font-bold text-gray-900">{profile?.fullname || 'User'}</h2>
                   <p className="text-sm text-gray-500 mt-1">{profile?.email || 'email@example.com'}</p>

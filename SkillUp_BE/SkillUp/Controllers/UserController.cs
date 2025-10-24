@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.User;
 using SkillUp.ExceptionHandling;
@@ -8,6 +9,7 @@ namespace SkillUp.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly ICurrentUserService _currentUserService;
@@ -103,7 +105,7 @@ namespace SkillUp.Controllers
             }
         }
         [HttpPost("upload-avatar")]
-        public async Task<IActionResult> UploadAvatar([FromForm] IFormFile avatar)
+        public async Task<IActionResult> UploadAvatar(IFormFile avatar)
         {
             try
             {
