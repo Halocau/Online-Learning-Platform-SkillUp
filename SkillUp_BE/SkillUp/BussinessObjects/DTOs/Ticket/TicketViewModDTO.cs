@@ -10,6 +10,8 @@
 
 		public string? Contents { get; set; }
 
+		public string? Response { get; set; }
+
 		public DateTime CreatedAt { get; set; }
 
 		public string? Status { get; set; }
