@@ -456,5 +456,56 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto changePasswordRequestDto)
+        {
+            try
+            {
+                var userId = _currentUserService.UserId;
+                if (!userId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy user",
+                        data = new List<object>()
+                    });
+                }
+                var result = await _authService.ChangePasswordAsync(userId.Value, changePasswordRequestDto);
+                if (!result)
+                {
+
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Mật khẩu cũ không chính xác",
+                        data = new List<object>()
+                    });
+                }
+
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Đổi mật khẩu thành công",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+
+        
     }
 }
