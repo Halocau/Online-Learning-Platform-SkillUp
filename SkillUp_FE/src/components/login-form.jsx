@@ -188,9 +188,9 @@ export function LoginForm({
             />
             <span className="text-sm">Ghi nhớ đăng nhập</span>
           </label>
-          <a href="#" className="text-sm text-red-500 hover:underline">
+          <Link to="/forgot-password" className="text-sm text-red-500 hover:underline">
             Quên mật khẩu?
-          </a>
+          </Link>
         </div>
 
         {/* Login Button */}

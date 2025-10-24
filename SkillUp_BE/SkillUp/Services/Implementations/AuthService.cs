@@ -449,7 +449,7 @@ namespace SkillUp.Services.Implementations
             await _refreshTokenRepository.RevokeAllUserTokensAsync(account.Id);
 
             // Lưu các thay đổi
-            return !await _accountRepository.SaveChangesAsync();
+            return await _accountRepository.SaveChangesAsync();
 
         }
 
