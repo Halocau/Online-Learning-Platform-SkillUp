@@ -92,7 +92,7 @@ function ResetPassword() {
       }
     } catch (error) {
       console.error('Reset password error:', error);
-      
+      console.log('Error response:', error.response);
       // Kiểm tra nếu response có status 200 nhưng bị lỗi parse hoặc logic
       if (error.response?.status === 200) {
         setSuccess(true);

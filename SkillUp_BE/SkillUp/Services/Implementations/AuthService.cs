@@ -1,4 +1,5 @@
 using Google.Apis.Auth;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
@@ -380,7 +381,7 @@ namespace SkillUp.Services.Implementations
 
             // Tạo reset token với prefix RPW_ để phân biệt với token xác thực email
             var tokenBytes = RandomNumberGenerator.GetBytes(32);
-            var resetToken = "RPW_" + Convert.ToBase64String(tokenBytes);
+            var resetToken = "RPW_" + WebEncoders.Base64UrlEncode(tokenBytes);
             var tokenExpiry = DateTime.Now.AddHours(1); // Token có hiệu lực 1 giờ
 
             // Lưu OTP reset password
