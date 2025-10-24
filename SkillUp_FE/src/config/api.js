@@ -18,7 +18,7 @@ export const API_ENDPOINTS = {
     // Ticket endpoints
     ALL_TICKETS: '/Ticket/all-tickets',
     MY_TICKETS: '/Ticket/my-tickets',
-    CREATE_TICKET: '/Ticket/create',
+    CREATE_TICKET: '/Ticket/create-ticket',
     GET_TICKET: '/Ticket',
     DETAIL_TICKET: '/Ticket/detail',
 };

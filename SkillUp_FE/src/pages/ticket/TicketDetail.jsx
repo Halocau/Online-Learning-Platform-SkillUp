@@ -4,6 +4,8 @@ import Header from '@/components/Layout/Header';
 import Footer from '@/components/Layout/Footer';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
+import CreateTicketModal from '../../components/Ticket/CreateTicketModal';
+
 
 function TicketDetail() {
     const { ticketCode } = useParams();
@@ -12,6 +14,8 @@ function TicketDetail() {
     const [loading, setLoading] = useState(true);
     const [replyMessage, setReplyMessage] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
 
     const fetchTicketDetail = useCallback(async () => {
         try {
@@ -34,6 +38,12 @@ function TicketDetail() {
         fetchTicketDetail();
     }, [fetchTicketDetail]);
 
+    const handleCreateSuccess = () => {
+        setIsModalOpen(false);
+        toast.success('Tạo ticket mới thành công!');
+        navigate('/ticket');
+    };
+
     const handleReply = async (e) => {
         e.preventDefault();
         if (!replyMessage.trim()) {
@@ -43,14 +53,13 @@ function TicketDetail() {
 
         try {
             setSubmitting(true);
-            // Giả sử có API để reply ticket
             await axiosInstance.post(`${API_ENDPOINTS.GET_TICKET}/${ticketCode}/reply`, {
                 message: replyMessage
             });
 
             toast.success('Đã gửi phản hồi thành công');
             setReplyMessage('');
-            fetchTicketDetail(); // Reload để lấy reply mới
+            fetchTicketDetail();
         } catch (error) {
             console.error('Error sending reply:', error);
             toast.error('Không thể gửi phản hồi');
@@ -71,11 +80,10 @@ function TicketDetail() {
         });
     };
 
-    // Hàm getStatusBadge từ code của bạn
     const getStatusBadge = (status) => {
         const statusConfig = {
             'Open': { color: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Mới', icon: '🆕' },
-            'InProgress': { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Đang xử lý', icon: '⏳' },
+            'Pending': { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Đang xử lý', icon: '⏳' },
             'Resolved': { color: 'bg-green-100 text-green-700 border-green-200', label: 'Đã giải quyết', icon: '✅' },
             'Closed': { color: 'bg-gray-100 text-gray-700 border-gray-200', label: 'Đã đóng', icon: '🔒' }
         };
@@ -88,7 +96,6 @@ function TicketDetail() {
         );
     };
 
-    // Hàm getPriorityBadge từ code của bạn
     const getPriorityBadge = (priority) => {
         const priorityConfig = {
             'Low': { color: 'bg-gray-100 text-gray-700', label: 'Thấp' },
@@ -104,7 +111,6 @@ function TicketDetail() {
         );
     };
 
-    // Loading State
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col bg-gray-50">
@@ -120,7 +126,6 @@ function TicketDetail() {
         );
     }
 
-    // Not Found State
     if (!ticket) {
         return (
             <div className="min-h-screen flex flex-col bg-gray-50">
@@ -143,14 +148,11 @@ function TicketDetail() {
         );
     }
 
-    // GIAO DIỆN CHÍNH (ĐÃ THAY THẾ)
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Header />
 
-            {/* ======== MAIN CONTENT (GIAO DIỆN MỚI) ======== */}
             <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-
                 {/* Tiêu đề và nút quay lại */}
                 <div className="flex justify-between items-center mb-6">
                     <div>
@@ -174,10 +176,8 @@ function TicketDetail() {
                     </button>
                 </div>
 
-                {/* Div bọc layout 3 cột */}
                 <div className="flex flex-col lg:flex-row lg:gap-8">
 
-                    {/* CỘT 1: SIDEBAR TĨNH (Nav) */}
                     <aside className="lg:w-64 flex-shrink-0 mb-6 lg:mb-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-8">
                             <h3 className="text-xl font-bold text-gray-900 mb-6">Ticket center</h3>
@@ -195,29 +195,27 @@ function TicketDetail() {
                                     All ticket
                                 </a>
                             </nav>
-                            <button className="mt-8 w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all shadow-sm">
+                            <button
+                                onClick={() => setIsModalOpen(true)}
+                                className="mt-8 w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all shadow-sm">
                                 <span>➕</span> Tạo ticket
                             </button>
                         </div>
                     </aside>
 
-                    {/* CỘT 2 & 3: NỘI DUNG CHÍNH */}
                     <div className="flex-grow">
                         <div className="flex flex-col-reverse lg:flex-row lg:gap-8">
 
-                            {/* Cột chính (Trái) - Nội dung & Phản hồi */}
                             <div className="flex-grow space-y-6">
 
-                                {/* Nội dung ticket gốc */}
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                                     <div className="bg-gray-50 px-5 py-4 border-b border-gray-200 flex justify-between items-center">
-                                        <span className="font-semibold text-gray-800">{ticket.createdBy || 'Bạn'} đã gửi</span>
+                                        <span className="font-semibold text-gray-800">{ticket.accountName || 'Bạn'} đã gửi</span>
                                         <span className="text-sm text-gray-500">{formatDateTime(ticket.createdAt)}</span>
                                     </div>
                                     <div className="p-5 text-gray-700 whitespace-pre-wrap">
-                                        {ticket.description}
+                                        {ticket.contents}
                                     </div>
-                                    {/* Tệp đính kèm */}
                                     {ticket.attachments && ticket.attachments.length > 0 && (
                                         <div className="border-t border-gray-200 p-5">
                                             <h3 className="text-sm font-semibold text-gray-700 mb-2">Tệp đính kèm</h3>
@@ -239,10 +237,8 @@ function TicketDetail() {
                                     )}
                                 </div>
 
-                                {/* Tiêu đề Phản hồi */}
                                 <h4 className="text-xl font-bold text-gray-900">Phản hồi</h4>
 
-                                {/* Danh sách Phản hồi */}
                                 {ticket.replies && ticket.replies.length > 0 ? (
                                     <div className="space-y-4">
                                         {ticket.replies.map((reply, index) => (
@@ -271,7 +267,6 @@ function TicketDetail() {
                                     </div>
                                 )}
 
-                                {/* Hộp Gửi phản hồi mới */}
                                 {ticket.status !== 'Closed' && (
                                     <form onSubmit={handleReply} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                                         <h4 className="text-lg font-semibold text-gray-900 mb-3">Gửi phản hồi mới</h4>
@@ -296,7 +291,6 @@ function TicketDetail() {
                                 )}
                             </div>
 
-                            {/* Cột phụ (Phải) - Thông tin ticket */}
                             <div className="lg:w-80 flex-shrink-0 mb-6 lg:mb-0">
                                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-8">
                                     <h4 className="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Thông tin ticket</h4>
@@ -338,7 +332,6 @@ function TicketDetail() {
                                             {getStatusBadge(ticket.status)}
                                         </div>
 
-                                        {/* Nút Đóng Ticket (bạn có thể thêm logic sau) */}
                                         <button className="w-full mt-4 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg transition-all">
                                             Đóng Ticket này
                                         </button>
@@ -352,6 +345,12 @@ function TicketDetail() {
             </main>
 
             <Footer />
+
+            <CreateTicketModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={handleCreateSuccess}
+            />
         </div>
     );
 }
