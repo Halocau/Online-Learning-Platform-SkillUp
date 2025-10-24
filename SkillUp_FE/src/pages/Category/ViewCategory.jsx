@@ -8,7 +8,7 @@ function ViewCategory() {
     const navigate = useNavigate();
 
     //fetch data
-    useEffect(() => {
+    
         const fetchCategories = async () => {
             try {
                 const response = await axiosInstance.get(API_ENDPOINTS.CATEGORY_LIST);
@@ -17,8 +17,10 @@ function ViewCategory() {
                 console.error(error);
             }
         };
-        fetchCategories();
-    }, []);
+        
+        useEffect(() => {
+            fetchCategories();
+        }, []);
 
     //load data to table
     const columns = [
@@ -39,8 +41,21 @@ function ViewCategory() {
         console.log("Edit:", item);
     };
 
-    const handleDelete = (id) => {
-        console.log("Delete:", id);
+    const handleDelete = async (id) => {
+        const isConfirmed = confirm(`Delete category with ID: ${id}?`);
+
+        if (!isConfirmed) return; // stop if user cancels
+
+        try {
+            //call delete API
+            const response = await axiosInstance.delete(API_ENDPOINTS.CATEGORY_DELETE.replace("{id}", id));
+            console.log("Delete success:", response.data);
+
+            //update UI after deletion
+            fetchCategories();
+        } catch (error) {
+            console.error("Error deleting category:", error);
+        }
     };
 
     return (

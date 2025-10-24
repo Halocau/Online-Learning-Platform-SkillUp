@@ -24,22 +24,12 @@ const CreateNews = () => {
           return;
         }
 
-        // Test the token and get user info
-        const response = await axiosInstance.get(API_ENDPOINTS.TEST_TOKEN);
-
-        if (response.data.code === 200) {
-          const userData = response.data.data[0];
-          if (!userData.email) {
-            message.error('User session is invalid. Please sign in again.');
-            localStorage.removeItem('accessToken');
-            navigate('/login');
-            return;
-          }
-          setUserVerified(true);
-        } else {
-          message.error('Failed to verify user session');
-          navigate('/login');
+        const user = JSON.parse(localStorage.getItem('user'));
+        if(user.roleId != 3) {
+          message.error("You don't have permission to create news");
+          navigate('/');
         }
+        setUserVerified(true);
       } catch (error) {
         console.error('Session verification error:', error);
         if (error.response?.status === 401) {
@@ -89,7 +79,7 @@ const CreateNews = () => {
 
       const newsData = {
         title: title.trim(),
-        contents: contents.trim()
+        contents: contents
       };
 
       console.log('Sending news data:', newsData); // For debugging

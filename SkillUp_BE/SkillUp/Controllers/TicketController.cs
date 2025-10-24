@@ -188,6 +188,7 @@ namespace SkillUp.Controllers
 					Contents = ticket.Contents,
 					AccountName = ticket.Account != null ? ticket.Account.Fullname : "N/A",
 					CreatedAt = ticket.CreatedAt,
+					Response = ticket.Response,
 					Status = ticket.Status
 				};
 				return Ok(new APIReturn

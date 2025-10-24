@@ -18,7 +18,7 @@ export const API_ENDPOINTS = {
     CATEGORY_LIST: '/Category/GetAll',
     CATEGORY_CREATE: '/Category/Create',
     CATEGORY_UPDATE: '/Category/Update',
-    CATEGORY_DELETE: '/Category/Delete',
+    CATEGORY_DELETE: '/Category/Delete/{id}',
     CATEGORY_ID: '/Category/GetById/{id}',
 };
 
