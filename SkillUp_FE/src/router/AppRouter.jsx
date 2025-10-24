@@ -13,6 +13,8 @@ import ContentModeratorRoutes from "./ContentModeratorRoutes";
 import SystemModeratorRoutes from "./SystemModeratorRoutes";
 import StudentRoutes from "./StudentRoutes";
 import ForumRoutes from "./ForumRoute";
+import NewsList from "@/pages/News/NewsList";
+import NewsDetail from "@/pages/News/NewsDetail";
 
 function AppRouter() {
   return (
@@ -26,6 +28,9 @@ function AppRouter() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="/forum/*" element={<ForumRoutes />} />
+          
+          <Route path="/news" element={<NewsList />} />
+        <Route path="/news/:id" element={<NewsDetail />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />

@@ -97,8 +97,8 @@ function Header() {
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             
             {/* Business Link - Hidden on small screens */}
-            <Link to="/forum" className="hidden md:block text-gray-700 hover:text-[#FFD54F] font-medium transition-colors text-sm">
-              Forum
+            <Link to="/news" className="hidden md:block text-gray-700 hover:text-[#FFD54F] font-medium transition-colors text-sm">
+              Tin tức
             </Link>
             
             {/* Teach Link - Hidden on mobile */}
