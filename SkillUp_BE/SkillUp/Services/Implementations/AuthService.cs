@@ -181,11 +181,11 @@ namespace SkillUp.Services.Implementations
 
             await _otpRepository.AddAsync(otp);
 
-            if (!await _accountRepository.SaveChangesAsync())
-            {
-                return false;
-            }
-
+            // if (!await _accountRepository.SaveChangesAsync())
+            // {
+            //     return false;
+            // }
+            await _accountRepository.SaveChangesAsync();
             await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, request.Fullname);
             return true;
         }
