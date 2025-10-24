@@ -13,6 +13,8 @@ public partial class AnswerBank
 
     public bool IsCorrect { get; set; }
 
+    public bool IsActive { get; set; }
+
     public virtual QuestionBank QuestionBank { get; set; } = null!;
 
     public virtual ICollection<QuizAnswerSubmission> QuizAnswerSubmissions { get; set; } = new List<QuizAnswerSubmission>();
