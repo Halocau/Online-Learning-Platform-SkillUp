@@ -31,6 +31,7 @@ namespace SkillUp.Services.Implementations
                 Gender = user.Gender,
                 Dob = user.Dob,
                 Avatar = user.Avatar,
+                Role = user.Role?.Name ?? "Unknown",
                 Description = user.Description,
                 CreatedAt = user.CreatedAt
             };

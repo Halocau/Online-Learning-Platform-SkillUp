@@ -15,7 +15,7 @@ namespace SkillUp.Repositories.Implementations
 
         public async Task<Account?> GetByIdAsync(Guid id)
         {
-            return await _context.Accounts
+            return await _context.Accounts.Include(a => a.Role)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 

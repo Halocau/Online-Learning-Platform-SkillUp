@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState , useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo_skillup.png';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
@@ -7,12 +7,40 @@ import { toast } from 'react-toastify';
 function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  
-  // Kiểm tra authentication và lấy user info
-  const accessToken = localStorage.getItem('accessToken');
-  const isAuthenticated = accessToken !== null;
-  const user = isAuthenticated ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+
+  const accessToken = localStorage.getItem("accessToken");
+  const isAuthenticated = !!accessToken;
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        if (!accessToken) return;
+
+        const cachedUser = localStorage.getItem("user");
+        if (cachedUser) {
+          setUser(JSON.parse(cachedUser));
+        }
+
+        const res = await axiosInstance.get("/User/View-Profile");
+        const userData = res.data.data[0];
+
+        const updatedUser = {
+          ...userData,
+          role: userData.role || JSON.parse(cachedUser || "{}").role || "Student",
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      } catch (err) {
+        console.error("Không thể lấy thông tin người dùng:", err);
+      }
+    };
+
+    fetchProfile();
+  }, [accessToken]);
+ null;
   
   const handleLogout = async () => {
     try {
@@ -26,7 +54,7 @@ function Header() {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
-      
+      setUser(null);
       setShowDropdown(false);
       toast.success('Đăng xuất thành công!');
       navigate('/');

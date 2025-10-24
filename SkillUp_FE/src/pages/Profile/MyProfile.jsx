@@ -195,6 +195,7 @@ function MyProfile() {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
+        window.location.reload();
       }
     } catch (error) {
       console.error('Upload avatar error:', error);
