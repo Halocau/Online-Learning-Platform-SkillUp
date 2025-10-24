@@ -89,9 +89,23 @@ export default function NewsManage() {
       title: "Content",
       render: (value) => (
         <div
-          className="max-w-[200px] truncate text-gray-600"
-          dangerouslySetInnerHTML={{ __html: value }}
-        />
+          className="max-w-[400px] text-gray-600 overflow-hidden"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "100px 1fr",
+            gap: "12px",
+            alignItems: "center",
+          }}
+        >
+          <div
+            dangerouslySetInnerHTML={{
+              __html: value.replace(
+                /<img[^>]+src="([^">]+)".*?>/,
+                '<img src="$1" style="width:100px; height:70px; object-fit:cover; border-radius:8px;"/>'
+              ),
+            }}
+          />
+        </div>
       ),
     },
   ];
