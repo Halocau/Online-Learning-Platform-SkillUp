@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SkillUp.BussinessObjects.Models;
-using SkillUp.BussinessObjects.Dtos;
-using System.Linq;
+using SkillUp.BussinessObjects.DTOs;
+using SkillUp.Services.Interfaces;
 using System.Threading.Tasks;
 
 namespace SkillUp.Controllers
@@ -11,138 +9,51 @@ namespace SkillUp.Controllers
     [ApiController]
     public class SubCategoryController : ControllerBase
     {
-        private readonly SkillUpContext _context;
+        private readonly ISubCategoryService _subCategoryService;
 
-        public SubCategoryController(SkillUpContext context)
+        public SubCategoryController(ISubCategoryService subCategoryService)
         {
-            _context = context;
+            _subCategoryService = subCategoryService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllSubCategories()
+        public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var subCategories = await _context.SubCategories
-                    .Include(sc => sc.Category)
-                    .Select(sc => new
-                    {
-                        sc.Id,
-                        sc.Name,
-                        sc.CategoryId,
-                        CategoryName = sc.Category != null ? sc.Category.Name : null,
-                        sc.IsActive
-                    })
-                    .ToListAsync();
-
-                return Ok(subCategories);
-            }
-            catch (System.Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    message = "Lỗi khi lấy danh sách SubCategory",
-                    error = ex.Message
-                });
-            }
+            var result = await _subCategoryService.GetAllAsync();
+            return Ok(result);
         }
 
-       
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetSubCategoryById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var subCategory = await _context.SubCategories
-                .Include(sc => sc.Category)
-                .Where(sc => sc.Id == id)
-                .Select(sc => new
-                {
-                    sc.Id,
-                    sc.Name,
-                    sc.CategoryId,
-                    CategoryName = sc.Category != null ? sc.Category.Name : null,
-                    sc.IsActive
-                })
-                .FirstOrDefaultAsync();
+            var result = await _subCategoryService.GetByIdAsync(id);
+            if (result == null)
+                return NotFound(new { message = "Không tìm thấy SubCategory." });
 
-            if (subCategory == null)
-                return NotFound();
-
-            return Ok(subCategory);
+            return Ok(result);
         }
 
-     
         [HttpPost]
-        public async Task<IActionResult> CreateSubCategory([FromBody] SubCategoryDto subCategoryDto)
+        public async Task<IActionResult> Create([FromBody] SubCategoryDto dto)
         {
-            if (subCategoryDto == null)
-                return BadRequest("Dữ liệu không được để trống.");
-
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == subCategoryDto.CategoryId);
-            if (!categoryExists)
-                return BadRequest("CategoryId không hợp lệ.");
-
-            var newSubCategory = new SubCategory
-            {
-                Name = subCategoryDto.Name,
-                CategoryId = subCategoryDto.CategoryId,
-                IsActive = true
-            };
-
-            _context.SubCategories.Add(newSubCategory);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetSubCategoryById), new { id = newSubCategory.Id }, newSubCategory);
+            var created = await _subCategoryService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // ✅ Cập nhật
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateSubCategory(int id, [FromBody] SubCategoryDto subCategoryDto)
+        public async Task<IActionResult> Update(int id, [FromBody] SubCategoryDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var existingSubCategory = await _context.SubCategories.FindAsync(id);
-            if (existingSubCategory == null)
-                return NotFound();
-
-            existingSubCategory.Name = subCategoryDto.Name;
-            existingSubCategory.CategoryId = subCategoryDto.CategoryId;
-            existingSubCategory.IsActive = subCategoryDto.IsActive;
-
-            _context.Entry(existingSubCategory).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.SubCategories.Any(e => e.Id == id))
-                    return NotFound();
-                else
-                    throw;
-            }
-
-            return NoContent();
+            var success = await _subCategoryService.UpdateAsync(id, dto);
+            if (!success) return NotFound(new { message = "Không tìm thấy SubCategory để cập nhật." });
+            return Ok(new { message = "Cập nhật thành công." });
         }
 
-        // ✅ Xóa mềm: chỉ chuyển IsActive = false
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSubCategory(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var subCategory = await _context.SubCategories.FindAsync(id);
-            if (subCategory == null)
-                return NotFound();
-
-            if (!subCategory.IsActive)
-                return BadRequest("SubCategory này đã bị vô hiệu hóa trước đó.");
-
-            subCategory.IsActive = false;
-
-            _context.Entry(subCategory).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Đã vô hiệu hóa SubCategory thành công." });
+            var success = await _subCategoryService.DeleteAsync(id);
+            if (!success) return NotFound(new { message = "Không tìm thấy SubCategory để xóa." });
+            return Ok(new { message = "Đã vô hiệu hóa SubCategory." });
         }
     }
 }
