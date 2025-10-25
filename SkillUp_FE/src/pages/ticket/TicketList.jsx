@@ -29,7 +29,7 @@ function TicketList() {
         let params = {};
 
         if (activeTab === 'my') {
-          const user = JSON.parse(localStorage.getItem('user'));
+          const user = JSON.parse(localStorage.getItem('token'));
           if (user && user.userId) {
             endpoint = `/Ticket/account-tickets/${user.userId}`;
           } else {
@@ -67,12 +67,20 @@ function TicketList() {
     setDisplayedTickets(ticketsForPage);
   }, [currentPage, allTickets]);
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = (newTicket) => {
     setIsModalOpen(false);
-    setActiveTab('my');
+    // Không ép sang tab "my" -> tránh case thiếu userId
     setRefetchTrigger(prev => prev + 1);
+    // (khuyến khích) cập nhật lạc quan để thấy ngay trên UI
+    if (newTicket) {
+      setAllTickets(prev => {
+        const next = [newTicket, ...prev];
+        setTotalPages(Math.ceil(next.length / PAGE_SIZE) || 1);
+        setCurrentPage(1);
+        return next;
+      });
+    }
   };
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -107,7 +115,7 @@ function TicketList() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col pb-24 bg-gray-50">
       <Header />
 
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">

@@ -1,83 +1,94 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Modal, Input, Button, Form, Typography, Space, Tooltip } from 'antd';
+import { Modal, Input, Button, Form, Typography, Space, Tag, Tooltip } from 'antd';
 import { toast } from 'react-toastify';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 
 const { TextArea } = Input;
 const { Text } = Typography;
 
-export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
+/**
+ * UpdateTicketModal
+ * Props:
+ *  - isOpen: boolean
+ *  - onClose: () => void
+ *  - ticket: { ticketCode, title, contents, status? }
+ *  - onSuccess: () => void
+ */
+export default function UpdateTicketModal({ isOpen, onClose, ticket, onSuccess }) {
     const [submitting, setSubmitting] = useState(false);
     const [form] = Form.useForm();
 
-    // Reset form khi mở/đóng
+    // preset dữ liệu vào Form khi mở modal
     useEffect(() => {
         if (isOpen) {
-            form.setFieldsValue({ title: '', contents: '' });
-            setSubmitting(false);
+            form.setFieldsValue({
+                title: ticket?.title || '',
+                contents: ticket?.contents || '',
+            });
         } else {
             form.resetFields();
             setSubmitting(false);
         }
-    }, [isOpen, form]);
+    }, [isOpen, ticket, form]);
 
+    const doRequest = useCallback(async (values) => {
+        if (!ticket?.ticketCode) {
+            toast.error('Không có mã ticket.');
+            return;
+        }
+        try {
+            setSubmitting(true);
+            const fd = new FormData();
+            fd.append('Code', ticket.ticketCode);
+            fd.append('Title', values.title.trim());
+            fd.append('Contents', values.contents.trim());
 
-    // GIỮ NGUYÊN logic gọi API: POST -> API_ENDPOINTS.CREATE_TICKET (multipart/form-data)
-    const doRequest = useCallback(
-        async (values) => {
-            try {
-                setSubmitting(true);
-                const fd = new FormData();
-                fd.append('Title', values.title.trim());
-                fd.append('Contents', values.contents.trim());
+            const url = API_ENDPOINTS?.UPDATE_TICKET || '/api/Ticket/update-ticket';
+            const res = await axiosInstance.put(url, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
 
-                const res = await axiosInstance.post(API_ENDPOINTS.CREATE_TICKET, fd, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
-
-                if (res?.data?.code === 200) {
-                    // (tuỳ BE, nếu trả về item mới có thể lấy ở res.data.data?.[0])
-                    toast.success('Tạo ticket thành công!');
-                    onClose?.();
-                    onSuccess?.();
-                } else {
-                    toast.error(res?.data?.message || 'Không thể tạo ticket.');
-                }
-            } catch (err) {
-                const msg =
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    'Có lỗi xảy ra khi tạo ticket.';
-                toast.error(msg);
-            } finally {
-                setSubmitting(false);
+            if (res?.data?.code === 200) {
+                toast.success('Cập nhật ticket thành công!');
+                onClose?.();
+                onSuccess?.();
+            } else {
+                toast.error(res?.data?.message || 'Cập nhật thất bại.');
             }
-        },
-        [onClose, onSuccess]
-    );
+        } catch (err) {
+            console.error(err);
+            toast.error('Có lỗi khi cập nhật ticket.');
+        } finally {
+            setSubmitting(false);
+        }
+    }, [ticket, onClose, onSuccess]);
 
     const handleSubmit = useCallback(async () => {
         try {
             const values = await form.validateFields();
             await doRequest(values);
         } catch (err) {
-            // nếu là lỗi validate (antd), không toast
+            // Nếu là lỗi validate của antd, err.errorFields tồn tại -> không toast
             if (!err?.errorFields) {
-                // eslint-disable-next-line no-console
                 console.error(err);
-                toast.error('Có lỗi xảy ra khi tạo ticket.');
+                toast.error('Có lỗi khi cập nhật ticket.');
             }
         }
     }, [form, doRequest]);
 
-    // Hotkey Ctrl/Cmd + Enter
+    // Hotkey Ctrl/Cmd + Enter (global khi modal mở)
     useEffect(() => {
         if (!isOpen) return;
 
         const handler = (e) => {
-            if (e.isComposing) return;
+            if (e.isComposing) return; // gõ tiếng Việt/IME
             const isHotkey = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
             if (!isHotkey || submitting) return;
+
+            // Nếu muốn chỉ khi focus nằm trong modal:
+            const wrap = document.querySelector('.ant-modal-wrap');
+            if (wrap && !wrap.contains(document.activeElement)) return;
+
             e.preventDefault();
             handleSubmit();
         };
@@ -89,7 +100,7 @@ export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
     const TitleLabel = (
         <Space size={6}>
             <span>Title</span>
-            <Tooltip title="Tiêu đề ngắn gọn, nêu rõ vấn đề hoặc yêu cầu.">
+            <Tooltip title="Tiêu đề ngắn gọn, rõ nội dung cần cập nhật">
                 <span className="text-gray-400 cursor-help">ⓘ</span>
             </Tooltip>
         </Space>
@@ -98,7 +109,7 @@ export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
     const ContentsLabel = (
         <Space size={6}>
             <span>Contents</span>
-            <Tooltip title="Mô tả chi tiết bối cảnh, bước tái hiện, ảnh hưởng,…">
+            <Tooltip title="Mô tả chi tiết thay đổi. Bạn có thể xuống dòng thoải mái.">
                 <span className="text-gray-400 cursor-help">ⓘ</span>
             </Tooltip>
         </Space>
@@ -106,7 +117,21 @@ export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
 
     return (
         <Modal
-            title={<span className="font-semibold">Tạo ticket</span>}
+            title={
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                        <span className="font-semibold">Cập nhật ticket</span>
+                        {ticket?.ticketCode && (
+                            <span className="text-xs text-gray-500">Mã: #{ticket.ticketCode}</span>
+                        )}
+                    </div>
+                    {ticket?.status && (
+                        <Tag color="gold" className="border border-yellow-300">
+                            {ticket.status}
+                        </Tag>
+                    )}
+                </div>
+            }
             open={isOpen}
             onCancel={() => !submitting && onClose?.()}
             destroyOnClose
@@ -117,31 +142,36 @@ export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
             footer={
                 <div className="flex items-center justify-between w-full">
                     <Text type="secondary" className="text-xs">
-                        Mẹo: nhấn <kbd>Ctrl</kbd>+<kbd>Enter</kbd> để gửi nhanh
+                        Mẹo: nhấn <kbd>Ctrl</kbd>+<kbd>Enter</kbd> để lưu nhanh
                     </Text>
                     <Space>
                         <Button onClick={onClose} disabled={submitting}>
                             Hủy
                         </Button>
                         <Button type="primary" onClick={handleSubmit} loading={submitting}>
-                            Tạo ticket
+                            Lưu thay đổi
                         </Button>
                     </Space>
                 </div>
             }
         >
-            <Form form={form} layout="vertical" requiredMark={false} autoComplete="off">
+            <Form
+                form={form}
+                layout="vertical"
+                requiredMark={false}
+                autoComplete="off"
+            >
                 <Form.Item
                     label={TitleLabel}
                     name="title"
                     rules={[
-                        { required: true, message: 'Vui lòng nhập tiêu đề' },
+                        { required: true, message: 'Vui lòng nhập Title' },
                         { max: 200, message: 'Tối đa 200 ký tự' },
                     ]}
                     extra={<Text type="secondary">Tiêu đề ngắn gọn, ≤ 200 ký tự.</Text>}
                 >
                     <Input
-                        placeholder="VD: Không đăng nhập được"
+                        placeholder="Nhập tiêu đề"
                         maxLength={200}
                         showCount
                         allowClear
@@ -153,14 +183,14 @@ export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
                     label={ContentsLabel}
                     name="contents"
                     rules={[
-                        { required: true, message: 'Vui lòng nhập nội dung' },
+                        { required: true, message: 'Vui lòng nhập Contents' },
                         { min: 10, message: 'Nội dung nên ≥ 10 ký tự' },
                         { max: 4000, message: 'Tối đa 4000 ký tự' },
                     ]}
                     extra={<Text type="secondary">Bạn có thể xuống dòng; nội dung sẽ giữ format khi hiển thị.</Text>}
                 >
                     <TextArea
-                        placeholder="Mô tả chi tiết vấn đề bạn gặp phải…"
+                        placeholder="Nhập nội dung cập nhật"
                         autoSize={{ minRows: 8, maxRows: 24 }}
                         allowClear
                         showCount

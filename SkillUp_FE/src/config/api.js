@@ -21,6 +21,9 @@ export const API_ENDPOINTS = {
     CREATE_TICKET: '/Ticket/create-ticket',
     GET_TICKET: '/Ticket',
     DETAIL_TICKET: '/Ticket/detail',
+    UPDATE_TICKET: '/Ticket/update-ticket',
+
+    // Category endpoints
     CATEGORY_LIST: '/Category/GetAll',
     CATEGORY_CREATE: '/Category/Create',
     CATEGORY_UPDATE: '/Category/Update',
