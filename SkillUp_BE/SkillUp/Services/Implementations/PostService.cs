@@ -17,6 +17,7 @@ namespace SkillUp.Services.Implementations
             _cloudinaryService = cloudinaryService;
         }
 
+        // 🟢 Tạo bài viết mới
         public async Task<object> CreatePostAsync(PostCreateRequest request, Guid accountId)
         {
             var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
@@ -67,6 +68,7 @@ namespace SkillUp.Services.Implementations
             };
         }
 
+        // 🔵 Lấy tất cả bài viết (cả active & inactive)
         public async Task<object> ViewAllPostsAsync()
         {
             var posts = await _context.Posts
@@ -92,6 +94,7 @@ namespace SkillUp.Services.Implementations
             return new { total = data.Count(), data };
         }
 
+        // 🟢 Lấy tất cả bài viết đang active
         public async Task<object> ViewActivePostsAsync()
         {
             var posts = await _context.Posts
@@ -115,6 +118,7 @@ namespace SkillUp.Services.Implementations
             return new { total = data.Count(), data };
         }
 
+        // 🟣 Lấy bài viết của 1 user
         public async Task<object> ViewUserPostsAsync(Guid accountId, bool includeInactive)
         {
             var query = _context.Posts
@@ -138,6 +142,66 @@ namespace SkillUp.Services.Implementations
             });
 
             return new { total = data.Count(), data };
+        }
+
+        // ✏️ Chỉnh sửa bài viết
+        public async Task<object> EditPostAsync(Guid postId, PostEditRequest request, Guid accountId)
+        {
+            var post = await _context.Posts
+                .Include(p => p.PostImages)
+                .FirstOrDefaultAsync(p => p.Id == postId && p.AccountId == accountId);
+
+            if (post == null)
+                throw new Exception("Post not found or unauthorized.");
+
+            post.Title = request.Title;
+            post.Contents = request.Contents;
+            post.UpdatedAt = DateTime.UtcNow;
+
+            if (request.Images != null && request.Images.Any())
+            {
+                foreach (var image in request.Images)
+                {
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(image, "skillup/posts");
+                    _context.PostImages.Add(new PostImage
+                    {
+                        Id = Guid.NewGuid(),
+                        PostId = post.Id,
+                        ImageUrl = imageUrl
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new
+            {
+                post.Id,
+                post.Title,
+                post.Contents,
+                post.UpdatedAt,
+                post.Status
+            };
+        }
+
+        // ❌ Xóa bài viết (soft delete)
+        public async Task<object> DeletePostAsync(Guid postId, Guid accountId)
+        {
+            var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId && p.AccountId == accountId);
+            if (post == null)
+                throw new Exception("Post not found or unauthorized.");
+
+            post.Status = "Inactive";
+            post.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return new
+            {
+                post.Id,
+                post.Title,
+                post.Status
+            };
         }
     }
 }
