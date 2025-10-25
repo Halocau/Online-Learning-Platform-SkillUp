@@ -25,10 +25,10 @@ const CreateNews = () => {
         }
 
         const user = JSON.parse(localStorage.getItem('user'));
-        if(user.roleId != 3) {
-          message.error("You don't have permission to create news");
-          navigate('/');
-        }
+        // if(user.roleId != 3) {
+        //   message.error("You don't have permission to create news");
+        //   navigate('/');
+        // }
         setUserVerified(true);
       } catch (error) {
         console.error('Session verification error:', error);
