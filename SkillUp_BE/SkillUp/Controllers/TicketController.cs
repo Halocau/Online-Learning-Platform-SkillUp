@@ -269,7 +269,7 @@ namespace SkillUp.Controllers
 				Ticket ticket = new Ticket
 				{
 					Id = existingTicket.Id,
-					Title = existingTicket.Title,
+					Title = ticketUpdateDTO.Title,
 					Contents = ticketUpdateDTO.Contents,
 					CreatedAt = DateTime.Now
 				};
