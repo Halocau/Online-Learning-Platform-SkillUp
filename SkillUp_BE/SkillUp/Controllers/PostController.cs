@@ -17,59 +17,45 @@ namespace SkillUp.Controllers
             _postService = postService;
         }
 
+        private Guid GetUserId()
+        {
+            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) throw new Exception("User ID not found in token");
+            return Guid.Parse(userId);
+        }
+
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreatePost([FromForm] PostCreateRequest request)
         {
-            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized("User ID not found in token");
+            var result = await _postService.CreatePostAsync(request, GetUserId());
+            return Ok(result);
+        }
 
-            if (!Guid.TryParse(userId, out Guid accountId))
-                return BadRequest("Invalid user ID format");
+        [Authorize]
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> UpdatePost(Guid id, [FromForm] PostUpdateRequest request)
+        {
+            var result = await _postService.UpdatePostAsync(id, request, GetUserId());
+            return Ok(result);
+        }
 
-            var result = await _postService.CreatePostAsync(request, accountId);
-            return Ok(new { message = "Post created successfully", data = result });
+        [Authorize]
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeletePost(Guid id)
+        {
+            var result = await _postService.DeletePostAsync(id, GetUserId());
+            return Ok(result);
         }
 
         [HttpGet("view-all")]
-        public async Task<IActionResult> ViewAll() =>
-            Ok(await _postService.ViewAllPostsAsync());
+        public async Task<IActionResult> ViewAll() => Ok(await _postService.ViewAllPostsAsync());
 
         [HttpGet("view-active")]
-        public async Task<IActionResult> ViewActive() =>
-            Ok(await _postService.ViewActivePostsAsync());
+        public async Task<IActionResult> ViewActive() => Ok(await _postService.ViewActivePostsAsync());
 
         [HttpGet("user/{accountId}")]
-        public async Task<IActionResult> ViewUser(Guid accountId, [FromQuery] bool includeInactive = false) =>
-            Ok(await _postService.ViewUserPostsAsync(accountId, includeInactive));
-
-        // 🟢 Edit post
-        [Authorize]
-        [HttpPut("edit/{postId}")]
-        public async Task<IActionResult> EditPost(Guid postId, [FromForm] PostEditRequest request)
-        {
-            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized("User ID not found in token");
-
-            var accountId = Guid.Parse(userId);
-            var result = await _postService.EditPostAsync(postId, request, accountId);
-            return Ok(new { message = "Post updated successfully", data = result });
-        }
-
-        // 🔴 Delete post (chuyển status thành inactive)
-        [Authorize]
-        [HttpDelete("delete/{postId}")]
-        public async Task<IActionResult> DeletePost(Guid postId)
-        {
-            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized("User ID not found in token");
-
-            var accountId = Guid.Parse(userId);
-            var result = await _postService.DeletePostAsync(postId, accountId);
-            return Ok(new { message = "Post deleted successfully", data = result });
-        }
+        public async Task<IActionResult> ViewUser(Guid accountId, [FromQuery] bool includeInactive = false)
+            => Ok(await _postService.ViewUserPostsAsync(accountId, includeInactive));
     }
 }

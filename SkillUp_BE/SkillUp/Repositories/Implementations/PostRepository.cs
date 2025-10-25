@@ -1,5 +1,4 @@
-﻿// Repositories/Implementations/PostRepository.cs
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 
@@ -8,13 +7,26 @@ namespace SkillUp.Repositories.Implementations
     public class PostRepository : IPostRepository
     {
         private readonly SkillUpContext _context;
-        public PostRepository(SkillUpContext context) => _context = context;
-
-        public async Task<Post> CreateAsync(Post post)
+        public PostRepository(SkillUpContext context)
         {
-            _context.Posts.Add(post);
-            await _context.SaveChangesAsync();
-            return post;
+            _context = context;
+        }
+
+        public async Task<Post?> GetByIdAsync(Guid id)
+        {
+            return await _context.Posts
+                .Include(p => p.Account)
+                .Include(p => p.ForumCategory)
+                .Include(p => p.PostImages)
+                .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task AddAsync(Post post) => await _context.Posts.AddAsync(post);
+
+        public async Task UpdateAsync(Post post)
+        {
+            _context.Posts.Update(post);
+            await Task.CompletedTask;
         }
 
         public async Task<List<Post>> GetAllAsync()
@@ -24,7 +36,6 @@ namespace SkillUp.Repositories.Implementations
                 .Include(p => p.ForumCategory)
                 .Include(p => p.CommentPosts)
                 .Include(p => p.PostImages)
-                .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
 
@@ -34,32 +45,22 @@ namespace SkillUp.Repositories.Implementations
                 .Where(p => p.Status == "Active")
                 .Include(p => p.Account)
                 .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
                 .Include(p => p.PostImages)
-                .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<List<Post>> GetByAccountIdAsync(Guid accountId, bool includeInactive)
+        public async Task<List<Post>> GetByUserIdAsync(Guid accountId, bool includeInactive)
         {
-            var query = _context.Posts
-                .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
-                .Include(p => p.PostImages)
-                .Where(p => p.AccountId == accountId);
-
+            var query = _context.Posts.Where(p => p.AccountId == accountId);
             if (!includeInactive)
                 query = query.Where(p => p.Status == "Active");
 
-            return await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
-        }
-
-        public async Task<Post?> GetByIdAsync(Guid id)
-        {
-            return await _context.Posts
+            return await query
                 .Include(p => p.ForumCategory)
                 .Include(p => p.PostImages)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .ToListAsync();
         }
+
+        public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }

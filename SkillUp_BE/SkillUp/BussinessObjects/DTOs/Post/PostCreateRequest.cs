@@ -1,18 +1,37 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿//using Microsoft.AspNetCore.Http;
 
-using System.Text.Json.Serialization;
+//using System.Text.Json.Serialization;
+
+//namespace SkillUp.BussinessObjects.DTOs.Post
+//{
+//    public class PostCreateRequest
+//    {
+
+//        [JsonIgnore]
+//        public Guid AccountId { get; set; }
+
+//        public int ForumCategoryId { get; set; }
+//        public string Title { get; set; } = null!;
+//        public string Contents { get; set; } = null!;
+//        public List<IFormFile>? Images { get; set; }
+//    }
+//}
+using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace SkillUp.BussinessObjects.DTOs.Post
 {
     public class PostCreateRequest
     {
-        
-        [JsonIgnore]
-        public Guid AccountId { get; set; }
-
+        [Required]
         public int ForumCategoryId { get; set; }
+
+        [Required]
         public string Title { get; set; } = null!;
+
+        [Required]
         public string Contents { get; set; } = null!;
+
         public List<IFormFile>? Images { get; set; }
     }
 }
