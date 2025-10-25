@@ -1,5 +1,4 @@
 ﻿using SkillUp.BussinessObjects.DTOs.Post;
-using System.Threading.Tasks;
 
 namespace SkillUp.Services.Interfaces
 {
@@ -9,5 +8,7 @@ namespace SkillUp.Services.Interfaces
         Task<object> ViewAllPostsAsync();
         Task<object> ViewActivePostsAsync();
         Task<object> ViewUserPostsAsync(Guid accountId, bool includeInactive);
+        Task<object> EditPostAsync(Guid postId, PostEditRequest request, Guid accountId);
+        Task<object> DeletePostAsync(Guid postId, Guid accountId);
     }
 }

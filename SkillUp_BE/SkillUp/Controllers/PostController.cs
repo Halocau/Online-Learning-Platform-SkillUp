@@ -43,5 +43,33 @@ namespace SkillUp.Controllers
         [HttpGet("user/{accountId}")]
         public async Task<IActionResult> ViewUser(Guid accountId, [FromQuery] bool includeInactive = false) =>
             Ok(await _postService.ViewUserPostsAsync(accountId, includeInactive));
+
+        // 🟢 Edit post
+        [Authorize]
+        [HttpPut("edit/{postId}")]
+        public async Task<IActionResult> EditPost(Guid postId, [FromForm] PostEditRequest request)
+        {
+            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("User ID not found in token");
+
+            var accountId = Guid.Parse(userId);
+            var result = await _postService.EditPostAsync(postId, request, accountId);
+            return Ok(new { message = "Post updated successfully", data = result });
+        }
+
+        // 🔴 Delete post (chuyển status thành inactive)
+        [Authorize]
+        [HttpDelete("delete/{postId}")]
+        public async Task<IActionResult> DeletePost(Guid postId)
+        {
+            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized("User ID not found in token");
+
+            var accountId = Guid.Parse(userId);
+            var result = await _postService.DeletePostAsync(postId, accountId);
+            return Ok(new { message = "Post deleted successfully", data = result });
+        }
     }
 }
