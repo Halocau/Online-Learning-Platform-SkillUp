@@ -14,14 +14,12 @@ namespace SkillUp.Repositories.Implementations
 		}
 		public async Task <IEnumerable<News>> GetAllNews()
 		{
-			return await _context.News
-				.Include(n => n.NewsImages).ToListAsync();
+			return await _context.News.ToListAsync();
 		}
 
 		public async Task<News> GetNewsById(Guid id)
 		{
-			return await _context.News
-				.Include(n => n.NewsImages).FirstOrDefaultAsync(n => n.Id == id);
+			return await _context.News.FirstOrDefaultAsync(n => n.Id == id);
 		}
 
 		public async Task<News> CreateNews(News news)
@@ -32,28 +30,13 @@ namespace SkillUp.Repositories.Implementations
 		}
 		public async Task<News> UpdateNews(News news)
 		{
-			var existingNews = await _context.News
-				.Include(n => n.NewsImages).FirstOrDefaultAsync(n => n.Id == news.Id);
-			if (existingNews == null)
-			{
-				return null;
-			}
-			existingNews.Title = news.Title;
-			existingNews.Contents = news.Contents;
-			_context.NewsImages.RemoveRange(existingNews.NewsImages);
-			existingNews.NewsImages = news.NewsImages;
+			_context.News.Update(news);
 			await _context.SaveChangesAsync();
-			return existingNews;
+			return news;
 		}
 
-		public async Task<News> DeleteNews(Guid id)
+		public async Task<News> DeleteNews(News news)
 		{
-			var news = await _context.News.Include(n => n.NewsImages).FirstOrDefaultAsync(n => n.Id == id);
-			if (news == null)
-			{
-				return null;
-			}
-			_context.NewsImages.RemoveRange(news.NewsImages);
 			_context.News.Remove(news);
 			await _context.SaveChangesAsync();
 			return news;

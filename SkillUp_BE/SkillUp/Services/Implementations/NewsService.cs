@@ -27,12 +27,26 @@ namespace SkillUp.Services.Implementations
 
 		public async Task<News> UpdateNews(News news)
 		{
-			return await _newsRepository.UpdateNews(news);
+			var existingNews =  await _newsRepository.GetNewsById(news.Id);
+			if (existingNews == null)
+			{
+				return null;
+			}
+			existingNews.Title = news.Title;
+			existingNews.Contents = news.Contents;
+			existingNews.Date = news.Date;
+
+			return await _newsRepository.UpdateNews(existingNews);
 		}
 
 		public async Task<News> DeleteNews(Guid id)
 		{
-			return await _newsRepository.DeleteNews(id);
+			var existingNews = await _newsRepository.GetNewsById(id);
+			if (existingNews == null)
+			{
+				return null;
+			}
+			return await _newsRepository.DeleteNews(existingNews);
 
 		}
 	}
