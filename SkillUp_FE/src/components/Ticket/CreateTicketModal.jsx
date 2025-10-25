@@ -120,10 +120,10 @@ export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
                         Mẹo: nhấn <kbd>Ctrl</kbd>+<kbd>Enter</kbd> để gửi nhanh
                     </Text>
                     <Space>
-                        <Button onClick={onClose} disabled={submitting}>
+                        <Button onClick={onClose} disabled={submitting} >
                             Hủy
                         </Button>
-                        <Button type="primary" onClick={handleSubmit} loading={submitting}>
+                        <Button type="primary" onClick={handleSubmit} loading={submitting} >
                             Tạo ticket
                         </Button>
                     </Space>
