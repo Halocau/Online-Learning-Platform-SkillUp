@@ -11,7 +11,6 @@ function TicketDetail() {
     const { ticketCode } = useParams();
     const navigate = useNavigate();
 
-
     const canUpdate = (status) => !['Accepted', 'Rejected'].includes(status || '');
 
     const [ticket, setTicket] = useState(null);
@@ -64,17 +63,26 @@ function TicketDetail() {
         });
     };
 
+    // Badge trạng thái theo yêu cầu
     const getStatusBadge = (status) => {
-        const statusConfig = {
-            Accepted: { color: 'bg-blue-100 text-blue-700 border-green-200', label: 'Đã giải quyết', icon: '✅' },
-            Pending: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Đang xử lý', icon: '⏳' },
-            Rejected: { color: 'bg-green-100 text-green-700 border-red-200', label: 'Đã từ chối', icon: '❌' },
+        const statusColors = {
+            Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+            Accepted: 'bg-green-100 text-green-700 border-green-200',
+            Rejected: 'bg-red-100 text-red-700 border-red-200',
         };
-        const cfg = statusConfig[status] || statusConfig.Open;
+        const statusLabels = {
+            Pending: 'Đang xử lý',
+            Accepted: 'Đã giải quyết',
+            Rejected: 'Bị từ chối',
+        };
+        const color = statusColors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+        const label = statusLabels[status] || (status || 'Không rõ');
+        const icon = status === 'Pending' ? '⏳' : status === 'Accepted' ? '✅' : status === 'Rejected' ? '❌' : 'ℹ️';
+
         return (
-            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${cfg.color}`}>
-                <span>{cfg.icon}</span>
-                {cfg.label}
+            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${color}`}>
+                <span>{icon}</span>
+                {label}
             </span>
         );
     };
@@ -139,7 +147,7 @@ function TicketDetail() {
                 <div className="mb-6">
                     <nav className="text-sm text-gray-500 mb-2">
                         <button onClick={() => navigate('/ticket')} className="hover:text-gray-700 hover:underline">
-                            My Tickets
+                            Danh sách ticket
                         </button>
                         <span className="mx-2">/</span>
                         <span className="text-gray-800 font-medium">#{ticket.ticketCode}</span>
@@ -162,30 +170,37 @@ function TicketDetail() {
                     {/* Sidebar trái: Ticket center */}
                     <aside className="lg:w-64 flex-shrink-0 mb-6 lg:mb-0">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
-                            <h3 className="text-base font-semibold text-gray-900 mb-4">Ticket center</h3>
-                            <nav className="space-y-1">
-                                <button type="button" className="w-full text-left px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900">
-                                    Danh sách
+                            <h3 className="text-base font-semibold text-gray-900 mb-4">Trung tâm ticket</h3>
+
+                            {/* === Ticket center: 3 mục VN, điều hướng theo ?tab === */}
+                            <nav className="space-y-2 mb-6">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/ticket?tab=all')}
+                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                >
+                                    Tất cả ticket
                                 </button>
                                 <button
                                     type="button"
-                                    className="w-full text-left px-4 py-2.5 rounded-lg bg-yellow-400 text-gray-900 font-semibold shadow-sm"
-                                    aria-current="page"
+                                    onClick={() => navigate('/ticket?tab=approved')}
+                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                                 >
-                                    My Tickets
+                                    Ticket đã duyệt
                                 </button>
-                                <button type="button" className="w-full text-left px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900">
-                                    Assigned to me
-                                </button>
-                                <button type="button" className="w-full text-left px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900">
-                                    All ticket
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/ticket?tab=rejected')}
+                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                >
+                                    Ticket bị từ chối
                                 </button>
                             </nav>
 
-                            {/* giữ nút tạo ticket tại đây */}
+                            {/* Nút tạo ticket */}
                             <button
                                 onClick={() => setIsModalOpen(true)}
-                                className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold shadow-sm"
+                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold shadow-sm"
                             >
                                 <span>➕</span> Tạo ticket
                             </button>
