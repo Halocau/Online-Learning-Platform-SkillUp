@@ -2,7 +2,7 @@
 
 namespace SkillUp.BussinessObjects.DTOs.Course
 {
-    public class CreateCourseDto
+    public class CreateUpdateCourseDto
     {
         [Required]
         public string Title { get; set; }

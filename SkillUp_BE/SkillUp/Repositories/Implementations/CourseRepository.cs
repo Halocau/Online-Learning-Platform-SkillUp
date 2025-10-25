@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 
 namespace SkillUp.Repositories.Implementations
@@ -16,9 +17,20 @@ namespace SkillUp.Repositories.Implementations
             await _context.AddAsync(course);
         }
 
+        public async Task<Course?> GetCourseByIdAsync(Guid courseId)
+        {
+            return await _context.Courses.FirstOrDefaultAsync(c  => c.Id == courseId);
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
            return await _context.SaveChangesAsync() > 0;
         }
+
+        public void UpdateCourse(Course course)
+        {
+            _context.Update(course);
+        }
+
     }
 }

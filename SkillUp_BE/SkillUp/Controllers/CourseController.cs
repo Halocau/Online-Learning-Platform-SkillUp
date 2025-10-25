@@ -21,7 +21,7 @@ namespace SkillUp.Controllers
         [HttpPost("Add-Course")]
         [Consumes("multipart/form-data")]
         [Authorize]
-        public async Task<IActionResult> CreateDraftCourse([FromForm] CreateCourseDto request)
+        public async Task<IActionResult> CreateDraftCourse([FromForm] CreateUpdateCourseDto request)
         {
             try
             {
@@ -91,5 +91,57 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpPut("Update-Course/{courseId}")]
+        [Consumes("multipart/form-data")]
+        [Authorize]
+        public async Task<IActionResult> UpdateCourse(Guid courseId, [FromForm] CreateUpdateCourseDto request)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var result = await _courseService.UpdateCourseAsync(request, courseId , accountId.Value);
+                if (result == null)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể cập nhật khoá học.",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Cập nhật khoá học thành công",
+                    data = new List<object> { result }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
     }
 }
