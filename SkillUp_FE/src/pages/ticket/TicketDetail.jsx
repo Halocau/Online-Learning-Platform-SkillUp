@@ -11,6 +11,9 @@ function TicketDetail() {
     const { ticketCode } = useParams();
     const navigate = useNavigate();
 
+
+    const canUpdate = (status) => !['Accepted', 'Rejected'].includes(status || '');
+
     const [ticket, setTicket] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,10 +66,9 @@ function TicketDetail() {
 
     const getStatusBadge = (status) => {
         const statusConfig = {
-            Open: { color: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Mới', icon: '🆕' },
+            Accepted: { color: 'bg-blue-100 text-blue-700 border-green-200', label: 'Đã giải quyết', icon: '✅' },
             Pending: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Đang xử lý', icon: '⏳' },
-            Resolved: { color: 'bg-green-100 text-green-700 border-green-200', label: 'Đã giải quyết', icon: '✅' },
-            Closed: { color: 'bg-gray-100 text-gray-700 border-gray-200', label: 'Đã đóng', icon: '🔒' },
+            Rejected: { color: 'bg-green-100 text-green-700 border-red-200', label: 'Đã từ chối', icon: '❌' },
         };
         const cfg = statusConfig[status] || statusConfig.Open;
         return (
@@ -274,13 +276,14 @@ function TicketDetail() {
                                         </div>
                                     </dl>
 
-                                    {/* NÚT Ở ĐÚNG VỊ TRÍ CŨ: thay "Đóng Ticket này" => "Cập nhật ticket" */}
-                                    <button
-                                        className="w-full mt-5 px-4 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors"
-                                        onClick={() => setIsUpdateOpen(true)}
-                                    >
-                                        Cập nhật ticket
-                                    </button>
+                                    {canUpdate(ticket.status) && (
+                                        <button
+                                            className="w-full mt-5 px-4 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors"
+                                            onClick={() => setIsUpdateOpen(true)}
+                                        >
+                                            Cập nhật ticket
+                                        </button>
+                                    )}
                                 </div>
                             </aside>
                         </div>
@@ -299,7 +302,7 @@ function TicketDetail() {
 
             {/* Update */}
             <UpdateTicketModal
-                isOpen={isUpdateOpen}
+                isOpen={isUpdateOpen && canUpdate(ticket.status)}
                 onClose={() => setIsUpdateOpen(false)}
                 onSuccess={handleUpdateSuccess}
                 ticket={ticket}
