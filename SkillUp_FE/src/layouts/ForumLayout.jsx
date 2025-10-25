@@ -9,8 +9,7 @@ export default function ForumLayout() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Forum</h1>
-          
+          <h1 className="text-2xl font-bold">Diễn đàn</h1>
         </div>
 
         <div className="grid grid-cols-12 gap-6">
@@ -23,14 +22,14 @@ export default function ForumLayout() {
               />
             </div>
             <nav className="space-y-3 text-sm text-gray-700">
-              <Link to="/forum" className="block">Posts</Link>
+              <Link to="/forum" className="block">Bài đăng</Link>
               <a className="block">Tags</a>
-              <a className="block">Ranking</a>
+              <a className="block">Xếp hạng</a>
 
               <div className="mt-6 text-xs text-gray-400">PERSONAL NAVIGATOR</div>
-              <Link to="/forum" className="block">Your posts</Link>
-              <a className="block">Your answers</a>
-              <a className="block">Your likes & votes</a>
+              <Link to="/forum" className="block">Bài đăng của tôi</Link>
+              <a className="block">Bài đã lưu</a>
+              <a className="block">Đã thích</a>
             </nav>
           </aside>
 

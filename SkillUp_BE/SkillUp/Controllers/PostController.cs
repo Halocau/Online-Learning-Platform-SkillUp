@@ -221,55 +221,89 @@ namespace SkillUp.Controllers
         }
 
 
-    //View post list user
-    [HttpGet("user/{accountId}")]
-    public async Task<IActionResult> ViewUserPosts(Guid accountId, [FromQuery] bool includeInactive = false)
-    {
-        // Kiểm tra người dùng có tồn tại không
-        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
-        if (account == null)
-            return NotFound(new { message = "User not found" });
-
-        // Lấy danh sách bài viết của user này
-        var query = _context.Posts
-            .Include(p => p.ForumCategory)
-            .Include(p => p.CommentPosts)
-            .Include(p => p.PostImages)
-            .Where(p => p.AccountId == accountId)
-            .AsQueryable();
-
-        // Chỉ lấy post Active nếu không có includeInactive
-        if (!includeInactive)
-            query = query.Where(p => p.Status == "Active");
-
-        // Sắp xếp bài viết theo thời gian đăng mới nhất
-        var posts = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
-
-        // Map sang DTO
-        var postDtos = posts.Select(p => new PostDto
+        //View post list user
+        [HttpGet("user/{accountId}")]
+        public async Task<IActionResult> ViewUserPosts(Guid accountId, [FromQuery] bool includeInactive = false)
         {
-            Id = p.Id,
-            AccountId = p.AccountId,
-            ForumCategoryId = p.ForumCategoryId,
-            Title = p.Title,
-            Contents = p.Contents,
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt,
-            Status = p.Status,
-            AccountName = account.Email, // hoặc account.FullName nếu có
-            ForumCategoryName = p.ForumCategory.Name,
-            CommentCount = p.CommentPosts.Count,
-            PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
-        }).ToList();
+            // Kiểm tra người dùng có tồn tại không
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
+            if (account == null)
+                return NotFound(new { message = "User not found" });
 
-        return Ok(new
+            // Lấy danh sách bài viết của user này
+            var query = _context.Posts
+                .Include(p => p.ForumCategory)
+                .Include(p => p.CommentPosts)
+                .Include(p => p.PostImages)
+                .Where(p => p.AccountId == accountId)
+                .AsQueryable();
+
+            // Chỉ lấy post Active nếu không có includeInactive
+            if (!includeInactive)
+                query = query.Where(p => p.Status == "Active");
+
+            // Sắp xếp bài viết theo thời gian đăng mới nhất
+            var posts = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+
+            // Map sang DTO
+            var postDtos = posts.Select(p => new PostDto
+            {
+                Id = p.Id,
+                AccountId = p.AccountId,
+                ForumCategoryId = p.ForumCategoryId,
+                Title = p.Title,
+                Contents = p.Contents,
+                CreatedAt = p.CreatedAt,
+                UpdatedAt = p.UpdatedAt,
+                Status = p.Status,
+                AccountName = account.Email, // hoặc account.FullName nếu có
+                ForumCategoryName = p.ForumCategory.Name,
+                CommentCount = p.CommentPosts.Count,
+                PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
+            }).ToList();
+
+            return Ok(new
+            {
+                message = "Get user posts successfully",
+                total = postDtos.Count,
+                data = postDtos
+            });
+        }
+
+        [HttpGet("{postId}")]
+        public async Task<IActionResult> GetPostById(Guid postId)
         {
-            message = "Get user posts successfully",
-            total = postDtos.Count,
-            data = postDtos
-        });
+            var post = await _context.Posts
+                .Include(p => p.ForumCategory)
+                .Include(p => p.CommentPosts)
+                .Include(p => p.PostImages)
+                .Include(p => p.Account)
+                .FirstOrDefaultAsync(p => p.Id == postId);
+
+            if (post == null)
+                return NotFound(new { message = "Post not found" });
+
+            var dto = new PostDto
+            {
+                Id = post.Id,
+                AccountId = post.AccountId,
+                ForumCategoryId = post.ForumCategoryId,
+                Title = post.Title,
+                Contents = post.Contents,
+                CreatedAt = post.CreatedAt,
+                UpdatedAt = post.UpdatedAt,
+                Status = post.Status,
+                AccountName = post.Account.Email, // or FullName if exists
+                ForumCategoryName = post.ForumCategory.Name,
+                CommentCount = post.CommentPosts.Count,
+                PostImageUrls = post.PostImages.Select(pi => pi.ImageUrl).ToList()
+            };
+
+            return Ok(new { message = "Get post detail successfully", data = dto });
         }
     }
+
+
 }
