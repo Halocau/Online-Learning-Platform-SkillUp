@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SkillUp.BussinessObjects.DTOs.Post;
+﻿using SkillUp.BussinessObjects.DTOs.Post;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
 
@@ -8,30 +8,21 @@ namespace SkillUp.Services.Implementations
 {
     public class PostService : IPostService
     {
-        private readonly SkillUpContext _context;
+        private readonly IPostRepository _postRepository;
         private readonly CloudinaryService _cloudinaryService;
 
-        public PostService(SkillUpContext context, CloudinaryService cloudinaryService)
+        public PostService(IPostRepository postRepository, CloudinaryService cloudinaryService)
         {
-            _context = context;
+            _postRepository = postRepository;
             _cloudinaryService = cloudinaryService;
         }
 
-        // 🟢 Tạo bài viết mới
-        public async Task<object> CreatePostAsync(PostCreateRequest request, Guid accountId)
+        public async Task<PostResponse> CreatePostAsync(PostCreateRequest request, Guid userId)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
-            if (account == null)
-                throw new Exception("Account not found.");
-
-            var category = await _context.ForumCategories.FirstOrDefaultAsync(c => c.Id == request.ForumCategoryId);
-            if (category == null)
-                throw new Exception("Forum category not found.");
-
             var post = new Post
             {
                 Id = Guid.NewGuid(),
-                AccountId = accountId,
+                AccountId = userId,
                 ForumCategoryId = request.ForumCategoryId,
                 Title = request.Title,
                 Contents = request.Contents,
@@ -39,131 +30,45 @@ namespace SkillUp.Services.Implementations
                 Status = "Active"
             };
 
-            _context.Posts.Add(post);
-            await _context.SaveChangesAsync();
-
-            if (request.Images != null && request.Images.Any())
+            if (request.Images != null && request.Images.Count > 0)
             {
-                foreach (var image in request.Images)
+                foreach (var file in request.Images)
                 {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(image, "skillup/posts");
-                    _context.PostImages.Add(new PostImage
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(file);
+                    post.PostImages.Add(new PostImage
                     {
                         Id = Guid.NewGuid(),
-                        PostId = post.Id,
-                        ImageUrl = imageUrl
+                        ImageUrl = imageUrl,
+                        PostId = post.Id
                     });
                 }
-                await _context.SaveChangesAsync();
             }
 
-            return new
-            {
-                post.Id,
-                post.Title,
-                post.Contents,
-                post.CreatedAt,
-                AccountName = account.Fullname,
-                CategoryName = category.Name
-            };
+            await _postRepository.CreateAsync(post);
+            await _postRepository.SaveAsync();
+
+            return MapToResponse(post);
         }
 
-        // 🔵 Lấy tất cả bài viết (cả active & inactive)
-        public async Task<object> ViewAllPostsAsync()
+        public async Task<PostResponse> UpdatePostAsync(Guid id, PostUpdateRequest request, Guid userId)
         {
-            var posts = await _context.Posts
-                .Include(p => p.Account)
-                .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
-                .Include(p => p.PostImages)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            var post = await _postRepository.GetByIdAsync(id)
+                ?? throw new Exception("Post not found");
 
-            var data = posts.Select(p => new
-            {
-                p.Id,
-                p.Title,
-                p.Contents,
-                p.Status,
-                AccountName = p.Account.Fullname,
-                CategoryName = p.ForumCategory.Name,
-                CommentCount = p.CommentPosts.Count,
-                ImageUrls = p.PostImages.Select(i => i.ImageUrl).ToList()
-            });
-
-            return new { total = data.Count(), data };
-        }
-
-        // 🟢 Lấy tất cả bài viết đang active
-        public async Task<object> ViewActivePostsAsync()
-        {
-            var posts = await _context.Posts
-                .Where(p => p.Status == "Active")
-                .Include(p => p.Account)
-                .Include(p => p.ForumCategory)
-                .Include(p => p.PostImages)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
-
-            var data = posts.Select(p => new
-            {
-                p.Id,
-                p.Title,
-                p.Contents,
-                AccountName = p.Account.Fullname,
-                CategoryName = p.ForumCategory.Name,
-                Images = p.PostImages.Select(i => i.ImageUrl)
-            });
-
-            return new { total = data.Count(), data };
-        }
-
-        // 🟣 Lấy bài viết của 1 user
-        public async Task<object> ViewUserPostsAsync(Guid accountId, bool includeInactive)
-        {
-            var query = _context.Posts
-                .Include(p => p.ForumCategory)
-                .Include(p => p.PostImages)
-                .Where(p => p.AccountId == accountId);
-
-            if (!includeInactive)
-                query = query.Where(p => p.Status == "Active");
-
-            var posts = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
-
-            var data = posts.Select(p => new
-            {
-                p.Id,
-                p.Title,
-                p.Contents,
-                p.Status,
-                CategoryName = p.ForumCategory.Name,
-                Images = p.PostImages.Select(i => i.ImageUrl)
-            });
-
-            return new { total = data.Count(), data };
-        }
-
-        // ✏️ Chỉnh sửa bài viết
-        public async Task<object> EditPostAsync(Guid postId, PostEditRequest request, Guid accountId)
-        {
-            var post = await _context.Posts
-                .Include(p => p.PostImages)
-                .FirstOrDefaultAsync(p => p.Id == postId && p.AccountId == accountId);
-
-            if (post == null)
-                throw new Exception("Post not found or unauthorized.");
+            if (post.AccountId != userId)
+                throw new Exception("You cannot update another user's post");
 
             post.Title = request.Title;
             post.Contents = request.Contents;
             post.UpdatedAt = DateTime.UtcNow;
 
-            if (request.Images != null && request.Images.Any())
+            if (request.Images != null && request.Images.Count > 0)
             {
-                foreach (var image in request.Images)
+                post.PostImages.Clear();
+                foreach (var file in request.Images)
                 {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(image, "skillup/posts");
-                    _context.PostImages.Add(new PostImage
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(file);
+                    post.PostImages.Add(new PostImage
                     {
                         Id = Guid.NewGuid(),
                         PostId = post.Id,
@@ -172,36 +77,60 @@ namespace SkillUp.Services.Implementations
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await _postRepository.UpdateAsync(post);
+            await _postRepository.SaveAsync();
 
-            return new
-            {
-                post.Id,
-                post.Title,
-                post.Contents,
-                post.UpdatedAt,
-                post.Status
-            };
+            return MapToResponse(post);
         }
 
-        // ❌ Xóa bài viết (soft delete)
-        public async Task<object> DeletePostAsync(Guid postId, Guid accountId)
+        public async Task<bool> DeletePostAsync(Guid id, Guid userId)
         {
-            var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId && p.AccountId == accountId);
-            if (post == null)
-                throw new Exception("Post not found or unauthorized.");
+            var post = await _postRepository.GetByIdAsync(id)
+                ?? throw new Exception("Post not found");
+
+            if (post.AccountId != userId)
+                throw new Exception("You cannot delete another user's post");
 
             post.Status = "Inactive";
-            post.UpdatedAt = DateTime.UtcNow;
+            await _postRepository.UpdateAsync(post);
+            await _postRepository.SaveAsync();
 
-            await _context.SaveChangesAsync();
+            return true;
+        }
 
-            return new
+        public async Task<IEnumerable<PostResponse>> ViewAllPostsAsync()
+        {
+            var posts = await _postRepository.GetAllAsync();
+            return posts.Select(MapToResponse);
+        }
+
+        public async Task<IEnumerable<PostResponse>> ViewActivePostsAsync()
+        {
+            var posts = await _postRepository.GetActiveAsync();
+            return posts.Select(MapToResponse);
+        }
+
+        public async Task<IEnumerable<PostResponse>> ViewUserPostsAsync(Guid accountId, bool includeInactive)
+        {
+            var posts = await _postRepository.GetByUserAsync(accountId, includeInactive);
+            return posts.Select(MapToResponse);
+        }
+
+        private PostResponse MapToResponse(Post post)
+        {
+            return new PostResponse
             {
-                post.Id,
-                post.Title,
-                post.Status
+                Id = post.Id,
+                Title = post.Title,
+                Contents = post.Contents,
+                Status = post.Status,
+                CreatedAt = post.CreatedAt,
+                UpdatedAt = post.UpdatedAt,
+                //AccountName = post.Account?.Fullname ?? "",  
+                //CategoryName = post.ForumCategory?.Name ?? "",
+                ImageUrls = post.PostImages.Select(i => i.ImageUrl).ToList()
             };
         }
+
     }
 }
