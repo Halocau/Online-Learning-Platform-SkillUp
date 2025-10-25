@@ -7,21 +7,60 @@ namespace SkillUp.Repositories.Implementations
     public class PostRepository : IPostRepository
     {
         private readonly SkillUpContext _context;
+
         public PostRepository(SkillUpContext context)
         {
             _context = context;
         }
 
-        public async Task<Post?> GetByIdAsync(Guid id)
+        public async Task<Post> CreateAsync(Post post)
+        {
+            await _context.Posts.AddAsync(post);
+            return post;
+        }
+
+      public async Task<Post?> GetByIdAsync(Guid id)
+{
+    return await _context.Posts
+        .Include(p => p.Account) // phải có dòng này
+        .Include(p => p.ForumCategory)
+        .Include(p => p.PostImages)
+        .FirstOrDefaultAsync(p => p.Id == id);
+}
+
+
+        public async Task<IEnumerable<Post>> GetAllAsync()
         {
             return await _context.Posts
                 .Include(p => p.Account)
                 .Include(p => p.ForumCategory)
                 .Include(p => p.PostImages)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .ToListAsync();
         }
 
-        public async Task AddAsync(Post post) => await _context.Posts.AddAsync(post);
+        public async Task<IEnumerable<Post>> GetActiveAsync()
+        {
+            return await _context.Posts
+                .Include(p => p.Account)
+                .Include(p => p.ForumCategory)
+                .Include(p => p.PostImages)
+                .Where(p => p.Status == "Active")
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Post>> GetByUserAsync(Guid userId, bool includeInactive)
+        {
+            var query = _context.Posts
+                .Include(p => p.Account)
+                .Include(p => p.ForumCategory)
+                .Include(p => p.PostImages)
+                .Where(p => p.AccountId == userId);
+
+            if (!includeInactive)
+                query = query.Where(p => p.Status == "Active");
+
+            return await query.ToListAsync();
+        }
 
         public async Task UpdateAsync(Post post)
         {
@@ -29,38 +68,15 @@ namespace SkillUp.Repositories.Implementations
             await Task.CompletedTask;
         }
 
-        public async Task<List<Post>> GetAllAsync()
+        public async Task DeleteAsync(Post post)
         {
-            return await _context.Posts
-                .Include(p => p.Account)
-                .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
-                .Include(p => p.PostImages)
-                .ToListAsync();
+            _context.Posts.Remove(post);
+            await Task.CompletedTask;
         }
 
-        public async Task<List<Post>> GetActiveAsync()
+        public async Task SaveAsync()
         {
-            return await _context.Posts
-                .Where(p => p.Status == "Active")
-                .Include(p => p.Account)
-                .Include(p => p.ForumCategory)
-                .Include(p => p.PostImages)
-                .ToListAsync();
+            await _context.SaveChangesAsync();
         }
-
-        public async Task<List<Post>> GetByUserIdAsync(Guid accountId, bool includeInactive)
-        {
-            var query = _context.Posts.Where(p => p.AccountId == accountId);
-            if (!includeInactive)
-                query = query.Where(p => p.Status == "Active");
-
-            return await query
-                .Include(p => p.ForumCategory)
-                .Include(p => p.PostImages)
-                .ToListAsync();
-        }
-
-        public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
     }
 }

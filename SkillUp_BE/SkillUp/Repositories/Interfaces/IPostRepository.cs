@@ -4,12 +4,13 @@ namespace SkillUp.Repositories.Interfaces
 {
     public interface IPostRepository
     {
+        Task<Post> CreateAsync(Post post);
         Task<Post?> GetByIdAsync(Guid id);
-        Task AddAsync(Post post);
+        Task<IEnumerable<Post>> GetAllAsync();
+        Task<IEnumerable<Post>> GetActiveAsync();
+        Task<IEnumerable<Post>> GetByUserAsync(Guid userId, bool includeInactive);
         Task UpdateAsync(Post post);
-        Task<List<Post>> GetAllAsync();
-        Task<List<Post>> GetActiveAsync();
-        Task<List<Post>> GetByUserIdAsync(Guid accountId, bool includeInactive);
-        Task SaveChangesAsync();
+        Task DeleteAsync(Post post);
+        Task SaveAsync();
     }
 }

@@ -4,11 +4,11 @@ namespace SkillUp.Services.Interfaces
 {
     public interface IPostService
     {
-        Task<object> CreatePostAsync(PostCreateRequest request, Guid accountId);
-        Task<object> ViewAllPostsAsync();
-        Task<object> ViewActivePostsAsync();
-        Task<object> ViewUserPostsAsync(Guid accountId, bool includeInactive);
-        Task<object> UpdatePostAsync(Guid id, PostUpdateRequest request, Guid accountId);
-        Task<object> DeletePostAsync(Guid id, Guid accountId);
+        Task<PostResponse> CreatePostAsync(PostCreateRequest request, Guid userId);
+        Task<PostResponse> UpdatePostAsync(Guid id, PostUpdateRequest request, Guid userId);
+        Task<bool> DeletePostAsync(Guid id, Guid userId);
+        Task<IEnumerable<PostResponse>> ViewAllPostsAsync();
+        Task<IEnumerable<PostResponse>> ViewActivePostsAsync();
+        Task<IEnumerable<PostResponse>> ViewUserPostsAsync(Guid accountId, bool includeInactive);
     }
 }

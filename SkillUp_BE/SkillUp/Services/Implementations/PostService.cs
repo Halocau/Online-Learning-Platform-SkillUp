@@ -8,21 +8,21 @@ namespace SkillUp.Services.Implementations
 {
     public class PostService : IPostService
     {
-        private readonly IPostRepository _postRepo;
+        private readonly IPostRepository _postRepository;
         private readonly CloudinaryService _cloudinaryService;
 
-        public PostService(IPostRepository postRepo, CloudinaryService cloudinaryService)
+        public PostService(IPostRepository postRepository, CloudinaryService cloudinaryService)
         {
-            _postRepo = postRepo;
+            _postRepository = postRepository;
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task<object> CreatePostAsync(PostCreateRequest request, Guid accountId)
+        public async Task<PostResponse> CreatePostAsync(PostCreateRequest request, Guid userId)
         {
             var post = new Post
             {
                 Id = Guid.NewGuid(),
-                AccountId = accountId,
+                AccountId = userId,
                 ForumCategoryId = request.ForumCategoryId,
                 Title = request.Title,
                 Contents = request.Contents,
@@ -30,85 +30,44 @@ namespace SkillUp.Services.Implementations
                 Status = "Active"
             };
 
-            await _postRepo.AddAsync(post);
-            await _postRepo.SaveChangesAsync();
-
-            if (request.Images != null && request.Images.Any())
+            if (request.Images != null && request.Images.Count > 0)
             {
-                foreach (var image in request.Images)
+                foreach (var file in request.Images)
                 {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(image, "skillup/posts");
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(file);
                     post.PostImages.Add(new PostImage
                     {
                         Id = Guid.NewGuid(),
-                        PostId = post.Id,
-                        ImageUrl = imageUrl
+                        ImageUrl = imageUrl,
+                        PostId = post.Id
                     });
                 }
-                await _postRepo.SaveChangesAsync();
             }
 
-            return new { post.Id, post.Title, post.Contents, post.CreatedAt };
+            await _postRepository.CreateAsync(post);
+            await _postRepository.SaveAsync();
+
+            return MapToResponse(post);
         }
 
-        public async Task<object> ViewAllPostsAsync()
+        public async Task<PostResponse> UpdatePostAsync(Guid id, PostUpdateRequest request, Guid userId)
         {
-            var posts = await _postRepo.GetAllAsync();
-            return posts.Select(p => new
-            {
-                p.Id,
-                p.Title,
-                p.Contents,
-                p.Status,
-                AccountName = p.Account.Fullname,
-                CategoryName = p.ForumCategory.Name,
-                Images = p.PostImages.Select(i => i.ImageUrl)
-            });
-        }
+            var post = await _postRepository.GetByIdAsync(id)
+                ?? throw new Exception("Post not found");
 
-        public async Task<object> ViewActivePostsAsync()
-        {
-            var posts = await _postRepo.GetActiveAsync();
-            return posts.Select(p => new
-            {
-                p.Id,
-                p.Title,
-                p.Contents,
-                AccountName = p.Account.Fullname,
-                CategoryName = p.ForumCategory.Name,
-                Images = p.PostImages.Select(i => i.ImageUrl)
-            });
-        }
-
-        public async Task<object> ViewUserPostsAsync(Guid accountId, bool includeInactive)
-        {
-            var posts = await _postRepo.GetByUserIdAsync(accountId, includeInactive);
-            return posts.Select(p => new
-            {
-                p.Id,
-                p.Title,
-                p.Contents,
-                p.Status,
-                CategoryName = p.ForumCategory.Name,
-                Images = p.PostImages.Select(i => i.ImageUrl)
-            });
-        }
-
-        public async Task<object> UpdatePostAsync(Guid id, PostUpdateRequest request, Guid accountId)
-        {
-            var post = await _postRepo.GetByIdAsync(id);
-            if (post == null || post.AccountId != accountId)
-                throw new Exception("Post not found or unauthorized.");
+            if (post.AccountId != userId)
+                throw new Exception("You cannot update another user's post");
 
             post.Title = request.Title;
             post.Contents = request.Contents;
             post.UpdatedAt = DateTime.UtcNow;
 
-            if (request.Images != null && request.Images.Any())
+            if (request.Images != null && request.Images.Count > 0)
             {
-                foreach (var image in request.Images)
+                post.PostImages.Clear();
+                foreach (var file in request.Images)
                 {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(image, "skillup/posts");
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(file);
                     post.PostImages.Add(new PostImage
                     {
                         Id = Guid.NewGuid(),
@@ -118,25 +77,60 @@ namespace SkillUp.Services.Implementations
                 }
             }
 
-            await _postRepo.UpdateAsync(post);
-            await _postRepo.SaveChangesAsync();
+            await _postRepository.UpdateAsync(post);
+            await _postRepository.SaveAsync();
 
-            return new { message = "Post updated successfully", post.Id };
+            return MapToResponse(post);
         }
 
-        public async Task<object> DeletePostAsync(Guid id, Guid accountId)
+        public async Task<bool> DeletePostAsync(Guid id, Guid userId)
         {
-            var post = await _postRepo.GetByIdAsync(id);
-            if (post == null || post.AccountId != accountId)
-                throw new Exception("Post not found or unauthorized.");
+            var post = await _postRepository.GetByIdAsync(id)
+                ?? throw new Exception("Post not found");
+
+            if (post.AccountId != userId)
+                throw new Exception("You cannot delete another user's post");
 
             post.Status = "Inactive";
-            post.UpdatedAt = DateTime.UtcNow;
+            await _postRepository.UpdateAsync(post);
+            await _postRepository.SaveAsync();
 
-            await _postRepo.UpdateAsync(post);
-            await _postRepo.SaveChangesAsync();
-
-            return new { message = "Post deleted successfully (set inactive)", post.Id };
+            return true;
         }
+
+        public async Task<IEnumerable<PostResponse>> ViewAllPostsAsync()
+        {
+            var posts = await _postRepository.GetAllAsync();
+            return posts.Select(MapToResponse);
+        }
+
+        public async Task<IEnumerable<PostResponse>> ViewActivePostsAsync()
+        {
+            var posts = await _postRepository.GetActiveAsync();
+            return posts.Select(MapToResponse);
+        }
+
+        public async Task<IEnumerable<PostResponse>> ViewUserPostsAsync(Guid accountId, bool includeInactive)
+        {
+            var posts = await _postRepository.GetByUserAsync(accountId, includeInactive);
+            return posts.Select(MapToResponse);
+        }
+
+        private PostResponse MapToResponse(Post post)
+        {
+            return new PostResponse
+            {
+                Id = post.Id,
+                Title = post.Title,
+                Contents = post.Contents,
+                Status = post.Status,
+                CreatedAt = post.CreatedAt,
+                UpdatedAt = post.UpdatedAt,
+                //AccountName = post.Account?.Fullname ?? "",  
+                //CategoryName = post.ForumCategory?.Name ?? "",
+                ImageUrls = post.PostImages.Select(i => i.ImageUrl).ToList()
+            };
+        }
+
     }
 }
