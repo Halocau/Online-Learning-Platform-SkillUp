@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.BussinessObjects.DTOs.Post;
@@ -19,14 +19,13 @@ namespace SkillUp.Controllers
             _cloudinaryService = cloudinaryService;
         }
 
-        // POST: api/Post/create
+        // ✅ Create new post
         [HttpPost("create")]
         public async Task<IActionResult> CreatePost([FromForm] PostCreateRequest request)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Kiểm tra tài khoản và danh mục
             var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == request.AccountId);
             var category = await _context.ForumCategories.FirstOrDefaultAsync(fc => fc.Id == request.ForumCategoryId);
 
@@ -36,7 +35,6 @@ namespace SkillUp.Controllers
             if (category == null)
                 return NotFound(new { message = "Forum category not found" });
 
-            // Tạo bài viết mới
             var newPost = new Post
             {
                 Id = Guid.NewGuid(),
@@ -51,7 +49,7 @@ namespace SkillUp.Controllers
             _context.Posts.Add(newPost);
             await _context.SaveChangesAsync();
 
-            // Upload ảnh nếu có
+            // Upload images if any
             var imageUrls = new List<string>();
             if (request.Images != null && request.Images.Count > 0)
             {
@@ -60,7 +58,6 @@ namespace SkillUp.Controllers
                     var imageUrl = await _cloudinaryService.UploadImageAsync(image, "skillup/posts");
                     imageUrls.Add(imageUrl);
 
-                    // Lưu vào bảng PostImage
                     var postImage = new PostImage
                     {
                         Id = Guid.NewGuid(),
@@ -69,11 +66,9 @@ namespace SkillUp.Controllers
                     };
                     _context.PostImages.Add(postImage);
                 }
-
                 await _context.SaveChangesAsync();
             }
 
-            // Chuẩn bị dữ liệu trả về
             var response = new PostDto
             {
                 Id = newPost.Id,
@@ -96,6 +91,7 @@ namespace SkillUp.Controllers
             });
         }
 
+        // ✅ View all posts
         [HttpGet("view-all")]
         public async Task<IActionResult> ViewAllPosts()
         {
@@ -117,7 +113,7 @@ namespace SkillUp.Controllers
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
                 Status = p.Status,
-                AccountName = p.Account.Email, // hoặc Fullname
+                AccountName = p.Account.Email,
                 ForumCategoryName = p.ForumCategory.Name,
                 CommentCount = p.CommentPosts.Count,
                 PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
@@ -131,8 +127,7 @@ namespace SkillUp.Controllers
             });
         }
 
-
-        // 2️⃣ Get only active posts
+        // ✅ View only active posts
         [HttpGet("view-active")]
         public async Task<IActionResult> ViewActivePosts()
         {
@@ -169,16 +164,14 @@ namespace SkillUp.Controllers
             });
         }
 
-        // ✅ VIEW MY POSTS (lọc theo AccountId)
+        // ✅ View my posts (by AccountId)
         [HttpGet("my-posts/{accountId}")]
         public async Task<IActionResult> ViewMyPosts(Guid accountId, [FromQuery] bool includeInactive = false)
         {
-            // Kiểm tra account tồn tại
             var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
             if (account == null)
                 return NotFound(new { message = "Account not found" });
 
-            // Truy vấn danh sách post thuộc về account này
             var query = _context.Posts
                 .Include(p => p.ForumCategory)
                 .Include(p => p.CommentPosts)
@@ -186,16 +179,11 @@ namespace SkillUp.Controllers
                 .Where(p => p.AccountId == accountId)
                 .AsQueryable();
 
-            // Nếu không yêu cầu includeInactive thì chỉ lấy post có Status = Active
             if (!includeInactive)
                 query = query.Where(p => p.Status == "Active");
 
-            // Sắp xếp: mới nhất trước
-            var posts = await query
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
+            var posts = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
 
-            // Map sang DTO
             var postDtos = posts.Select(p => new PostDto
             {
                 Id = p.Id,
@@ -206,7 +194,7 @@ namespace SkillUp.Controllers
                 CreatedAt = p.CreatedAt,
                 UpdatedAt = p.UpdatedAt,
                 Status = p.Status,
-                AccountName = account.Email, // hoặc account.FullName nếu có
+                AccountName = account.Email,
                 ForumCategoryName = p.ForumCategory.Name,
                 CommentCount = p.CommentPosts.Count,
                 PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
@@ -220,58 +208,7 @@ namespace SkillUp.Controllers
             });
         }
 
-
-        //View post list user
-        [HttpGet("user/{accountId}")]
-        public async Task<IActionResult> ViewUserPosts(Guid accountId, [FromQuery] bool includeInactive = false)
-        {
-            // Kiểm tra người dùng có tồn tại không
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
-            if (account == null)
-                return NotFound(new { message = "User not found" });
-
-            // Lấy danh sách bài viết của user này
-            var query = _context.Posts
-                .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
-                .Include(p => p.PostImages)
-                .Where(p => p.AccountId == accountId)
-                .AsQueryable();
-
-            // Chỉ lấy post Active nếu không có includeInactive
-            if (!includeInactive)
-                query = query.Where(p => p.Status == "Active");
-
-            // Sắp xếp bài viết theo thời gian đăng mới nhất
-            var posts = await query
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
-
-            // Map sang DTO
-            var postDtos = posts.Select(p => new PostDto
-            {
-                Id = p.Id,
-                AccountId = p.AccountId,
-                ForumCategoryId = p.ForumCategoryId,
-                Title = p.Title,
-                Contents = p.Contents,
-                CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt,
-                Status = p.Status,
-                AccountName = account.Email, // hoặc account.FullName nếu có
-                ForumCategoryName = p.ForumCategory.Name,
-                CommentCount = p.CommentPosts.Count,
-                PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
-            }).ToList();
-
-            return Ok(new
-            {
-                message = "Get user posts successfully",
-                total = postDtos.Count,
-                data = postDtos
-            });
-        }
-
+        // ✅ View post by ID
         [HttpGet("{postId}")]
         public async Task<IActionResult> GetPostById(Guid postId)
         {
@@ -295,15 +232,17 @@ namespace SkillUp.Controllers
                 CreatedAt = post.CreatedAt,
                 UpdatedAt = post.UpdatedAt,
                 Status = post.Status,
-                AccountName = post.Account.Email, // or FullName if exists
+                AccountName = post.Account.Email,
                 ForumCategoryName = post.ForumCategory.Name,
                 CommentCount = post.CommentPosts.Count,
                 PostImageUrls = post.PostImages.Select(pi => pi.ImageUrl).ToList()
             };
 
-            return Ok(new { message = "Get post detail successfully", data = dto });
+            return Ok(new
+            {
+                message = "Get post detail successfully",
+                data = dto
+            });
         }
     }
-
-
 }

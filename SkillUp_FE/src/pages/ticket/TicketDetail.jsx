@@ -5,28 +5,30 @@ import Footer from '@/components/Layout/Footer';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
 import CreateTicketModal from '../../components/Ticket/CreateTicketModal';
-
+import UpdateTicketModal from '../../components/Ticket/UpdateTicketModal';
 
 function TicketDetail() {
     const { ticketCode } = useParams();
     const navigate = useNavigate();
+
+    const canUpdate = (status) => !['Accepted', 'Rejected'].includes(status || '');
+
     const [ticket, setTicket] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [replyMessage, setReplyMessage] = useState('');
-    const [submitting, setSubmitting] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
+    const [isUpdateOpen, setIsUpdateOpen] = useState(false);
 
     const fetchTicketDetail = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await axiosInstance.get(`${API_ENDPOINTS.GET_TICKET}/${ticketCode}`);
-
-            if (response.data.code === 200) {
-                setTicket(response.data.data[0]);
+            const res = await axiosInstance.get(`${API_ENDPOINTS.GET_TICKET}/${ticketCode}`);
+            if (res?.data?.code === 200 && Array.isArray(res.data.data) && res.data.data.length > 0) {
+                setTicket(res.data.data[0]);
+            } else {
+                setTicket(null);
             }
-        } catch (error) {
-            console.error('Error fetching ticket detail:', error);
+        } catch (err) {
+            console.error('Error fetching ticket detail:', err);
             toast.error('Không thể tải thông tin ticket');
             navigate('/ticket');
         } finally {
@@ -44,28 +46,9 @@ function TicketDetail() {
         navigate('/ticket');
     };
 
-    const handleReply = async (e) => {
-        e.preventDefault();
-        if (!replyMessage.trim()) {
-            toast.warning('Vui lòng nhập nội dung phản hồi');
-            return;
-        }
-
-        try {
-            setSubmitting(true);
-            await axiosInstance.post(`${API_ENDPOINTS.GET_TICKET}/${ticketCode}/reply`, {
-                message: replyMessage
-            });
-
-            toast.success('Đã gửi phản hồi thành công');
-            setReplyMessage('');
-            fetchTicketDetail();
-        } catch (error) {
-            console.error('Error sending reply:', error);
-            toast.error('Không thể gửi phản hồi');
-        } finally {
-            setSubmitting(false);
-        }
+    const handleUpdateSuccess = () => {
+        setIsUpdateOpen(false);
+        fetchTicketDetail();
     };
 
     const formatDateTime = (dateString) => {
@@ -76,49 +59,52 @@ function TicketDetail() {
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
         });
     };
 
+    // Badge trạng thái theo yêu cầu
     const getStatusBadge = (status) => {
-        const statusConfig = {
-            'Open': { color: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Mới', icon: '🆕' },
-            'Pending': { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Đang xử lý', icon: '⏳' },
-            'Resolved': { color: 'bg-green-100 text-green-700 border-green-200', label: 'Đã giải quyết', icon: '✅' },
-            'Closed': { color: 'bg-gray-100 text-gray-700 border-gray-200', label: 'Đã đóng', icon: '🔒' }
+        const statusColors = {
+            Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+            Accepted: 'bg-green-100 text-green-700 border-green-200',
+            Rejected: 'bg-red-100 text-red-700 border-red-200',
         };
-        const config = statusConfig[status] || statusConfig['Open'];
+        const statusLabels = {
+            Pending: 'Đang xử lý',
+            Accepted: 'Đã giải quyết',
+            Rejected: 'Bị từ chối',
+        };
+        const color = statusColors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+        const label = statusLabels[status] || (status || 'Không rõ');
+        const icon = status === 'Pending' ? '⏳' : status === 'Accepted' ? '✅' : status === 'Rejected' ? '❌' : 'ℹ️';
+
         return (
-            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${config.color}`}>
-                <span>{config.icon}</span>
-                {config.label}
+            <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${color}`}>
+                <span>{icon}</span>
+                {label}
             </span>
         );
     };
 
-    const getPriorityBadge = (priority) => {
-        const priorityConfig = {
-            'Low': { color: 'bg-gray-100 text-gray-700', label: 'Thấp' },
-            'Medium': { color: 'bg-blue-100 text-blue-700', label: 'Trung bình' },
-            'High': { color: 'bg-orange-100 text-orange-700', label: 'Cao' },
-            'Critical': { color: 'bg-red-100 text-red-700', label: 'Khẩn cấp' }
-        };
-        const config = priorityConfig[priority] || priorityConfig['Medium'];
-        return (
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.color}`}>
-                {config.label}
-            </span>
-        );
-    };
-
+    // LOADING
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col bg-gray-50">
                 <Header />
-                <main className="flex-grow flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mb-4"></div>
-                        <p className="text-gray-600 text-lg">Đang tải thông tin ticket...</p>
+                <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+                    <div className="animate-pulse space-y-6">
+                        <div className="h-6 w-56 bg-gray-200 rounded" />
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2 space-y-4">
+                                <div className="h-40 bg-white rounded-xl border border-gray-200" />
+                                <div className="h-24 bg-white rounded-xl border border-gray-200" />
+                                <div className="h-24 bg-white rounded-xl border border-gray-200" />
+                            </div>
+                            <div className="space-y-4">
+                                <div className="h-64 bg-white rounded-xl border border-gray-200" />
+                            </div>
+                        </div>
                     </div>
                 </main>
                 <Footer />
@@ -126,20 +112,21 @@ function TicketDetail() {
         );
     }
 
+    // NOT FOUND
     if (!ticket) {
         return (
             <div className="min-h-screen flex flex-col bg-gray-50">
                 <Header />
-                <main className="flex-grow flex items-center justify-center">
-                    <div className="text-center">
-                        <div className="text-6xl mb-4">❌</div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Không tìm thấy ticket</h2>
-                        <p className="text-gray-600 mb-6">Ticket này không tồn tại hoặc đã bị xóa</p>
+                <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 w-full">
+                    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm mx-auto max-w-xl p-10 text-center">
+                        <div className="text-5xl mb-3">🙈</div>
+                        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Không tìm thấy ticket</h2>
+                        <p className="text-gray-600 mb-6">Ticket này không tồn tại hoặc đã bị xóa.</p>
                         <button
                             onClick={() => navigate('/ticket')}
-                            className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors"
                         >
-                            Quay lại danh sách
+                            <span>←</span> Quay lại danh sách
                         </button>
                     </div>
                 </main>
@@ -148,197 +135,172 @@ function TicketDetail() {
         );
     }
 
+    // NORMAL
+    const attachments = Array.isArray(ticket.attachments) ? ticket.attachments : [];
+
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Header />
 
-            <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-                {/* Tiêu đề và nút quay lại */}
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-1">{ticket.title}</h2>
-                        <p className="text-sm text-gray-600">
-                            <button
-                                onClick={() => navigate('/ticket')}
-                                className="text-yellow-500 hover:text-yellow-600 hover:underline font-medium"
-                            >
-                                My Tickets
-                            </button>
-                            <span className="mx-2">/</span>
-                            <span className="font-medium text-gray-800">#{ticket.ticketCode}</span>
-                        </p>
+            <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-40 w-full">
+                {/* Breadcrumb + Title */}
+                <div className="mb-6">
+                    <nav className="text-sm text-gray-500 mb-2">
+                        <button onClick={() => navigate('/ticket')} className="hover:text-gray-700 hover:underline">
+                            Danh sách ticket
+                        </button>
+                        <span className="mx-2">/</span>
+                        <span className="text-gray-800 font-medium">#{ticket.ticketCode}</span>
+                    </nav>
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
+                            <p className="mt-1 text-sm text-gray-500">Tạo lúc {formatDateTime(ticket.createdAt)}</p>
+                        </div>
+                        <button
+                            onClick={() => navigate('/ticket')}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 font-medium"
+                        >
+                            <span>←</span> Quay lại
+                        </button>
                     </div>
-                    <button
-                        onClick={() => navigate('/ticket')}
-                        className="px-6 py-2 bg-white hover:bg-gray-100 border border-gray-300 text-gray-800 font-semibold rounded-lg transition-all shadow-sm"
-                    >
-                        ❮ Quay lại
-                    </button>
                 </div>
 
                 <div className="flex flex-col lg:flex-row lg:gap-8">
-
+                    {/* Sidebar trái: Ticket center */}
                     <aside className="lg:w-64 flex-shrink-0 mb-6 lg:mb-0">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-8">
-                            <h3 className="text-xl font-bold text-gray-900 mb-6">Ticket center</h3>
-                            <nav className="space-y-2">
-                                <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors">
-                                    Danh sách
-                                </a>
-                                <a href="#" className="flex items-center px-4 py-3 font-semibold bg-yellow-400 text-gray-900 rounded-lg shadow-md">
-                                    My Tickets
-                                </a>
-                                <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors">
-                                    Assigned to me
-                                </a>
-                                <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors">
-                                    All ticket
-                                </a>
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
+                            <h3 className="text-base font-semibold text-gray-900 mb-4">Trung tâm ticket</h3>
+
+                            {/* === Ticket center: 3 mục VN, điều hướng theo ?tab === */}
+                            <nav className="space-y-2 mb-6">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/ticket?tab=all')}
+                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                >
+                                    Tất cả ticket
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/ticket?tab=approved')}
+                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                >
+                                    Ticket đã duyệt
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/ticket?tab=rejected')}
+                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                >
+                                    Ticket bị từ chối
+                                </button>
                             </nav>
+
+                            {/* Nút tạo ticket */}
                             <button
                                 onClick={() => setIsModalOpen(true)}
-                                className="mt-8 w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all shadow-sm">
+                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold shadow-sm"
+                            >
                                 <span>➕</span> Tạo ticket
                             </button>
                         </div>
                     </aside>
 
+                    {/* Main */}
                     <div className="flex-grow">
                         <div className="flex flex-col-reverse lg:flex-row lg:gap-8">
+                            {/* Left: content + replies */}
+                            <section className="flex-grow space-y-6">
+                                {/* Original message */}
+                                <article className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                                    <header className="bg-gray-50 px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-gray-800">{ticket.accountName || 'Bạn'} đã gửi</span>
+                                        </div>
+                                        <time className="text-sm text-gray-500">{formatDateTime(ticket.createdAt)}</time>
+                                    </header>
 
-                            <div className="flex-grow space-y-6">
+                                    <div className="p-5 text-gray-800 whitespace-pre-wrap leading-relaxed">{ticket.contents}</div>
 
-                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                                    <div className="bg-gray-50 px-5 py-4 border-b border-gray-200 flex justify-between items-center">
-                                        <span className="font-semibold text-gray-800">{ticket.accountName || 'Bạn'} đã gửi</span>
-                                        <span className="text-sm text-gray-500">{formatDateTime(ticket.createdAt)}</span>
-                                    </div>
-                                    <div className="p-5 text-gray-700 whitespace-pre-wrap">
-                                        {ticket.contents}
-                                    </div>
-                                    {ticket.attachments && ticket.attachments.length > 0 && (
+                                    {attachments.length > 0 && (
                                         <div className="border-t border-gray-200 p-5">
-                                            <h3 className="text-sm font-semibold text-gray-700 mb-2">Tệp đính kèm</h3>
-                                            <div className="space-y-2">
-                                                {ticket.attachments.map((file, index) => (
+                                            <h4 className="text-sm font-semibold text-gray-700 mb-3">Tệp đính kèm</h4>
+                                            <div className="grid sm:grid-cols-2 gap-2">
+                                                {attachments.map((file, i) => (
                                                     <a
-                                                        key={index}
+                                                        key={i}
                                                         href={file.url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                                                        className="group flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
                                                     >
-                                                        <span className="text-2xl">📎</span>
-                                                        <span className="text-sm font-medium text-gray-700">{file.name}</span>
+                                                        <span className="text-xl">📎</span>
+                                                        <span className="text-sm text-gray-700 group-hover:text-gray-900 truncate">
+                                                            {file.name || file.url}
+                                                        </span>
                                                     </a>
                                                 ))}
                                             </div>
                                         </div>
                                     )}
-                                </div>
+                                </article>
 
-                                <h4 className="text-xl font-bold text-gray-900">Phản hồi</h4>
-
-                                {ticket.replies && ticket.replies.length > 0 ? (
-                                    <div className="space-y-4">
-                                        {ticket.replies.map((reply, index) => (
-                                            <div
-                                                key={index}
-                                                className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${reply.isStaff ? 'border-yellow-200' : ''}`}
-                                            >
-                                                <div
-                                                    className={`px-5 py-4 border-b border-gray-200 flex justify-between items-center ${reply.isStaff ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50'}`}
-                                                >
-                                                    <span className={`font-semibold ${reply.isStaff ? 'text-yellow-600' : 'text-gray-800'}`}>
-                                                        {reply.isStaff ? (reply.userName || 'EdA Support') : (reply.userName || 'Bạn')}
+                                {/* Replies */}
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Phản hồi</h3>
+                                    {ticket.response ? (
+                                        <div className="bg-white rounded-2xl shadow-sm border border-yellow-200 overflow-hidden">
+                                            <div className="px-5 py-3 border-b bg-yellow-50 border-yellow-200 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-semibold text-yellow-700">Support</span>
+                                                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">
+                                                        Staff
                                                     </span>
-                                                    <span className="text-sm text-gray-500">{formatDateTime(reply.createdAt)}</span>
-                                                </div>
-                                                <div className="p-5 text-gray-700 whitespace-pre-wrap">
-                                                    {reply.message}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8 bg-white rounded-xl shadow-sm border border-gray-200">
-                                        <div className="text-4xl mb-2">💬</div>
-                                        <p className="text-gray-500">Chưa có phản hồi nào</p>
-                                    </div>
-                                )}
-
-                                {ticket.status !== 'Closed' && (
-                                    <form onSubmit={handleReply} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                                        <h4 className="text-lg font-semibold text-gray-900 mb-3">Gửi phản hồi mới</h4>
-                                        <textarea
-                                            value={replyMessage}
-                                            onChange={(e) => setReplyMessage(e.target.value)}
-                                            rows="4"
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent resize-none"
-                                            placeholder="Nhập phản hồi của bạn..."
-                                            disabled={submitting}
-                                        />
-                                        <div className="flex justify-end mt-4">
-                                            <button
-                                                type="submit"
-                                                disabled={submitting || !replyMessage.trim()}
-                                                className="px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                {submitting ? 'Đang gửi...' : 'Gửi phản hồi'}
-                                            </button>
-                                        </div>
-                                    </form>
-                                )}
-                            </div>
-
-                            <div className="lg:w-80 flex-shrink-0 mb-6 lg:mb-0">
-                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-8">
-                                    <h4 className="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Thông tin ticket</h4>
-
-                                    <div className="space-y-5">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-gray-600">Mã Ticket:</span>
-                                            <span className="font-semibold text-gray-900">#{ticket.ticketCode}</span>
-                                        </div>
-
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-gray-600">Ngày tạo:</span>
-                                            <span className="font-semibold text-gray-900 text-right">{formatDateTime(ticket.createdAt)}</span>
-                                        </div>
-
-                                        {ticket.updatedAt && (
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-600">Cập nhật:</span>
-                                                <span className="font-semibold text-gray-900 text-right">{formatDateTime(ticket.updatedAt)}</span>
+                                            <div className="p-5 text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                                {ticket.response}
                                             </div>
-                                        )}
-
-                                        {ticket.category && (
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-600">Danh mục:</span>
-                                                <span className="font-semibold text-gray-900 text-right">{ticket.category}</span>
-                                            </div>
-                                        )}
-
-                                        {ticket.priority && (
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-sm text-gray-600">Độ ưu tiên:</span>
-                                                {getPriorityBadge(ticket.priority)}
-                                            </div>
-                                        )}
-
-                                        <div className="flex justify-between items-start">
-                                            <span className="text-sm text-gray-600">Trạng thái:</span>
-                                            {getStatusBadge(ticket.status)}
                                         </div>
-
-                                        <button className="w-full mt-4 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg transition-all">
-                                            Đóng Ticket này
-                                        </button>
-                                    </div>
+                                    ) : (
+                                        <div className="text-center py-10 bg-white rounded-2xl shadow-sm border border-dashed border-gray-300">
+                                            <div className="text-3xl mb-2">💬</div>
+                                            <p className="text-gray-600">Chưa có phản hồi nào</p>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
+                            </section>
 
+                            {/* Right: ticket meta */}
+                            <aside className="lg:w-80 flex-shrink-0 mb-6 lg:mb-0">
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Thông tin ticket</h4>
+                                    <dl className="space-y-4 text-sm">
+                                        <div className="flex items-center justify-between">
+                                            <dt className="text-gray-600">Mã Ticket</dt>
+                                            <dd className="font-semibold text-gray-900">#{ticket.ticketCode}</dd>
+                                        </div>
+                                        <div className="flex items-start justify-between">
+                                            <dt className="text-gray-600">Trạng thái</dt>
+                                            <dd>{getStatusBadge(ticket.status)}</dd>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <dt className="text-gray-600">Ngày tạo</dt>
+                                            <dd className="font-medium text-gray-900">{formatDateTime(ticket.createdAt)}</dd>
+                                        </div>
+                                    </dl>
+
+                                    {canUpdate(ticket.status) && (
+                                        <button
+                                            className="w-full mt-5 px-4 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors"
+                                            onClick={() => setIsUpdateOpen(true)}
+                                        >
+                                            Cập nhật ticket
+                                        </button>
+                                    )}
+                                </div>
+                            </aside>
                         </div>
                     </div>
                 </div>
@@ -346,10 +308,19 @@ function TicketDetail() {
 
             <Footer />
 
+            {/* Create */}
             <CreateTicketModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSuccess={handleCreateSuccess}
+            />
+
+            {/* Update */}
+            <UpdateTicketModal
+                isOpen={isUpdateOpen && canUpdate(ticket.status)}
+                onClose={() => setIsUpdateOpen(false)}
+                onSuccess={handleUpdateSuccess}
+                ticket={ticket}
             />
         </div>
     );
