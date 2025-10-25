@@ -9,7 +9,7 @@ public partial class PostImage
 
     public Guid PostId { get; set; }
 
-    public string ImageUrl { get; set; } = null!;
+    public string? ImageUrl { get; set; }
 
     public virtual Post Post { get; set; } = null!;
 }

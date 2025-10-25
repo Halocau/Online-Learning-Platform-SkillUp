@@ -7,13 +7,13 @@ public partial class Course
 {
     public Guid Id { get; set; }
 
-    public string? Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string? Description { get; set; }
+    public string Description { get; set; } = null!;
 
-    public string? Image { get; set; }
+    public string Image { get; set; } = null!;
 
-    public decimal? Price { get; set; }
+    public decimal Price { get; set; }
 
     public int EnrollmentCount { get; set; }
 
@@ -27,7 +27,7 @@ public partial class Course
 
     public DateTime UpdatedAt { get; set; }
 
-    public int? SubCategoryId { get; set; }
+    public int SubCategoryId { get; set; }
 
     public Guid LecturerId { get; set; }
 
@@ -47,7 +47,7 @@ public partial class Course
 
     public virtual ICollection<StudentProgress> StudentProgresses { get; set; } = new List<StudentProgress>();
 
-    public virtual SubCategory? SubCategory { get; set; }
+    public virtual SubCategory SubCategory { get; set; } = null!;
 
     public virtual ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
 

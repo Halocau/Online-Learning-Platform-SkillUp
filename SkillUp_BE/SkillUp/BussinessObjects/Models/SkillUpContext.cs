@@ -352,6 +352,7 @@ public partial class SkillUpContext : DbContext
 
             entity.HasOne(d => d.SubCategory).WithMany(p => p.Courses)
                 .HasForeignKey(d => d.SubCategoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Course_SubCategory");
         });
 
