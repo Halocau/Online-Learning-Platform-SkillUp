@@ -93,9 +93,9 @@ export function LoginForm({
 
         // Lấy user info từ localStorage để navigate
         const user = JSON.parse(localStorage.getItem('user'))
+        
+        // Navigate theo role
         const redirectPath = getRedirectPath(user.role)
-
-        // Navigate theo role sau 1 giây
         setTimeout(() => {
           navigate(redirectPath, { replace: true })
         }, 1000)
