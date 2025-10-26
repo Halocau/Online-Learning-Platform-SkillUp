@@ -30,6 +30,7 @@ namespace SkillUp.Controllers
 					Title = t.Title,
 					Contents = t.Contents,
 					AccountName = t.Account != null ? t.Account.Fullname : "N/A",
+					Response = t.Response,
 					CreatedAt = t.CreatedAt,
 					Status = t.Status
 				}).ToList();
@@ -265,10 +266,10 @@ namespace SkillUp.Controllers
 						data = new List<object>()
 					});
 				}
-				var existingTicket = await _ticketService.GetTicketByCode(ticketUpdateDTO.Code);
+				//var existingTicket = await _ticketService.GetTicketByCode(ticketUpdateDTO.Code);
 				Ticket ticket = new Ticket
 				{
-					Id = existingTicket.Id,
+					TicketCode = ticketUpdateDTO.Code,
 					Title = ticketUpdateDTO.Title,
 					Contents = ticketUpdateDTO.Contents,
 					CreatedAt = DateTime.Now
