@@ -165,7 +165,7 @@ namespace SkillUp.Services.Implementations
                 return false;
             }
 
-            // Bước 2: Lấy thông tin đơn ứng tuyển từ repository
+            // Lấy thông tin đơn ứng tuyển từ repository
             var application = await _lecturerApplicationRepository.GetByIdAsync(applicationId);
             if (application == null)
             {
@@ -176,33 +176,42 @@ namespace SkillUp.Services.Implementations
             var updateResult = await _lecturerApplicationRepository.UpdateStatusAsync(applicationId, request.Status, request.Reason);
             if (updateResult == null || !await _lecturerApplicationRepository.SaveChangesAsync())
             {
-                return false; // Nếu không cập nhật trạng thái thành công
+                return false;
             }
-            if (request.Status.Equals("Accepted"))
+
+            // Nếu trạng thái là "Accepted", tạo Lecturer mới và cập nhật trạng thái của Account
+            if (request.Status == true) // "Accepted"
             {
                 // Tạo đối tượng Lecturer mới từ thông tin trong đơn ứng tuyển
                 var newLecturer = new Lecturer
                 {
                     Id = Guid.NewGuid(),
-                    AccountId = (Guid)application.AccountId,
+                    AccountId = application.AccountId ?? Guid.Empty, // Sử dụng accountId từ đơn ứng tuyển
                     Title = application.Title,
                     Profession = application.Profession
-                    // Bạn có thể thêm các thuộc tính khác của Lecturer nếu cần
+                    // Có thể thêm các thuộc tính khác của Lecturer nếu cần
                 };
 
-
+                // Lưu Lecturer mới vào cơ sở dữ liệu
                 var lecturerCreationResult = await _lecturerService.CreateLecturerAsync(newLecturer);
                 if (!lecturerCreationResult)
                 {
                     return false; // Nếu tạo Lecturer mới thất bại
                 }
+
+                var account = await _accountRepository.GetByIdAsync(application.AccountId.Value); // AccountId đã được đảm bảo không null
+                if (account != null)
+                {
+                    var accountUpdateResult = await _accountRepository.UpdateStatusAsync(account.Id, "Active");
+                    if (!accountUpdateResult)
+                    {
+                        return false; // Nếu không cập nhật trạng thái Account thành công
+                    }
+                }
             }
-
-            // Nếu trạng thái là "Rejected", chỉ cần cập nhật trạng thái mà không tạo Lecturer mới
-
-            // Trả về kết quả thành công
             return true;
         }
+
 
 
         public async Task<List<LecturerApplicationResponseDto>> GetAllLecturerApplicationsAsync()

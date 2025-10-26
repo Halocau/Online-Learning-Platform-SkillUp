@@ -47,6 +47,7 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Lecturers
                 .Include(x => x.Account) // Đảm bảo lấy thông tin về Account nếu cần
                 .ToListAsync();
+        }
         public async Task<Lecturer?> GetLecturerByAccountIdAsync(Guid accountId)
         {
             return await _context.Lecturers
