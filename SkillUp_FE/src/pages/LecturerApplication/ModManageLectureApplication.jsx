@@ -3,10 +3,7 @@ import { Table, Button, Space, Tag, Input, Segmented, Tooltip, Modal } from 'ant
 import { SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
-import { Document, Page, pdfjs } from 'react-pdf';
 
-// Đảm bảo cấu hình worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ENDPOINTS = {
     all: API_ENDPOINTS.MANAGE_LECTURER_APPLICATIONS,
