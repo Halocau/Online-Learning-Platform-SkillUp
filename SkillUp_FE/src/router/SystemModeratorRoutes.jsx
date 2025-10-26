@@ -8,6 +8,7 @@ import ModDashboard from "../pages/contentmoderator/ModDashboard";
 import SystemModeratorLayout from "@/layouts/SystemModeratorLayout";
 import CategoryManage from "@/pages/systemModerator/CategoryManage";
 import TicketManage from "@/pages/systemModerator/TicketManage";
+import LecturerApplicationManage from "@/pages/systemModerator/LecturerApplicationManage";
 
 const SystemModeratorRoutes = () => {
   return (
@@ -23,6 +24,7 @@ const SystemModeratorRoutes = () => {
         <Route index element={<ModDashboard />} />
         <Route path="category" element={<CategoryManage />} />
         <Route path="ticket" element={<TicketManage />} />
+        <Route path="lecturer-application" element={<LecturerApplicationManage />} />
         // Routes chức năng khác
       </Route>
     </Routes>

@@ -23,8 +23,9 @@ export const API_ENDPOINTS = {
     DETAIL_TICKET: '/Ticket/detail',
     UPDATE_TICKET: '/Ticket/update-ticket',
     SOLVE_TICKETS: '/Ticket/solved-tickets',
-    UNSOLVE_TICKETS: '/Ticket/unsolved-tickets',
+    UNSOLVED_TICKETS: '/Ticket/unsolved-tickets',
     RESOLVE_TICKET: '/Ticket/resolve-ticket',
+    MANAGE_LECTURER_APPLICATIONS: '/LecturerApplication/manage-lecturer-applications',
 
     // Category endpoints
     CATEGORY_LIST: '/Category/GetAll',

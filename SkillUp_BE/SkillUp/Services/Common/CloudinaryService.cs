@@ -80,7 +80,7 @@ namespace SkillUp.Services.Common
             {
                 var pdfUrl = _cloudinary.Api.UrlImgUp
                                  .ResourceType("raw")
-                                 .BuildUrl(result.PublicId + ".pdf");
+                                 .BuildUrl(result.PublicId);
 
                 return pdfUrl;
             }
