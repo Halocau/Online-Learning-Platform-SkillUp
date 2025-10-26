@@ -21,6 +21,13 @@ namespace SkillUp.Services.Implementations
             return _repo.GetAll();
         }
 
+        // V THÊM PHƯƠNG THỨC NÀY V
+        public IEnumerable<Category> GetAllWithSubCategories()
+        {
+            return _repo.GetAllWithSubCategories();
+        }
+        // ^ THÊM PHƯƠNG THỨC NÀY ^
+
         public Category? GetById(int id)
         {
             return _repo.GetById(id);
@@ -33,6 +40,7 @@ namespace SkillUp.Services.Implementations
 
         public Category Create(CategoryRequestDto request)
         {
+            // ... (code khác giữ nguyên) ...
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new ArgumentException("Tên danh mục không được để trống.");
 
@@ -50,6 +58,7 @@ namespace SkillUp.Services.Implementations
 
         public Category Update(int id, CategoryRequestDto request)
         {
+            // ... (code khác giữ nguyên) ...
             var category = _repo.GetById(id)
                 ?? throw new KeyNotFoundException("Không tìm thấy danh mục.");
 
@@ -67,6 +76,7 @@ namespace SkillUp.Services.Implementations
 
         public Category Delete(int id)
         {
+            // ... (code khác giữ nguyên) ...
             var category = _repo.GetById(id)
                 ?? throw new KeyNotFoundException("Không tìm thấy danh mục.");
 

@@ -7,6 +7,7 @@ namespace SkillUp.Services.Interfaces
     public interface ICategoryService
     {
         IEnumerable<Category> GetAll();
+        IEnumerable<Category> GetAllWithSubCategories();
         Category? GetById(int id);
         Category? GetByIdWithSubCategories(int id);
         Category Create(CategoryRequestDto request);
