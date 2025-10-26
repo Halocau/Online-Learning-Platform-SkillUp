@@ -126,8 +126,8 @@ namespace SkillUp.Services.Implementations
                 Status = post.Status,
                 CreatedAt = post.CreatedAt,
                 UpdatedAt = post.UpdatedAt,
-                //AccountName = post.Account?.Fullname ?? "",  
-                //CategoryName = post.ForumCategory?.Name ?? "",
+                AccountName = post.Account?.Fullname ?? "",
+                CategoryName = post.ForumCategory?.Name ?? "",
                 ImageUrls = post.PostImages.Select(i => i.ImageUrl).ToList()
             };
         }
