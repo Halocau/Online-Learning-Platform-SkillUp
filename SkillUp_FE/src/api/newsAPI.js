@@ -4,9 +4,6 @@ import axiosInstance from "../lib/axios";
 
 const API_URL = "http://localhost:5120/api/News";
 
-// -----------------------------
-// 🔹 Helper functions for message handling
-// -----------------------------
 const handleAPIResponse = (res, defaultSuccessMsg = "Thành công!") => {
   const apiRes = res.data;
   if (apiRes?.code >= 200 && apiRes?.code < 300) {
@@ -25,11 +22,9 @@ const handleAPIError = (err, defaultErrorMsg = "Không thể kết nối đến 
   return [];
 };
 
-// -----------------------------
-// 🔹 NEWS API CALLS
-// -----------------------------
 
-// 🟩 GET ALL NEWS
+
+// GET ALL NEWS
 export const getAllNews = async () => {
   try {
     const res = await axiosInstance.get(`${API_URL}/all-news`);
@@ -39,7 +34,7 @@ export const getAllNews = async () => {
   }
 };
 
-// 🟩 UPDATE NEWS
+//  UPDATE NEWS
 export const updateNews = async (news) => {
   try {
     const res = await axiosInstance.put(`${API_URL}/update-news`, news, {
@@ -52,7 +47,7 @@ export const updateNews = async (news) => {
   }
 };
 
-// 🟩 DELETE NEWS
+// DELETE NEWS
 export const deleteNews = async (id) => {
   try {
     const res = await axiosInstance.delete(`${API_URL}/delete-news/${id}`);
@@ -60,5 +55,16 @@ export const deleteNews = async (id) => {
     return res.data;
   } catch (err) {
     return handleAPIError(err, "Không thể xóa tin tức!");
+  }
+};
+
+
+// 🟩 GET NEWS BY ID
+export const getNewsById = async (id) => {
+  try {
+    const res = await axiosInstance.get(`${API_URL}/news/${id}`);
+    return handleAPIResponse(res, "Lấy chi tiết tin tức thành công!");
+  } catch (err) {
+    return handleAPIError(err, "Không thể tải chi tiết tin tức!");
   }
 };

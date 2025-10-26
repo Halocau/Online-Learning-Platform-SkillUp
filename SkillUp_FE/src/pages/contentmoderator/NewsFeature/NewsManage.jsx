@@ -3,11 +3,15 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search, Calendar } from "lucide-react";
-import { DatePicker, message, Modal } from "antd";
+import { DatePicker, Modal } from "antd";
 import Table from "@/components/common/Table";
 import { getAllNews, deleteNews } from "../../../api/newsAPI";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import NewsDetailModal from "./DetailNewsMod";
+
 
 export default function NewsManage() {
   const [data, setData] = useState([]);
@@ -18,8 +22,15 @@ export default function NewsManage() {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const navigate = useNavigate();
+const [selectedNews, setSelectedNews] = useState(null);
+const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchNews = async () => {
+const handleView = (news) => {
+  setSelectedNews(news);
+  setIsModalOpen(true);
+};
+
+const fetchNews = async () => {
     try {
       setLoading(true);
       const newsList = await getAllNews();
@@ -27,7 +38,7 @@ export default function NewsManage() {
       setFilteredData(newsList);
     } catch (err) {
       console.error(err);
-      message.error("Failed to load news");
+      toast.error("Failed to load news");
     } finally {
       setLoading(false);
     }
@@ -37,7 +48,6 @@ export default function NewsManage() {
     fetchNews();
   }, []);
 
-  // Filter
   const applyFilters = (emailValue, dateValue) => {
     let result = data;
 
@@ -64,22 +74,23 @@ export default function NewsManage() {
     applyFilters(emailSearch, date);
   };
 
-  // Delete with confirm + message
   const handleDelete = (id) => {
     setDeleteId(id);
     setConfirmVisible(true);
   };
+
   const handleConfirmDelete = async () => {
     try {
       await deleteNews(deleteId);
-      message.success("News deleted successfully");
+      toast.success("News deleted successfully");
       fetchNews();
     } catch (err) {
-      message.error("Failed to delete news");
+      toast.error("Failed to delete news");
     } finally {
       setConfirmVisible(false);
     }
   };
+
   const columns = [
     { key: "title", title: "Title" },
     { key: "email", title: "Author Email" },
@@ -87,26 +98,45 @@ export default function NewsManage() {
     {
       key: "contents",
       title: "Content",
-      render: (value) => (
-        <div
-          className="max-w-[400px] text-gray-600 overflow-hidden"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "100px 1fr",
-            gap: "12px",
-            alignItems: "center",
-          }}
-        >
+      render: (value) => {
+        if (!value) return null;
+
+        // Extract first image and remove it from text
+        const imgMatch = value.match(/<img[^>]+src="([^">]+)"/);
+        const imgSrc = imgMatch ? imgMatch[1] : null;
+        const cleanText = value
+          .replace(/<img[^>]*>/g, "")
+          .replace(/<\/?[^>]+(>|$)/g, " ") // remove html tags
+          .replace(/\s+/g, " ")
+          .trim();
+
+        return (
           <div
-            dangerouslySetInnerHTML={{
-              __html: value.replace(
-                /<img[^>]+src="([^">]+)".*?>/,
-                '<img src="$1" style="width:100px; height:70px; object-fit:cover; border-radius:8px;"/>'
-              ),
-            }}
-          />
-        </div>
-      ),
+            className="flex items-start gap-3 max-w-[420px] overflow-hidden"
+            style={{ alignItems: "flex-start" }}
+          >
+            {imgSrc && (
+              <img
+                src={imgSrc}
+                alt="thumb"
+                className="w-[100px] h-[70px] object-cover rounded-lg flex-shrink-0"
+              />
+            )}
+            <p
+              className="text-gray-700 leading-snug overflow-hidden"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: "vertical",
+                maxHeight: "5.6em",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {cleanText}
+            </p>
+          </div>
+        );
+      },
     },
   ];
 
@@ -115,13 +145,13 @@ export default function NewsManage() {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">News Management</h2>
         <Button>
-          <Link to="/contentmod/createnews">
-            <PlusCircle size={25} /> Add News
+          <Link to="/contentmod/createnews" className="flex items-center gap-2">
+            Add News <PlusCircle size={18} />
           </Link>
         </Button>
       </div>
 
-      {/* Search and Filter */}
+      
       <div className="flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-2">
           <Search className="text-gray-400" />
@@ -148,6 +178,7 @@ export default function NewsManage() {
         data={filteredData}
         onEdit={(item) => navigate(`/contentmod/editnews/${item.id}`)}
         onDelete={(itemId) => handleDelete(itemId)}
+        onRowClick={handleView}
         loading={loading}
       />
 
@@ -161,6 +192,13 @@ export default function NewsManage() {
       >
         Are you sure you want to delete this news?
       </Modal>
+
+      <NewsDetailModal
+  visible={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  news={selectedNews}
+/>
+
     </div>
   );
 }
