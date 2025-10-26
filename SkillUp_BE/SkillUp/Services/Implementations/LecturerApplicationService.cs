@@ -1,5 +1,6 @@
 using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
@@ -11,16 +12,18 @@ namespace SkillUp.Services.Implementations
         private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly CloudinaryService _cloudinaryService;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly ILecturerService _lecturerService;
 
-        public LecturerApplicationService(
-            ILecturerApplicationRepository lecturerApplicationRepository,
-            IAccountRepository accountRepository,
-            CloudinaryService cloudinaryService)
+        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, CloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService)
         {
             _lecturerApplicationRepository = lecturerApplicationRepository;
             _accountRepository = accountRepository;
             _cloudinaryService = cloudinaryService;
+            _currentUserService = currentUserService;
+            _lecturerService = lecturerService;
         }
+
 
         public async Task<bool> ApplyCvAsync(Guid accountId, ApplyCvRequestDto request)
         {
@@ -152,5 +155,79 @@ namespace SkillUp.Services.Implementations
                 UpdatedAt = null
             };
         }
+
+        public async Task<bool> UpdateStatusAsync(Guid applicationId, UpdateStatusRequestDto request)
+        {
+            // Kiểm tra người dùng hiện tại
+            var userId = _currentUserService.UserId;
+            if (userId == null)
+            {
+                return false;
+            }
+
+            // Bước 2: Lấy thông tin đơn ứng tuyển từ repository
+            var application = await _lecturerApplicationRepository.GetByIdAsync(applicationId);
+            if (application == null)
+            {
+                return false; // Đơn ứng tuyển không tồn tại
+            }
+
+            // Cập nhật trạng thái đơn ứng tuyển
+            var updateResult = await _lecturerApplicationRepository.UpdateStatusAsync(applicationId, request.Status, request.Reason);
+            if (updateResult == null || !await _lecturerApplicationRepository.SaveChangesAsync())
+            {
+                return false; // Nếu không cập nhật trạng thái thành công
+            }
+            if (request.Status.Equals("Accepted"))
+            {
+                // Tạo đối tượng Lecturer mới từ thông tin trong đơn ứng tuyển
+                var newLecturer = new Lecturer
+                {
+                    Id = Guid.NewGuid(),
+                    AccountId = (Guid)application.AccountId,
+                    Title = application.Title,
+                    Profession = application.Profession
+                    // Bạn có thể thêm các thuộc tính khác của Lecturer nếu cần
+                };
+
+
+                var lecturerCreationResult = await _lecturerService.CreateLecturerAsync(newLecturer);
+                if (!lecturerCreationResult)
+                {
+                    return false; // Nếu tạo Lecturer mới thất bại
+                }
+            }
+
+            // Nếu trạng thái là "Rejected", chỉ cần cập nhật trạng thái mà không tạo Lecturer mới
+
+            // Trả về kết quả thành công
+            return true;
+        }
+
+
+        public async Task<List<LecturerApplicationResponseDto>> GetAllLecturerApplicationsAsync()
+        {
+            var applications = await _lecturerApplicationRepository.GetAllLecturerApplicationsAsync();
+
+            // Kiểm tra dữ liệu trả về có null không
+            if (applications == null || applications.Count == 0)
+            {
+                return new List<LecturerApplicationResponseDto>(); // Trả về danh sách rỗng nếu không có dữ liệu
+            }
+
+            return applications.Select(app => new LecturerApplicationResponseDto
+            {
+                Cv = app.Cv ?? string.Empty,  // Nếu null, thay bằng chuỗi rỗng
+                Degree = app.Degree ?? string.Empty,
+                Title = app.Title ?? string.Empty,
+                Profession = app.Profession ?? string.Empty,
+                Description = app.Description,
+                Status = app.Status,
+                RejectReason = app.Reason,
+                CreatedAt = app.CreatedAt,
+                UpdatedAt = null // Sẽ thêm sau khi update database
+            }).OrderByDescending(x => x.CreatedAt).ToList();
+        }
+
     }
 }

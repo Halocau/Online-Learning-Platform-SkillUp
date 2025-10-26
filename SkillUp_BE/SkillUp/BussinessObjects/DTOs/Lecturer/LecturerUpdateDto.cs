@@ -1,0 +1,8 @@
+﻿namespace SkillUp.BussinessObjects.DTOs.Lecturer
+{
+    public class LecturerUpdateDto
+    {
+        public string Title { get; set; }
+        public string Profession { get; set; }
+    }
+}

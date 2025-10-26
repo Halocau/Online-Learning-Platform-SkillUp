@@ -76,8 +76,8 @@ builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRe
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 builder.Services.AddScoped<INewsRepository, NewsRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
-
-
+builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRepository>();
+builder.Services.AddScoped<ILecturerRepository,LecturerRepository>(); 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -87,6 +87,7 @@ builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationService>();
+builder.Services.AddScoped<ILecturerService, LecturerService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
