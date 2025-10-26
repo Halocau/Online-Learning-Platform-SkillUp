@@ -1,124 +1,110 @@
+// src/pages/forum/ForumList.jsx
 import React, { useEffect, useState } from "react";
-import { Card, Button, message, Empty, Typography, Tag } from "antd";
-import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { Badge } from "@/components/ui/badge"; // shadcn
-import { Separator } from "@/components/ui/seperator";
-import { Tooltip } from "@/components/ui/tooltip";
+import { Button, Spin, Empty, Select } from "antd";
+import { Link } from "react-router-dom";
+import { postApi } from "@/api/postAPI";
+import { categoryApi } from "@/api/forumCategory";
+import PostCard from "@/components/forum/PostCard";
+import { PlusCircle, RefreshCcw } from "lucide-react";
 
-const { Title, Paragraph } = Typography;
-
-const ForumList = () => {
+export default function ForumList() {
   const [posts, setPosts] = useState([]);
-  const navigate = useNavigate();
-  const [editingId, setEditingId] = useState(null);
-  const fetchPosts = async () => {
-    try {
-      const res = await axios.get("/api/posts");
-      setPosts(res.data);
-    } catch (err) {
-      message.error("Failed to load posts");
-    }
-  };
+  const [categories, setCategories] = useState([]);
+  const [filterCat, setFilterCat] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetchCategories();
     fetchPosts();
   }, []);
 
-  const handleDelete = async (id) => {
+  const fetchCategories = async () => {
     try {
-      await axios.delete(`/api/posts/${id}`);
-      message.success("Post deleted");
-      fetchPosts();
-    } catch {
-      message.error("Failed to delete post");
+      const res = await categoryApi.getAll();
+      setCategories(res.data.data || []);
+    } catch (err) {
+      console.error(err);
     }
   };
 
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const res = await postApi.getActive();
+      setPosts(res?.data?.data ?? []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Ensure consistent comparison using toString()
+  const filtered = filterCat
+    ? posts.filter((p) => {
+        const catId = p.ForumCategoryId ?? p.forumCategoryId;
+        return catId && catId.toString() === filterCat.toString();
+      })
+    : posts;
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex justify-center">
-      <div className="w-full max-w-5xl">
-        <div className="flex justify-between items-center mb-6">
-          <Title level={2}>Student Forum</Title>
-          <Button type="primary" onClick={() => navigate("/forum/create")}>
-            + New Post
+    <div className="max-w-5xl mx-auto py-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Select
+            placeholder="Filter by category"
+            allowClear
+            style={{ width: 220 }}
+            value={filterCat ?? undefined}
+            onChange={(val) => setFilterCat(val || null)}
+          >
+            {categories.map((c, i) => {
+              const id = c.Id?.toString() ?? c.id?.toString();
+              const name = c.Name ?? c.name;
+              return (
+                <Select.Option key={id ?? `cat-${i}`} value={id}>
+                  {name}
+                </Select.Option>
+              );
+            })}
+          </Select>
+
+          <Button
+            icon={<RefreshCcw size={16} />}
+            onClick={() => {
+              setFilterCat(null);
+              fetchPosts();
+            }}
+            className="border-gray-300"
+          >
+            Refresh
           </Button>
         </div>
 
-        {posts.length === 0 ? (
-          <Empty description="No posts yet" />
-        ) : (
-          <div className="grid gap-5">
-            {posts.map((post, index) => (
-              <motion.div
-                key={post._id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card
-                  className="shadow-md rounded-2xl hover:shadow-xl transition-all"
-                  title={
-                    <div className="flex items-center justify-between">
-                      <Link
-                        to={`/forum/${post._id}`}
-                        className="text-blue-600 font-semibold text-lg hover:underline"
-                      >
-                        {post.title}
-                      </Link>
-                      <Badge variant="outline" className="capitalize">
-                        {post.category}
-                      </Badge>
-                    </div>
-                  }
-                  actions={[
-                    <Tooltip>
-                      <Button onClick={() => setEditingId(post._id)}>
-                        Edit
-                      </Button>
-                      {editingId && (
-                        <EditPost
-                          postId={editingId}
-                          visible={Boolean(editingId)}
-                          onClose={() => {
-                            setEditingId(null);
-                            fetchPosts();
-                          }}
-                        />
-                      )}
-                    </Tooltip>,
-                    <Tooltip>
-                      <Button
-                        key="delete"
-                        danger
-                        onClick={() => handleDelete(post._id)}
-                      >
-                        Delete
-                      </Button>
-                    </Tooltip>,
-                  ]}
-                >
-                  <Paragraph
-                    ellipsis={{ rows: 3 }}
-                    className="text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: post.content }}
-                  />
-                  <Separator className="my-3" />
-                  <div className="text-sm text-gray-400">
-                    Posted by:{" "}
-                    <span className="font-medium">
-                      {post.authorName || "Unknown"}
-                    </span>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
+        <Link to="/forum/create">
+          <Button
+            type="primary"
+            icon={<PlusCircle size={16} />}
+            className="bg-gradient-to-r from-indigo-500 to-purple-500 border-0 text-white font-medium rounded-lg shadow-sm hover:opacity-90"
+          >
+            Create Post
+          </Button>
+        </Link>
       </div>
+
+      {loading ? (
+        <div className="text-center py-20">
+          <Spin size="large" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <Empty description="No posts found" />
+      ) : (
+        <div className="space-y-4">
+          {filtered.map((p) => (
+            <PostCard key={p.Id ?? p.id} post={p} />
+          ))}
+        </div>
+      )}
     </div>
   );
-};
-
-export default ForumList;
+}

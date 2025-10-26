@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SkillUp.BussinessObjects.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.Post;
-using SkillUp.Services.Common;
+using SkillUp.ExceptionHandling;
+using SkillUp.Services.Interfaces;
+using System.Security.Claims;
 
 namespace SkillUp.Controllers
 {
@@ -10,266 +11,177 @@ namespace SkillUp.Controllers
     [ApiController]
     public class PostController : ControllerBase
     {
-        private readonly SkillUpContext _context;
-        private readonly CloudinaryService _cloudinaryService;
+        private readonly IPostService _postService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public PostController(SkillUpContext context, CloudinaryService cloudinaryService)
+        public PostController(IPostService postService, ICurrentUserService currentUserService)
         {
-            _context = context;
-            _cloudinaryService = cloudinaryService;
+            _postService = postService;
+            _currentUserService = currentUserService;
         }
 
-        // POST: api/Post/create
+        // ✅ Lấy userId từ token
+        private Guid GetUserId()
+        {
+            var userId = User.FindFirst("userId")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                throw new Exception("User ID not found in token");
+
+            return Guid.Parse(userId);
+        }
+
+        // ✅ Tạo bài viết
+        [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreatePost([FromForm] PostCreateRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Kiểm tra tài khoản và danh mục
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == request.AccountId);
-            var category = await _context.ForumCategories.FirstOrDefaultAsync(fc => fc.Id == request.ForumCategoryId);
-
-            if (account == null)
-                return NotFound(new { message = "Account not found" });
-
-            if (category == null)
-                return NotFound(new { message = "Forum category not found" });
-
-            // Tạo bài viết mới
-            var newPost = new Post
+            try
             {
-                Id = Guid.NewGuid(),
-                AccountId = request.AccountId,
-                ForumCategoryId = request.ForumCategoryId,
-                Title = request.Title,
-                Contents = request.Contents,
-                CreatedAt = DateTime.UtcNow,
-                Status = "Active"
-            };
-
-            _context.Posts.Add(newPost);
-            await _context.SaveChangesAsync();
-
-            // Upload ảnh nếu có
-            var imageUrls = new List<string>();
-            if (request.Images != null && request.Images.Count > 0)
-            {
-                foreach (var image in request.Images)
+                 var userId = _currentUserService.UserId;
+                var result = await _postService.CreatePostAsync(request, GetUserId());
+                return Ok(new APIReturn
                 {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(image, "skillup/posts");
-                    imageUrls.Add(imageUrl);
-
-                    // Lưu vào bảng PostImage
-                    var postImage = new PostImage
-                    {
-                        Id = Guid.NewGuid(),
-                        PostId = newPost.Id,
-                        ImageUrl = imageUrl
-                    };
-                    _context.PostImages.Add(postImage);
-                }
-
-                await _context.SaveChangesAsync();
+                    code = 200,
+                    message = "Post created successfully",
+                    data = new List<object> { result }
+                });
             }
-
-            // Chuẩn bị dữ liệu trả về
-            var response = new PostDto
+            catch (Exception ex)
             {
-                Id = newPost.Id,
-                AccountId = newPost.AccountId,
-                ForumCategoryId = newPost.ForumCategoryId,
-                Title = newPost.Title,
-                Contents = newPost.Contents,
-                CreatedAt = newPost.CreatedAt,
-                Status = newPost.Status,
-                AccountName = account.Email,
-                ForumCategoryName = category.Name,
-                CommentCount = 0,
-                PostImageUrls = imageUrls
-            };
-
-            return Ok(new
-            {
-                message = "Post created successfully",
-                data = response
-            });
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
         }
 
+        // ✅ Cập nhật bài viết
+        [Authorize]
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> UpdatePost(Guid id, [FromForm] PostUpdateRequest request)
+        {
+            try
+            {
+                var result = await _postService.UpdatePostAsync(id, request, GetUserId());
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Post updated successfully",
+                    data = new List<object> { result }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
+
+        // ✅ Xóa (ẩn) bài viết
+        [Authorize]
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeletePost(Guid id)
+        {
+            try
+            {
+                var result = await _postService.DeletePostAsync(id, GetUserId());
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = result ? "Post deleted successfully" : "Failed to delete post",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
+
+        // ✅ Xem toàn bộ bài viết (bao gồm inactive)
         [HttpGet("view-all")]
-        public async Task<IActionResult> ViewAllPosts()
+        public async Task<IActionResult> ViewAll()
         {
-            var posts = await _context.Posts
-                .Include(p => p.Account)
-                .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
-                .Include(p => p.PostImages)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
-
-            var postDtos = posts.Select(p => new PostDto
+            try
             {
-                Id = p.Id,
-                AccountId = p.AccountId,
-                ForumCategoryId = p.ForumCategoryId,
-                Title = p.Title,
-                Contents = p.Contents,
-                CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt,
-                Status = p.Status,
-                AccountName = p.Account.Email, // hoặc Fullname
-                ForumCategoryName = p.ForumCategory.Name,
-                CommentCount = p.CommentPosts.Count,
-                PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
-            }).ToList();
-
-            return Ok(new
+                var result = await _postService.ViewAllPostsAsync();
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Fetched all posts successfully",
+                    data = result.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
             {
-                message = "Get all posts successfully",
-                total = postDtos.Count,
-                data = postDtos
-            });
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
         }
 
-
-        // 2️⃣ Get only active posts
+        // ✅ Xem các bài viết đang active
         [HttpGet("view-active")]
-        public async Task<IActionResult> ViewActivePosts()
+        public async Task<IActionResult> ViewActive()
         {
-            var posts = await _context.Posts
-                .Where(p => p.Status == "Active")
-                .Include(p => p.Account)
-                .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
-                .Include(p => p.PostImages)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
-
-            var postDtos = posts.Select(p => new PostDto
+            try
             {
-                Id = p.Id,
-                AccountId = p.AccountId,
-                ForumCategoryId = p.ForumCategoryId,
-                Title = p.Title,
-                Contents = p.Contents,
-                CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt,
-                Status = p.Status,
-                AccountName = p.Account.Fullname,
-                ForumCategoryName = p.ForumCategory.Name,
-                CommentCount = p.CommentPosts.Count,
-                PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
-            }).ToList();
-
-            return Ok(new
+                var result = await _postService.ViewActivePostsAsync();
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Fetched active posts successfully",
+                    data = result.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
             {
-                message = "Get active posts successfully",
-                total = postDtos.Count,
-                data = postDtos
-            });
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
         }
 
-        // ✅ VIEW MY POSTS (lọc theo AccountId)
-        [HttpGet("my-posts/{accountId}")]
-        public async Task<IActionResult> ViewMyPosts(Guid accountId, [FromQuery] bool includeInactive = false)
+        // ✅ Xem bài viết của 1 người dùng cụ thể
+        [HttpGet("user/{accountId}")]
+        public async Task<IActionResult> ViewUser(Guid accountId, [FromQuery] bool includeInactive = false)
         {
-            // Kiểm tra account tồn tại
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
-            if (account == null)
-                return NotFound(new { message = "Account not found" });
-
-            // Truy vấn danh sách post thuộc về account này
-            var query = _context.Posts
-                .Include(p => p.ForumCategory)
-                .Include(p => p.CommentPosts)
-                .Include(p => p.PostImages)
-                .Where(p => p.AccountId == accountId)
-                .AsQueryable();
-
-            // Nếu không yêu cầu includeInactive thì chỉ lấy post có Status = Active
-            if (!includeInactive)
-                query = query.Where(p => p.Status == "Active");
-
-            // Sắp xếp: mới nhất trước
-            var posts = await query
-                .OrderByDescending(p => p.CreatedAt)
-                .ToListAsync();
-
-            // Map sang DTO
-            var postDtos = posts.Select(p => new PostDto
+            try
             {
-                Id = p.Id,
-                AccountId = p.AccountId,
-                ForumCategoryId = p.ForumCategoryId,
-                Title = p.Title,
-                Contents = p.Contents,
-                CreatedAt = p.CreatedAt,
-                UpdatedAt = p.UpdatedAt,
-                Status = p.Status,
-                AccountName = account.Email, // hoặc account.FullName nếu có
-                ForumCategoryName = p.ForumCategory.Name,
-                CommentCount = p.CommentPosts.Count,
-                PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
-            }).ToList();
-
-            return Ok(new
+                var result = await _postService.ViewUserPostsAsync(accountId, includeInactive);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Fetched user posts successfully",
+                    data = result.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
             {
-                message = "Get my posts successfully",
-                total = postDtos.Count,
-                data = postDtos
-            });
-        }
-
-
-    //View post list user
-    [HttpGet("user/{accountId}")]
-    public async Task<IActionResult> ViewUserPosts(Guid accountId, [FromQuery] bool includeInactive = false)
-    {
-        // Kiểm tra người dùng có tồn tại không
-        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
-        if (account == null)
-            return NotFound(new { message = "User not found" });
-
-        // Lấy danh sách bài viết của user này
-        var query = _context.Posts
-            .Include(p => p.ForumCategory)
-            .Include(p => p.CommentPosts)
-            .Include(p => p.PostImages)
-            .Where(p => p.AccountId == accountId)
-            .AsQueryable();
-
-        // Chỉ lấy post Active nếu không có includeInactive
-        if (!includeInactive)
-            query = query.Where(p => p.Status == "Active");
-
-        // Sắp xếp bài viết theo thời gian đăng mới nhất
-        var posts = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .ToListAsync();
-
-        // Map sang DTO
-        var postDtos = posts.Select(p => new PostDto
-        {
-            Id = p.Id,
-            AccountId = p.AccountId,
-            ForumCategoryId = p.ForumCategoryId,
-            Title = p.Title,
-            Contents = p.Contents,
-            CreatedAt = p.CreatedAt,
-            UpdatedAt = p.UpdatedAt,
-            Status = p.Status,
-            AccountName = account.Email, // hoặc account.FullName nếu có
-            ForumCategoryName = p.ForumCategory.Name,
-            CommentCount = p.CommentPosts.Count,
-            PostImageUrls = p.PostImages.Select(pi => pi.ImageUrl).ToList()
-        }).ToList();
-
-        return Ok(new
-        {
-            message = "Get user posts successfully",
-            total = postDtos.Count,
-            data = postDtos
-        });
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
         }
     }
 }

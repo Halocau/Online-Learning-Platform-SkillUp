@@ -1,6 +1,7 @@
-﻿using SkillUp.Repositories.Interfaces;
-using SkillUp.BussinessObjects.Models;
+﻿using Azure;
 using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Interfaces;
 
 namespace SkillUp.Repositories.Implementations
 {
@@ -56,33 +57,9 @@ namespace SkillUp.Repositories.Implementations
 		}
 		public async Task<Ticket> UpdateTicket(Ticket ticket)
 		{
-			var existingTicket = await _context.Tickets
-				.FirstOrDefaultAsync(t => t.Id == ticket.Id);
-			if (existingTicket == null)
-			{
-				return null;
-			}
-			existingTicket.Title = ticket.Title;
-			existingTicket.Contents = ticket.Contents;
-			existingTicket.CreatedAt = ticket.CreatedAt;
-
+			_context.Tickets.Update(ticket);
 			await _context.SaveChangesAsync();
-			return existingTicket;
-		}
-
-		public async Task<Ticket> ResolveTicket(Ticket ticket, bool decision, string response)
-		{
-			var existingTicket = await _context.Tickets
-				.FirstOrDefaultAsync(t => t.Id == ticket.Id);
-			if (existingTicket == null)
-			{
-				return null;
-			}
-			existingTicket.Status = decision ? "Accepted" : "Rejected";
-			existingTicket.Response = response;
-			existingTicket.CreatedAt = DateTime.Now;
-			await _context.SaveChangesAsync();
-			return existingTicket;
+			return ticket;
 		}
 	}
 }

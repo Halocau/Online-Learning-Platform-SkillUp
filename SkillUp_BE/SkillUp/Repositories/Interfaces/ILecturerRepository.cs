@@ -9,5 +9,6 @@ namespace SkillUp.Repositories.Interfaces
         Task<bool> SaveChangesAsync();
         Task<Lecturer> AddAsync(Lecturer lecturer);
         Task<List<Lecturer>> GetAllLecturersAsync();
+        Task<Lecturer?> GetLecturerByAccountIdAsync(Guid accountId);
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace SkillUp.BussinessObjects.DTOs.Category
+﻿
+
+namespace SkillUp.BussinessObjects.DTOs.Category
 {
     public class CategoryRequestDto
     {

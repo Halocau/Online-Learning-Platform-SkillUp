@@ -1,19 +1,22 @@
-// src/router/ForumRoutes.jsx
-import CreatePost from "@/pages/forum/CreatePost";
-import EditPost from "@/pages/forum/EditPost";
-import ForumList from "@/pages/forum/ForumList";
-import PostDetail from "@/pages/forum/PostDetail";
+// src/routes/ForumRoute.jsx
+import React from "react";
 import { Routes, Route } from "react-router-dom";
 
-const ForumRoutes = () => {
+import ForumList from "@/pages/forum/ForumList";
+
+import PostDetail from "@/pages/forum/PostDetail";
+import ForumLayout from "@/layouts/ForumLayout";
+import ForumForm from "@/pages/forum/ForumForm";
+
+export default function ForumRoutes() {
   return (
     <Routes>
-      <Route index element={<ForumList />} />
-      <Route path="/create" element={<CreatePost />} />
-      <Route path="/edit/:postId" element={<EditPost />} />
-      <Route path="/:postId" element={<PostDetail />} />
+      <Route path="/" element={<ForumLayout />}>
+        <Route index element={<ForumList />} />
+        <Route path="create" element={<ForumForm />} />
+        <Route path="edit/:postId" element={<ForumForm isEdit />} />
+        <Route path=":postId" element={<PostDetail />} />
+      </Route>
     </Routes>
   );
-};
-
-export default ForumRoutes;
+}

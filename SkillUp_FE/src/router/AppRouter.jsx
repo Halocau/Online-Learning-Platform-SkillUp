@@ -8,6 +8,8 @@ import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import Home from "../pages/Home/Home";
 import MyProfile from "../pages/Profile/MyProfile";
+import ApplyCV from "../pages/Lecturer/ApplyCV";
+import MyApplications from "../pages/Lecturer/MyApplications";
 import MainLayout from "../layouts/MainLayout";
 
 // Import role-based routes
@@ -15,7 +17,7 @@ import AdminRoutes from "./AdminRoutes";
 import ContentModeratorRoutes from "./ContentModeratorRoutes";
 import SystemModeratorRoutes from "./SystemModeratorRoutes";
 import StudentRoutes from "./StudentRoutes";
-import CreatePost from "@/pages/forum/CreatePost";
+import CreatePost from "@/pages/forum/ForumForm";
 import TicketList from "@/pages/ticket/TicketList";
 import TicketDetail from "@/pages/ticket/TicketDetail";
 import ForumRoutes from "./ForumRoute";
@@ -33,13 +35,15 @@ function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<MyProfile />} />
+        <Route path="/lecturer/apply-cv" element={<ApplyCV />} />
+        <Route path="/lecturer/applications" element={<MyApplications />} />
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="/forum/*" element={<ForumRoutes />} />
-          
+
           <Route path="/news" element={<NewsList />} />
-        <Route path="/news/:id" element={<NewsDetail />} />
+          <Route path="/news/:id" element={<NewsDetail />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />
@@ -54,8 +58,6 @@ function AppRouter() {
         <Route path="*" element={<MainLayout />}>
           <Route index element={<Home />} />
         </Route>
-
-        <Route path="/forum" element={<CreatePost />} />
       </Routes>
     </>
   );

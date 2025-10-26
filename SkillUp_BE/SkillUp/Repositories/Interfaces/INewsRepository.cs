@@ -8,6 +8,6 @@ namespace SkillUp.Repositories.Interfaces
 		Task<News> GetNewsById(Guid id);
 		Task<News> CreateNews(News news);
 		Task<News> UpdateNews(News news);
-		Task<News> DeleteNews(Guid id);
+		Task<News> DeleteNews(News news);
 	}
 }

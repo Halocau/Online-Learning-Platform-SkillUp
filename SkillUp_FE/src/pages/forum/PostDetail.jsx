@@ -1,63 +1,109 @@
+// src/pages/forum/PostDetail.jsx
 import React, { useEffect, useState } from "react";
-import { Card, Spin, message, Button } from "antd";
-import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import axios from "axios";
-import { Badge } from "@/components/ui/badge";
+import { postApi } from "@/api/postAPI";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Spin, Button, message } from "antd";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import CommentSection from "../../components/forum/CommentSection";
+import { Edit, ArrowLeft } from "lucide-react";
 
-const PostDetail = () => {
+export default function PostDetail() {
   const { postId } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const res = await axios.get(`/api/posts/${postId}`);
-        setPost(res.data);
-      } catch {
-        message.error("Failed to fetch post");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPost();
+    if (!postId) return;
+    setLoading(true);
+    postApi
+      .getById(postId)
+      .then((res) => {
+        const payload = res?.data?.data ?? res?.data ?? res;
+        const p = Array.isArray(payload) ? payload[0] : payload;
+        setPost(p);
+      })
+      .catch(() => {
+        message.error("Failed to load post");
+      })
+      .finally(() => setLoading(false));
   }, [postId]);
 
-  if (loading) {
+  if (loading)
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="text-center py-12">
         <Spin size="large" />
       </div>
     );
-  }
+  if (!post)
+    return <div className="p-6 bg-white rounded-lg shadow-sm">Post not found</div>;
 
-  if (!post) return <p>Post not found</p>;
+  const images = post.PostImageUrls ?? post.postImageUrls ?? [];
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const isOwner =
+    String(currentUser.id ?? currentUser.Id) ===
+    String(post.AccountId ?? post.accountId);
 
   return (
-    <motion.div
-      className="min-h-screen bg-gray-50 p-6 flex justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <Card className="w-full max-w-4xl shadow-lg rounded-2xl">
-        <div className="flex justify-between items-center mb-3">
-          <h1 className="text-3xl font-bold">{post.title}</h1>
-          <Badge variant="outline" className="capitalize">
-            {post.category}
-          </Badge>
-        </div>
-        <div
-          className="prose max-w-none text-gray-700"
-          dangerouslySetInnerHTML={{ __html: post.content }}
-        />
-        <div className="mt-6 flex justify-end">
-          <Button onClick={() => navigate(-1)}>Back</Button>
-        </div>
-      </Card>
-    </motion.div>
-  );
-};
+    <div className="max-w-4xl mx-auto space-y-6 py-6">
+      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="text-sm text-gray-500 mb-1">
+              {post.AccountName ?? post.accountName}
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {post.Title ?? post.title}
+            </h1>
+            <div className="text-xs text-gray-400">
+              {post.CreatedAt ? new Date(post.CreatedAt).toLocaleString() : ""}
+            </div>
+          </div>
 
-export default PostDetail;
+          <div className="space-x-2">
+            {isOwner && (
+              <Button
+                icon={<Edit size={14} />}
+                onClick={() => navigate(`/forum/edit/${post.Id ?? post.id}`)}
+              >
+                Edit
+              </Button>
+            )}
+            <Link to="/forum">
+              <Button icon={<ArrowLeft size={14} />}>Back</Button>
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 prose prose-indigo max-w-none text-gray-700 leading-relaxed">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {post.Contents ?? post.contents}
+          </ReactMarkdown>
+        </div>
+
+        {images.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 mt-6">
+            {images.map((u, i) => (
+              <img
+                key={i}
+                src={u}
+                alt=""
+                className="w-full h-56 object-cover rounded-lg border border-gray-100 hover:opacity-90 transition"
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="mt-6 text-sm text-gray-500">
+          Category:{" "}
+          <strong className="text-indigo-600">
+            {post.ForumCategoryName ?? post.forumCategoryName}
+          </strong>
+        </div>
+      </div>
+
+      <CommentSection postId={postId} />
+    </div>
+  );
+}
