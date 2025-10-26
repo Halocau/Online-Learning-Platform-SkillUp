@@ -12,7 +12,9 @@ export default function NewsDetail() {
   useEffect(() => {
     const fetchNewsDetail = async () => {
       try {
-        const res = await axiosInstance.get(`http://localhost:5120/api/News/${id}`);
+        const res = await axiosInstance.get(
+          `http://localhost:5120/api/News/${id}`
+        );
         const data = res.data.data?.[0];
         setNews(data);
       } catch (err) {
@@ -33,19 +35,29 @@ export default function NewsDetail() {
   }
 
   if (!news) {
-    return <p className="text-center mt-10 text-red-500">Không tìm thấy tin tức!</p>;
+    return (
+      <p className="text-center mt-10 text-red-500">Không tìm thấy tin tức!</p>
+    );
   }
 
   return (
     <div className="max-w-4xl mx-auto mt-8 px-4">
-      <Link to="/news" className="text-blue-500 hover:underline mb-4 inline-block">
+      <Link
+        to="/news"
+        className="text-blue-500 hover:underline mb-4 inline-block"
+      >
         ← Quay lại danh sách tin tức
       </Link>
       <h1 className="text-3xl font-bold mb-4">{news.title}</h1>
       <p className="text-gray-500 text-sm mb-4">{news.date}</p>
       <div
         className="prose prose-lg max-w-none"
-        dangerouslySetInnerHTML={{ __html: news.contents }}
+        dangerouslySetInnerHTML={{
+          __html: news.contents.replace(
+            /<img([^>]+?)src="([^">]+)"([^>]*?)>/g,
+            '<img src="$2" style="width:680px;height:408px;object-fit:cover;border-radius:12px;margin:16px 0;display:block;"/>'
+          ),
+        }}
       />
     </div>
   );

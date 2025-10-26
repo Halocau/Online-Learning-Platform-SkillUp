@@ -1,8 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 
-export default function Table({ columns, data, onEdit, onDelete }) {
-  // Ensure data is always an array
+export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
   const safeData = Array.isArray(data) ? data : [];
 
   return (
@@ -20,6 +19,7 @@ export default function Table({ columns, data, onEdit, onDelete }) {
             )}
           </tr>
         </thead>
+
         <tbody>
           {safeData.length === 0 ? (
             <tr>
@@ -32,7 +32,11 @@ export default function Table({ columns, data, onEdit, onDelete }) {
             </tr>
           ) : (
             safeData.map((item) => (
-              <tr key={item.id} className="border-b hover:bg-gray-50">
+              <tr
+                key={item.id}
+                className="border-b hover:bg-gray-50 cursor-pointer transition"
+                onClick={() => onRowClick && onRowClick(item)} // ✅ Click row to open modal
+              >
                 {columns.map((col) => (
                   <td key={col.key} className="p-3">
                     {col.render
@@ -40,8 +44,12 @@ export default function Table({ columns, data, onEdit, onDelete }) {
                       : item[col.key]}
                   </td>
                 ))}
+
                 {(onEdit || onDelete) && (
-                  <td className="p-3 text-right space-x-2">
+                  <td
+                    className="p-3 text-right space-x-2"
+                    onClick={(e) => e.stopPropagation()} // ✅ prevent row click when pressing button
+                  >
                     {onEdit && (
                       <Button
                         variant="outline"
@@ -55,13 +63,12 @@ export default function Table({ columns, data, onEdit, onDelete }) {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          console.log("Delete clicked", item.id);
-                          onDelete(item.id);
-                        }}
+                        onClick={() => onDelete(item.id)}
                       >
                         Delete
                       </Button>
+
+                      
                     )}
                   </td>
                 )}

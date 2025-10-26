@@ -40,7 +40,6 @@ export default function ForumForm({ isEdit = false }) {
   const loadPost = async () => {
     setLoading(true);
     try {
-      
       const res = await postApi.getById(postId);
       const payload = res?.data?.data ?? res?.data ?? res;
       const p = Array.isArray(payload) ? payload[0] : payload;
@@ -48,7 +47,7 @@ export default function ForumForm({ isEdit = false }) {
         Title: p.Title ?? p.title ?? "",
         Contents: p.Contents ?? p.contents ?? "",
         ForumCategoryId: p.ForumCategoryId ?? p.forumCategoryId ?? "",
-        images: [], 
+        images: [],
       });
     } catch (err) {
       console.error("Failed to load post", err);
@@ -65,26 +64,24 @@ export default function ForumForm({ isEdit = false }) {
     }
     setSaving(true);
     try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
       const formData = new FormData();
-      formData.append("AccountId", user.id || user.Id || localStorage.getItem("accountId"));
+      
       formData.append("ForumCategoryId", form.ForumCategoryId);
       formData.append("Title", form.Title);
       formData.append("Contents", form.Contents);
-      form.images.forEach(f => formData.append("Images", f.originFileObj || f));
+      form.images.forEach((f) =>
+        formData.append("Images", f.originFileObj || f)
+      );
 
       if (isEdit || postId) {
         await postApi.update(postId, formData);
-        message.success("Updated");
+        message.success("Updated successfully");
         navigate(`/forum/${postId}`);
       } else {
         const res = await postApi.create(formData);
-        const createdId = res?.data?.data?.Id ?? res?.data?.data ?? null;
-        message.success("Created");
-        
-        const id = res?.data?.data?.Id ?? res?.data?.data;
-        if (id) navigate(`/forum/${id}`);
-        else navigate("/forum");
+        const created = res?.data?.data;
+        message.success("Post created successfully");
+        navigate(`/forum/${created?.Id ?? created ?? "/forum"}`);
       }
     } catch (err) {
       console.error(err);
@@ -94,20 +91,34 @@ export default function ForumForm({ isEdit = false }) {
     }
   };
 
-  if (loading) return <div className="text-center py-12"><Spin /></div>;
+  if (loading)
+    return (
+      <div className="text-center py-12">
+        <Spin />
+      </div>
+    );
 
   return (
     <div className="bg-white p-6 rounded shadow-sm">
-      <h2 className="text-xl font-semibold mb-4">{isEdit || postId ? "Edit Post" : "Create a post"}</h2>
+      <h2 className="text-xl font-semibold mb-4">
+        {isEdit || postId ? "Edit Post" : "Create a post"}
+      </h2>
 
       <div className="space-y-3">
         <Select
           placeholder="Choose categories"
-          value={form.ForumCategoryId}
+          value={form.ForumCategoryId?.toString() || ""}
           onChange={(v) => setForm({ ...form, ForumCategoryId: v })}
           className="w-full"
         >
-          {categories.map(c => <Select.Option key={c.id ?? c.Id} value={c.id ?? c.Id}>{c.name ?? c.Name}</Select.Option>)}
+          {categories.map((c, i) => (
+            <Select.Option
+              key={c.Id?.toString() ?? c.id?.toString() ?? `cat-${i}`}
+              value={c.Id?.toString() ?? c.id?.toString()}
+            >
+              {c.Name ?? c.name}
+            </Select.Option>
+          ))}
         </Select>
 
         <Input
