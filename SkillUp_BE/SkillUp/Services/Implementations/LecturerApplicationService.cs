@@ -37,15 +37,20 @@ namespace SkillUp.Services.Implementations
             // Upload CV file to Cloudinary
             var cvUrl = await _cloudinaryService.UploadPdfAsync(request.CvFile, "skillup/lecturers/cv");
 
-            // Upload Degree image to Cloudinary
-            var degreeUrl = await _cloudinaryService.UploadImageAsync(request.DegreeFile, "skillup/lecturers/degrees");
+            // Upload nhiều ảnh Degree lên Cloudinary
+            var degreeUrls = new List<string>();
+            foreach (var degreeFile in request.DegreeFile)
+            {
+                var degreeUrl = await _cloudinaryService.UploadImageAsync(degreeFile, "skillup/lecturers/degrees");
+                degreeUrls.Add(degreeUrl);
+            }
 
             var application = new LecturerApplication
             {
                 Id = Guid.NewGuid(),
                 AccountId = accountId,
                 Cv = cvUrl,
-                Degree = degreeUrl,
+                Degree = string.Join(",", degreeUrls),
                 Description = request.Description,
                 Title = request.Title,
                 Profession = request.Profession,
