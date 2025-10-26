@@ -4,7 +4,7 @@ import { message, Card, Input, Button, Space } from "antd";
 import { Editor } from "@tinymce/tinymce-react";
 import { getAllNews, updateNews } from "../../../api/newsAPI";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
-
+import { toast } from "react-toastify";
 export default function EditNews() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,13 +57,12 @@ export default function EditNews() {
       };
 
       await updateNews(updateData);
-      
 
-      
+      toast.success("Cập nhật tin tức thành công!");
       setTimeout(() => navigate("/contentmod/news"), 1500);
     } catch (err) {
       console.error(err);
-      message.error("❌ Failed to update news");
+      toast.error("Cập nhật tin tức thất bại!");
     } finally {
       setLoading(false);
     }
