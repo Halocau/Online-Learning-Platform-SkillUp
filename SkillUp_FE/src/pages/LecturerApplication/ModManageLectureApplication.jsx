@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Table, Button, Space, Tag, Input, Segmented, Tooltip, Modal } from 'antd';
-import { SearchOutlined, ReloadOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Tag, Input, Segmented, Modal } from 'antd';
+import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
-
 
 const ENDPOINTS = {
     all: API_ENDPOINTS.MANAGE_LECTURER_APPLICATIONS,
@@ -44,8 +43,9 @@ const ModManageLectureApplication = () => {
     const [sortedInfo, setSortedInfo] = useState({});
     const [dataset, setDataset] = useState('all');
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Preview states
     const [previewVisible, setPreviewVisible] = useState(false);
-    const [previewImage, setPreviewImage] = useState('');
     const [previewTitle, setPreviewTitle] = useState('');
     const [pdfUrl, setPdfUrl] = useState('');
     const [imageUrls, setImageUrls] = useState([]);
@@ -54,13 +54,12 @@ const ModManageLectureApplication = () => {
         setLoading(true);
         try {
             const res = await axiosInstance.get(ENDPOINTS.all);
-            const { code, message, data } = res?.data || {};
+            const { code, data } = res?.data || {};
             if (code !== 200 || !data || !Array.isArray(data)) {
                 toast.error('Không thể tải danh sách đơn ứng tuyển');
                 setApplications([]);
                 return;
             }
-
             setApplications(data[0] || []);
         } catch (err) {
             console.error('Fetch lecturer applications failed:', err);
@@ -85,28 +84,45 @@ const ModManageLectureApplication = () => {
         });
     }, [applications, search]);
 
-    const handleChange = (pagination, filters, sorter) => {
+    const handleChange = (_pagination, filters, sorter) => {
         setFilteredInfo(filters);
         setSortedInfo(sorter);
     };
 
     const clearFilters = () => setFilteredInfo({});
-    const clearAll = () => { setFilteredInfo({}); setSortedInfo({}); setSearch(''); };
-    const refresh = () => setRefreshKey(k => k + 1);
+    const clearAll = () => {
+        setFilteredInfo({});
+        setSortedInfo({});
+        setSearch('');
+    };
+    const refresh = () => setRefreshKey((k) => k + 1);
 
     const handlePreview = (fileUrl, fileType) => {
-        setPreviewTitle(fileType === 'cv' ? 'CV' : 'Degree');
+        if (!fileUrl) return;
+
         if (fileType === 'cv') {
-            // Mở CV trong tab mới
-            window.open(fileUrl, '_blank');
-            setPdfUrl('');
+            // XEM CV TRONG MODAL (mặc định Cách A):
+            setPreviewTitle('CV');
+            setPdfUrl(fileUrl);
             setImageUrls([]);
-        } else {
-            setImageUrls(fileUrl.split(','));
-            setPdfUrl('');
             setPreviewVisible(true);
+
+            // NẾU MUỐN MỞ TAB MỚI THAY VÌ MODAL, bỏ comment dòng dưới và comment 4 dòng trên:
+            // window.open(fileUrl, '_blank', 'noopener,noreferrer');
+            return;
         }
+
+        // Degree là danh sách ảnh, phân tách bằng dấu phẩy
+        setPreviewTitle('Degree');
+        setPdfUrl('');
+        const imgs = fileUrl
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+        setImageUrls(imgs);
+        setPreviewVisible(true);
     };
+
     const columns = [
         {
             title: 'Tiêu đề',
@@ -146,10 +162,7 @@ const ModManageLectureApplication = () => {
             dataIndex: 'cv',
             key: 'cv',
             render: (cv) => (
-                <Button
-                    type="link"
-                    onClick={() => handlePreview(cv, 'cv')}
-                >
+                <Button type="link" onClick={() => handlePreview(cv, 'cv')}>
                     Xem CV
                 </Button>
             ),
@@ -159,10 +172,7 @@ const ModManageLectureApplication = () => {
             dataIndex: 'degree',
             key: 'degree',
             render: (degree) => (
-                <Button
-                    type="link"
-                    onClick={() => handlePreview(degree, 'degree')}
-                >
+                <Button type="link" onClick={() => handlePreview(degree, 'degree')}>
                     Xem bằng cấp
                 </Button>
             ),
@@ -180,13 +190,13 @@ const ModManageLectureApplication = () => {
     return (
         <div className="bg-white border border-gray-200 rounded-xl p-4">
             <h2 className="text-2xl font-bold mb-4">Quản lý đơn ứng tuyển giảng viên</h2>
+
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-3">
                 <div className="flex items-center gap-3">
                     <Segmented
                         value={dataset}
                         onChange={(v) => setDataset(v)}
                         options={[{ label: 'All', value: 'all' }]}
-
                     />
                     <Input
                         allowClear
@@ -213,7 +223,8 @@ const ModManageLectureApplication = () => {
             <Table
                 size="middle"
                 bordered
-                rowKey="ticketCode"
+                // Đổi rowKey nếu không có ticketCode: fallback theo id hoặc tổ hợp
+                rowKey={(r) => r.id ?? r.ticketCode ?? `${r.title}-${r.createdAt}`}
                 loading={loading}
                 columns={columns}
                 dataSource={displayed}
@@ -223,29 +234,36 @@ const ModManageLectureApplication = () => {
                 locale={{ emptyText: 'Không tìm thấy đơn ứng tuyển nào!' }}
             />
 
+            {/* AntD v5: dùng 'open' thay vì 'visible' */}
             <Modal
-                visible={previewVisible}
+                open={previewVisible}
                 title={previewTitle}
                 footer={null}
                 onCancel={() => setPreviewVisible(false)}
-                width={600}  // Cố định chiều rộng modal
-                style={{ top: 20 }}  // Điều chỉnh vị trí modal nếu cần
-                bodyStyle={{ maxHeight: '650px', overflowY: 'auto' }}  // Cho phép cuộn khi nội dung dài
+                width={800}
+                centered
+                destroyOnClose
+                maskClosable
+                bodyStyle={{ maxHeight: 700, overflowY: 'auto' }}
             >
                 {pdfUrl ? (
-                    <Document file={pdfUrl}>
-                        <Page pageNumber={1} />
-                    </Document>
+                    <iframe
+                        src={`${pdfUrl}#toolbar=1&navpanes=0`}
+                        title="PDF preview"
+                        style={{ width: '100%', height: '640px', border: 'none' }}
+                        allow="fullscreen"
+                        referrerPolicy="no-referrer"
+                    />
                 ) : (
                     imageUrls.map((url, index) => (
                         <img
                             key={index}
                             src={url}
-                            alt={`Degree Image ${index}`}
+                            alt={`Degree Image ${index + 1}`}
                             style={{
                                 width: '100%',
-                                maxHeight: '500px',
-                                objectFit: 'contain', // Giữ nguyên tỷ lệ ảnh
+                                maxHeight: 640,
+                                objectFit: 'contain',
                                 marginBottom: 10,
                                 display: 'block',
                                 marginLeft: 'auto',
@@ -255,8 +273,6 @@ const ModManageLectureApplication = () => {
                     ))
                 )}
             </Modal>
-
-
         </div>
     );
 };
