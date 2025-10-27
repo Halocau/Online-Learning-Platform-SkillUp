@@ -8,6 +8,8 @@ import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import Home from "../pages/Home/Home";
 import MyProfile from "../pages/Profile/MyProfile";
+import ApplyCV from "../pages/Lecturer/ApplyCV";
+import MyApplications from "../pages/Lecturer/MyApplications";
 import MainLayout from "../layouts/MainLayout";
 
 // Import role-based routes
@@ -33,6 +35,8 @@ function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<MyProfile />} />
+        <Route path="/lecturer/apply-cv" element={<ApplyCV />} />
+        <Route path="/lecturer/applications" element={<MyApplications />} />
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />

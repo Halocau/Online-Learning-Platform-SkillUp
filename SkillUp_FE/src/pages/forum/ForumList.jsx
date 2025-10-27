@@ -39,10 +39,12 @@ export default function ForumList() {
     }
   };
 
+  // ✅ Ensure consistent comparison using toString()
   const filtered = filterCat
-    ? posts.filter(
-        (p) => String(p.ForumCategoryId ?? p.forumCategoryId) === String(filterCat)
-      )
+    ? posts.filter((p) => {
+        const catId = p.ForumCategoryId ?? p.forumCategoryId;
+        return catId && catId.toString() === filterCat.toString();
+      })
     : posts;
 
   return (
@@ -53,17 +55,26 @@ export default function ForumList() {
             placeholder="Filter by category"
             allowClear
             style={{ width: 220 }}
-            onChange={(val) => setFilterCat(val)}
+            value={filterCat ?? undefined}
+            onChange={(val) => setFilterCat(val || null)}
           >
-            {categories.map((c) => (
-              <Select.Option key={c.id ?? c.Id} value={c.id ?? c.Id}>
-                {c.name ?? c.Name}
-              </Select.Option>
-            ))}
+            {categories.map((c, i) => {
+              const id = c.Id?.toString() ?? c.id?.toString();
+              const name = c.Name ?? c.name;
+              return (
+                <Select.Option key={id ?? `cat-${i}`} value={id}>
+                  {name}
+                </Select.Option>
+              );
+            })}
           </Select>
+
           <Button
             icon={<RefreshCcw size={16} />}
-            onClick={fetchPosts}
+            onClick={() => {
+              setFilterCat(null);
+              fetchPosts();
+            }}
             className="border-gray-300"
           >
             Refresh
@@ -86,7 +97,7 @@ export default function ForumList() {
           <Spin size="large" />
         </div>
       ) : filtered.length === 0 ? (
-        <Empty description="No posts yet" />
+        <Empty description="No posts found" />
       ) : (
         <div className="space-y-4">
           {filtered.map((p) => (
