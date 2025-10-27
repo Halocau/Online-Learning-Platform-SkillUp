@@ -46,6 +46,13 @@ namespace SkillUp.Repositories.Implementations
         {
             _context.SubCategories.Remove(subCategory);
         }
+        public async Task<SubCategory?> GetByNameAndCategoryAsync(string name, int categoryId)
+        {
+            var normalized = name.Trim().ToLower();
+            return await _context.SubCategories
+                .FirstOrDefaultAsync(sc => sc.CategoryId == categoryId && sc.Name.ToLower() == normalized);
+        }
+
 
         public async Task SaveChangesAsync()
         {
