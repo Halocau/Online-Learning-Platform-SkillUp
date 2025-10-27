@@ -18,7 +18,7 @@ namespace SkillUp.Services.Implementations
 
         public IEnumerable<Category> GetAll()
         {
-            return _repo.GetAll();
+            return _repo.GetAll().Where(c => c.IsActive);
         }
 
         // V THÊM PHƯƠNG THỨC NÀY V
