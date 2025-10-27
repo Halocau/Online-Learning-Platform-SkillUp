@@ -16,13 +16,13 @@ namespace SkillUp.API.Controllers
         }
 
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromBody] SubCategoryCreateRequest request)
         {
-            var result = await _service.GetAllSubCategoriesAsync();
+            var result = await _service.CreateSubCategoryAsync(request);
             return Ok(result);
         }
 
-        [HttpGet("GetByIdSubCatogory/{id}")]
+        [HttpGet("GetByIdSubCategory/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetSubCategoryByIdAsync(id);
@@ -30,7 +30,7 @@ namespace SkillUp.API.Controllers
             return Ok(result);
         }
 
-        [HttpPost("CreateSubCatogory")]
+        [HttpPost("CreateSubCategory")]
         public async Task<IActionResult> Create([FromBody] SubCategoryCreateRequest request)
         {
             try
@@ -44,7 +44,7 @@ namespace SkillUp.API.Controllers
             }
         }
 
-        [HttpPut("UpdateSubCatogory/{id}")]
+        [HttpPut("UpdateSubCategory/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] SubCategoryUpdateRequest request)
         {
             try

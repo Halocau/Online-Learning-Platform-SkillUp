@@ -1,13 +1,11 @@
 ﻿using SkillUp.BussinessObjects.DTOs;
+using SkillUp.ExceptionHandling;
 
-namespace SkillUp.Services.Interfaces
+public interface ISubCategoryService
 {
-    public interface ISubCategoryService
-    {
-        Task<IEnumerable<SubCategoryDto>> GetAllSubCategoriesAsync();
-        Task<SubCategoryDto> CreateSubCategoryAsync(SubCategoryCreateRequest request);
-        Task<SubCategoryDto?> GetSubCategoryByIdAsync(int id);
-        Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request);
-        Task DeleteSubCategoryAsync(int id);
-    }
+    Task<IEnumerable<SubCategoryDto>> GetAllSubCategoriesAsync();
+    Task<SubCategoryDto?> GetSubCategoryByIdAsync(int id);
+    Task<APIReturn> CreateSubCategoryAsync(SubCategoryCreateRequest request); // sửa dòng này
+    Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request);
+    Task DeleteSubCategoryAsync(int id);
 }

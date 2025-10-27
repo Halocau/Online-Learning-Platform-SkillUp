@@ -1,5 +1,6 @@
 ﻿using SkillUp.BussinessObjects.DTOs;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.ExceptionHandling;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
 
@@ -40,31 +41,44 @@ namespace SkillUp.Services.Implementations
             };
         }
 
-        public async Task<SubCategoryDto> CreateSubCategoryAsync(SubCategoryCreateRequest request)
+        public async Task<APIReturn> CreateSubCategoryAsync(SubCategoryCreateRequest request)
         {
-            // Kiểm tra trùng tên
-            var existing = await _repository.GetByNameAsync(request.Name);
-            if (existing != null)
-                throw new Exception("Tên SubCategory đã tồn tại.");
+            // Chuẩn hóa tên để tránh trùng kiểu "ReactJS" và "reactjs "
+            var normalizedName = request.Name.Trim().ToLower();
 
+            // Kiểm tra trùng tên trong cùng Category
+            var existing = await _repository.GetByNameAsync(request.Name);
+            if (existing != null && existing.CategoryId == request.CategoryId)
+            {
+                return new APIReturn(400, "Tên SubCategory đã tồn tại", null);
+            }
+
+            // Tạo mới SubCategory
             var subCategory = new SubCategory
             {
                 CategoryId = request.CategoryId,
-                Name = request.Name,
+                Name = request.Name.Trim(),
                 IsActive = true
             };
 
             await _repository.CreateAsync(subCategory);
             await _repository.SaveChangesAsync();
 
-            return new SubCategoryDto
-            {
-                Id = subCategory.Id,
-                CategoryId = subCategory.CategoryId,
-                Name = subCategory.Name,
-                IsActive = subCategory.IsActive
-            };
+            // Chuẩn bị dữ liệu phản hồi
+            var data = new List<object>
+    {
+        new
+        {
+            subCategory.Id,
+            subCategory.CategoryId,
+            subCategory.Name,
+            subCategory.IsActive
         }
+    };
+
+            return new APIReturn(200, "Tạo SubCategory thành công", data);
+        }
+
 
         public async Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request)
         {
