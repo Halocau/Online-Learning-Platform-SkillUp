@@ -7,7 +7,7 @@ namespace SkillUp.Repositories.Interfaces
     {
         IEnumerable<Category> GetAll();
         IEnumerable<Category> GetAllWithSubCategories();
-        Category? GetById(int id);
+        Category? GetById(int id);  
         Category? GetByIdWithSubCategories(int id);
         void Add(Category category);
         void Update(Category category);
