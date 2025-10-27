@@ -1,59 +1,75 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs;
 using SkillUp.Services.Interfaces;
-using System.Threading.Tasks;
 
-namespace SkillUp.Controllers
+namespace SkillUp.API.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class SubCategoryController : ControllerBase
     {
-        private readonly ISubCategoryService _subCategoryService;
+        private readonly ISubCategoryService _service;
 
-        public SubCategoryController(ISubCategoryService subCategoryService)
+        public SubCategoryController(ISubCategoryService service)
         {
-            _subCategoryService = subCategoryService;
+            _service = service;
         }
 
-        [HttpGet]
+        [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
-            var result = await _subCategoryService.GetAllAsync();
+            var result = await _service.GetAllSubCategoriesAsync();
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetByIdSubCategory/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var result = await _subCategoryService.GetByIdAsync(id);
-            if (result == null)
-                return NotFound(new { message = "Không tìm thấy SubCategory." });
-
+            var result = await _service.GetSubCategoryByIdAsync(id);
+            if (result == null) return NotFound("Không tìm thấy SubCategory.");
             return Ok(result);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] SubCategoryDto dto)
+        [HttpPost("CreateSubCategory")]
+        public async Task<IActionResult> Create([FromBody] SubCategoryCreateRequest request)
         {
-            var created = await _subCategoryService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                var result = await _service.CreateSubCategoryAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] SubCategoryDto dto)
+        [HttpPut("UpdateSubCategory/{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] SubCategoryUpdateRequest request)
         {
-            var success = await _subCategoryService.UpdateAsync(id, dto);
-            if (!success) return NotFound(new { message = "Không tìm thấy SubCategory để cập nhật." });
-            return Ok(new { message = "Cập nhật thành công." });
+            try
+            {
+                await _service.UpdateSubCategoryAsync(id, request);
+                return Ok("Cập nhật thành công.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteSubCategory/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var success = await _subCategoryService.DeleteAsync(id);
-            if (!success) return NotFound(new { message = "Không tìm thấy SubCategory để xóa." });
-            return Ok(new { message = "Đã vô hiệu hóa SubCategory." });
+            try
+            {
+                await _service.DeleteSubCategoryAsync(id);
+                return Ok("Xóa thành công.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

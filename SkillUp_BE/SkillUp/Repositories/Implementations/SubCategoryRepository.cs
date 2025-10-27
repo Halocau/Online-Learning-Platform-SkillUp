@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace SkillUp.Repositories.Implementations
 {
@@ -15,29 +13,38 @@ namespace SkillUp.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<SubCategory>> GetAllAsync()
+        public async Task<IEnumerable<SubCategory>> GetAllActiveAsync()
         {
             return await _context.SubCategories
-                .Include(sc => sc.Category)
+                .Where(sc => sc.IsActive)
                 .ToListAsync();
         }
 
         public async Task<SubCategory?> GetByIdAsync(int id)
         {
-            return await _context.SubCategories
-                .Include(sc => sc.Category)
-                .FirstOrDefaultAsync(sc => sc.Id == id);
+            return await _context.SubCategories.FindAsync(id);
         }
 
-        public async Task AddAsync(SubCategory subCategory)
+        public async Task<SubCategory?> GetByNameAsync(string name)
+        {
+            return await _context.SubCategories
+                .FirstOrDefaultAsync(sc => sc.Name.ToLower() == name.ToLower());
+        }
+
+        public async Task<SubCategory> CreateAsync(SubCategory subCategory)
         {
             await _context.SubCategories.AddAsync(subCategory);
+            return subCategory;
         }
 
         public async Task UpdateAsync(SubCategory subCategory)
         {
             _context.SubCategories.Update(subCategory);
-            await Task.CompletedTask;
+        }
+
+        public async Task DeleteAsync(SubCategory subCategory)
+        {
+            _context.SubCategories.Remove(subCategory);
         }
 
         public async Task SaveChangesAsync()

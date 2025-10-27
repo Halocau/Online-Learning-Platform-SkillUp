@@ -1,14 +1,25 @@
-﻿
-using System.Text.Json.Serialization;
-namespace SkillUp.BussinessObjects.DTOs
+﻿namespace SkillUp.BussinessObjects.DTOs
 {
+    // Dùng để hiển thị (GET)
     public class SubCategoryDto
     {
-        [JsonIgnore]
-        public int Id { get; set; }               // Dùng khi update, delete, view
-        public int CategoryId { get; set; }       // Liên kết đến Category
-        public string? CategoryName { get; set; } // Tên Category cha (nếu cần hiển thị)
+        public int Id { get; set; }
+        public int CategoryId { get; set; }
         public string Name { get; set; } = null!;
-        public bool IsActive { get; set; }        // Trạng thái kích hoạt
+        public bool IsActive { get; set; }
+    }
+
+    // Dùng khi tạo mới (POST)
+    public class SubCategoryCreateRequest
+    {
+        public int CategoryId { get; set; }
+        public string Name { get; set; } = null!;
+    }
+
+    // Dùng khi cập nhật (PUT)
+    public class SubCategoryUpdateRequest
+    {
+        public string Name { get; set; } = null!;
+        public bool IsActive { get; set; }
     }
 }
