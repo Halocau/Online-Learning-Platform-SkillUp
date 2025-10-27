@@ -6,6 +6,10 @@ import { toast } from 'react-toastify';
 
 const ENDPOINTS = {
     all: API_ENDPOINTS.MANAGE_LECTURER_APPLICATIONS,
+    // Nếu baseURL của axiosInstance là '/api' thì chỉ cần path bên dưới:
+    updateStatus: (id) => `${API_ENDPOINTS.UPDATE_STATUS_LECTURER_APPLICATION}/${encodeURIComponent(id)}`,
+    // Trường hợp bạn đã có sẵn hằng số trong API_ENDPOINTS thì thay bằng:
+    // updateStatus: (id) => `${API_ENDPOINTS.UPDATE_STATUS_LECTURER_APPLICATION}/${encodeURIComponent(id)}`,
 };
 
 const PAGE_SIZE = 10;
@@ -35,6 +39,15 @@ const formatDateTime = (iso) => {
     });
 };
 
+// Helper lấy id ứng tuyển từ record (điều chỉnh theo backend của bạn)
+const getAppId = (r) =>
+    r?.id ??
+    r?.lecturerApplicationId ??
+    r?.applicationId ??
+    r?.guid ??
+    r?.lecturerId ??
+    null;
+
 const ModManageLectureApplication = () => {
     const [loading, setLoading] = useState(true);
     const [applications, setApplications] = useState([]);
@@ -44,11 +57,18 @@ const ModManageLectureApplication = () => {
     const [dataset, setDataset] = useState('all');
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // Preview states
+    // Preview (PDF/Ảnh)
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewTitle, setPreviewTitle] = useState('');
     const [pdfUrl, setPdfUrl] = useState('');
     const [imageUrls, setImageUrls] = useState([]);
+
+    // Update status
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
+    const [statusTarget, setStatusTarget] = useState(null); // record
+    const [targetAction, setTargetAction] = useState('Accepted'); // 'Accepted' | 'Rejected'
+    const [reason, setReason] = useState('');
+    const [updating, setUpdating] = useState(false);
 
     const fetchApplications = async () => {
         setLoading(true);
@@ -101,13 +121,13 @@ const ModManageLectureApplication = () => {
         if (!fileUrl) return;
 
         if (fileType === 'cv') {
-            // XEM CV TRONG MODAL (mặc định Cách A):
+            // Xem CV trong MODAL (Cách A)
             setPreviewTitle('CV');
             setPdfUrl(fileUrl);
             setImageUrls([]);
             setPreviewVisible(true);
 
-            // NẾU MUỐN MỞ TAB MỚI THAY VÌ MODAL, bỏ comment dòng dưới và comment 4 dòng trên:
+            // Nếu muốn mở tab mới thay vì modal:
             // window.open(fileUrl, '_blank', 'noopener,noreferrer');
             return;
         }
@@ -121,6 +141,55 @@ const ModManageLectureApplication = () => {
             .filter(Boolean);
         setImageUrls(imgs);
         setPreviewVisible(true);
+    };
+
+    const openStatusModal = (record, action) => {
+        setStatusTarget(record);
+        setTargetAction(action); // 'Accepted' | 'Rejected'
+        setReason('');
+        setStatusModalOpen(true);
+    };
+
+    const submitStatusUpdate = async () => {
+        const id = getAppId(statusTarget);
+        if (!id) {
+            toast.error('Không xác định được ID đơn ứng tuyển.');
+            return;
+        }
+        // Backend expects: { status: boolean, reason: string }
+        // Map: Accepted => true, Rejected => false
+        const statusBool = targetAction === 'Accepted';
+
+        if (!statusBool && !reason.trim()) {
+            toast.info('Vui lòng nhập lý do khi từ chối.');
+            return;
+        }
+
+        setUpdating(true);
+        try {
+            const payload = { status: statusBool, reason: reason?.trim() || '' };
+            const res = await axiosInstance.put(ENDPOINTS.updateStatus(id), payload);
+
+            // Một số API trả {code,message}, một số trả trực tiếp object/200.
+            const { code, message } = res?.data || {};
+            if (res.status === 200 && (code === undefined || code === 200)) {
+                toast.success('Cập nhật trạng thái thành công');
+                setStatusModalOpen(false);
+                setStatusTarget(null);
+                refresh(); // refetch list
+            } else {
+                toast.error(message || 'Cập nhật thất bại');
+            }
+        } catch (err) {
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                'Cập nhật trạng thái thất bại';
+            toast.error(msg);
+            console.error('Update status error:', err);
+        } finally {
+            setUpdating(false);
+        }
     };
 
     const columns = [
@@ -185,6 +254,34 @@ const ModManageLectureApplication = () => {
             sortOrder: sortedInfo.columnKey === 'createdAt' ? sortedInfo.order : null,
             render: (v) => <span>{formatDateTime(v)}</span>,
         },
+        {
+            title: 'Thao tác',
+            key: 'actions',
+            fixed: 'right',
+            width: 220,
+            render: (_, record) => {
+                const disabledAccept = record.status === 'Accepted';
+                const disabledReject = record.status === 'Rejected';
+                return (
+                    <Space>
+                        <Button
+                            type="primary"
+                            disabled={disabledAccept}
+                            onClick={() => openStatusModal(record, 'Accepted')}
+                        >
+                            Duyệt
+                        </Button>
+                        <Button
+                            danger
+                            disabled={disabledReject}
+                            onClick={() => openStatusModal(record, 'Rejected')}
+                        >
+                            Từ chối
+                        </Button>
+                    </Space>
+                );
+            },
+        },
     ];
 
     return (
@@ -223,18 +320,17 @@ const ModManageLectureApplication = () => {
             <Table
                 size="middle"
                 bordered
-                // Đổi rowKey nếu không có ticketCode: fallback theo id hoặc tổ hợp
                 rowKey={(r) => r.id ?? r.ticketCode ?? `${r.title}-${r.createdAt}`}
                 loading={loading}
                 columns={columns}
                 dataSource={displayed}
                 onChange={handleChange}
                 pagination={{ pageSize: PAGE_SIZE, showSizeChanger: false }}
-                scroll={{ x: 980 }}
+                scroll={{ x: 1100 }}
                 locale={{ emptyText: 'Không tìm thấy đơn ứng tuyển nào!' }}
             />
 
-            {/* AntD v5: dùng 'open' thay vì 'visible' */}
+            {/* Preview Modal (PDF/Images) */}
             <Modal
                 open={previewVisible}
                 title={previewTitle}
@@ -272,6 +368,37 @@ const ModManageLectureApplication = () => {
                         />
                     ))
                 )}
+            </Modal>
+
+            {/* Update Status Modal */}
+            <Modal
+                open={statusModalOpen}
+                title={`Cập nhật trạng thái — ${statusTarget?.title ?? ''}`}
+                onCancel={() => setStatusModalOpen(false)}
+                onOk={submitStatusUpdate}
+                okText={targetAction === 'Accepted' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'}
+                confirmLoading={updating}
+                destroyOnClose
+                maskClosable={!updating}
+            >
+                <div style={{ marginBottom: 12 }}>
+                    <b>Hành động:</b> {targetAction === 'Accepted' ? 'Duyệt (Accepted)' : 'Từ chối (Rejected)'}
+                </div>
+                <div>
+                    <b>Lý do {targetAction === 'Rejected' ? '(bắt buộc)' : '(tuỳ chọn)'}:</b>
+                    <Input.TextArea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        rows={4}
+                        placeholder={
+                            targetAction === 'Accepted'
+                                ? 'Ghi chú nội bộ (tuỳ chọn)...'
+                                : 'Nhập lý do từ chối...'
+                        }
+                        maxLength={500}
+                        style={{ marginTop: 6 }}
+                    />
+                </div>
             </Modal>
         </div>
     );

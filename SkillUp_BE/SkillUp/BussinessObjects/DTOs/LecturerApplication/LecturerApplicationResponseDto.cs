@@ -2,6 +2,7 @@ namespace SkillUp.BussinessObjects.DTOs.LecturerApplication
 {
     public class LecturerApplicationResponseDto
     {
+        public Guid Id { get; set; }
         public string Cv { get; set; } = null!;
         public string Degree { get; set; } = null!;
         public string Title { get; set; } = null!;
