@@ -5,6 +5,7 @@ import { UploadOutlined } from "@ant-design/icons";
 import { useNavigate, useParams } from "react-router-dom";
 import { postApi } from "@/api/postAPI";
 import { categoryApi } from "@/api/forumCategory";
+import { toast } from "react-toastify";
 
 const { TextArea } = Input;
 
@@ -19,7 +20,7 @@ export default function ForumForm({ isEdit = false }) {
   const [form, setForm] = useState({
     Title: "",
     Contents: "",
-    ForumCategoryId: "",
+    ForumCategoryId: null,
     images: [],
   });
 
@@ -31,7 +32,8 @@ export default function ForumForm({ isEdit = false }) {
   const fetchCategories = async () => {
     try {
       const res = await categoryApi.getAll();
-      setCategories(res.data.data || []);
+      console.log("Categories API response:", res.data);
+      setCategories(res.data.data || res.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -46,12 +48,15 @@ export default function ForumForm({ isEdit = false }) {
       setForm({
         Title: p.Title ?? p.title ?? "",
         Contents: p.Contents ?? p.contents ?? "",
-        ForumCategoryId: p.ForumCategoryId ?? p.forumCategoryId ?? "",
+        ForumCategoryId:
+          p.ForumCategoryId ?? p.forumCategoryId
+            ? Number(p.ForumCategoryId ?? p.forumCategoryId)
+            : null,
         images: [],
       });
     } catch (err) {
       console.error("Failed to load post", err);
-      message.error("Failed to load post data");
+      toast.error("Failed to load post data");
     } finally {
       setLoading(false);
     }
@@ -65,27 +70,38 @@ export default function ForumForm({ isEdit = false }) {
     setSaving(true);
     try {
       const formData = new FormData();
-      
-      formData.append("ForumCategoryId", form.ForumCategoryId);
+      formData.append("ForumCategoryId", Number(form.ForumCategoryId));
       formData.append("Title", form.Title);
       formData.append("Contents", form.Contents);
-      form.images.forEach((f) =>
-        formData.append("Images", f.originFileObj || f)
-      );
+
+      form.images.forEach((f) => {
+        formData.append("Images", f.originFileObj || f);
+      });
+
+      console.log("FormData:", [...formData.entries()]);
 
       if (isEdit || postId) {
         await postApi.update(postId, formData);
-        message.success("Updated successfully");
+        toast.success("Post updated successfully");
+        
+
         navigate(`/forum/${postId}`);
       } else {
         const res = await postApi.create(formData);
-        const created = res?.data?.data;
-        message.success("Post created successfully");
-        navigate(`/forum/${created?.Id ?? created ?? "/forum"}`);
+        const created = res?.data?.data?.[0] ?? res?.data ?? res;
+        toast.success("Post created successfully");
+        toast.warning("Please fill all fields");
+
+        const myId = localStorage.getItem("userId");
+        if (myId) {
+          navigate(`/forum/user/${myId}`);
+        } else {
+          navigate("/forum");
+        }
       }
     } catch (err) {
-      console.error(err);
-      message.error("Save failed");
+      console.error("❌ Create post error:", err.response?.data || err);
+      toast.warning(err.response?.data?.message || "Save failed");
     } finally {
       setSaving(false);
     }
@@ -106,16 +122,13 @@ export default function ForumForm({ isEdit = false }) {
 
       <div className="space-y-3">
         <Select
-          placeholder="Choose categories"
-          value={form.ForumCategoryId?.toString() || ""}
+          placeholder="Choose category"
+          value={form.ForumCategoryId || undefined}
           onChange={(v) => setForm({ ...form, ForumCategoryId: v })}
           className="w-full"
         >
           {categories.map((c, i) => (
-            <Select.Option
-              key={c.Id?.toString() ?? c.id?.toString() ?? `cat-${i}`}
-              value={c.Id?.toString() ?? c.id?.toString()}
-            >
+            <Select.Option key={c.Id ?? c.id ?? i} value={c.Id ?? c.id}>
               {c.Name ?? c.name}
             </Select.Option>
           ))}

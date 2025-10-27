@@ -21,7 +21,10 @@ export default function ForumList() {
   const fetchCategories = async () => {
     try {
       const res = await categoryApi.getAll();
-      setCategories(res.data.data || []);
+      setCategories(
+        (res.data.data || []).filter((c) => c.IsActive ?? c.isActive)
+      );
+      console.log("Categories:", res.data.data);
     } catch (err) {
       console.error(err);
     }
@@ -32,6 +35,7 @@ export default function ForumList() {
     try {
       const res = await postApi.getActive();
       setPosts(res?.data?.data ?? []);
+      console.log("Posts:", res.data.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -39,11 +43,14 @@ export default function ForumList() {
     }
   };
 
-  // ✅ Ensure consistent comparison using toString()
   const filtered = filterCat
     ? posts.filter((p) => {
-        const catId = p.ForumCategoryId ?? p.forumCategoryId;
-        return catId && catId.toString() === filterCat.toString();
+        const catName =
+          p.ForumCategoryName ??
+          p.forumCategoryName ??
+          p.ForumCategoryId?.name ??
+          p.forumCategoryId?.name;
+        return catName?.toLowerCase() === filterCat?.toLowerCase();
       })
     : posts;
 
@@ -58,15 +65,11 @@ export default function ForumList() {
             value={filterCat ?? undefined}
             onChange={(val) => setFilterCat(val || null)}
           >
-            {categories.map((c, i) => {
-              const id = c.Id?.toString() ?? c.id?.toString();
-              const name = c.Name ?? c.name;
-              return (
-                <Select.Option key={id ?? `cat-${i}`} value={id}>
-                  {name}
-                </Select.Option>
-              );
-            })}
+            {categories.map((c, i) => (
+              <Select.Option key={c.name} value={c.name}>
+                {c.name}
+              </Select.Option>
+            ))}
           </Select>
 
           <Button

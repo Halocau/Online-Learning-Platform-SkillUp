@@ -39,7 +39,7 @@ export default function PostDetail() {
   if (!post)
     return <div className="p-6 bg-white rounded-lg shadow-sm">Post not found</div>;
 
-  const images = post.PostImageUrls ?? post.postImageUrls ?? [];
+  const images = post.ImageUrls ?? post.imageUrls ?? [];
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const isOwner =
     String(currentUser.id ?? currentUser.Id) ===
