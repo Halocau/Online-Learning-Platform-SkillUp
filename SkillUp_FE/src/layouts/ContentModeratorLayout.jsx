@@ -23,9 +23,8 @@ export default function ModeratorLayout() {
   return (
     <div className="flex h-screen bg-gray-50">
       <aside
-        className={`${
-          collapsed ? "w-16" : "w-60"
-        } bg-white border-r flex flex-col transition-all duration-300`}
+        className={`${collapsed ? "w-16" : "w-60"
+          } bg-white border-r flex flex-col transition-all duration-300`}
       >
         <div className="flex items-center justify-between px-4 h-16 border-b">
           <span className="text-xl font-bold text-indigo-600">

@@ -1,6 +1,8 @@
+using SkillUp.BussinessObjects.DTOs.Account;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace SkillUp.Services.Interfaces
 {
@@ -39,5 +41,6 @@ namespace SkillUp.Services.Interfaces
         public Task<bool> ResetPasswordAsync(ResetPasswordRequestDto request);
        
         public Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request);
+
     }
 }

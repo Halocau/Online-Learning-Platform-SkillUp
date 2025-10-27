@@ -22,7 +22,86 @@ namespace SkillUp.Controllers
             _currentUserService = currentUserService;
         }
 
-  
+        [HttpGet("manage-lecturer-applications")]
+        public async Task<IActionResult> GetAllLecturerApplicationsForModerator()
+        {
+            try
+            {
+                // Gọi service để lấy tất cả các đơn ứng tuyển
+                var applications = await _lecturerApplicationService.GetAllLecturerApplicationsAsync();
+
+                // Kiểm tra nếu không có dữ liệu
+                if (applications == null || applications.Count == 0)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không có đơn ứng tuyển nào.",
+                        data = new List<object>()
+                    });
+                }
+
+                // Trả về danh sách các đơn ứng tuyển
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy danh sách ứng tuyển thành công",
+                    data = new List<object> { applications }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Ghi lỗi chi tiết vào log hoặc console để tiện debug
+                Console.WriteLine($"Error: {ex.Message}");
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
+
+
+        [HttpPut("manage-lecturer-applications/update-status/{applicationId}")]
+        public async Task<IActionResult> UpdateStatusForModerator(Guid applicationId, [FromBody] UpdateStatusRequestDto request)
+        {
+            try
+            {
+                // Kiểm tra và cập nhật trạng thái thông qua service
+                var result = await _lecturerApplicationService.UpdateStatusAsync(applicationId, request);
+
+                // Kiểm tra kết quả cập nhật
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể cập nhật trạng thái ứng tuyển! Kiểm tra quyền truy cập.",
+                        data = new List<object>()
+                    });
+                }
+
+                // Thành công
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Cập nhật trạng thái ứng tuyển thành công!",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
+
+
         [HttpPost("apply")]
         public async Task<IActionResult> ApplyCv([FromForm] ApplyCvRequestDto request)
         {
@@ -162,7 +241,7 @@ namespace SkillUp.Controllers
             }
         }
 
-     
+
         [HttpGet("{applicationId}")]
         public async Task<IActionResult> GetApplicationById(Guid applicationId)
         {
@@ -170,6 +249,7 @@ namespace SkillUp.Controllers
             {
                 var application = await _lecturerApplicationService.GetApplicationByIdAsync(applicationId);
 
+                // Kiểm tra nếu ứng tuyển không tồn tại
                 if (application == null)
                 {
                     return NotFound(new APIReturn
@@ -197,5 +277,6 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
     }
 }

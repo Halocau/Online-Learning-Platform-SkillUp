@@ -1,5 +1,7 @@
+using System.Data.Common;
 using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
@@ -11,16 +13,18 @@ namespace SkillUp.Services.Implementations
         private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly CloudinaryService _cloudinaryService;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly ILecturerService _lecturerService;
 
-        public LecturerApplicationService(
-            ILecturerApplicationRepository lecturerApplicationRepository,
-            IAccountRepository accountRepository,
-            CloudinaryService cloudinaryService)
+        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, CloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService)
         {
             _lecturerApplicationRepository = lecturerApplicationRepository;
             _accountRepository = accountRepository;
             _cloudinaryService = cloudinaryService;
+            _currentUserService = currentUserService;
+            _lecturerService = lecturerService;
         }
+
 
         public async Task<bool> ApplyCvAsync(Guid accountId, ApplyCvRequestDto request)
         {
@@ -34,15 +38,20 @@ namespace SkillUp.Services.Implementations
             // Upload CV file to Cloudinary
             var cvUrl = await _cloudinaryService.UploadPdfAsync(request.CvFile, "skillup/lecturers/cv");
 
-            // Upload Degree image to Cloudinary
-            var degreeUrl = await _cloudinaryService.UploadImageAsync(request.DegreeFile, "skillup/lecturers/degrees");
+            // Upload nhiều ảnh Degree lên Cloudinary
+            var degreeUrls = new List<string>();
+            foreach (var degreeFile in request.DegreeFile)
+            {
+                var degreeUrl = await _cloudinaryService.UploadImageAsync(degreeFile, "skillup/lecturers/degrees");
+                degreeUrls.Add(degreeUrl);
+            }
 
             var application = new LecturerApplication
             {
                 Id = Guid.NewGuid(),
                 AccountId = accountId,
                 Cv = cvUrl,
-                Degree = degreeUrl,
+                Degree = string.Join(",", degreeUrls),
                 Description = request.Description,
                 Title = request.Title,
                 Profession = request.Profession,
@@ -152,5 +161,97 @@ namespace SkillUp.Services.Implementations
                 UpdatedAt = null
             };
         }
+
+        public async Task<bool> UpdateStatusAsync(Guid applicationId, UpdateStatusRequestDto request)
+        {
+            // 1) Kiểm tra user hiện tại
+            var userId = _currentUserService.UserId;
+            if (userId == null) return false;
+
+            // 2) Lấy application
+            var application = await _lecturerApplicationRepository.GetByIdAsync(applicationId);
+            if (application == null) return false;
+
+            // 3) Cập nhật trạng thái application
+            var updateResult = await _lecturerApplicationRepository.UpdateStatusAsync(
+                applicationId, request.Status, request.Reason
+            );
+            if (updateResult == null || !await _lecturerApplicationRepository.SaveChangesAsync())
+                return false;
+
+            // 4) Accepted → tạo Lecturer nếu CHƯA tồn tại, đồng thời cập nhật Account = Active
+            if (request.Status == true)
+            {
+                if (!application.AccountId.HasValue) return false;
+
+                // ⚠️ Kiểm tra tồn tại lecturer theo AccountId
+                var existLecturer = await _lecturerService.GetLecturerByAccountIdAsync(application.AccountId.Value);
+                if (existLecturer == null)
+                {
+                    var newLecturer = new Lecturer
+                    {
+                        Id = Guid.NewGuid(),
+                        AccountId = application.AccountId.Value,
+                        Title = application.Title,
+                        Profession = application.Profession
+                    };
+
+                    var created = await _lecturerService.CreateLecturerAsync(newLecturer);
+                    if (!created) return false;
+                }
+                // Nếu đã tồn tại thì bỏ qua tạo mới (có thể cập nhật Title/Profession nếu cần)
+
+                var account = await _accountRepository.GetByIdAsync(application.AccountId.Value);
+                if (account != null)
+                {
+                    var accountUpdateResult = await _accountRepository.UpdateStatusAsync(account.Id, "Active");
+                    if (!accountUpdateResult) return false;
+                }
+            }
+
+            // 5) Rejected → cập nhật Account = Pending (không động đến Lecturer)
+            if (request.Status == false)
+            {
+                if (!application.AccountId.HasValue) return false;
+
+                var account = await _accountRepository.GetByIdAsync(application.AccountId.Value);
+                if (account != null)
+                {
+                    var accountUpdateResult = await _accountRepository.UpdateStatusAsync(account.Id, "Pending");
+                    if (!accountUpdateResult) return false;
+                }
+            }
+
+            return true;
+        }
+
+
+
+
+        public async Task<List<LecturerApplicationResponseDto>> GetAllLecturerApplicationsAsync()
+        {
+            var applications = await _lecturerApplicationRepository.GetAllLecturerApplicationsAsync();
+
+            // Kiểm tra dữ liệu trả về có null không
+            if (applications == null || applications.Count == 0)
+            {
+                return new List<LecturerApplicationResponseDto>(); // Trả về danh sách rỗng nếu không có dữ liệu
+            }
+
+            return applications.Select(app => new LecturerApplicationResponseDto
+            {
+                Id = app.Id,
+                Cv = app.Cv ?? string.Empty,  // Nếu null, thay bằng chuỗi rỗng
+                Degree = app.Degree ?? string.Empty,
+                Title = app.Title ?? string.Empty,
+                Profession = app.Profession ?? string.Empty,
+                Description = app.Description,
+                Status = app.Status,
+                RejectReason = app.Reason,
+                CreatedAt = app.CreatedAt,
+                UpdatedAt = null // Sẽ thêm sau khi update database
+            }).OrderByDescending(x => x.CreatedAt).ToList();
+        }
+
     }
 }

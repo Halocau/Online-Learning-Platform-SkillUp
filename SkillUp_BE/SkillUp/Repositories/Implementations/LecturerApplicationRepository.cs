@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 
@@ -12,6 +12,7 @@ namespace SkillUp.Repositories.Implementations
         {
             _context = context;
         }
+
 
         public async Task<LecturerApplication> GetByIdAsync(Guid id)
         {
@@ -93,6 +94,24 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.LecturerApplications
                 .AnyAsync(x => x.AccountId == accountId);
+        }
+
+        public async Task<List<LecturerApplication>> GetAllLecturerApplicationsAsync()
+        {
+            var applications = await _context.LecturerApplications.ToListAsync();
+            return applications ?? new List<LecturerApplication>();
+        }
+
+        public async Task<LecturerApplication> UpdateStatusAsync(Guid applicationId, bool status, string reason)
+        {
+            var application = await _context.LecturerApplications.FindAsync(applicationId);
+            if (application == null)
+                return null;
+
+            application.Status = status ? "Accepted" : "Rejected";
+            application.Reason = reason;
+            _context.Entry(application).State = EntityState.Modified;
+            return application;
         }
     }
 }

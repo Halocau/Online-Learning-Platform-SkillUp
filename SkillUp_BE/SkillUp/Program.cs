@@ -76,10 +76,8 @@ builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRe
 builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 builder.Services.AddScoped<INewsRepository, NewsRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
-builder.Services.AddScoped<ICourseRepository, CourseRepository>();
-builder.Services.AddScoped<ILecturerRepository, LecturerRepository>();
-
-
+builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRepository>();
+builder.Services.AddScoped<ILecturerRepository,LecturerRepository>(); 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -89,27 +87,7 @@ builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationService>();
-builder.Services.AddScoped<ICourseService, CourseService>();
-
-
-//Category
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-
-//Subcategory
-builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
-builder.Services.AddScoped<ISubCategoryService, SubCategoryService>();
-
-
-//Forum category
-builder.Services.AddScoped<IForumCategoryRepository, ForumCategoryRepository>();
-builder.Services.AddScoped<IForumCategoryService, ForumCategoryService>();
-
-
-//post
-builder.Services.AddScoped<IPostRepository, PostRepository>();
-builder.Services.AddScoped<IPostService, PostService>();
-
+builder.Services.AddScoped<ILecturerService, LecturerService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

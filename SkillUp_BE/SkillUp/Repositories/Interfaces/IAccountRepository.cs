@@ -1,4 +1,4 @@
-using SkillUp.BussinessObjects.Models;
+﻿using SkillUp.BussinessObjects.Models;
 
 namespace SkillUp.Repositories.Interfaces
 {
@@ -11,5 +11,6 @@ namespace SkillUp.Repositories.Interfaces
         Task AddAsync(Account account);
         Task UpdateAsync(Account account);
         Task<bool> SaveChangesAsync();
+        Task<bool> UpdateStatusAsync(Guid accountId, string newStatus); 
     }
 }

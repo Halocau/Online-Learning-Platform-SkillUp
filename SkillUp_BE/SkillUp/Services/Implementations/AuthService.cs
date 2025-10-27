@@ -1,6 +1,7 @@
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
+using SkillUp.BussinessObjects.DTOs.Account;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
@@ -452,7 +453,7 @@ namespace SkillUp.Services.Implementations
             return await _accountRepository.SaveChangesAsync();
 
         }
-
+      
         //TOKEN GENERATION
         #region token generation
         private async Task<TokenDto> GenerateAndSaveTokensAsync(Account account)

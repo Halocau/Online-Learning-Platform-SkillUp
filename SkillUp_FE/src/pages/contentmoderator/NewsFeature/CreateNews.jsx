@@ -87,7 +87,7 @@ const CreateNews = () => {
         toast.success(response.data.message || "Tạo tin tức thành công!");
         setTitle("");
         setContents("");
-        setTimeout(() => navigate("/contentmod/news"), 1500);
+        setTimeout(() => navigate("/contentmod/news"), 1000);
       } else {
         toast.error(response.data.message || "Tạo tin tức thất bại!");
       }

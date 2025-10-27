@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 
@@ -53,6 +53,23 @@ namespace SkillUp.Repositories.Implementations
 
         public async Task<bool> SaveChangesAsync()
         {
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> UpdateStatusAsync(Guid accountId, string newStatus)
+        {
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.Id == accountId);
+
+            if (account == null)
+            {
+                return false; 
+            }
+
+            account.Status = newStatus;
+
+            _context.Accounts.Update(account);
+
             return await _context.SaveChangesAsync() > 0;
         }
     }

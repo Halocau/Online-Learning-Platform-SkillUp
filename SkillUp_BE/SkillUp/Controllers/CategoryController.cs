@@ -17,8 +17,6 @@ namespace SkillUp.Controllers
             _service = service;
         }
 
-        // ... (Các phương thức Create, Update, Delete giữ nguyên) ...
-
         [HttpPost("Create")]
         public IActionResult CreateCategory([FromBody] CategoryRequestDto request)
         {
@@ -61,31 +59,27 @@ namespace SkillUp.Controllers
             }
         }
 
-
-        // V THAY ĐỔI PHƯƠNG THỨC NÀY V
         [HttpGet("GetAll")]
         public IActionResult GetAllCategories()
         {
             try
             {
-                // 1. Gọi phương thức mới để lấy cả sub-categories
-                var categories = _service.GetAllWithSubCategories().Select(c => new
-                {
-                    c.Id,
-                    c.Name,
-                    c.IsActive,
-                    // 2. Thêm SubCategories vào kết quả trả về
-                    //    Lọc các sub-category còn active giống như bạn làm ở endpoint GetWithSub
-                    SubCategories = c.SubCategories
-                        .Where(sc => sc.IsActive)
-                        .Select(sc => new
-                        {
-                            sc.Id,
-                            sc.Name,
-                            sc.IsActive
-                        })
-                        .ToList()
-                });
+                var categories = _service.GetAllWithSubCategories()
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.Name,
+                        c.IsActive,
+                        SubCategories = c.SubCategories
+                            .Where(sc => sc.IsActive)
+                            .Select(sc => new
+                            {
+                                sc.Id,
+                                sc.Name,
+                                sc.IsActive
+                            })
+                            .ToList()
+                    });
 
                 return Ok(new { message = "Lấy danh sách danh mục (kèm danh mục con) thành công.", data = categories });
             }
@@ -94,13 +88,10 @@ namespace SkillUp.Controllers
                 return StatusCode(500, new { message = $"Có lỗi xảy ra: {ex.Message}" });
             }
         }
-        // ^ THAY ĐỔI PHƯƠNG THỨC NÀY ^
-
 
         [HttpGet("GetById/{id}")]
         public IActionResult GetCategoryById(int id)
         {
-            // ... (giữ nguyên) ...
             try
             {
                 var category = _service.GetById(id);
@@ -127,7 +118,6 @@ namespace SkillUp.Controllers
         [HttpGet("GetWithSub/{id}")]
         public IActionResult GetCategoryWithSubCategories(int id)
         {
-            // ... (giữ nguyên) ...
             try
             {
                 var category = _service.GetByIdWithSubCategories(id);

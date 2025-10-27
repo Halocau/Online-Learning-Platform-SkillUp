@@ -17,7 +17,8 @@ export default function SystemModeratorLayout() {
     { label: "Dashboard", icon: <LayoutDashboard />, path: "/sysmod" },
     { label: "Account Management", icon: <FileText />, path: "/sysmod" },
     { label: "Category Management", icon: <TableOfContents />, path: "/sysmod/category" },
-    { label: "Ticket Management", icon: <TableOfContents />, path: "/sysmod/ticket" },
+    { label: "Quản lý phiếu", icon: <TableOfContents />, path: "/sysmod/ticket" },
+    { label: "Quản lý ứng tuyển", icon: <TableOfContents />, path: "/sysmod/lecturer-application" }
   ];
 
   return (

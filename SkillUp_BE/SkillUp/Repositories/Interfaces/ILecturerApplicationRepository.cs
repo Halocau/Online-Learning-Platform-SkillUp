@@ -4,6 +4,8 @@ namespace SkillUp.Repositories.Interfaces
 {
     public interface ILecturerApplicationRepository
     {
+        Task<List<LecturerApplication>> GetAllLecturerApplicationsAsync();
+        Task<LecturerApplication> UpdateStatusAsync(Guid applicationId, bool status, string reason);
         Task<LecturerApplication> GetByIdAsync(Guid id);
         Task<LecturerApplication> GetByAccountIdAsync(Guid accountId);
         Task<LecturerApplication> GetLatestByAccountIdAsync(Guid accountId);

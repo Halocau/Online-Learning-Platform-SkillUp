@@ -1,96 +1,103 @@
-﻿using Microsoft.EntityFrameworkCore;
-using SkillUp.BussinessObjects.DTOs;
+﻿using SkillUp.BussinessObjects.DTOs;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.ExceptionHandling;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SkillUp.Services.Implementations
 {
     public class SubCategoryService : ISubCategoryService
     {
-        private readonly ISubCategoryRepository _subCategoryRepository;
-        private readonly SkillUpContext _context;
+        private readonly ISubCategoryRepository _repository;
 
-        public SubCategoryService(ISubCategoryRepository subCategoryRepository, SkillUpContext context)
+        public SubCategoryService(ISubCategoryRepository repository)
         {
-            _subCategoryRepository = subCategoryRepository;
-            _context = context;
+            _repository = repository;
         }
 
         public async Task<IEnumerable<SubCategoryDto>> GetAllSubCategoriesAsync()
         {
-            var list = await _subCategoryRepository.GetAllSubCategoriesAsync();
-            return list.Select(sc => new SubCategoryDto
+            var subCategories = await _repository.GetAllActiveAsync();
+            return subCategories.Select(sc => new SubCategoryDto
             {
                 Id = sc.Id,
-                Name = sc.Name,
                 CategoryId = sc.CategoryId,
-                CategoryName = sc.Category?.Name,
+                Name = sc.Name,
                 IsActive = sc.IsActive
             });
         }
 
         public async Task<SubCategoryDto?> GetSubCategoryByIdAsync(int id)
         {
-            var sc = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
+            var sc = await _repository.GetByIdAsync(id);
             if (sc == null) return null;
 
             return new SubCategoryDto
             {
                 Id = sc.Id,
-                Name = sc.Name,
                 CategoryId = sc.CategoryId,
-                CategoryName = sc.Category?.Name,
+                Name = sc.Name,
                 IsActive = sc.IsActive
             };
         }
 
-        public async Task<SubCategoryDto> CreateSubCategoryAsync(SubCategoryDto dto)
+        public async Task<APIReturn> CreateSubCategoryAsync(SubCategoryCreateRequest request)
         {
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId);
-            if (!categoryExists)
-                throw new System.Exception("CategoryId không hợp lệ.");
+            var normalizedName = request.Name.Trim().ToLower();
+
+            // ✅ Kiểm tra trùng trong cùng Category
+            var existing = await _repository.GetByNameAndCategoryAsync(normalizedName, request.CategoryId);
+            if (existing != null)
+            {
+                return new APIReturn(400, "Tên SubCategory đã tồn tại trong Category này", null);
+            }
 
             var subCategory = new SubCategory
             {
-                Name = dto.Name,
-                CategoryId = dto.CategoryId,
+                CategoryId = request.CategoryId,
+                Name = request.Name.Trim(),
                 IsActive = true
             };
 
-            await _subCategoryRepository.AddSubCategoryAsync(subCategory);
-            await _subCategoryRepository.SaveChangesAsync();
+            await _repository.CreateAsync(subCategory);
+            await _repository.SaveChangesAsync();
 
-            dto.Id = subCategory.Id;
-            return dto;
+            var data = new List<object>
+    {
+        new
+        {
+            subCategory.Id,
+            subCategory.CategoryId,
+            subCategory.Name,
+            subCategory.IsActive
+        }
+    };
+
+            return new APIReturn(200, "Tạo SubCategory thành công", data);
         }
 
-        public async Task<bool> UpdateSubCategoryAsync(int id, SubCategoryDto dto)
+
+
+
+        public async Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request)
         {
-            var existing = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
-            if (existing == null) return false;
+            var subCategory = await _repository.GetByIdAsync(id)
+                ?? throw new Exception("Không tìm thấy SubCategory.");
 
-            existing.Name = dto.Name;
-            existing.CategoryId = dto.CategoryId;
-            existing.IsActive = dto.IsActive;
+            subCategory.Name = request.Name;
+            subCategory.IsActive = request.IsActive;
 
-            await _subCategoryRepository.UpdateSubCategoryAsync(existing);
-            await _subCategoryRepository.SaveChangesAsync();
-            return true;
+            await _repository.UpdateAsync(subCategory);
+            await _repository.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteSubCategoryAsync(int id)
+        public async Task DeleteSubCategoryAsync(int id)
         {
-            var existing = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
-            if (existing == null) return false;
+            var subCategory = await _repository.GetByIdAsync(id)
+                ?? throw new Exception("Không tìm thấy SubCategory.");
 
-            existing.IsActive = false;
-            await _subCategoryRepository.UpdateSubCategoryAsync(existing);
-            await _subCategoryRepository.SaveChangesAsync();
-            return true;
+            await _repository.DeleteAsync(subCategory);
+            await _repository.SaveChangesAsync();
         }
     }
 }

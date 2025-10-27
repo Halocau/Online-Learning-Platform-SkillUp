@@ -1,15 +1,17 @@
 ﻿using SkillUp.BussinessObjects.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace SkillUp.Repositories.Interfaces
 {
     public interface ISubCategoryRepository
     {
-        Task<IEnumerable<SubCategory>> GetAllSubCategoriesAsync();
-        Task<SubCategory?> GetSubCategoryByIdAsync(int id);
-        Task AddSubCategoryAsync(SubCategory subCategory);
-        Task UpdateSubCategoryAsync(SubCategory subCategory);
+        Task<IEnumerable<SubCategory>> GetAllActiveAsync();
+        Task<SubCategory?> GetByIdAsync(int id);
+        Task<SubCategory?> GetByNameAsync(string name);
+
+        Task<SubCategory?> GetByNameAndCategoryAsync(string name, int categoryId);
+        Task<SubCategory> CreateAsync(SubCategory subCategory);
+        Task UpdateAsync(SubCategory subCategory);
+        Task DeleteAsync(SubCategory subCategory);
         Task SaveChangesAsync();
     }
 }

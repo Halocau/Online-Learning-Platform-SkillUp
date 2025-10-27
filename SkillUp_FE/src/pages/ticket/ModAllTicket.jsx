@@ -9,8 +9,8 @@ import ResolveTicketModal from '@/components/Ticket/ResolveTicketModal.jsx';
 const ENDPOINTS = {
     all: API_ENDPOINTS.ALL_TICKETS,          // '/Ticket/all-tickets'
     // Nếu chưa có trong API_ENDPOINTS, dùng path trực tiếp:
-    unsolved: '/Ticket/unsolved-tickets',
-    solved: '/Ticket/solved-tickets',
+    unsolved: API_ENDPOINTS.UNSOLVED_TICKETS,  // '/Ticket/unsolved-tickets'
+    solved: API_ENDPOINTS.SOLVE_TICKETS,      // '/Ticket/solved-tickets'
 };
 
 const PAGE_SIZE = 10;

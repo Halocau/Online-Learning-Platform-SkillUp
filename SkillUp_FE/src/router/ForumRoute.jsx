@@ -7,6 +7,8 @@ import ForumList from "@/pages/forum/ForumList";
 import PostDetail from "@/pages/forum/PostDetail";
 import ForumLayout from "@/layouts/ForumLayout";
 import ForumForm from "@/pages/forum/ForumForm";
+import { User } from "lucide-react";
+import UserPosts from "@/pages/forum/UserPost";
 
 export default function ForumRoutes() {
   return (
@@ -16,6 +18,7 @@ export default function ForumRoutes() {
         <Route path="create" element={<ForumForm />} />
         <Route path="edit/:postId" element={<ForumForm isEdit />} />
         <Route path=":postId" element={<PostDetail />} />
+        <Route path="user/:accountId" element={<UserPosts />} />
       </Route>
     </Routes>
   );
