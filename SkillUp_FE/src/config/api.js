@@ -37,11 +37,11 @@ export const API_ENDPOINTS = {
     CATEGORY_ID: '/Category/GetById/{id}',
 
     //subcategory endpoints
-    SUBCATEGORY_LIST: '/SubCategory/GetAllSubCategories',
+    SUBCATEGORY_LIST: '/SubCategory/GetAll',
     SUBCATEGORY_CREATE: '/SubCategory/CreateSubCategory',
     SUBCATEGORY_UPDATE: '/SubCategory/UpdateSubCategory/{id}',
     SUBCATEGORY_DELETE: '/SubCategory/DeleteSubCategory/{id}',
-    SUBCATEGORY_ID: '/SubCategory/GetSubCategoryById/{id}',
+    SUBCATEGORY_ID: '/SubCategory/GetByIdSubCategory/{id}',
 };
 
 
