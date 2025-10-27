@@ -14,14 +14,16 @@ API.interceptors.request.use(config => {
 
 export const postApi = {
   getActive: () => API.get('/Post/view-active'),
-  getMy: (accountId) => API.get(`/Post/my-posts/${accountId}`),
   getUser: (accountId) => API.get(`/Post/user/${accountId}`),
   getById: (postId) => API.get(`/Post/${postId}`),
-  create: (formData) => API.post('/Post/create', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  update: (postId, formData) => API.put(`/Post/${postId}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  delete: (postId) => API.delete(`/Post/${postId}`),
+  create: (formData) =>
+    API.post('/Post/create', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  update: (postId, formData) =>
+    API.put(`/Post/update/${postId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  delete: (postId) => API.delete(`/Post/delete/${postId}`),
 };
+

@@ -7,6 +7,8 @@ namespace SkillUp.Repositories.Interfaces
         Task<IEnumerable<SubCategory>> GetAllActiveAsync();
         Task<SubCategory?> GetByIdAsync(int id);
         Task<SubCategory?> GetByNameAsync(string name);
+
+        Task<SubCategory?> GetByNameAndCategoryAsync(string name, int categoryId);
         Task<SubCategory> CreateAsync(SubCategory subCategory);
         Task UpdateAsync(SubCategory subCategory);
         Task DeleteAsync(SubCategory subCategory);
