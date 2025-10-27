@@ -1,8 +1,13 @@
 // src/pages/forum/ForumLayout.jsx
 import React from "react";
 import { Outlet, Link } from "react-router-dom";
-
+import { useEffect, useState } from "react";
 export default function ForumLayout() {
+  const [userId, setUserId] = useState(null);
+  useEffect(() => {
+    const storedId = localStorage.getItem("userId");
+    setUserId(storedId);
+  }, []);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Container */}
@@ -14,7 +19,6 @@ export default function ForumLayout() {
 
         {/* Layout wrapper - must NOT have overflow hidden */}
         <div className="grid grid-cols-12 gap-6">
-          
           {/* ✅ Left sidebar */}
           <aside className="col-span-3">
             <div className="sticky top-24 bg-white p-4 rounded shadow-sm space-y-4">
@@ -43,7 +47,7 @@ export default function ForumLayout() {
                   Personal Navigator
                 </div>
                 <Link
-                  to="/forum"
+                  to={userId ? `/forum/user/${userId}` : "/forum"}
                   className="block hover:text-indigo-600 transition-colors"
                 >
                   Bài đăng của tôi
@@ -58,18 +62,18 @@ export default function ForumLayout() {
             </div>
           </aside>
 
-          {/* ✅ Main content */}
           <main className="col-span-7">
             <Outlet />
           </main>
 
-          {/* ✅ Right sidebar */}
           <aside className="col-span-2">
             <div className="sticky top-24 space-y-4">
               <div className="bg-white p-4 rounded shadow-sm">
                 <h3 className="font-semibold mb-2">Must-read posts</h3>
                 <ul className="text-sm text-blue-600 space-y-1">
-                  <li>• Please read rules before you start working on a platform</li>
+                  <li>
+                    • Please read rules before you start working on a platform
+                  </li>
                   <li>• Vision & Strategy of SkillUp</li>
                 </ul>
               </div>

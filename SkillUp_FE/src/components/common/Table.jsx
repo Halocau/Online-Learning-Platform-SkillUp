@@ -48,7 +48,7 @@ export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
                 {(onEdit || onDelete) && (
                   <td
                     className="p-3 text-right space-x-2"
-                    onClick={(e) => e.stopPropagation()} // ✅ prevent row click when pressing button
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {onEdit && (
                       <Button
@@ -67,8 +67,6 @@ export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
                       >
                         Delete
                       </Button>
-
-                      
                     )}
                   </td>
                 )}
