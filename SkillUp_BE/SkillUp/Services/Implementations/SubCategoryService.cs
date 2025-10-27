@@ -28,7 +28,7 @@ namespace SkillUp.Services.Implementations
                 Id = sc.Id,
                 Name = sc.Name,
                 CategoryId = sc.CategoryId,
-                CategoryName = sc.Category?.Name,
+                //CategoryName = sc.Category?.Name,
                 IsActive = sc.IsActive
             });
         }
@@ -43,7 +43,7 @@ namespace SkillUp.Services.Implementations
                 Id = sc.Id,
                 Name = sc.Name,
                 CategoryId = sc.CategoryId,
-                CategoryName = sc.Category?.Name,
+                //CategoryName = sc.Category?.Name,
                 IsActive = sc.IsActive
             };
         }
