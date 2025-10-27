@@ -15,29 +15,29 @@ namespace SkillUp.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<SubCategory>> GetAllAsync()
+        public async Task<IEnumerable<SubCategory>> GetAllSubCategoriesAsync()
         {
             return await _context.SubCategories
                 .Include(sc => sc.Category)
                 .ToListAsync();
         }
 
-        public async Task<SubCategory?> GetByIdAsync(int id)
+        public async Task<SubCategory?> GetSubCategoryByIdAsync(int id)
         {
             return await _context.SubCategories
                 .Include(sc => sc.Category)
                 .FirstOrDefaultAsync(sc => sc.Id == id);
         }
 
-        public async Task AddAsync(SubCategory subCategory)
+        public async Task AddSubCategoryAsync(SubCategory subCategory)
         {
             await _context.SubCategories.AddAsync(subCategory);
         }
 
-        public async Task UpdateAsync(SubCategory subCategory)
+        public Task UpdateSubCategoryAsync(SubCategory subCategory)
         {
             _context.SubCategories.Update(subCategory);
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
         public async Task SaveChangesAsync()

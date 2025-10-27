@@ -6,10 +6,10 @@ namespace SkillUp.Repositories.Interfaces
 {
     public interface ISubCategoryRepository
     {
-        Task<IEnumerable<SubCategory>> GetAllAsync();
-        Task<SubCategory?> GetByIdAsync(int id);
-        Task AddAsync(SubCategory subCategory);
-        Task UpdateAsync(SubCategory subCategory);
+        Task<IEnumerable<SubCategory>> GetAllSubCategoriesAsync();
+        Task<SubCategory?> GetSubCategoryByIdAsync(int id);
+        Task AddSubCategoryAsync(SubCategory subCategory);
+        Task UpdateSubCategoryAsync(SubCategory subCategory);
         Task SaveChangesAsync();
     }
 }

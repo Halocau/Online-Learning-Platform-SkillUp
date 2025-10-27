@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-
 using SkillUp.BussinessObjects.DTOs;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
@@ -21,9 +20,9 @@ namespace SkillUp.Services.Implementations
             _context = context;
         }
 
-        public async Task<IEnumerable<SubCategoryDto>> GetAllAsync()
+        public async Task<IEnumerable<SubCategoryDto>> GetAllSubCategoriesAsync()
         {
-            var list = await _subCategoryRepository.GetAllAsync();
+            var list = await _subCategoryRepository.GetAllSubCategoriesAsync();
             return list.Select(sc => new SubCategoryDto
             {
                 Id = sc.Id,
@@ -34,9 +33,9 @@ namespace SkillUp.Services.Implementations
             });
         }
 
-        public async Task<SubCategoryDto?> GetByIdAsync(int id)
+        public async Task<SubCategoryDto?> GetSubCategoryByIdAsync(int id)
         {
-            var sc = await _subCategoryRepository.GetByIdAsync(id);
+            var sc = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
             if (sc == null) return null;
 
             return new SubCategoryDto
@@ -49,7 +48,7 @@ namespace SkillUp.Services.Implementations
             };
         }
 
-        public async Task<SubCategoryDto> CreateAsync(SubCategoryDto dto)
+        public async Task<SubCategoryDto> CreateSubCategoryAsync(SubCategoryDto dto)
         {
             var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId);
             if (!categoryExists)
@@ -62,34 +61,34 @@ namespace SkillUp.Services.Implementations
                 IsActive = true
             };
 
-            await _subCategoryRepository.AddAsync(subCategory);
+            await _subCategoryRepository.AddSubCategoryAsync(subCategory);
             await _subCategoryRepository.SaveChangesAsync();
 
             dto.Id = subCategory.Id;
             return dto;
         }
 
-        public async Task<bool> UpdateAsync(int id, SubCategoryDto dto)
+        public async Task<bool> UpdateSubCategoryAsync(int id, SubCategoryDto dto)
         {
-            var existing = await _subCategoryRepository.GetByIdAsync(id);
+            var existing = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
             if (existing == null) return false;
 
             existing.Name = dto.Name;
             existing.CategoryId = dto.CategoryId;
             existing.IsActive = dto.IsActive;
 
-            await _subCategoryRepository.UpdateAsync(existing);
+            await _subCategoryRepository.UpdateSubCategoryAsync(existing);
             await _subCategoryRepository.SaveChangesAsync();
             return true;
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteSubCategoryAsync(int id)
         {
-            var existing = await _subCategoryRepository.GetByIdAsync(id);
+            var existing = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
             if (existing == null) return false;
 
             existing.IsActive = false;
-            await _subCategoryRepository.UpdateAsync(existing);
+            await _subCategoryRepository.UpdateSubCategoryAsync(existing);
             await _subCategoryRepository.SaveChangesAsync();
             return true;
         }
