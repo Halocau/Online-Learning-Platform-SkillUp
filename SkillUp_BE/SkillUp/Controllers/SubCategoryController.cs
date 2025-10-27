@@ -16,9 +16,9 @@ namespace SkillUp.API.Controllers
         }
 
         [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAll([FromBody] SubCategoryCreateRequest request)
+        public async Task<IActionResult> GetAll()
         {
-            var result = await _service.CreateSubCategoryAsync(request);
+            var result = await _service.GetAllSubCategoriesAsync();
             return Ok(result);
         }
 
