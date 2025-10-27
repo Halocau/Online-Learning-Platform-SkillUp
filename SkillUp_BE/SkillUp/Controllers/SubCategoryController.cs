@@ -1,63 +1,75 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs;
 using SkillUp.Services.Interfaces;
-using System.Threading.Tasks;
 
-namespace SkillUp.Controllers
+namespace SkillUp.API.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class SubCategoryController : ControllerBase
     {
-        private readonly ISubCategoryService _subCategoryService;
+        private readonly ISubCategoryService _service;
 
-        public SubCategoryController(ISubCategoryService subCategoryService)
+        public SubCategoryController(ISubCategoryService service)
         {
-            _subCategoryService = subCategoryService;
+            _service = service;
         }
 
-        [HttpGet("GetAllSubCategories")]
-        public async Task<IActionResult> GetAllSubCategories()
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            var result = await _subCategoryService.GetAllSubCategoriesAsync();
+            var result = await _service.GetAllSubCategoriesAsync();
             return Ok(result);
         }
 
-        [HttpGet("GetSubCategoryById/{id}")]
-        public async Task<IActionResult> GetSubCategoryById(int id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var result = await _subCategoryService.GetSubCategoryByIdAsync(id);
-            if (result == null)
-                return NotFound(new { message = "Không tìm thấy SubCategory." });
-
+            var result = await _service.GetSubCategoryByIdAsync(id);
+            if (result == null) return NotFound("Không tìm thấy SubCategory.");
             return Ok(result);
         }
 
-        [HttpPost("CreateSubCategory")]
-        public async Task<IActionResult> CreateSubCategory([FromBody] SubCategoryDto dto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] SubCategoryCreateRequest request)
         {
-            var created = await _subCategoryService.CreateSubCategoryAsync(dto);
-            return CreatedAtAction(nameof(GetSubCategoryById), new { id = created.Id }, created);
+            try
+            {
+                var result = await _service.CreateSubCategoryAsync(request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
-        [HttpPut("UpdateSubCategory/{id}")]
-        public async Task<IActionResult> UpdateSubCategory(int id, [FromBody] SubCategoryDto dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] SubCategoryUpdateRequest request)
         {
-            var success = await _subCategoryService.UpdateSubCategoryAsync(id, dto);
-            if (!success)
-                return NotFound(new { message = "Không tìm thấy SubCategory để cập nhật." });
-
-            return Ok(new { message = "Cập nhật SubCategory thành công." });
+            try
+            {
+                await _service.UpdateSubCategoryAsync(id, request);
+                return Ok("Cập nhật thành công.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
-        [HttpDelete("DeleteSubCategory/{id}")]
-        public async Task<IActionResult> DeleteSubCategory(int id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            var success = await _subCategoryService.DeleteSubCategoryAsync(id);
-            if (!success)
-                return NotFound(new { message = "Không tìm thấy SubCategory để xóa." });
-
-            return Ok(new { message = "Đã vô hiệu hóa SubCategory." });
+            try
+            {
+                await _service.DeleteSubCategoryAsync(id);
+                return Ok("Xóa thành công.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
