@@ -43,17 +43,15 @@ namespace SkillUp.Services.Implementations
 
         public async Task<APIReturn> CreateSubCategoryAsync(SubCategoryCreateRequest request)
         {
-            // Chuẩn hóa tên để tránh trùng kiểu "ReactJS" và "reactjs "
             var normalizedName = request.Name.Trim().ToLower();
 
-            // Kiểm tra trùng tên trong cùng Category
-            var existing = await _repository.GetByNameAsync(request.Name);
-            if (existing != null && existing.CategoryId == request.CategoryId)
+            // ✅ Kiểm tra trùng trong cùng Category
+            var existing = await _repository.GetByNameAndCategoryAsync(normalizedName, request.CategoryId);
+            if (existing != null)
             {
-                return new APIReturn(400, "Tên SubCategory đã tồn tại", null);
+                return new APIReturn(400, "Tên SubCategory đã tồn tại trong Category này", null);
             }
 
-            // Tạo mới SubCategory
             var subCategory = new SubCategory
             {
                 CategoryId = request.CategoryId,
@@ -64,7 +62,6 @@ namespace SkillUp.Services.Implementations
             await _repository.CreateAsync(subCategory);
             await _repository.SaveChangesAsync();
 
-            // Chuẩn bị dữ liệu phản hồi
             var data = new List<object>
     {
         new
@@ -78,6 +75,8 @@ namespace SkillUp.Services.Implementations
 
             return new APIReturn(200, "Tạo SubCategory thành công", data);
         }
+
+
 
 
         public async Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request)
