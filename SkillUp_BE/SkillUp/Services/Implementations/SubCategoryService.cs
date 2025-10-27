@@ -20,43 +20,54 @@ namespace SkillUp.Services.Implementations
             _context = context;
         }
 
+        // ✅ Chỉ lấy các SubCategory đang Active
         public async Task<IEnumerable<SubCategoryDto>> GetAllSubCategoriesAsync()
         {
             var list = await _subCategoryRepository.GetAllSubCategoriesAsync();
-            return list.Select(sc => new SubCategoryDto
-            {
-                Id = sc.Id,
-                Name = sc.Name,
-                CategoryId = sc.CategoryId,
-                //CategoryName = sc.Category?.Name,
-                IsActive = sc.IsActive
-            });
+            return list
+                .Where(sc => sc.IsActive)
+                .Select(sc => new SubCategoryDto
+                {
+                    Id = sc.Id,
+                    Name = sc.Name,
+                    CategoryId = sc.CategoryId,
+                    IsActive = sc.IsActive
+                });
         }
 
         public async Task<SubCategoryDto?> GetSubCategoryByIdAsync(int id)
         {
             var sc = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
-            if (sc == null) return null;
+            if (sc == null || !sc.IsActive) return null;
 
             return new SubCategoryDto
             {
                 Id = sc.Id,
                 Name = sc.Name,
                 CategoryId = sc.CategoryId,
-                //CategoryName = sc.Category?.Name,
                 IsActive = sc.IsActive
             };
         }
 
+        // ✅ Khi tạo: nếu tên đã tồn tại thì báo lỗi và không tạo
         public async Task<SubCategoryDto> CreateSubCategoryAsync(SubCategoryDto dto)
         {
+            // Kiểm tra CategoryId hợp lệ
             var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId);
             if (!categoryExists)
                 throw new System.Exception("CategoryId không hợp lệ.");
 
+            // Kiểm tra trùng tên trong cùng Category (chỉ tính Active)
+            var nameExists = await _context.SubCategories
+                .AnyAsync(sc => sc.CategoryId == dto.CategoryId
+                             && sc.Name.ToLower() == dto.Name.ToLower()
+                             && sc.IsActive);
+            if (nameExists)
+                throw new System.Exception("Tên SubCategory đã tồn tại.");
+
             var subCategory = new SubCategory
             {
-                Name = dto.Name,
+                Name = dto.Name.Trim(),
                 CategoryId = dto.CategoryId,
                 IsActive = true
             };
@@ -71,9 +82,18 @@ namespace SkillUp.Services.Implementations
         public async Task<bool> UpdateSubCategoryAsync(int id, SubCategoryDto dto)
         {
             var existing = await _subCategoryRepository.GetSubCategoryByIdAsync(id);
-            if (existing == null) return false;
+            if (existing == null || !existing.IsActive) return false;
 
-            existing.Name = dto.Name;
+            // Kiểm tra trùng tên (trừ chính nó)
+            var duplicateName = await _context.SubCategories
+                .AnyAsync(sc => sc.Id != id
+                             && sc.CategoryId == dto.CategoryId
+                             && sc.Name.ToLower() == dto.Name.ToLower()
+                             && sc.IsActive);
+            if (duplicateName)
+                throw new System.Exception("Tên SubCategory đã tồn tại.");
+
+            existing.Name = dto.Name.Trim();
             existing.CategoryId = dto.CategoryId;
             existing.IsActive = dto.IsActive;
 

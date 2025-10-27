@@ -17,6 +17,7 @@ namespace SkillUp.Repositories.Implementations
 
         public async Task<IEnumerable<SubCategory>> GetAllSubCategoriesAsync()
         {
+            // ✅ Lấy cả Category để tiện map DTO, nhưng chỉ lọc Active ở Service
             return await _context.SubCategories
                 .Include(sc => sc.Category)
                 .ToListAsync();

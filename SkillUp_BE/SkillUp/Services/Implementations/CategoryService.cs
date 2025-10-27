@@ -4,7 +4,6 @@ using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace SkillUp.Services.Implementations
 {
@@ -19,13 +18,11 @@ namespace SkillUp.Services.Implementations
 
         public IEnumerable<Category> GetAll()
         {
-            // Chỉ lấy Category đang hoạt động
-            return _repo.GetAll().Where(c => c.IsActive);
+            return _repo.GetAll();
         }
 
         public IEnumerable<Category> GetAllWithSubCategories()
         {
-            // Lấy Category + SubCategory đang hoạt động
             return _repo.GetAllWithSubCategories();
         }
 
@@ -43,6 +40,10 @@ namespace SkillUp.Services.Implementations
         {
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new ArgumentException("Tên danh mục không được để trống.");
+
+            var existingCategory = _repo.GetByName(request.Name.Trim());
+            if (existingCategory != null)
+                throw new InvalidOperationException("Tên danh mục đã tồn tại.");
 
             var category = new Category
             {
@@ -63,6 +64,10 @@ namespace SkillUp.Services.Implementations
 
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new ArgumentException("Tên danh mục không được để trống.");
+
+            var duplicate = _repo.GetByName(request.Name.Trim());
+            if (duplicate != null && duplicate.Id != id)
+                throw new InvalidOperationException("Tên danh mục đã tồn tại.");
 
             category.Name = request.Name.Trim();
             category.IsActive = request.IsActive;

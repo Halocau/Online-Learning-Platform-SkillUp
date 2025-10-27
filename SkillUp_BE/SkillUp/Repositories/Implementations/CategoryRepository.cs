@@ -15,7 +15,6 @@ namespace SkillUp.Repositories.Implementations
             _context = context;
         }
 
-        // 🔹 Chỉ lấy các Category đang hoạt động
         public IEnumerable<Category> GetAll()
         {
             return _context.Categories
@@ -23,7 +22,6 @@ namespace SkillUp.Repositories.Implementations
                 .ToList();
         }
 
-        // 🔹 Lấy Category + SubCategory đang active
         public IEnumerable<Category> GetAllWithSubCategories()
         {
             return _context.Categories
@@ -32,13 +30,11 @@ namespace SkillUp.Repositories.Implementations
                 .ToList();
         }
 
-        // 🔹 Lấy Category theo ID
         public Category? GetById(int id)
         {
             return _context.Categories.FirstOrDefault(c => c.Id == id);
         }
 
-        // 🔹 Lấy Category theo ID và các SubCategory active
         public Category? GetByIdWithSubCategories(int id)
         {
             return _context.Categories
@@ -47,19 +43,23 @@ namespace SkillUp.Repositories.Implementations
                 .FirstOrDefault();
         }
 
-        // 🔹 Thêm mới Category
+        // 🔍 Kiểm tra tên danh mục trùng
+        public Category? GetByName(string name)
+        {
+            return _context.Categories
+                .FirstOrDefault(c => c.Name.ToLower() == name.ToLower());
+        }
+
         public void Add(Category category)
         {
             _context.Categories.Add(category);
         }
 
-        // 🔹 Cập nhật Category
         public void Update(Category category)
         {
             _context.Categories.Update(category);
         }
 
-        // 🔹 Lưu thay đổi
         public void Save()
         {
             _context.SaveChanges();
