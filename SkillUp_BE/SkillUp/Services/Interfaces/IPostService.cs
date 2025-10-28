@@ -7,6 +7,8 @@ namespace SkillUp.Services.Interfaces
         Task<PostResponse> CreatePostAsync(PostCreateRequest request, Guid userId);
         Task<PostResponse> UpdatePostAsync(Guid id, PostUpdateRequest request, Guid userId);
         Task<bool> DeletePostAsync(Guid id, Guid userId);
+        Task<PostDto> GetPostByIdAsync(Guid id);
+
         Task<IEnumerable<PostResponse>> ViewAllPostsAsync();
         Task<IEnumerable<PostResponse>> ViewActivePostsAsync();
         Task<IEnumerable<PostResponse>> ViewUserPostsAsync(Guid accountId, bool includeInactive);
