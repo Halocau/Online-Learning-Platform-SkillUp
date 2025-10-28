@@ -29,7 +29,6 @@ namespace SkillUp.Services.Implementations
             var popularCourses = await _courseRepository.GetPopularCoursesAsync(10);
             var newestCourses = await _courseRepository.GetNewestCoursesAsync(10);
 
-            // 2. Thực hiện Mapping từ Entity -> DTO
             var bannerDTOs = banners.Select(b => new BannerDTO
             {
                 Id = b.Id,
@@ -42,13 +41,12 @@ namespace SkillUp.Services.Implementations
             var categoryDTOs = categories.Select(c => new CategoryHomePageDTO
             {
                 Id = c.Id,
-                Name = c.Name,
-                // Đảm bảo SubCategories không null trước khi Select
+                Name = c.Name,        
                 SubCategories = c.SubCategories?.Select(sc => new SubCategoryHomePageDTO
                 {
                     Id = sc.Id,
                     Name = sc.Name
-                }).ToList() ?? new List<SubCategoryHomePageDTO>() // Trả về list rỗng nếu null
+                }).ToList() ?? new List<SubCategoryHomePageDTO>() 
             }).ToList();
 
             var popularCourseDTOs = popularCourses.Select(c => new CourseSummaryDTO
@@ -72,8 +70,7 @@ namespace SkillUp.Services.Implementations
                 EnrollmentCount = c.EnrollmentCount,
                 LecturerName = c.Lecturer?.Account?.Fullname
             }).ToList();
-
-            // 3. Gán DTOs vào HomePageDTO
+          
             var homePageData = new HomePageDTO
             {
                 Banners = bannerDTOs,
