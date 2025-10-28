@@ -121,6 +121,7 @@ namespace SkillUp.Services.Implementations
             return new PostResponse
             {
                 Id = post.Id,
+                AccountId = post.AccountId,
                 Title = post.Title,
                 Contents = post.Contents,
                 Status = post.Status,
@@ -132,5 +133,27 @@ namespace SkillUp.Services.Implementations
             };
         }
 
+        // ✅ Lấy bài viết theo ID (kèm tên người đăng)
+        public async Task<PostDto> GetPostByIdAsync(Guid id)
+        {
+            var post = await _postRepository.GetByIdAsync(id)
+                ?? throw new Exception("Không tìm thấy bài viết.");
+
+            return new PostDto
+            {
+                Id = post.Id,
+                AccountId = post.AccountId,
+                ForumCategoryId = post.ForumCategoryId,
+                Title = post.Title,
+                Contents = post.Contents,
+                CreatedAt = post.CreatedAt,
+                UpdatedAt = post.UpdatedAt,
+                Status = post.Status,
+                AuthorName = post.Account.Fullname,     // ✅ Lấy tên người đăng
+                CategoryName = post.ForumCategory.Name, // ✅ Lấy tên category
+                ImageUrls = post.PostImages?.Select(pi => pi.ImageUrl).ToList(),
+                CommentCount = post.CommentPosts?.Count ?? 0
+            };
+        }
     }
 }
