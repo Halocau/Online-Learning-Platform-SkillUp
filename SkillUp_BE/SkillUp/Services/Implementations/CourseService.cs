@@ -39,7 +39,7 @@ namespace SkillUp.Services.Implementations
                 EnrollmentCount = 0,
                 Rating = 0,
                 Status = "Draft",
-                IsActive = false,
+                IsActive = true,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
             };
@@ -83,7 +83,7 @@ namespace SkillUp.Services.Implementations
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa khoá học này!");
             }
 
-            course.Status = "Unpublished";
+            course.Status = "Unpublish";
             course.UpdatedAt = DateTime.Now;
       
             _courseRepository.UpdateCourse(course);
