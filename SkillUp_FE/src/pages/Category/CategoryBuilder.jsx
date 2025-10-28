@@ -1,5 +1,5 @@
-import React, { useState, useEffect, act } from 'react';
-import { Bars3Icon, EllipsisVerticalIcon, PlusIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Bars3Icon, EllipsisVerticalIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import ActionMenu from '@/components/common/ActionMenu';
 import AddCategoryModal from '@/components/Category/AddCategoryModal';
 import EditCategoryModal from '@/components/Category/EditCategoryModal';
@@ -159,6 +159,64 @@ const CategoryBuilder = () => {
         setOpenMenuId(null); // Close menu
     };
 
+
+    // --- NEW STATE FOR FILTER AND SORT ---
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('name-asc');
+
+    // --- FILTERING AND SORTING LOGIC WITH useMemo ---
+    const filteredAndSortedCategories = useMemo(() => {
+        // 1. FILTERING
+        let filtered = categories
+            .map(category => {
+                const searchLower = searchTerm.toLowerCase();
+
+                // Check if category name matches
+                const categoryMatch = category.name.toLowerCase().includes(searchLower);
+
+                // Filter subcategories that match
+                const matchingSubCategories = category.subCategories.filter(sub =>
+                    sub.name.toLowerCase().includes(searchLower)
+                );
+
+                // If the category itself matches, keep it with all its original subcategories
+                if (categoryMatch) {
+                    return category;
+                }
+
+                // If only subcategories match, return the category but with only the matching subs
+                if (matchingSubCategories.length > 0) {
+                    return { ...category, subCategories: matchingSubCategories };
+                }
+
+                // No match found in this category or its subs
+                return null;
+            })
+            .filter(Boolean); // Remove null entries where no match was found
+
+        // 2. SORTING
+        const sorted = [...filtered]; // Create a new array to avoid mutating the filtered one
+        switch (sortOption) {
+            case 'name-asc':
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'name-desc':
+                sorted.sort((a, b) => b.name.localeCompare(a.name));
+                break;
+            case 'sub-desc': // Most subcategories
+                sorted.sort((a, b) => b.subCategories.length - a.subCategories.length);
+                break;
+            case 'sub-asc': // Fewest subcategories
+                sorted.sort((a, b) => a.subCategories.length - b.subCategories.length);
+                break;
+            default:
+                break;
+        }
+
+        return sorted;
+
+    }, [categories, searchTerm, sortOption]); // Recalculate only when these dependencies change
+
     return (
         <>
             <div className="bg-slate-50 min-h-screen font-sans">
@@ -171,6 +229,36 @@ const CategoryBuilder = () => {
                             </p>
 
                             <div className="mt-8">
+                                {/* --- FILTER AND SORT CONTROLS --- */}
+                                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                                    {/* Search Input */}
+                                    <div className="relative flex-grow">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                            <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Tìm kiếm danh mục hoặc danh mục con..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="block w-full rounded-lg border-slate-300 bg-white pl-10 pr-4 py-2 text-slate-800 focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                    </div>
+
+                                    {/* Sort Dropdown */}
+                                    <select
+                                        value={sortOption}
+                                        onChange={(e) => setSortOption(e.target.value)}
+                                        className="rounded-lg border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="name-asc">Sắp xếp theo tên (A-Z)</option>
+                                        <option value="name-desc">Sắp xếp theo tên (Z-A)</option>
+                                        <option value="sub-desc">Nhiều danh mục con nhất</option>
+                                        <option value="sub-asc">Ít danh mục con nhất</option>
+                                    </select>
+                                </div>
+
+
                                 <button
                                     onClick={() => setShowAddCategoryModal(true)}
                                     className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -180,7 +268,8 @@ const CategoryBuilder = () => {
                                 </button>
 
                                 <div className="mt-6 space-y-4">
-                                    {categories.map((category) => (
+                                    {/* --- UPDATED: RENDER THE FILTERED AND SORTED LIST --- */}
+                                    {filteredAndSortedCategories.map((category) => (
                                         <div key={category.id} className="rounded-lg bg-white p-4 shadow-sm border border-slate-200">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
@@ -232,7 +321,6 @@ const CategoryBuilder = () => {
                                     ))}
                                 </div>
                             </div>
-
                         </main>
                     </div>
                 </div>
