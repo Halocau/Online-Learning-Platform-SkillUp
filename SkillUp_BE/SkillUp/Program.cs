@@ -78,6 +78,8 @@ builder.Services.AddScoped<INewsRepository, NewsRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRepository>();
 builder.Services.AddScoped<ILecturerRepository,LecturerRepository>(); 
+builder.Services.AddScoped<IBannerRepository,BannerRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -88,6 +90,8 @@ builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationService>();
 builder.Services.AddScoped<ILecturerService, LecturerService>();
+builder.Services.AddScoped<IHomePageService, HomePageService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
 
 // POST
 builder.Services.AddScoped<IPostRepository, PostRepository>();
