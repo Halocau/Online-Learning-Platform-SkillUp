@@ -14,17 +14,16 @@ const handleAPIResponse = (res, defaultSuccessMsg = "Thành công!") => {
   return apiRes?.data ?? [];
 };
 
-const handleAPIError = (err, defaultErrorMsg = "Không thể kết nối đến máy chủ!") => {
+const handleAPIError = (
+  err,
+  defaultErrorMsg = "Không thể kết nối đến máy chủ!"
+) => {
   console.error("API Error:", err);
-  const msg =
-    err.response?.data?.message || err.message || defaultErrorMsg;
+  const msg = err.response?.data?.message || err.message || defaultErrorMsg;
   message.error(msg);
   return [];
 };
 
-
-
-// GET ALL NEWS
 export const getAllNews = async () => {
   try {
     const res = await axiosInstance.get(`${API_URL}/all-news`);
@@ -34,7 +33,6 @@ export const getAllNews = async () => {
   }
 };
 
-//  UPDATE NEWS
 export const updateNews = async (news) => {
   try {
     const res = await axiosInstance.put(`${API_URL}/update-news`, news, {
@@ -47,7 +45,6 @@ export const updateNews = async (news) => {
   }
 };
 
-// DELETE NEWS
 export const deleteNews = async (id) => {
   try {
     const res = await axiosInstance.delete(`${API_URL}/delete-news/${id}`);
@@ -58,8 +55,6 @@ export const deleteNews = async (id) => {
   }
 };
 
-
-// 🟩 GET NEWS BY ID
 export const getNewsById = async (id) => {
   try {
     const res = await axiosInstance.get(`${API_URL}/news/${id}`);

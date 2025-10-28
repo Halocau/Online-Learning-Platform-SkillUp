@@ -45,18 +45,26 @@ export default function ForumForm({ isEdit = false }) {
       const res = await postApi.getById(postId);
       const payload = res?.data?.data ?? res?.data ?? res;
       const p = Array.isArray(payload) ? payload[0] : payload;
+
+      // ✅ Map existing image URLs for AntD Upload preview
+      const imageList =
+        (p.imageUrls || []).map((url, index) => ({
+          uid: index,
+          name: `image-${index}`,
+          status: "done",
+          url,
+        })) ?? [];
+
       setForm({
-        Title: p.Title ?? p.title ?? "",
-        Contents: p.Contents ?? p.contents ?? "",
+        Title: p.title || p.Title || "",
+        Contents: p.contents || p.Contents || "",
         ForumCategoryId:
-          p.ForumCategoryId ?? p.forumCategoryId
-            ? Number(p.ForumCategoryId ?? p.forumCategoryId)
-            : null,
-        images: [],
+          p.forumCategoryId || p.ForumCategoryID || p.ForumCategoryId || null,
+        images: imageList,
       });
     } catch (err) {
-      console.error("Failed to load post", err);
-      toast.error("Failed to load post data");
+      console.error("Lấy bài viết thất bại", err);
+      toast.error("Lấy bài viết thất bại");
     } finally {
       setLoading(false);
     }
@@ -64,7 +72,7 @@ export default function ForumForm({ isEdit = false }) {
 
   const handleSave = async () => {
     if (!form.Title || !form.Contents || !form.ForumCategoryId) {
-      message.warning("Please fill all fields");
+      toast.warning("Hãy điền đầy đủ mục cần thiết !");
       return;
     }
     setSaving(true);
@@ -73,25 +81,19 @@ export default function ForumForm({ isEdit = false }) {
       formData.append("ForumCategoryId", Number(form.ForumCategoryId));
       formData.append("Title", form.Title);
       formData.append("Contents", form.Contents);
-
       form.images.forEach((f) => {
-        formData.append("Images", f.originFileObj || f);
+        if (f.originFileObj) formData.append("Images", f.originFileObj);
+        else if (f.url) formData.append("ExistingImages", f.url);
       });
-
-      console.log("FormData:", [...formData.entries()]);
 
       if (isEdit || postId) {
         await postApi.update(postId, formData);
-        toast.success("Post updated successfully");
-        
-
+        toast.success("Cập nhật bài viết thành công !");
         navigate(`/forum/${postId}`);
       } else {
         const res = await postApi.create(formData);
         const created = res?.data?.data?.[0] ?? res?.data ?? res;
-        toast.success("Post created successfully");
-        toast.warning("Please fill all fields");
-
+        toast.success("Tạo bài viết thành công !");
         const myId = localStorage.getItem("userId");
         if (myId) {
           navigate(`/forum/user/${myId}`);
@@ -100,8 +102,8 @@ export default function ForumForm({ isEdit = false }) {
         }
       }
     } catch (err) {
-      console.error("❌ Create post error:", err.response?.data || err);
-      toast.warning(err.response?.data?.message || "Save failed");
+      console.error("Create post error:", err.response?.data || err);
+      toast.warning(err.response?.data?.message || "Lưu bài viết thất bại !");
     } finally {
       setSaving(false);
     }
@@ -117,12 +119,12 @@ export default function ForumForm({ isEdit = false }) {
   return (
     <div className="bg-white p-6 rounded shadow-sm">
       <h2 className="text-xl font-semibold mb-4">
-        {isEdit || postId ? "Edit Post" : "Create a post"}
+        {isEdit || postId ? "Câp nhật bài viết" : "Tạo bài viết mới"}
       </h2>
 
       <div className="space-y-3">
         <Select
-          placeholder="Choose category"
+          placeholder="Chọn danh mục"
           value={form.ForumCategoryId || undefined}
           onChange={(v) => setForm({ ...form, ForumCategoryId: v })}
           className="w-full"
@@ -135,30 +137,32 @@ export default function ForumForm({ isEdit = false }) {
         </Select>
 
         <Input
-          placeholder="Type catching attention title"
+          placeholder="Tiêu đề"
           value={form.Title}
           onChange={(e) => setForm({ ...form, Title: e.target.value })}
         />
 
         <TextArea
           rows={10}
-          placeholder="Type your question"
+          placeholder="Nội dung bài đăng"
           value={form.Contents}
           onChange={(e) => setForm({ ...form, Contents: e.target.value })}
         />
 
         <Upload
           multiple
+          listType="picture"
+          fileList={form.images}
           beforeUpload={() => false}
           onChange={({ fileList }) => setForm({ ...form, images: fileList })}
         >
-          <Button icon={<UploadOutlined />}>Add Image</Button>
+          <Button icon={<UploadOutlined />}>Thêm ảnh</Button>
         </Upload>
 
         <div className="flex justify-end gap-3 mt-4">
-          <Button onClick={() => navigate(-1)}>Cancel</Button>
+          <Button onClick={() => navigate(-1)}>Hủy</Button>
           <Button type="primary" onClick={handleSave} loading={saving}>
-            {isEdit || postId ? "Update" : "Publish"}
+            {isEdit || postId ? "Câp nhật" : "Đăng bài"}
           </Button>
         </div>
       </div>
