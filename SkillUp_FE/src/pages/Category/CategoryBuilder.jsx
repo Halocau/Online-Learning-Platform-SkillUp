@@ -105,6 +105,11 @@ const CategoryBuilder = () => {
     // Opens the confirmation modal
     const handleDelete = async (item, type) => {
         if (type === 'category') {
+            if (item.subCategories && item.subCategories.length > 0) {
+                toast.error('Không thể xoá danh mục có danh mục con. Vui lòng xoá các danh mục con trước.');
+                setOpenMenuId(null);
+                return;
+            }
             const response = await axiosInstance.delete(API_ENDPOINTS.CATEGORY_DELETE.replace('{id}', item.id));
             if (response?.data?.message === 'Xóa danh mục (soft delete) thành công.') {
                 toast.success('Xóa danh mục thành công.');
@@ -119,6 +124,7 @@ const CategoryBuilder = () => {
             }
         }
         if (type === 'subcategory') {
+            try{
             const response = await axiosInstance.delete(API_ENDPOINTS.SUBCATEGORY_DELETE.replace('{id}', item.id));
             if (response?.data === 'Xóa thành công.') {
                 toast.success('Xóa danh mục con thành công.');
@@ -131,6 +137,10 @@ const CategoryBuilder = () => {
                 fetchCategories();
                 return;
             }
+        } catch (error) {
+            toast.error('Không thể xoá danh mục con. Chỉ có thể xoá danh mục con không liên kết với khoá học.');
+            setOpenMenuId(null);
+        }
         }
         setModalState({ isOpen: true, item, type });
         setOpenMenuId(null); // Close menu
