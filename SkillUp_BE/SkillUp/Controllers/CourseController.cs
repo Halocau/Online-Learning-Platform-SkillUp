@@ -252,5 +252,49 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpGet("All-Courses")]
+        public async Task<IActionResult> GetAllCourses()
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                var courses = await _courseService.GetAllCourseAsync(accountId.Value);
+                if (courses == null || courses.Count == 0)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy khóa học nào.",
+                        data = new List<object>()
+                    });
+                }
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Danh sách khóa học",
+                    data = courses.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
     }
 }

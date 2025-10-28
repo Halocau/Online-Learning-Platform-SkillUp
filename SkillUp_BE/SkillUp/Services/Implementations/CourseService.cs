@@ -170,5 +170,32 @@ namespace SkillUp.Services.Implementations
 
             return course.IsActive;
         }
+        public async Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId) {
+            var modContent = await _accountRepository.GetByIdAsync(accountId);
+            if (modContent == null)
+            {
+                throw new Exception("Không tìm thấy tài khoản quản trị viên!");
+            }
+            var isModContent = modContent.RoleId == 3;
+
+            if (!isModContent)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng này!");
+            }
+            var courses = await _courseRepository.GetAllCourseAsync();
+            return courses.Select(course => new CourseMorderatorResponseDto
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                Price = course.Price,
+                EnrollmentCount = course.EnrollmentCount,
+                Rating = course.Rating,
+                Status = course.Status,
+                IsActive = course.IsActive,
+                SubCategoryName = course.SubCategory.Name,
+                LecturerName = course.Lecturer.Account.Fullname
+            }).ToList();    
+        }
     }
 }

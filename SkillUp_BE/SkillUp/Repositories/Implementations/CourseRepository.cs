@@ -16,6 +16,14 @@ namespace SkillUp.Repositories.Implementations
         {
             await _context.AddAsync(course);
         }
+        public async Task<List<Course>> GetAllCourseAsync()
+        {
+            return await _context.Courses
+                                 .Include(c => c.Lecturer).ThenInclude(l => l.Account)
+                                 .Include(c => c.SubCategory)
+                                 .ToListAsync();
+        }
+
 
         public async Task<Course?> GetCourseByIdAsync(Guid courseId)
         {
