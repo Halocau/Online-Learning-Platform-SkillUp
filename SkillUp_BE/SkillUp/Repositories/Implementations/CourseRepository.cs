@@ -22,6 +22,29 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Courses.FirstOrDefaultAsync(c  => c.Id == courseId);
         }
 
+        public async Task<List<Course>> GetNewestCoursesAsync(int limit)
+        {
+            return await _context.Courses
+                .Where(c => c.IsActive == true && c.Status == "Public")
+                .Include(c => c.Lecturer)
+                    .ThenInclude(l => l.Account)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(limit)
+                .ToListAsync();
+        }
+
+        public async Task<List<Course>> GetPopularCoursesAsync(int limit)
+        {
+            return await _context.Courses
+                .Where(c => c.IsActive == true && c.Status == "Public")            
+                .Include(c => c.Lecturer)
+                    .ThenInclude(l => l.Account)
+                .OrderByDescending(c => c.EnrollmentCount)
+                .ThenByDescending(c => c.Rating)
+                .Take(limit)
+                .ToListAsync();
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
            return await _context.SaveChangesAsync() > 0;

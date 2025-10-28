@@ -183,5 +183,31 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        // ✅ Lấy bài viết theo Id
+        [HttpGet("ViewPostbyId/{id}")]
+        public async Task<IActionResult> GetPostById(Guid id)
+        {
+            try
+            {
+                var result = await _postService.GetPostByIdAsync(id);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Fetched post successfully",
+                    data = new List<object> { result }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
+
     }
 }

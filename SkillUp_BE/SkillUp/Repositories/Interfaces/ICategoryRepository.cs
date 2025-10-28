@@ -13,5 +13,7 @@ namespace SkillUp.Repositories.Interfaces
         void Add(Category category);
         void Update(Category category);
         void Save();
+
+        Task<List<Category>> GetCategoriesWithSubCategoriesAsync();
     }
 }

@@ -1,6 +1,14 @@
 import React, { useState } from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
-import { FileText, MessageSquare, LogOut, Menu, X, Layout, LayoutDashboard, TableOfContents } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  FileText,
+  MessageSquare,
+  LogOut,
+  Menu,
+  X,
+  LayoutDashboard,
+  TableOfContents,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SystemModeratorLayout() {
@@ -14,44 +22,74 @@ export default function SystemModeratorLayout() {
   };
 
   const menuItems = [
-    { label: "Dashboard", icon: <LayoutDashboard />, path: "/sysmod" },
-    { label: "Account Management", icon: <FileText />, path: "/sysmod" },
-    { label: "Category Management", icon: <TableOfContents />, path: "/sysmod/category" },
-    { label: "Quản lý phiếu hỗ trợ", icon: <TableOfContents />, path: "/sysmod/ticket" },
-    { label: "Quản lý ứng tuyển", icon: <TableOfContents />, path: "/sysmod/lecturer-application" }
+    {
+      label: "Bảng điều khiển",
+      icon: <LayoutDashboard size={18} />,
+      path: "/sysmod",
+    },
+    {
+      label: "Quản lý tài khoản",
+      icon: <FileText size={18} />,
+      path: "/sysmod/account",
+    },
+    {
+      label: "Quản lý danh mục",
+      icon: <TableOfContents size={18} />,
+      path: "/sysmod/category",
+    },
+    {
+      label: "Quản lý phiếu hỗ trợ",
+      icon: <MessageSquare size={18} />,
+      path: "/sysmod/ticket",
+    },
+    {
+      label: "Quản lý ứng tuyển",
+      icon: <TableOfContents size={18} />,
+      path: "/sysmod/lecturer-application",
+    },
   ];
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
       <aside
         className={`${collapsed ? "w-16" : "w-60"
           } bg-white border-r flex flex-col transition-all duration-300`}
       >
+        {/* Header */}
         <div className="flex items-center justify-between px-4 h-16 border-b">
           <span className="text-xl font-bold text-indigo-600">
             {collapsed ? "SU" : "SkillUp SystemMod"}
           </span>
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="text-gray-600 hover:text-gray-900 md:hidden"
+            className="text-gray-600 hover:text-indigo-600 md:hidden"
           >
             {collapsed ? <Menu size={20} /> : <X size={20} />}
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-2 py-4">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
           {menuItems.map((item) => (
-            <Link
+            <NavLink
               key={item.label}
               to={item.path}
-              className="flex items-center gap-3 p-3 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
+              end
+              className={({ isActive }) =>
+                `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                  ? "bg-indigo-500 text-white shadow-md"
+                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                }`
+              }
             >
               {item.icon}
               {!collapsed && <span>{item.label}</span>}
-            </Link>
+            </NavLink>
           ))}
         </nav>
 
+        {/* Logout */}
         <div className="border-t p-3">
           <Button
             variant="ghost"
@@ -64,7 +102,8 @@ export default function SystemModeratorLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6">
           <Outlet />
         </div>

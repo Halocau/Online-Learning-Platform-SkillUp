@@ -1,32 +1,36 @@
-// src/components/CategoryBuilder.js
-
-import React, { useState, useEffect } from 'react';
-import { Bars3Icon, EllipsisVerticalIcon, PlusIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Bars3Icon, EllipsisVerticalIcon, PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import ActionMenu from '@/components/common/ActionMenu';
-import FormModal from '@/components/common/FormModal';
+import AddCategoryModal from '@/components/Category/AddCategoryModal';
+import EditCategoryModal from '@/components/Category/EditCategoryModal';
+import AddSubCategoryModal from '@/components/Category/AddSubCategoryModal';
+import EditSubCategoryModal from '@/components/Category/EditSubCategoryModal';
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
+import { toast } from 'react-toastify';
+import { set } from 'zod';
 
 // Main Component
 const CategoryBuilder = () => {
-    // const [categories, setCategories] = useState([]);
-    //fetch data
-    // const fetchCategories = async () => {
-    //     try {
-    //         const response = await axiosInstance.get(API_ENDPOINTS.CATEGORY_LIST);
-    //         setCategories(response.data.data);
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-    // };
-    // //thieu sub category vi api chua include
-    // useEffect(() => {
-    //     fetchCategories();
-    // }, []);
+    const [categories, setCategories] = useState([]);
+    const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+    const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+    const [showAddSubCategoryModal, setShowAddSubCategoryModal] = useState(false);
+    const [showEditSubCategoryModal, setShowEditSubCategoryModal] = useState(false);
 
-    const [categories, setCategories] = useState([
-    { id: 1, name: 'Electronics', subcategories: [{ id: 101, name: 'Smartphones' }, { id: 102, name: 'Laptops' }] },
-    { id: 2, name: 'Books', subcategories: [{ id: 201, name: 'Science Fiction' }] },
-  ]);
+    // fetch data
+    const fetchCategories = async () => {
+        try {
+            const response = await axiosInstance.get(API_ENDPOINTS.CATEGORY_LIST);
+            const activeCategories = response.data.data.filter(cat => cat.isActive);
+            setCategories(activeCategories);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
 
     // State to track which dropdown menu is open
     const [openMenuId, setOpenMenuId] = useState(null);
@@ -36,17 +40,61 @@ const CategoryBuilder = () => {
 
     // --- Handlers ---
 
-    const handleAddCategory = () => {
-        const newCategory = { id: Date.now(), name: `New Category ${categories.length + 1}`, subcategories: [] };
-        setCategories([...categories, newCategory]);
+    const handleAddCategory = async (categoryName) => {
+        const newCategory = { name: categoryName, subcategories: [] };
+        const response = await axiosInstance.post(API_ENDPOINTS.CATEGORY_CREATE, newCategory);
+        if (response?.data?.message === 'Tạo danh mục thành công.') {
+            toast.success('Tạo danh mục mới thành công.');
+            fetchCategories();
+            return;
+        } else {
+            toast.error('Không thể tạo danh mục mới.');
+            fetchCategories();
+            return;
+        }
     };
 
-    const handleAddSubcategory = (categoryId) => {
-        setCategories(categories.map(cat =>
-            cat.id === categoryId
-                ? { ...cat, subcategories: [...cat.subcategories, { id: Date.now(), name: 'New Subcategory' }] }
-                : cat
-        ));
+    const handleEditCategory = async (categoryName, id) => {
+        const newCategory = { name: categoryName, subcategories: [] };
+        const response = await axiosInstance.put(API_ENDPOINTS.CATEGORY_UPDATE.replace('{id}', id), newCategory);
+        if (response?.data?.message === 'Cập nhật danh mục thành công.') {
+            toast.success('Cập nhật danh mục thành công.');
+            fetchCategories();
+            return;
+        } else {
+            toast.error('Không thể cập nhật danh mục.');
+            fetchCategories();
+            return;
+        }
+    };
+
+    const handleEditSubCategory = async (subCategoryName, id) => {
+        const newCategory = { name: subCategoryName, isActive: true };
+        const response = await axiosInstance.put(API_ENDPOINTS.SUBCATEGORY_UPDATE.replace('{id}', id), newCategory);
+
+        if (response?.data === 'Cập nhật thành công.') {
+            toast.success('Cập nhật danh mục con thành công.');
+            fetchCategories();
+            return;
+        } else {
+            toast.error('Không thể cập nhật danh mục con.');
+            fetchCategories();
+            return;
+        }
+    };
+
+    const handleAddSubcategory = async (categoryName, categoryId) => {
+        const newSubCategory = { name: categoryName, categoryId: categoryId };
+        const response = await axiosInstance.post(API_ENDPOINTS.SUBCATEGORY_CREATE, newSubCategory);
+        if (response?.data?.code === 200) {
+            toast.success('Tạo danh mục con mới thành công.');
+            fetchCategories();
+            return;
+        } else {
+            toast.error('Không thể tạo danh mục con mới.');
+            fetchCategories();
+            return;
+        }
     };
 
     // Toggle the action menu for a given item
@@ -54,38 +102,130 @@ const CategoryBuilder = () => {
         setOpenMenuId(openMenuId === id ? null : id);
     };
 
-    // Generic edit handler (can be expanded later)
-    const handleEdit = (item, type) => {
-        console.log(`Editing ${type}:`, item);
-        // Add your logic to open an edit form/modal here
-        setOpenMenuId(null); // Close menu after action
-    };
-
     // Opens the confirmation modal
-    const handleOpenDeleteModal = (item, type) => {
+    const handleDelete = async (item, type) => {
+        if (type === 'category') {
+            if (item.subCategories && item.subCategories.length > 0) {
+                toast.error('Không thể xoá danh mục có danh mục con. Vui lòng xoá các danh mục con trước.');
+                setOpenMenuId(null);
+                return;
+            }
+            const response = await axiosInstance.delete(API_ENDPOINTS.CATEGORY_DELETE.replace('{id}', item.id));
+            if (response?.data?.message === 'Xóa danh mục (soft delete) thành công.') {
+                toast.success('Xóa danh mục thành công.');
+                setOpenMenuId(null); // Close menu
+                fetchCategories();
+                return;
+            } else {
+                toast.error('Không thể xoá danh mục.');
+                setOpenMenuId(null); // Close menu
+                fetchCategories();
+                return;
+            }
+        }
+        if (type === 'subcategory') {
+            try{
+            const response = await axiosInstance.delete(API_ENDPOINTS.SUBCATEGORY_DELETE.replace('{id}', item.id));
+            if (response?.data === 'Xóa thành công.') {
+                toast.success('Xóa danh mục con thành công.');
+                setOpenMenuId(null); // Close menu
+                fetchCategories();
+                return;
+            } else {
+                toast.error('Không thể xoá danh mục con.');
+                setOpenMenuId(null); // Close menu
+                fetchCategories();
+                return;
+            }
+        } catch (error) {
+            toast.error('Không thể xoá danh mục con. Chỉ có thể xoá danh mục con không liên kết với khoá học.');
+            setOpenMenuId(null);
+        }
+        }
         setModalState({ isOpen: true, item, type });
         setOpenMenuId(null); // Close menu
     };
 
-    // Closes the confirmation modal
-    const handleCloseModal = () => {
-        setModalState({ isOpen: false, item: null, type: null });
-    };
-
-    // Deletes the item after confirmation
-    const handleConfirmDelete = () => {
-        if (!modalState.item) return;
-
-        if (modalState.type === 'category') {
-            setCategories(categories.filter(cat => cat.id !== modalState.item.id));
-        } else if (modalState.type === 'subcategory') {
-            setCategories(categories.map(cat => ({
-                ...cat,
-                subcategories: cat.subcategories.filter(sub => sub.id !== modalState.item.id),
-            })));
+    // Opens the edit modal
+    const [categoryObj, setCategoryObj] = useState(null);
+    const handleOpenEditModal = (item, type) => {
+        if (type === 'category') {
+            setCategoryObj(item);
+            setShowEditCategoryModal(true);
+            setOpenMenuId(null); // Close menu
+            return;
         }
-        handleCloseModal();
+        if (type === 'subcategory') {
+            setCategoryObj(item);
+            setShowEditSubCategoryModal(true);
+            setOpenMenuId(null);
+            return;
+        }
     };
+
+    const handleOpenAddSubCategoryModal = (item) => {
+        setCategoryObj(item);
+        setShowAddSubCategoryModal(true);
+        setOpenMenuId(null); // Close menu
+    };
+
+
+    // --- NEW STATE FOR FILTER AND SORT ---
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('name-asc');
+
+    // --- FILTERING AND SORTING LOGIC WITH useMemo ---
+    const filteredAndSortedCategories = useMemo(() => {
+        // 1. FILTERING
+        let filtered = categories
+            .map(category => {
+                const searchLower = searchTerm.toLowerCase();
+
+                // Check if category name matches
+                const categoryMatch = category.name.toLowerCase().includes(searchLower);
+
+                // Filter subcategories that match
+                const matchingSubCategories = category.subCategories.filter(sub =>
+                    sub.name.toLowerCase().includes(searchLower)
+                );
+
+                // If the category itself matches, keep it with all its original subcategories
+                if (categoryMatch) {
+                    return category;
+                }
+
+                // If only subcategories match, return the category but with only the matching subs
+                if (matchingSubCategories.length > 0) {
+                    return { ...category, subCategories: matchingSubCategories };
+                }
+
+                // No match found in this category or its subs
+                return null;
+            })
+            .filter(Boolean); // Remove null entries where no match was found
+
+        // 2. SORTING
+        const sorted = [...filtered]; // Create a new array to avoid mutating the filtered one
+        switch (sortOption) {
+            case 'name-asc':
+                sorted.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'name-desc':
+                sorted.sort((a, b) => b.name.localeCompare(a.name));
+                break;
+            case 'sub-desc': // Most subcategories
+                sorted.sort((a, b) => b.subCategories.length - a.subCategories.length);
+                break;
+            case 'sub-asc': // Fewest subcategories
+                sorted.sort((a, b) => a.subCategories.length - b.subCategories.length);
+                break;
+            default:
+                break;
+        }
+
+        return sorted;
+
+    }, [categories, searchTerm, sortOption]); // Recalculate only when these dependencies change
 
     return (
         <>
@@ -93,22 +233,53 @@ const CategoryBuilder = () => {
                 <div className="container mx-auto max-w-6xl p-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
                         <main className="md:col-span-3">
-                            <h1 className="text-3xl font-bold text-slate-800">Category Builder</h1>
+                            <h1 className="text-3xl font-bold text-slate-800">Quản Lý Danh Mục</h1>
                             <p className="mt-2 text-slate-500">
-                                Structure your product catalog by creating categories and subcategories.
+                                Xây dựng cấu trúc danh mục của bạn bằng cách tạo các danh mục và danh mục con.
                             </p>
 
                             <div className="mt-8">
+                                {/* --- FILTER AND SORT CONTROLS --- */}
+                                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                                    {/* Search Input */}
+                                    <div className="relative flex-grow">
+                                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                            <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Tìm kiếm danh mục hoặc danh mục con..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="block w-full rounded-lg border-slate-300 bg-white pl-10 pr-4 py-2 text-slate-800 focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                    </div>
+
+                                    {/* Sort Dropdown */}
+                                    <select
+                                        value={sortOption}
+                                        onChange={(e) => setSortOption(e.target.value)}
+                                        className="rounded-lg border-slate-300 bg-white px-4 py-2 font-medium text-slate-700 focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="name-asc">Sắp xếp theo tên (A-Z)</option>
+                                        <option value="name-desc">Sắp xếp theo tên (Z-A)</option>
+                                        <option value="sub-desc">Nhiều danh mục con nhất</option>
+                                        <option value="sub-asc">Ít danh mục con nhất</option>
+                                    </select>
+                                </div>
+
+
                                 <button
-                                    onClick={handleAddCategory}
+                                    onClick={() => setShowAddCategoryModal(true)}
                                     className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                                 >
                                     <PlusIcon className="h-5 w-5" />
-                                    Add Category
+                                    Thêm Danh Mục
                                 </button>
 
                                 <div className="mt-6 space-y-4">
-                                    {categories.map((category) => (
+                                    {/* --- UPDATED: RENDER THE FILTERED AND SORTED LIST --- */}
+                                    {filteredAndSortedCategories.map((category) => (
                                         <div key={category.id} className="rounded-lg bg-white p-4 shadow-sm border border-slate-200">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
@@ -121,15 +292,15 @@ const CategoryBuilder = () => {
                                                     </button>
                                                     {openMenuId === category.id && (
                                                         <ActionMenu
-                                                            onEdit={() => handleEdit(category, 'category')}
-                                                            onDelete={() => handleOpenDeleteModal(category, 'category')}
+                                                            onEdit={() => handleOpenEditModal(category, 'category')}
+                                                            onDelete={() => handleDelete(category, 'category')}
                                                         />
                                                     )}
                                                 </div>
                                             </div>
 
                                             <div className="mt-4 ml-4 space-y-3 border-l-2 border-slate-200 pl-6">
-                                                {category.subcategories.map((sub) => (
+                                                {category.subCategories.map((sub) => (
                                                     <div key={sub.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
                                                         <div className="flex items-center gap-3">
                                                             <Bars3Icon className="h-5 w-5 text-slate-400 cursor-grab" />
@@ -141,38 +312,57 @@ const CategoryBuilder = () => {
                                                             </button>
                                                             {openMenuId === sub.id && (
                                                                 <ActionMenu
-                                                                    onEdit={() => handleEdit(sub, 'subcategory')}
-                                                                    onDelete={() => handleOpenDeleteModal(sub, 'subcategory')}
+                                                                    onEdit={() => handleOpenEditModal(sub, 'subcategory')}
+                                                                    onDelete={() => handleDelete(sub, 'subcategory')}
                                                                 />
                                                             )}
                                                         </div>
                                                     </div>
                                                 ))}
                                                 <button
-                                                    onClick={() => handleAddSubcategory(category.id)}
+                                                    onClick={() => handleOpenAddSubCategoryModal(category)}
                                                     className="flex items-center gap-2 rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 transition-colors"
                                                 >
                                                     <PlusIcon className="h-5 w-5" />
-                                                    Add Subcategory
+                                                    Thêm Danh Mục Con
                                                 </button>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-
                         </main>
                     </div>
                 </div>
             </div>
 
-            {/* Render the modal conditionally */}
-            {/* <FormModal
-        isOpen={modalState.isOpen}
-        itemName={modalState.item?.name}
-        onClose={handleCloseModal}
-        onConfirm={handleConfirmDelete}
-      /> */}
+            {/* Call modal component */}
+            <AddCategoryModal
+                isOpen={showAddCategoryModal}
+                onClose={() => setShowAddCategoryModal(false)}
+                onAdd={handleAddCategory}
+            />
+
+            <EditCategoryModal
+                isOpen={showEditCategoryModal}
+                onClose={() => setShowEditCategoryModal(false)}
+                Category={categoryObj}
+                onEdit={handleEditCategory}
+            />
+
+            <AddSubCategoryModal
+                isOpen={showAddSubCategoryModal}
+                onClose={() => setShowAddSubCategoryModal(false)}
+                onAdd={handleAddSubcategory}
+                categoryId={categoryObj?.id}
+            />
+
+            <EditSubCategoryModal
+                isOpen={showEditSubCategoryModal}
+                onClose={() => setShowEditSubCategoryModal(false)}
+                SubCategory={categoryObj}
+                onEdit={handleEditSubCategory}
+            />
         </>
     );
 };

@@ -56,11 +56,21 @@ function ApplyCV() {
     const { name } = e.target;
     const file = e.target.files[0];
     if (file) {
-      // Validate file type (PDF only)
-      if (file.type !== 'application/pdf') {
-        toast.error('Chỉ chấp nhận file PDF!');
-        e.target.value = '';
-        return;
+      if (name === 'cvFile') {
+        // CV chỉ chấp nhận PDF
+        if (file.type !== 'application/pdf') {
+          toast.error('CV chỉ chấp nhận file PDF!');
+          e.target.value = '';
+          return;
+        }
+      } else if (name === 'degreeFile') {
+        // Bằng cấp chấp nhận ảnh (JPG, PNG, JPEG)
+        const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+        if (!validImageTypes.includes(file.type)) {
+          toast.error('Bằng cấp chỉ chấp nhận file ảnh (JPG, PNG)!');
+          e.target.value = '';
+          return;
+        }
       }
       
       // Validate file size (max 5MB)
@@ -80,7 +90,6 @@ function ApplyCV() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
     if (!formData.title || !formData.profession || !formData.cvFile || !formData.degreeFile) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc!');
       return;
@@ -324,7 +333,7 @@ function ApplyCV() {
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <GraduationCap className="w-5 h-5 text-yellow-500" />
-                    Tải lên bằng cấp <span className="text-red-500">*</span>
+                    Tải lên ảnh bằng cấp <span className="text-red-500">*</span>
                   </h3>
 
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-400 transition-colors">
@@ -332,7 +341,7 @@ function ApplyCV() {
                       type="file"
                       id="degreeFile"
                       name="degreeFile"
-                      accept=".pdf"
+                      accept="image/jpeg,image/jpg,image/png"
                       onChange={handleFileChange}
                       className="hidden"
                       required
@@ -346,7 +355,7 @@ function ApplyCV() {
                       ) : (
                         <>
                           <p className="text-sm text-gray-600 mb-1">
-                            Click để tải lên bằng cấp (PDF)
+                            Click để tải lên ảnh bằng cấp (JPG, PNG)
                           </p>
                           <p className="text-xs text-gray-500">
                             Tối đa 5MB
