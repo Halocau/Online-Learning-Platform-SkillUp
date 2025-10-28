@@ -5,7 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import ForumList from "@/pages/forum/ForumList";
 
 import PostDetail from "@/pages/forum/PostDetail";
-import ForumLayout from "@/layouts/ForumLayout";
+import ForumLayout from "../layouts/ForumLayout";
 import ForumForm from "@/pages/forum/ForumForm";
 import { User } from "lucide-react";
 import UserPosts from "@/pages/forum/UserPost";

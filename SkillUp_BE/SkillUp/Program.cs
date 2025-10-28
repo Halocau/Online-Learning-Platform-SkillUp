@@ -110,6 +110,24 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IForumCategoryRepository, ForumCategoryRepository>();
 builder.Services.AddScoped<IForumCategoryService, ForumCategoryService>();
 
+//Category
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+//Subcategory
+builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+builder.Services.AddScoped<ISubCategoryService, SubCategoryService>();
+
+
+//Forum category
+builder.Services.AddScoped<IForumCategoryRepository, ForumCategoryRepository>();
+builder.Services.AddScoped<IForumCategoryService, ForumCategoryService>();
+
+
+//post
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IPostService, PostService>();
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];

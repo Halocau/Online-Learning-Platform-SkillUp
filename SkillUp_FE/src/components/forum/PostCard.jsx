@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle, Heart } from "lucide-react";
+import { MessageCircle, Heart, Calendar } from "lucide-react";
 import { Avatar, Tooltip } from "antd";
 import { toast } from "react-toastify";
 
@@ -12,96 +12,99 @@ export default function PostCard({ post }) {
   const images = post.ImageUrls ?? post.imageUrls ?? [];
   const commentCount = post.CommentCount ?? 0;
   const likeCount = post.LikeCount ?? 0;
+  const category = post.CategoryName ?? post.categoryName ?? "Chưa phân loại";
   const avatarUrl =
     post.AccountAvatarUrl ??
     post.accountAvatarUrl ??
-    "https://api.dicebear.com/8.x/avataaars/svg?seed=" +
-      (post.AccountName ?? "student");
+    `https://api.dicebear.com/8.x/avataaars/svg?seed=${
+      post.AccountName ?? "student"
+    }`;
   const userId = post.AccountId ?? post.accountId;
+
   return (
-    <div className="bg-white hover:shadow-lg transition-shadow duration-300 border border-gray-100 rounded-xl p-5">
-      <div className="flex items-start gap-5">
+    <div className="bg-white hover:shadow-lg transition-all duration-300 border border-gray-100 rounded-2xl p-6 mb-6 hover:-translate-y-[2px]">
+      <div className="flex items-start gap-4">
         {/* Avatar */}
-        <Tooltip
-          title={`View all posts by ${post.AccountName ?? post.accountName}`}
-        >
+        <Tooltip title={`Xem bài đăng của ${post.AccountName ?? post.accountName}`}>
           <Link
             to={userId ? `/forum/user/${userId}` : "#"}
             onClick={(e) => {
               if (!userId) {
                 e.preventDefault();
-                toast.error("User ID is missing for this post!");
+                toast.error("Không tìm thấy người dùng cho bài viết này!");
               }
             }}
-            className="flex-shrink-0"
           >
             <Avatar
               src={avatarUrl}
-              size={50}
+              size={54}
               className="border border-gray-200 cursor-pointer hover:opacity-80"
             />
           </Link>
         </Tooltip>
 
         {/* Content */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Link
             to={`/forum/${post.Id ?? post.id}`}
-            className="text-lg font-semibold text-gray-800 hover:text-indigo-600 transition-colors duration-200"
+            className="text-lg font-semibold text-gray-800 hover:text-indigo-600 transition-colors duration-200 leading-snug line-clamp-2"
           >
             {title}
           </Link>
 
-          <div className="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-3">
+          <div className="text-sm text-gray-600 mt-1 leading-relaxed line-clamp-3">
             {preview}
           </div>
 
           {images.length > 0 && (
-            <div className="flex gap-2 mt-3">
-              {images.slice(0, 3).map((u, i) => (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {images.slice(0, 3).map((url, i) => (
                 <img
                   key={i}
-                  src={u}
-                  alt=""
-                  className="w-20 h-14 object-cover rounded-md border border-gray-100 hover:opacity-90 transition"
+                  src={url}
+                  alt="post"
+                  className="w-24 h-16 object-cover rounded-lg border border-gray-100 hover:opacity-90 transition"
                 />
               ))}
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-            <div className="flex items-center gap-3">
-              <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-md text-xs">
-                {post.CategoryName ?? post.categoryName}
+          {/* Meta Info */}
+          <div className="flex flex-wrap items-center justify-between mt-3 text-xs text-gray-500">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md font-medium text-xs">
+                {category}
               </span>
               <Link
-                to={`/forum/user/${post.AccountId ?? post.accountId}`}
+                to={`/forum/user/${userId}`}
                 className="text-indigo-600 font-medium hover:underline"
               >
                 {post.AccountName ?? post.accountName}
               </Link>
-              <span>
-                ·{" "}
-                {post.CreatedAt
-                  ? new Date(post.CreatedAt).toLocaleDateString()
-                  : ""}
-              </span>
+              <div className="flex items-center gap-1 text-gray-400">
+                <Calendar size={12} />
+                <span>
+                  {post.createdAt
+                    ? new Date(post.createdAt).toLocaleDateString("vi-VN")
+                    : ""}
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-4 text-gray-500">
-              <div className="flex items-center gap-1">
-                <Heart size={15} className="text-pink-500" />
-                {likeCount}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1 hover:text-pink-500 transition">
+                <Heart size={15} />
+                <span>{likeCount}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <MessageCircle size={15} className="text-indigo-500" />
-                {commentCount}
+              <div className="flex items-center gap-1 hover:text-indigo-500 transition">
+                <MessageCircle size={15} />
+                <span>{commentCount}</span>
               </div>
               <Link
                 to={`/forum/${post.Id ?? post.id}`}
                 className="text-xs text-gray-400 hover:text-indigo-600 transition"
               >
-                View →
+                Chi tiết →
               </Link>
             </div>
           </div>

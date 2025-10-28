@@ -1,5 +1,6 @@
 // src/api/postAPI.js
 import axios from 'axios';
+import { id } from 'zod/v4/locales';
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5120/api',
@@ -15,7 +16,7 @@ API.interceptors.request.use(config => {
 export const postApi = {
   getActive: () => API.get('/Post/view-active'),
   getUser: (accountId) => API.get(`/Post/user/${accountId}`),
-  getById: (postId) => API.get(`/Post/${postId}`),
+  getById: (postId) => API.get(`/Post/ViewPostById/${postId}`),
   create: (formData) =>
     API.post('/Post/create', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -24,6 +25,6 @@ export const postApi = {
     API.put(`/Post/update/${postId}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
-  delete: (postId) => API.delete(`/Post/delete/${postId}`),
+  delete: (id) => API.delete(`/Post/delete/${id}`),
 };
 
