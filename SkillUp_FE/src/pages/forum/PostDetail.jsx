@@ -1,7 +1,12 @@
 // src/pages/forum/PostDetail.jsx
 import React, { useEffect, useState } from "react";
 import { postApi } from "@/api/postAPI";
-import { useParams, Link, useNavigate, useOutletContext } from "react-router-dom";
+import {
+  useParams,
+  Link,
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom";
 import { Spin, Button, Dropdown, Menu, Modal } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -16,7 +21,6 @@ export default function PostDetail() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
 
-  // context is available if needed
   useOutletContext?.();
 
   useEffect(() => {
@@ -42,11 +46,15 @@ export default function PostDetail() {
       </div>
     );
 
-  if (!post) return <div className="p-6 bg-white rounded-lg shadow-sm">Post not found</div>;
+  if (!post)
+    return (
+      <div className="p-6 bg-white rounded-lg shadow-sm">Post not found</div>
+    );
 
   const images = post.imageUrls ?? [];
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const isOwner = String(currentUser.id ?? currentUser.Id) === String(post.accountId);
+  const isOwner =
+    String(currentUser.id ?? currentUser.Id) === String(post.accountId);
 
   const handleDelete = () => {
     Modal.confirm({
@@ -73,10 +81,19 @@ export default function PostDetail() {
 
   const menu = (
     <Menu>
-      <Menu.Item key="edit" icon={<Edit size={14} />} onClick={() => navigate(`/forum/edit/${post.id}`)}>
+      <Menu.Item
+        key="edit"
+        icon={<Edit size={14} />}
+        onClick={() => navigate(`/forum/edit/${post.id}`)}
+      >
         Sửa bài viết
       </Menu.Item>
-      <Menu.Item key="delete" icon={<Trash2 size={14} />} danger onClick={handleDelete}>
+      <Menu.Item
+        key="delete"
+        icon={<Trash2 size={14} />}
+        danger
+        onClick={handleDelete}
+      >
         Xóa bài viết
       </Menu.Item>
     </Menu>
@@ -101,12 +118,18 @@ export default function PostDetail() {
                 className="w-10 h-10 rounded-full border border-gray-200"
               />
               <div>
-                <div className="font-medium text-gray-800">{post.accountName}</div>
+                <div className="font-medium text-gray-800">
+                  {post.accountName}
+                </div>
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
-            <div className="text-xs text-gray-400">{post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}</div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {post.title}
+            </h1>
+            <div className="text-xs text-gray-400">
+              {post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -122,13 +145,20 @@ export default function PostDetail() {
         </div>
 
         <div className="mt-6 prose prose-lg max-w-none text-gray-700 leading-relaxed">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.contents}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {post.contents}
+          </ReactMarkdown>
         </div>
 
         {images.length > 0 && (
           <div className="grid grid-cols-2 gap-3 mt-6">
             {images.map((u, i) => (
-              <img key={i} src={u} alt="" className="w-full h-56 object-cover rounded-lg border border-gray-100 hover:opacity-90 transition" />
+              <img
+                key={i}
+                src={u}
+                alt=""
+                className="w-full h-56 object-cover rounded-lg border border-gray-100 hover:opacity-90 transition"
+              />
             ))}
           </div>
         )}
