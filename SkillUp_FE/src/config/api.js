@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     SOLVE_TICKETS: '/Ticket/solved-tickets',
     UNSOLVED_TICKETS: '/Ticket/unsolved-tickets',
     RESOLVE_TICKET: '/Ticket/resolve-ticket',
+    SUGGEST_TICKET_TITLES: '/Ticket/suggest-titles',
 
     // Lecturer Application endpoints
     MANAGE_LECTURER_APPLICATIONS: '/LecturerApplication/manage-lecturer-applications',
