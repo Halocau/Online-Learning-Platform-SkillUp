@@ -15,7 +15,7 @@ namespace SkillUp.Controllers
         {
             _homeService = homeService;
         }
-        [HttpGet]
+        [HttpGet("GetAllHomePage")]
         public async Task<IActionResult> GetHomePageData()
         {
             try
