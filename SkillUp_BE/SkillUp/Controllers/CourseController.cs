@@ -199,5 +199,58 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpPut("ban-unban-course/{courseId}")]
+        [Authorize] 
+        public async Task<IActionResult> ToggleBanCourse(Guid courseId)
+        {
+            try
+            {
+                var adminAccountId = _currentUserService.UserId;
+                if (!adminAccountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var newIsActiveStatus = await _courseService.ToggleBanCourseAsync(courseId, adminAccountId.Value);
+
+                var message = newIsActiveStatus ?
+                    "Đã bỏ cấm (Unban) khóa học thành công." :
+                    "Đã cấm (Ban) khóa học thành công.";
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = message,
+                    data = new List<object> { new { isActive = newIsActiveStatus } }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {              
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {           
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }
