@@ -6,25 +6,25 @@ import { toast } from 'react-toastify';
 
 const ENDPOINTS = {
     all: API_ENDPOINTS.MANAGE_LECTURER_APPLICATIONS,
-    // Nếu baseURL của axiosInstance là '/api' thì chỉ cần path bên dưới:
     updateStatus: (id) => `${API_ENDPOINTS.UPDATE_STATUS_LECTURER_APPLICATION}/${encodeURIComponent(id)}`,
-    // Trường hợp bạn đã có sẵn hằng số trong API_ENDPOINTS thì thay bằng:
-    // updateStatus: (id) => `${API_ENDPOINTS.UPDATE_STATUS_LECTURER_APPLICATION}/${encodeURIComponent(id)}`,
 };
 
 const PAGE_SIZE = 10;
 
 const statusColor = (s) => {
     switch (s) {
-        case 'Rejected':
-            return 'red';
-        case 'Pending':
-            return 'gold';
-        case 'Accepted':
-            return 'green';
-        default:
-            return 'default';
+        case 'Rejected': return 'red';
+        case 'Pending': return 'gold';
+        case 'Accepted': return 'green';
+        default: return 'default';
     }
+};
+
+// Map hiển thị tiếng Việt (không đổi giá trị gốc dùng cho BE)
+const statusLabelMap = {
+    Pending: 'Chờ xử lý',
+    Accepted: 'Đã chấp nhận',
+    Rejected: 'Từ chối',
 };
 
 const formatDateTime = (iso) => {
@@ -80,7 +80,17 @@ const ModManageLectureApplication = () => {
                 setApplications([]);
                 return;
             }
-            setApplications(data[0] || []);
+            // Lấy danh sách thực từ data (thường là data[0])
+            let list = data[0] || [];
+
+            // --- Chuẩn hoá trạng thái hiển thị ---
+            list = list.map((it) => ({
+                ...it,
+                statusRaw: it.status,                              // giữ nguyên giá trị gốc
+                statusLabel: statusLabelMap[it.status] || 'Không rõ', // hiển thị tiếng Việt
+            }));
+
+            setApplications(list);
         } catch (err) {
             console.error('Fetch lecturer applications failed:', err);
             toast.error('Không thể tải danh sách đơn ứng tuyển');
@@ -99,8 +109,9 @@ const ModManageLectureApplication = () => {
         const q = search.trim().toLowerCase();
         return applications.filter((app) => {
             const title = (app.title || '').toLowerCase();
-            const status = (app.status || '').toLowerCase();
-            return title.includes(q) || status.includes(q);
+            const statusRaw = (app.statusRaw || '').toLowerCase();
+            const statusLabel = (app.statusLabel || '').toLowerCase();
+            return title.includes(q) || statusRaw.includes(q) || statusLabel.includes(q);
         });
     }, [applications, search]);
 
@@ -121,19 +132,16 @@ const ModManageLectureApplication = () => {
         if (!fileUrl) return;
 
         if (fileType === 'cv') {
-            // Xem CV trong MODAL (Cách A)
+            // Xem CV trong MODAL
             setPreviewTitle('CV');
             setPdfUrl(fileUrl);
             setImageUrls([]);
             setPreviewVisible(true);
-
-            // Nếu muốn mở tab mới thay vì modal:
-            // window.open(fileUrl, '_blank', 'noopener,noreferrer');
             return;
         }
 
         // Degree là danh sách ảnh, phân tách bằng dấu phẩy
-        setPreviewTitle('Degree');
+        setPreviewTitle('Bằng cấp');
         setPdfUrl('');
         const imgs = fileUrl
             .split(',')
@@ -156,12 +164,12 @@ const ModManageLectureApplication = () => {
             toast.error('Không xác định được ID đơn ứng tuyển.');
             return;
         }
-        // Backend expects: { status: boolean, reason: string }
-        // Map: Accepted => true, Rejected => false
+        // BE expects: { status: boolean, reason: string }
+        // Map UI: Accepted => true, Rejected => false
         const statusBool = targetAction === 'Accepted';
 
         if (!statusBool && !reason.trim()) {
-            toast.info('Vui lòng nhập lý do khi từ chối.');
+            toast.error('Vui lòng nhập lý do khi từ chối.');
             return;
         }
 
@@ -170,7 +178,6 @@ const ModManageLectureApplication = () => {
             const payload = { status: statusBool, reason: reason?.trim() || '' };
             const res = await axiosInstance.put(ENDPOINTS.updateStatus(id), payload);
 
-            // Một số API trả {code,message}, một số trả trực tiếp object/200.
             const { code, message } = res?.data || {};
             if (res.status === 200 && (code === undefined || code === 200)) {
                 toast.success('Cập nhật trạng thái thành công');
@@ -203,16 +210,18 @@ const ModManageLectureApplication = () => {
         },
         {
             title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
+            dataIndex: 'statusRaw',  // dùng giá trị gốc cho filter/sort
+            key: 'statusRaw',
             filters: [
-                { text: 'Pending', value: 'Pending' },
-                { text: 'Accepted', value: 'Accepted' },
-                { text: 'Rejected', value: 'Rejected' },
+                { text: 'Chờ xử lý', value: 'Pending' },
+                { text: 'Đã chấp nhận', value: 'Accepted' },
+                { text: 'Từ chối', value: 'Rejected' },
             ],
-            filteredValue: filteredInfo.status || null,
-            onFilter: (value, record) => record.status === value,
-            render: (s) => <Tag color={statusColor(s)}>{s || 'Unknown'}</Tag>,
+            filteredValue: filteredInfo.statusRaw || null,
+            onFilter: (value, record) => (record.statusRaw || '') === value,
+            sorter: (a, b) => (a.statusRaw || '').localeCompare(b.statusRaw || ''),
+            sortOrder: sortedInfo.columnKey === 'statusRaw' ? sortedInfo.order : null,
+            render: (_, r) => <Tag color={statusColor(r.statusRaw)}>{r.statusLabel}</Tag>,
         },
         {
             title: 'Chức danh',
@@ -237,7 +246,7 @@ const ModManageLectureApplication = () => {
             ),
         },
         {
-            title: 'Degree',
+            title: 'Bằng cấp',
             dataIndex: 'degree',
             key: 'degree',
             render: (degree) => (
@@ -260,8 +269,8 @@ const ModManageLectureApplication = () => {
             fixed: 'right',
             width: 220,
             render: (_, record) => {
-                const disabledAccept = record.status === 'Accepted';
-                const disabledReject = record.status === 'Rejected';
+                const disabledAccept = record.statusRaw === 'Accepted';
+                const disabledReject = record.statusRaw === 'Rejected';
                 return (
                     <Space>
                         <Button
@@ -286,14 +295,17 @@ const ModManageLectureApplication = () => {
 
     return (
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-            <h2 className="text-2xl font-bold mb-4">Quản lý đơn ứng tuyển giảng viên</h2>
-
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-3">
                 <div className="flex items-center gap-3">
                     <Segmented
                         value={dataset}
-                        onChange={(v) => setDataset(v)}
-                        options={[{ label: 'All', value: 'all' }]}
+                        onChange={(v) => {
+                            setDataset(v);
+                            // (tuỳ chọn) reset filter/sort khi đổi dataset
+                            setFilteredInfo({});
+                            setSortedInfo({});
+                        }}
+                        options={[{ label: 'Tất cả', value: 'all' }]}
                     />
                     <Input
                         allowClear
@@ -307,12 +319,12 @@ const ModManageLectureApplication = () => {
 
                 <Space wrap>
                     <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>
-                        Sort mới nhất
+                        Sắp xếp mới nhất
                     </Button>
-                    <Button onClick={clearFilters}>Clear filters</Button>
-                    <Button onClick={clearAll}>Clear all</Button>
+                    <Button onClick={clearFilters}>Xoá bộ lọc</Button>
+                    <Button onClick={clearAll}>Xoá tất cả</Button>
                     <Button icon={<ReloadOutlined />} onClick={refresh}>
-                        Refresh
+                        Tải lại
                     </Button>
                 </Space>
             </div>
@@ -325,7 +337,7 @@ const ModManageLectureApplication = () => {
                 columns={columns}
                 dataSource={displayed}
                 onChange={handleChange}
-                pagination={{ pageSize: PAGE_SIZE, showSizeChanger: false }}
+                pagination={{ pageSize: PAGE_SIZE, showSizeChanger: false, showTotal: (t) => `${t} bản ghi` }}
                 scroll={{ x: 1100 }}
                 locale={{ emptyText: 'Không tìm thấy đơn ứng tuyển nào!' }}
             />
@@ -345,7 +357,7 @@ const ModManageLectureApplication = () => {
                 {pdfUrl ? (
                     <iframe
                         src={`${pdfUrl}#toolbar=1&navpanes=0`}
-                        title="PDF preview"
+                        title="Xem trước PDF"
                         style={{ width: '100%', height: '640px', border: 'none' }}
                         allow="fullscreen"
                         referrerPolicy="no-referrer"
@@ -355,7 +367,7 @@ const ModManageLectureApplication = () => {
                         <img
                             key={index}
                             src={url}
-                            alt={`Degree Image ${index + 1}`}
+                            alt={`Ảnh bằng cấp ${index + 1}`}
                             style={{
                                 width: '100%',
                                 maxHeight: 640,
@@ -382,7 +394,7 @@ const ModManageLectureApplication = () => {
                 maskClosable={!updating}
             >
                 <div style={{ marginBottom: 12 }}>
-                    <b>Hành động:</b> {targetAction === 'Accepted' ? 'Duyệt (Accepted)' : 'Từ chối (Rejected)'}
+                    <b>Hành động:</b> {targetAction === 'Accepted' ? 'Duyệt' : 'Từ chối'}
                 </div>
                 <div>
                     <b>Lý do {targetAction === 'Rejected' ? '(bắt buộc)' : '(tuỳ chọn)'}:</b>
