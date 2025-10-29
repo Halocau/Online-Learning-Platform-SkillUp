@@ -25,10 +25,11 @@ namespace SkillUp.Services.Implementations
             var lecturer = await _lecturerRepository.GetByAccountIdAsync(accountId);
 
             if (lecturer == null)
-                return null;
+                throw new UnauthorizedAccessException("Bạn không phải là giảng viên!");
 
             return new LecturerDto
             {
+                Id = lecturer.Id,
                 Title = lecturer.Title,
                 Profession = lecturer.Profession
             };

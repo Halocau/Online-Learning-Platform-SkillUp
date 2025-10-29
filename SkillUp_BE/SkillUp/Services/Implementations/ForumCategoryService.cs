@@ -75,7 +75,7 @@ namespace SkillUp.Services.Implementations
                 category.IsActive
             });
         }
-
+    
         public async Task<ApiResponse> GetAllAsync()
         {
             var list = await _repository.GetAllAsync();
