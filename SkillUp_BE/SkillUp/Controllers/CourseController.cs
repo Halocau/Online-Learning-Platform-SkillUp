@@ -13,11 +13,15 @@ namespace SkillUp.Controllers
     {
         private readonly ICourseService _courseService;
         private readonly ICurrentUserService _currentUserService;
-        public CourseController(ICourseService courseService, ICurrentUserService currentUserService)
+        private readonly ILecturerService _lecturerService;
+
+        public CourseController(ICourseService courseService, ICurrentUserService currentUserService, ILecturerService lecturerService)
         {
             _courseService = courseService;
             _currentUserService = currentUserService;
+            _lecturerService = lecturerService;
         }
+
         [HttpPost("Add-Course")]
         [Consumes("multipart/form-data")]
         [Authorize]
@@ -295,6 +299,58 @@ namespace SkillUp.Controllers
                 });
             }
         }
-
+        [HttpGet("Courses-Of-Lecturer")]
+        public async Task<IActionResult> GetCoursesOfLecturer()
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                // Lấy lecturerId từ AccountId
+                var lecturer = await _lecturerService.GetLecturerByAccountIdAsync(accountId.Value);
+                if (lecturer == null)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy giảng viên cho tài khoản này!",
+                        data = new List<object>()
+                    });
+                }
+                var courses = await _courseService.GetCoursesOfLecturer(lecturer.Id);
+                if (courses == null || courses.Count == 0)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy khóa học nào.",
+                        data = new List<object>()
+                    });
+                }
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Danh sách khóa học",
+                    data = courses.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }

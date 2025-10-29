@@ -11,5 +11,6 @@ namespace SkillUp.Services.Interfaces
         Task<bool> DeleteCourseAsync(Guid courseId, Guid accountId);
         Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId);
         Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId);
+        Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturer(Guid lecturerId);
     }
 }

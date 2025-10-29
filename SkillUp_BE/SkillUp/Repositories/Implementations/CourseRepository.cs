@@ -30,6 +30,15 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Courses.FirstOrDefaultAsync(c  => c.Id == courseId);
         }
 
+        public async Task<List<Course>> GetCoursesOfLecturer(Guid lecturerId)
+        {
+            return await _context.Courses
+                                 .Where(c => c.LecturerId == lecturerId)
+                                    .Include(c => c.Lecturer)
+                                    .Include(c => c.SubCategory)
+                                    .ToListAsync();
+        }
+
         public async Task<List<Course>> GetNewestCoursesAsync(int limit)
         {
             return await _context.Courses
