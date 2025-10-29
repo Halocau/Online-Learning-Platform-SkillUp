@@ -173,7 +173,7 @@ namespace SkillUp.Services.Implementations
 
         public async Task<List<CourseSummaryDTO>> GetListCourseBySubCateId(int id)
         {
-            var courses = await _courseRepository.GetCoursesByCategoryId(id);
+            var courses = await _courseRepository.GetCoursesBySubCategoryId(id);
             if (courses == null || !courses.Any())
             {
                 throw new Exception("Không tìm thấy khóa học nào");
