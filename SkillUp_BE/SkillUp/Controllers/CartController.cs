@@ -16,7 +16,6 @@ namespace SkillUp.Controllers
         {
             _cartService = cartService;
         }
-        [Authorize(Policy = "LecturerPolicy")]
         [HttpGet("Cart/{studentId}")]
         public async Task<IActionResult> ViewCart(Guid studentId)
         {

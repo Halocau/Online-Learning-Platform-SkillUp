@@ -164,16 +164,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("StudentPolicy", policy => policy.RequireRole("5"));  
-    options.AddPolicy("LecturerPolicy", policy => policy.RequireRole("4"));  
-    options.AddPolicy("ModeratorContentPolicy", policy => policy.RequireRole("3"));  
-    options.AddPolicy("ModeratorSystemPolicy", policy => policy.RequireRole("2"));  
-    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("1")); 
-});
-
-
 // cloudinary 
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("CloudinarySettings"));
