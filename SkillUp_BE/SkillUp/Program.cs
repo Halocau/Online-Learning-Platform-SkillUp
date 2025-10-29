@@ -81,6 +81,8 @@ builder.Services.AddScoped<ILecturerRepository,LecturerRepository>();
 builder.Services.AddScoped<IBannerRepository,BannerRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+
 
 
 // Register Services
@@ -96,6 +98,7 @@ builder.Services.AddScoped<ILecturerService, LecturerService>();
 builder.Services.AddScoped<IHomePageService, HomePageService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ICartService, CartService>();
 
 
 // POST
@@ -160,6 +163,16 @@ builder.Services.AddAuthentication(options =>
         RoleClaimType = "roleName"
     };
 });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("StudentPolicy", policy => policy.RequireRole("5"));  
+    options.AddPolicy("LecturerPolicy", policy => policy.RequireRole("4"));  
+    options.AddPolicy("ModeratorContentPolicy", policy => policy.RequireRole("3"));  
+    options.AddPolicy("ModeratorSystemPolicy", policy => policy.RequireRole("2"));  
+    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("1")); 
+});
+
 
 // cloudinary 
 builder.Services.Configure<CloudinarySettings>(
