@@ -131,6 +131,7 @@ export default function ForumForm({ isEdit = false }) {
           value={form.ForumCategoryId || undefined}
           onChange={(v) => setForm({ ...form, ForumCategoryId: v })}
           className="w-full"
+          disabled={isEdit || !!postId}
         >
           {categories.map((c, i) => (
             <Select.Option key={c.Id ?? c.id ?? i} value={c.Id ?? c.id}>
@@ -138,6 +139,7 @@ export default function ForumForm({ isEdit = false }) {
             </Select.Option>
           ))}
         </Select>
+
         <label className="block text-sm font-medium mb-1">Tiêu đề *</label>
         <Input
           placeholder="Tiêu đề"
