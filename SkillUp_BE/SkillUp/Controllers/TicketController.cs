@@ -342,5 +342,16 @@ namespace SkillUp.Controllers
 				return StatusCode(500, new { message = "Có lỗi xảy ra: " + ex.Message });
 			}
 		}
-	}
+
+        [HttpGet("suggest-titles")]
+        public async Task<IActionResult> SuggestTitles(
+        [FromQuery] string query, [FromQuery] int limit = 8, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Ok(new { items = Array.Empty<TicketTitleSuggestDto>() });
+
+            var items = await _ticketService.SuggestTitlesAsync(query.Trim(), Math.Clamp(limit, 1, 20), ct);
+            return Ok(new { items });
+        }
+    }
 }

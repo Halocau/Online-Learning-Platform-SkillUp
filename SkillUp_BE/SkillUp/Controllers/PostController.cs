@@ -85,7 +85,7 @@ namespace SkillUp.Controllers
 
         // ✅ Xóa (ẩn) bài viết
         [Authorize]
-        [HttpDelete("delete/{id}")]
+        [HttpPut("delete/{id}")]
         public async Task<IActionResult> DeletePost(Guid id)
         {
             try

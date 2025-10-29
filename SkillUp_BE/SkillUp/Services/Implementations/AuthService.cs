@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using SkillUp.BussinessObjects.DTOs.Account;
 using SkillUp.BussinessObjects.DTOs.Auth;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
@@ -21,18 +22,16 @@ namespace SkillUp.Services.Implementations
         private readonly IOtpRepository _otpRepository;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly IStudentService _studentService;
 
-        public AuthService(IAccountRepository accountRepository,
-                            IRefreshTokenRepository refreshTokenRepository,
-                            IOtpRepository otpRepository,
-                            IConfiguration configuration,
-                            IEmailService emailService)
+        public AuthService(IAccountRepository accountRepository, IRefreshTokenRepository refreshTokenRepository, IOtpRepository otpRepository, IConfiguration configuration, IEmailService emailService, IStudentService studentService)
         {
             _accountRepository = accountRepository;
             _refreshTokenRepository = refreshTokenRepository;
             _otpRepository = otpRepository;
             _configuration = configuration;
             _emailService = emailService;
+            _studentService = studentService;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
@@ -186,7 +185,16 @@ namespace SkillUp.Services.Implementations
             if (!await _accountRepository.SaveChangesAsync())
             {
                 return false;
-            }            
+            }
+
+            if (request.RoleId == 5)
+            {
+                var studentRegistered = await _studentService.RegisterStudentAsync(account.Id);
+                if (!studentRegistered)
+                {
+                    return false;
+                }
+            }
             await _emailService.SendVerifyEmailAsync(request.Email, verifyToken, request.Fullname);
             return true;
         }

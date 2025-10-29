@@ -30,17 +30,25 @@ const statusColor = (s) => {
         default: return 'default';
     }
 };
+
+// Map hiển thị tiếng Việt (không ảnh hưởng đến giá trị gốc gửi/nhận từ BE)
+const statusLabelMap = {
+    Pending: 'Chờ xử lý',
+    Accepted: 'Đã chấp nhận',
+    Rejected: 'Từ chối',
+};
+
 const getModeratorName = () => {
     try {
         const u = JSON.parse(localStorage.getItem('user') || '{}');
-        return u?.fullName || u?.fullname || u?.email || 'Moderator';
+        return u?.fullName || u?.fullname || u?.email || 'Điều phối viên';
     } catch {
-        return 'Moderator';
+        return 'Điều phối viên';
     }
 };
+
 const buildAutoAcceptMsg = () =>
     `Đã chấp nhận ticket. Duyệt bởi ${getModeratorName()} lúc ${new Date().toLocaleString('vi-VN')}.`;
-
 
 const formatDateTime = (iso) => {
     if (!iso) return '';
@@ -107,7 +115,7 @@ export default function ResolveTicketModal({ open, code, onClose, onSuccess }) {
 
         const isRejected = decision === 'Rejected';
         if (isRejected && !response.trim()) {
-            toast.error('Vui lòng nhập lý do khi từ chối (Rejected).');
+            toast.error('Vui lòng nhập lý do khi từ chối.');
             return;
         }
 
@@ -116,7 +124,7 @@ export default function ResolveTicketModal({ open, code, onClose, onSuccess }) {
             // gửi JSON đúng spec { code, decision, response }
             const payload = {
                 code: ticket.ticketCode,
-                decision: decision === 'Accepted',
+                decision: decision === 'Accepted',          // true = Accepted, false = Rejected
                 response: isRejected ? response.trim() : (response || ''),
             };
 
@@ -142,7 +150,7 @@ export default function ResolveTicketModal({ open, code, onClose, onSuccess }) {
 
     return (
         <Modal
-            title={<span className="font-semibold">Xem & xử lý ticket</span>}
+            title={<span className="font-semibold">Xem & xử lý phiếu hỗ trợ</span>}
             open={open}
             onCancel={() => !submitting && onClose?.()}
             destroyOnClose
@@ -167,7 +175,7 @@ export default function ResolveTicketModal({ open, code, onClose, onSuccess }) {
                             <Col>
                                 <Space size={6}>
                                     <Text type="secondary">Mã:</Text>
-                                    <Tooltip title="Nhấn để copy">
+                                    <Tooltip title="Nhấn để sao chép">
                                         <Text code copyable={{ text: ticket.ticketCode }} className="select-all">
                                             #{ticket.ticketCode}
                                         </Text>
@@ -183,7 +191,9 @@ export default function ResolveTicketModal({ open, code, onClose, onSuccess }) {
                                 <Text type="secondary">Tạo lúc: {formatDateTime(ticket.createdAt)}</Text>
                             </Col>
                             <Col>
-                                <Tag color={statusColor(ticket.status)}>{ticket.status}</Tag>
+                                <Tag color={statusColor(ticket.status)}>
+                                    {statusLabelMap[ticket.status] || 'Không rõ'}
+                                </Tag>
                             </Col>
                         </Row>
                     </div>
@@ -246,8 +256,9 @@ export default function ResolveTicketModal({ open, code, onClose, onSuccess }) {
                             onChange={(e) => setDecision(e.target.value)}
                             buttonStyle="solid"
                         >
-                            <Radio.Button value="Accepted">Accepted</Radio.Button>
-                            <Radio.Button value="Rejected">Rejected</Radio.Button>
+                            {/* Giữ value gốc để gửi/so sánh; chỉ đổi nhãn hiển thị */}
+                            <Radio.Button value="Accepted">Chấp nhận</Radio.Button>
+                            <Radio.Button value="Rejected">Từ chối</Radio.Button>
                         </Radio.Group>
 
                         {decision === 'Rejected' && (

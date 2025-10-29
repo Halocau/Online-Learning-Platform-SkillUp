@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.Models;
+﻿using SkillUp.BussinessObjects.DTOs.Ticket;
+using SkillUp.BussinessObjects.Models;
 
 namespace SkillUp.Services.Interfaces
 {
@@ -12,5 +13,7 @@ namespace SkillUp.Services.Interfaces
 		Task<Ticket> CreateTicket(Ticket ticket);
 		Task<Ticket> UpdateTicket(Ticket ticket);
 		Task<Ticket> ResolveTicket(Ticket ticket, bool decision, string response);
-	}
+        Task<IReadOnlyList<TicketTitleSuggestDto>> SuggestTitlesAsync(
+        string query, int limit, CancellationToken ct = default);
+    }
 }

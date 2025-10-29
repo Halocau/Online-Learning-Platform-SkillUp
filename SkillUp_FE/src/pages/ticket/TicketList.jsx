@@ -163,7 +163,7 @@ function TicketList() {
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Hỗ trợ Ticket</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Phiếu hỗ trợ</h1>
           <p className="text-gray-600">
             {filteredTickets.length} ticket •
             {filteredTickets.filter(t => t.status === 'Open' || t.status === 'Pending').length} đang mở •
@@ -175,7 +175,7 @@ function TicketList() {
           {/* Sidebar */}
           <aside className="w-64 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Trung tâm ticket</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Lọc phiếu hỗ trợ</h3>
               <nav className="space-y-2 mb-6">
                 <button
                   onClick={() => setActiveTab('all')}
@@ -184,7 +184,7 @@ function TicketList() {
                     : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  Tất cả ticket
+                  Tất cả phiếu
                 </button>
                 <button
                   onClick={() => setActiveTab('approved')}
@@ -193,7 +193,7 @@ function TicketList() {
                     : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  Ticket đã duyệt
+                  Phiếu đã duyệt
                 </button>
                 <button
                   onClick={() => setActiveTab('rejected')}
@@ -202,7 +202,7 @@ function TicketList() {
                     : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  Ticket bị từ chối
+                  Phiếu bị từ chối
                 </button>
               </nav>
               <button
@@ -210,7 +210,7 @@ function TicketList() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
               >
                 <span className="text-xl">➕</span>
-                Tạo ticket
+                Tạo phiếu mới
               </button>
             </div>
           </aside>
@@ -246,21 +246,30 @@ function TicketList() {
                       onClick={() => navigate(`/ticket/${ticket.ticketCode}`)}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-grow">
+                        {/* min-w-0 để flex item cho phép text xuống dòng */}
+                        <div className="flex items-center gap-4 flex-grow min-w-0">
                           <div className="w-12 h-12 bg-yellow-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                             📄
                           </div>
-                          <div className="flex-grow">
-                            <div className="flex items-center gap-3 mb-1">
-                              <h4 className="text-lg font-semibold text-gray-900">{ticket.title}</h4>
-                              {getStatusBadge(ticket.status)}
+                          {/* khối text cũng cần min-w-0 */}
+                          <div className="flex-grow min-w-0">
+                            <div className="flex items-center gap-3 mb-1 min-w-0">
+                              {/* Cho phép xuống dòng + bẻ cả chuỗi dài không khoảng trắng */}
+                              <h4 className="text-lg font-semibold text-gray-900 whitespace-normal break-all">
+                                {ticket.title}
+                              </h4>
+                              {/* Badge có thể shrink-0 để không đẩy chữ */}
+                              <span className="shrink-0">
+                                {getStatusBadge(ticket.status)}
+                              </span>
                             </div>
                             <p className="text-sm text-gray-500">
                               Tạo vào {formatDate(ticket.createdAt)}
                             </p>
                           </div>
                         </div>
-                        <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-all">
+                        {/* Nút không co lại và không đẩy layout */}
+                        <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-all shrink-0">
                           Xem
                         </button>
                       </div>

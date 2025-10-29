@@ -1,5 +1,6 @@
 ﻿using SkillUp.BussinessObjects.DTOs.Course;
 using SkillUp.BussinessObjects.Models;
+using System.Threading.Tasks;
 
 namespace SkillUp.Services.Interfaces
 {
@@ -8,5 +9,10 @@ namespace SkillUp.Services.Interfaces
         Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request , Guid accId);
         Task<CourseResponseDto?> UpdateCourseAsync(CreateUpdateCourseDto request , Guid courseId , Guid accountId);
         Task<bool> DeleteCourseAsync(Guid courseId, Guid accountId);
+        Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId);
+
+        Task<List<CourseSummaryDTO>> GetListCourseBySubCateId(int id);
+        Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId);
+        Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturer(Guid lecturerId);
     }
 }

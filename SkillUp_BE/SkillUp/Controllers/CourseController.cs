@@ -13,11 +13,15 @@ namespace SkillUp.Controllers
     {
         private readonly ICourseService _courseService;
         private readonly ICurrentUserService _currentUserService;
-        public CourseController(ICourseService courseService, ICurrentUserService currentUserService)
+        private readonly ILecturerService _lecturerService;
+
+        public CourseController(ICourseService courseService, ICurrentUserService currentUserService, ILecturerService lecturerService)
         {
             _courseService = courseService;
             _currentUserService = currentUserService;
+            _lecturerService = lecturerService;
         }
+
         [HttpPost("Add-Course")]
         [Consumes("multipart/form-data")]
         [Authorize]
@@ -47,7 +51,7 @@ namespace SkillUp.Controllers
                 }
 
                 try
-                {                  
+                {
                     var result = await _courseService.CreateDraftCourseAsync(request, accountId.Value);
 
                     if (result == null)
@@ -68,7 +72,7 @@ namespace SkillUp.Controllers
                     });
                 }
                 catch (Exception serviceEx)
-                {               
+                {
                     if (serviceEx.Message.Contains("Không tìm thấy giảng viên"))
                     {
                         return NotFound(new APIReturn
@@ -110,7 +114,7 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                var result = await _courseService.UpdateCourseAsync(request, courseId , accountId.Value);
+                var result = await _courseService.UpdateCourseAsync(request, courseId, accountId.Value);
                 if (result == null)
                 {
                     return BadRequest(new APIReturn
@@ -147,7 +151,7 @@ namespace SkillUp.Controllers
         public async Task<IActionResult> DeleteCourse(Guid courseId)
         {
             try
-            {      
+            {
                 var accountId = _currentUserService.UserId;
                 if (!accountId.HasValue)
                 {
@@ -161,14 +165,14 @@ namespace SkillUp.Controllers
                 var result = await _courseService.DeleteCourseAsync(courseId, accountId.Value);
 
                 if (!result)
-                {                  
+                {
                     return BadRequest(new APIReturn
                     {
                         code = 400,
                         message = "Không thể gỡ khoá học.",
                         data = new List<object>()
                     });
-                }          
+                }
                 return Ok(new APIReturn
                 {
                     code = 200,
@@ -198,6 +202,193 @@ namespace SkillUp.Controllers
                     data = new List<object>()
                 });
             }
+        }
+        [HttpPut("ban-unban-course/{courseId}")]
+        [Authorize]
+        public async Task<IActionResult> ToggleBanCourse(Guid courseId)
+        {
+            try
+            {
+                var adminAccountId = _currentUserService.UserId;
+                if (!adminAccountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var newIsActiveStatus = await _courseService.ToggleBanCourseAsync(courseId, adminAccountId.Value);
+
+                var message = newIsActiveStatus ?
+                    "Đã bỏ cấm (Unban) khóa học thành công." :
+                    "Đã cấm (Ban) khóa học thành công.";
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = message,
+                    data = new List<object> { new { isActive = newIsActiveStatus } }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpGet("GetListCourseBySubCategory/{subCategoryId}")]
+        public async Task<IActionResult> GetListCourseBySubCategoryId(int subCategoryId)
+        {
+            try
+            {
+                var result = await _courseService.GetListCourseBySubCateId(subCategoryId);
+
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy danh sách khóa học thành công",
+                    data = new List<object> { result }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpGet("All-Courses")]
+        public async Task<IActionResult> GetAllCourses()
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                var courses = await _courseService.GetAllCourseAsync(accountId.Value);
+                if (courses == null || courses.Count == 0)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy khóa học nào.",
+                        data = new List<object>()
+                    });
+                }
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Danh sách khóa học",
+                    data = courses.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+        [HttpGet("Courses-Of-Lecturer")]
+        public async Task<IActionResult> GetCoursesOfLecturer()
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                // Lấy lecturerId từ AccountId
+                var lecturer = await _lecturerService.GetLecturerByAccountIdAsync(accountId.Value);
+                if (lecturer == null)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy giảng viên cho tài khoản này!",
+                        data = new List<object>()
+                    });
+                }
+                var courses = await _courseService.GetCoursesOfLecturer(lecturer.Id);
+                if (courses == null || courses.Count == 0)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy khóa học nào.",
+                        data = new List<object>()
+                    });
+                }
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Danh sách khóa học",
+                    data = courses.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+
+
         }
     }
 }
