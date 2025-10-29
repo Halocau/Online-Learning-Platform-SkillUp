@@ -32,8 +32,10 @@ export default function ForumForm({ isEdit = false }) {
   const fetchCategories = async () => {
     try {
       const res = await categoryApi.getAll();
-      console.log("Categories API response:", res.data);
-      setCategories(res.data.data || res.data || []);
+      const activeCategories = (res.data.data || res.data || []).filter(
+        (c) => c.isActive ?? c.IsActive
+      );
+      setCategories(activeCategories);
     } catch (err) {
       console.error(err);
     }
@@ -123,6 +125,7 @@ export default function ForumForm({ isEdit = false }) {
       </h2>
 
       <div className="space-y-3">
+        <label className="block text-sm font-medium mb-1">Danh mục *</label>
         <Select
           placeholder="Chọn danh mục"
           value={form.ForumCategoryId || undefined}
@@ -135,13 +138,13 @@ export default function ForumForm({ isEdit = false }) {
             </Select.Option>
           ))}
         </Select>
-
+        <label className="block text-sm font-medium mb-1">Tiêu đề *</label>
         <Input
           placeholder="Tiêu đề"
           value={form.Title}
           onChange={(e) => setForm({ ...form, Title: e.target.value })}
         />
-
+        <label className="block text-sm font-medium mb-1">Nội dung *</label>
         <TextArea
           rows={10}
           placeholder="Nội dung bài đăng"
@@ -151,12 +154,26 @@ export default function ForumForm({ isEdit = false }) {
 
         <Upload
           multiple
-          listType="picture"
+          listType="picture-card"
           fileList={form.images}
           beforeUpload={() => false}
-          onChange={({ fileList }) => setForm({ ...form, images: fileList })}
+          onChange={({ fileList }) => {
+            const valid = fileList.filter((f) => {
+              if (f.size > 10 * 1024 * 1024) {
+                message.error(`${f.name} quá lớn (>10MB)`);
+                return false;
+              }
+              return true;
+            });
+            setForm({ ...form, images: valid });
+          }}
         >
-          <Button icon={<UploadOutlined />}>Thêm ảnh</Button>
+          {form.images.length >= 8 ? null : (
+            <div>
+              <UploadOutlined />
+              <div className="mt-1">Thêm ảnh</div>
+            </div>
+          )}
         </Upload>
 
         <div className="flex justify-end gap-3 mt-4">
