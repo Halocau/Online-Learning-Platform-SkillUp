@@ -8,8 +8,7 @@ import ResolveTicketModal from '@/components/Ticket/ResolveTicketModal.jsx';
 
 const ENDPOINTS = {
     all: API_ENDPOINTS.ALL_TICKETS,          // '/Ticket/all-tickets'
-    // Nếu chưa có trong API_ENDPOINTS, dùng path trực tiếp:
-    unsolved: API_ENDPOINTS.UNSOLVED_TICKETS,  // '/Ticket/unsolved-tickets'
+    unsolved: API_ENDPOINTS.UNSOLVED_TICKETS, // '/Ticket/unsolved-tickets'
     solved: API_ENDPOINTS.SOLVE_TICKETS,      // '/Ticket/solved-tickets'
 };
 
@@ -22,6 +21,13 @@ const statusColor = (s) => {
         case 'Accepted': return 'green';
         default: return 'default';
     }
+};
+
+// Hiển thị nhãn tiếng Việt (giữ nguyên value gốc để filter/so khớp dữ liệu)
+const statusLabelMap = {
+    Pending: 'Chờ xử lý',
+    Accepted: 'Đã chấp nhận',
+    Rejected: 'Từ chối',
 };
 
 const formatDateTime = (iso) => {
@@ -46,32 +52,25 @@ export default function ModAllTicket() {
     const [detailOpen, setDetailOpen] = useState(false);
     const [detailCode, setDetailCode] = useState(null);
 
-
     const fetchTickets = useCallback(async () => {
         setLoading(true);
-        // XÓA dữ liệu cũ ngay khi fetch để bảng trống nếu không có gì
         setTickets([]);
 
         try {
             const endpoint = ENDPOINTS[dataset] || ENDPOINTS.all;
             const res = await axiosInstance.get(endpoint);
-
             const { code, message, data } = res?.data || {};
 
-            // Trường hợp không thành công hoặc thông báo "Không tìm thấy ticket nào!"
             if (code !== 200) {
                 if (typeof message === 'string' && message.toLowerCase().includes('không tìm thấy ticket')) {
-                    // Không toast lỗi — chỉ để bảng trống
                     setTickets([]);
                     return;
                 }
-                // Các lỗi khác
                 setTickets([]);
                 toast.error('Không thể tải danh sách ticket');
                 return;
             }
 
-            // Normalize data
             let list = [];
             if (Array.isArray(data)) {
                 list = Array.isArray(data[0]) ? data[0] : data;
@@ -79,7 +78,6 @@ export default function ModAllTicket() {
                 list = [data];
             }
 
-            // Nếu rỗng, đảm bảo bảng trống
             if (!Array.isArray(list) || list.length === 0) {
                 setTickets([]);
                 return;
@@ -88,8 +86,7 @@ export default function ModAllTicket() {
             setTickets(list);
         } catch (err) {
             console.error('Fetch tickets failed:', err);
-            setTickets([]); // bảng trống khi lỗi
-            // Có thể chỉ toast khi thật sự là lỗi mạng
+            setTickets([]);
             toast.error('Không thể tải danh sách ticket');
         } finally {
             setLoading(false);
@@ -100,7 +97,7 @@ export default function ModAllTicket() {
         fetchTickets();
     }, [fetchTickets, refreshKey]);
 
-    // Tìm kiếm client
+    // Tìm kiếm phía client
     const displayed = useMemo(() => {
         if (!search.trim()) return tickets;
         const q = search.trim().toLowerCase();
@@ -123,7 +120,7 @@ export default function ModAllTicket() {
 
     const columns = [
         {
-            title: 'Ticket',
+            title: 'Mã ticket',
             dataIndex: 'ticketCode',
             key: 'ticketCode',
             width: 140,
@@ -155,13 +152,13 @@ export default function ModAllTicket() {
             key: 'status',
             width: 140,
             filters: [
-                { text: 'Pending', value: 'Pending' },
-                { text: 'Accepted', value: 'Accepted' },
-                { text: 'Rejected', value: 'Rejected' },
+                { text: 'Chờ xử lý', value: 'Pending' },
+                { text: 'Đã chấp nhận', value: 'Accepted' },
+                { text: 'Từ chối', value: 'Rejected' },
             ],
             filteredValue: filteredInfo.status || null,
             onFilter: (value, record) => (record.status || '') === value,
-            render: (s) => <Tag color={statusColor(s)}>{s || 'Unknown'}</Tag>,
+            render: (s) => <Tag color={statusColor(s)}>{statusLabelMap[s] || 'Không rõ'}</Tag>,
         },
         {
             title: 'Ngày tạo',
@@ -199,15 +196,15 @@ export default function ModAllTicket() {
                         value={dataset}
                         onChange={(v) => setDataset(v)}
                         options={[
-                            { label: 'All', value: 'all' },
-                            { label: 'Unsolved', value: 'unsolved' },
-                            { label: 'Solved', value: 'solved' },
+                            { label: 'Tất cả', value: 'all' },
+                            { label: 'Chưa xử lý', value: 'unsolved' },
+                            { label: 'Đã xử lý', value: 'solved' },
                         ]}
                     />
                     <Input
                         allowClear
                         prefix={<SearchOutlined />}
-                        placeholder="Tìm theo code, tiêu đề, người gửi…"
+                        placeholder="Tìm theo mã, tiêu đề, người gửi…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         style={{ width: 320 }}
@@ -216,12 +213,12 @@ export default function ModAllTicket() {
 
                 <Space wrap>
                     <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>
-                        Sort mới nhất
+                        Sắp xếp mới nhất
                     </Button>
-                    <Button onClick={clearFilters}>Clear filters</Button>
-                    <Button onClick={clearAll}>Clear all</Button>
+                    <Button onClick={clearFilters}>Xoá bộ lọc</Button>
+                    <Button onClick={clearAll}>Xoá tất cả</Button>
                     <Button icon={<ReloadOutlined />} onClick={refresh}>
-                        Refresh
+                        Tải lại
                     </Button>
                 </Space>
             </div>
@@ -234,11 +231,11 @@ export default function ModAllTicket() {
                 columns={columns}
                 dataSource={displayed}
                 onChange={handleChange}
-                pagination={{ pageSize: PAGE_SIZE, showSizeChanger: false }}
+                pagination={{ pageSize: PAGE_SIZE, showSizeChanger: false, showTotal: (t) => `${t} bản ghi` }}
                 scroll={{ x: 980 }}
-                // Hiển thị rỗng (áp dụng mọi trường hợp) khi không có data
                 locale={{ emptyText: 'Không tìm thấy ticket nào!' }}
             />
+
             <ResolveTicketModal
                 open={detailOpen}
                 code={detailCode}

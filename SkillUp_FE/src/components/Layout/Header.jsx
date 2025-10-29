@@ -1,4 +1,4 @@
-import { useState , useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo_skillup.png';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
@@ -40,13 +40,13 @@ function Header() {
 
     fetchProfile();
   }, [accessToken]);
- null;
-  
+  null;
+
   const handleLogout = async () => {
     try {
       // Gọi API logout để revoke RefreshToken
       // Backend lấy userId từ JWT token qua [Authorize]
-      await axiosInstance.post(API_ENDPOINTS.LOGOUT);    
+      await axiosInstance.post(API_ENDPOINTS.LOGOUT);
     } catch {
       // Ignore error
     } finally {
@@ -72,7 +72,7 @@ function Header() {
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
-          
+
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
             <img
@@ -80,7 +80,7 @@ function Header() {
               alt="SkillUp Logo"
               className="h-8 w-auto"
             />
-            
+
           </Link>
 
           {/* Search Bar - Responsive */}
@@ -116,24 +116,24 @@ function Header() {
             )}
             {isAuthenticated && (
               <Link to="/ticket" className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm">
-                Ticket
+                Phiếu hỗ trợ
               </Link>
             )}
           </nav>
 
           {/* Right Menu - Responsive */}
           <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-            
+
             {/* Business Link - Hidden on small screens */}
             <Link to="/news" className="hidden md:block text-gray-700 hover:text-[#FFD54F] font-medium transition-colors text-sm">
               Tin tức
             </Link>
-            
+
             {/* Teach Link - Hidden on mobile */}
             <Link to="/teach" className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm">
-              
+
             </Link>
-            
+
             {/* Cart */}
             <Link to="/cart" className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2">
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,11 +172,11 @@ function Header() {
                   {showDropdown && (
                     <>
                       {/* Backdrop to close dropdown */}
-                      <div 
-                        className="fixed inset-0 z-10" 
+                      <div
+                        className="fixed inset-0 z-10"
                         onClick={() => setShowDropdown(false)}
                       ></div>
-                      
+
                       {/* Dropdown Content */}
                       <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20">
 
@@ -196,7 +196,7 @@ function Header() {
                           >
                             Khóa học của tôi
                           </Link>
-                          
+
                         </div>
 
                         {/* Logout */}
@@ -215,20 +215,20 @@ function Header() {
               </div>
             ) : (
               <>
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="text-gray-700 hover:text-[#FFD500] font-medium transition-colors border border-gray-900 px-3 py-1.5 sm:px-4 sm:py-2 hover:bg-gray-50 text-sm"
                 >
                   Đăng nhập
                 </Link>
-                <Link 
-                  to="/register" 
+                <Link
+                  to="/register"
                   className="bg-gray-900 text-white px-3 py-1.5 sm:px-4 sm:py-2 hover:bg-gray-800 transition-colors font-medium text-sm"
                 >
                   Đăng ký
                 </Link>
               </>
-            )}         
+            )}
           </div>
         </div>
       </div>

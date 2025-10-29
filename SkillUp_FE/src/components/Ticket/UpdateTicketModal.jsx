@@ -6,19 +6,19 @@ import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 const { TextArea } = Input;
 const { Text } = Typography;
 
-/**
- * UpdateTicketModal
- * Props:
- *  - isOpen: boolean
- *  - onClose: () => void
- *  - ticket: { ticketCode, title, contents, status? }
- *  - onSuccess: () => void
- */
+const STATUS_MAP = new Map([
+    ['accepted', { vi: 'Đã chấp nhận', color: 'green' }],
+    ['rejected', { vi: 'Từ chối', color: 'red' }],
+    ['pending', { vi: 'Đang chờ', color: 'gold' }],
+]);
+
+const norm = (s) => String(s ?? '').trim().toLowerCase();
+const getStatusMeta = (s) => STATUS_MAP.get(norm(s)) ?? { vi: s ?? '', color: 'default' };
+
 export default function UpdateTicketModal({ isOpen, onClose, ticket, onSuccess }) {
     const [submitting, setSubmitting] = useState(false);
     const [form] = Form.useForm();
 
-    // preset dữ liệu vào Form khi mở modal
     useEffect(() => {
         if (isOpen) {
             form.setFieldsValue({
@@ -33,7 +33,7 @@ export default function UpdateTicketModal({ isOpen, onClose, ticket, onSuccess }
 
     const doRequest = useCallback(async (values) => {
         if (!ticket?.ticketCode) {
-            toast.error('Không có mã ticket.');
+            toast.error('Không tìm thấy mã phiếu.');
             return;
         }
         try {
@@ -49,15 +49,15 @@ export default function UpdateTicketModal({ isOpen, onClose, ticket, onSuccess }
             });
 
             if (res?.data?.code === 200) {
-                toast.success('Cập nhật ticket thành công!');
+                toast.success('Cập nhật phiếu thành công!');
                 onClose?.();
                 onSuccess?.();
             } else {
-                toast.error(res?.data?.message || 'Cập nhật thất bại.');
+                toast.error(res?.data?.message || 'Cập nhật không thành công.');
             }
         } catch (err) {
             console.error(err);
-            toast.error('Có lỗi khi cập nhật ticket.');
+            toast.error('Đã xảy ra lỗi khi cập nhật phiếu.');
         } finally {
             setSubmitting(false);
         }
@@ -68,39 +68,32 @@ export default function UpdateTicketModal({ isOpen, onClose, ticket, onSuccess }
             const values = await form.validateFields();
             await doRequest(values);
         } catch (err) {
-            // Nếu là lỗi validate của antd, err.errorFields tồn tại -> không toast
             if (!err?.errorFields) {
                 console.error(err);
-                toast.error('Có lỗi khi cập nhật ticket.');
+                toast.error('Đã xảy ra lỗi khi cập nhật phiếu.');
             }
         }
     }, [form, doRequest]);
 
-    // Hotkey Ctrl/Cmd + Enter (global khi modal mở)
     useEffect(() => {
         if (!isOpen) return;
-
         const handler = (e) => {
-            if (e.isComposing) return; // gõ tiếng Việt/IME
+            if (e.isComposing) return;
             const isHotkey = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
             if (!isHotkey || submitting) return;
-
-            // Nếu muốn chỉ khi focus nằm trong modal:
             const wrap = document.querySelector('.ant-modal-wrap');
             if (wrap && !wrap.contains(document.activeElement)) return;
-
             e.preventDefault();
             handleSubmit();
         };
-
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
     }, [isOpen, submitting, handleSubmit]);
 
     const TitleLabel = (
         <Space size={6}>
-            <span>Title</span>
-            <Tooltip title="Tiêu đề ngắn gọn, rõ nội dung cần cập nhật">
+            <span>Tiêu đề</span>
+            <Tooltip title="Tiêu đề ngắn gọn, phản ánh đúng nội dung cập nhật.">
                 <span className="text-gray-400 cursor-help">ⓘ</span>
             </Tooltip>
         </Space>
@@ -108,26 +101,28 @@ export default function UpdateTicketModal({ isOpen, onClose, ticket, onSuccess }
 
     const ContentsLabel = (
         <Space size={6}>
-            <span>Contents</span>
-            <Tooltip title="Mô tả chi tiết thay đổi. Bạn có thể xuống dòng thoải mái.">
+            <span>Nội dung</span>
+            <Tooltip title="Mô tả chi tiết thay đổi; có thể xuống dòng thoải mái.">
                 <span className="text-gray-400 cursor-help">ⓘ</span>
             </Tooltip>
         </Space>
     );
+
+    const statusMeta = getStatusMeta(ticket?.status);
 
     return (
         <Modal
             title={
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col">
-                        <span className="font-semibold">Cập nhật ticket</span>
+                        <span className="font-semibold">Cập nhật phiếu</span>
                         {ticket?.ticketCode && (
                             <span className="text-xs text-gray-500">Mã: #{ticket.ticketCode}</span>
                         )}
                     </div>
                     {ticket?.status && (
-                        <Tag color="gold" className="border border-yellow-300">
-                            {ticket.status}
+                        <Tag color={statusMeta.color} className={statusMeta.color === 'default' ? '' : 'border border-yellow-300'}>
+                            {statusMeta.vi}
                         </Tag>
                     )}
                 </div>
@@ -155,39 +150,28 @@ export default function UpdateTicketModal({ isOpen, onClose, ticket, onSuccess }
                 </div>
             }
         >
-            <Form
-                form={form}
-                layout="vertical"
-                requiredMark={false}
-                autoComplete="off"
-            >
+            <Form form={form} layout="vertical" requiredMark={false} autoComplete="off">
                 <Form.Item
                     label={TitleLabel}
                     name="title"
                     rules={[
-                        { required: true, message: 'Vui lòng nhập Title' },
+                        { required: true, message: 'Vui lòng nhập tiêu đề' },
                         { max: 200, message: 'Tối đa 200 ký tự' },
                     ]}
                     extra={<Text type="secondary">Tiêu đề ngắn gọn, ≤ 200 ký tự.</Text>}
                 >
-                    <Input
-                        placeholder="Nhập tiêu đề"
-                        maxLength={200}
-                        showCount
-                        allowClear
-                        disabled={submitting}
-                    />
+                    <Input placeholder="Nhập tiêu đề" maxLength={200} showCount allowClear disabled={submitting} />
                 </Form.Item>
 
                 <Form.Item
                     label={ContentsLabel}
                     name="contents"
                     rules={[
-                        { required: true, message: 'Vui lòng nhập Contents' },
+                        { required: true, message: 'Vui lòng nhập nội dung' },
                         { min: 10, message: 'Nội dung nên ≥ 10 ký tự' },
                         { max: 4000, message: 'Tối đa 4000 ký tự' },
                     ]}
-                    extra={<Text type="secondary">Bạn có thể xuống dòng; nội dung sẽ giữ format khi hiển thị.</Text>}
+                    extra={<Text type="secondary">Bạn có thể xuống dòng; nội dung sẽ được giữ định dạng khi hiển thị.</Text>}
                 >
                     <TextArea
                         placeholder="Nhập nội dung cập nhật"

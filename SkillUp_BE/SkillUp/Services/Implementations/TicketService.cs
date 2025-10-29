@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.DTOs.Ticket;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
@@ -64,5 +65,24 @@ namespace SkillUp.Services.Implementations
 
 			return existingTicket;
 		}
-	}
+
+        public async Task<IReadOnlyList<TicketTitleSuggestDto>> SuggestTitlesAsync(string query, int limit, CancellationToken ct = default)
+        {
+            var entities = await _ticketRepository.SuggestTitleEntitiesAsync(query, limit, ct);
+
+            // Score đơn giản để debug/hiển thị: prefix > substring
+            return entities.Select(t =>
+            {
+                var title = t.Title ?? string.Empty;
+                var idx = title.IndexOf(query, StringComparison.OrdinalIgnoreCase);
+                var score = idx == 0 ? 1.0 : (idx > 0 ? 0.7 : 0.0);
+                return new TicketTitleSuggestDto
+				{
+					Id = t.Id,
+					Title = title,
+					Score = score
+                };
+            }).ToList();
+        }
+    }
 }

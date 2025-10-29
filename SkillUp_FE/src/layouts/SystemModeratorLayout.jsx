@@ -23,22 +23,22 @@ export default function SystemModeratorLayout() {
 
   const menuItems = [
     {
-      label: "Dashboard",
+      label: "Bảng điều khiển",
       icon: <LayoutDashboard size={18} />,
       path: "/sysmod",
     },
     {
-      label: "Account Management",
+      label: "Quản lý tài khoản",
       icon: <FileText size={18} />,
       path: "/sysmod/account",
     },
     {
-      label: "Category Management",
+      label: "Quản lý danh mục",
       icon: <TableOfContents size={18} />,
       path: "/sysmod/category",
     },
     {
-      label: "Quản lý phiếu",
+      label: "Quản lý phiếu hỗ trợ",
       icon: <MessageSquare size={18} />,
       path: "/sysmod/ticket",
     },
@@ -53,9 +53,8 @@ export default function SystemModeratorLayout() {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside
-        className={`${
-          collapsed ? "w-16" : "w-60"
-        } bg-white border-r flex flex-col transition-all duration-300`}
+        className={`${collapsed ? "w-16" : "w-60"
+          } bg-white border-r flex flex-col transition-all duration-300`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-16 border-b">
@@ -78,10 +77,9 @@ export default function SystemModeratorLayout() {
               to={item.path}
               end
               className={({ isActive }) =>
-                `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? "bg-indigo-500 text-white shadow-md"
-                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                  ? "bg-indigo-500 text-white shadow-md"
+                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
                 }`
               }
             >
