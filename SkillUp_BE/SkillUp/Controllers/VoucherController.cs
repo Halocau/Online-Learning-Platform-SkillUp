@@ -160,7 +160,38 @@ namespace SkillUp.Controllers
 						data = new List<object>()
 					});
 				}
+
+				if (updateVoucherDTO.EndTime <= updateVoucherDTO.StartTime)
+				{
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "End time must be after start time.",
+						data = new List<object>()
+					});
+				}
+
+				if (updateVoucherDTO.StartTime < DateTime.Now)
+				{
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "Start time must be in the future.",
+						data = new List<object>()
+					});
+				}
+
 				var updatedVoucher = await _voucherService.UpdateVoucher(updateVoucherDTO, id);
+
+				if (updatedVoucher == null) {
+					return NotFound(new APIReturn
+					{
+						code = 404,
+						message = "Voucher not found.",
+						data = new List<object>()
+					});
+				}
+
 				return Ok(new APIReturn
 				{
 					code = 200,
