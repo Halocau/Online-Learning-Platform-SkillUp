@@ -252,5 +252,31 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpGet("GetListCourseBySubCategory/{subCategoryId}")]
+        public async Task<IActionResult> GetListCourseBySubCategoryId(int subCategoryId)
+        {
+            try
+            {
+                var result = await _courseService.GetListCourseBySubCateId(subCategoryId);
+
+              
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy danh sách khóa học thành công",
+                    data = new List<object> { result } 
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }

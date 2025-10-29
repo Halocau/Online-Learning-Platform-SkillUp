@@ -170,5 +170,25 @@ namespace SkillUp.Services.Implementations
 
             return course.IsActive;
         }
+
+        public async Task<List<CourseSummaryDTO>> GetListCourseBySubCateId(int id)
+        {
+            var courses = await _courseRepository.GetCoursesByCategoryId(id);
+            if (courses == null || !courses.Any())
+            {
+                throw new Exception("Không tìm thấy khóa học nào");
+            }
+            return courses.Select(course => new CourseSummaryDTO
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Image = course.Image,
+                Price = course.Price,
+                Rating = course.Rating,
+                EnrollmentCount = course.EnrollmentCount,
+                LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
+            }).ToList();
+        }
+     
     }
 }

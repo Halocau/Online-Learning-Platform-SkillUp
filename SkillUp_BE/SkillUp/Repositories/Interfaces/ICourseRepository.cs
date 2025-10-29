@@ -11,5 +11,7 @@ namespace SkillUp.Repositories.Interfaces
 
         Task<List<Course>> GetPopularCoursesAsync(int limit);
         Task<List<Course>> GetNewestCoursesAsync(int limit);
+
+        Task<List<Course>> GetCoursesBySubCategoryId(int id);
     }
 }
