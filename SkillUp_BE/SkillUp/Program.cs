@@ -80,6 +80,9 @@ builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRe
 builder.Services.AddScoped<ILecturerRepository,LecturerRepository>(); 
 builder.Services.AddScoped<IBannerRepository,BannerRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+
+
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -92,6 +95,8 @@ builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationServi
 builder.Services.AddScoped<ILecturerService, LecturerService>();
 builder.Services.AddScoped<IHomePageService, HomePageService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+
 
 // POST
 builder.Services.AddScoped<IPostRepository, PostRepository>();
