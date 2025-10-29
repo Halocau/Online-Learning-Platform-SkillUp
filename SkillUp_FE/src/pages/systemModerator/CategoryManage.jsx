@@ -1,4 +1,3 @@
-import ViewCategory from "../Category/ViewCategory";
 import CategoryBuilder from "../Category/CategoryBuilder";
 
 export default function CategoryManage() {

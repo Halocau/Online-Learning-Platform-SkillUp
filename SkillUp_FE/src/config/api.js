@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
     SOLVE_TICKETS: '/Ticket/solved-tickets',
     UNSOLVED_TICKETS: '/Ticket/unsolved-tickets',
     RESOLVE_TICKET: '/Ticket/resolve-ticket',
+    SUGGEST_TICKET_TITLES: '/Ticket/suggest-titles',
 
     // Lecturer Application endpoints
     MANAGE_LECTURER_APPLICATIONS: '/LecturerApplication/manage-lecturer-applications',
@@ -32,9 +33,16 @@ export const API_ENDPOINTS = {
     // Category endpoints
     CATEGORY_LIST: '/Category/GetAll',
     CATEGORY_CREATE: '/Category/Create',
-    CATEGORY_UPDATE: '/Category/Update',
+    CATEGORY_UPDATE: '/Category/Update/{id}',
     CATEGORY_DELETE: '/Category/Delete/{id}',
     CATEGORY_ID: '/Category/GetById/{id}',
+
+    //subcategory endpoints
+    SUBCATEGORY_LIST: '/SubCategory/GetAll',
+    SUBCATEGORY_CREATE: '/SubCategory/CreateSubCategory',
+    SUBCATEGORY_UPDATE: '/SubCategory/UpdateSubCategory/{id}',
+    SUBCATEGORY_DELETE: '/SubCategory/DeleteSubCategory/{id}',
+    SUBCATEGORY_ID: '/SubCategory/GetByIdSubCategory/{id}',
 };
 
 

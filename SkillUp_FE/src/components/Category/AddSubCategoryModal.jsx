@@ -1,0 +1,59 @@
+import React, { useState } from 'react';
+import { toast } from 'react-toastify';
+
+const AddSubCategoryModal = ({ isOpen, onClose, onAdd, categoryId }) => {
+    const [categoryName, setCategoryName] = useState('');
+
+    const handleSubmit = async () => {
+        if (!categoryName.trim()) {
+            toast.error('Xin hãy nhập tên danh mục con.');
+            return;
+        }
+
+        if (categoryName.length > 50) {
+            toast.error('Tên danh mục con không được vượt quá 50 ký tự.');
+            return;
+        }
+
+        onAdd(categoryName, categoryId);
+        setCategoryName('');
+        onClose();  // Close modal
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-lg p-6 w-80 animate-fadeIn">
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                    Tạo danh mục mới
+                </h2>
+
+                <input
+                    type="text"
+                    value={categoryName}
+                    onChange={(e) => setCategoryName(e.target.value)}
+                    placeholder="Nhập tên danh mục con"
+                    className="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                    >
+                        Huỷ
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                        Lưu
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AddSubCategoryModal;

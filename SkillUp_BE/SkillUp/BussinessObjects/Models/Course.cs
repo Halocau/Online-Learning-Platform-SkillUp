@@ -33,8 +33,6 @@ public partial class Course
 
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
-    public virtual ICollection<CourseImage> CourseImages { get; set; } = new List<CourseImage>();
-
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
     public virtual Lecturer Lecturer { get; set; } = null!;

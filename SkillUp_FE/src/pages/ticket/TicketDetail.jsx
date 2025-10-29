@@ -29,7 +29,7 @@ function TicketDetail() {
             }
         } catch (err) {
             console.error('Error fetching ticket detail:', err);
-            toast.error('Không thể tải thông tin ticket');
+            toast.error('Không thể tải thông tin phiếu');
             navigate('/ticket');
         } finally {
             setLoading(false);
@@ -42,7 +42,7 @@ function TicketDetail() {
 
     const handleCreateSuccess = () => {
         setIsModalOpen(false);
-        toast.success('Tạo ticket mới thành công!');
+        toast.success('Tạo phiếu mới thành công!');
         navigate('/ticket');
     };
 
@@ -63,7 +63,7 @@ function TicketDetail() {
         });
     };
 
-    // Badge trạng thái theo yêu cầu
+    // Badge trạng thái
     const getStatusBadge = (status) => {
         const statusColors = {
             Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
@@ -152,66 +152,69 @@ function TicketDetail() {
                         <span className="mx-2">/</span>
                         <span className="text-gray-800 font-medium">#{ticket.ticketCode}</span>
                     </nav>
-                    <div className="flex items-start justify-between gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{ticket.title}</h1>
+
+                    {/* min-w-0 để tiêu đề không kéo giãn ngang */}
+                    <div className="flex items-start justify-between gap-4 min-w-0">
+                        <div className="min-w-0">
+                            <h1 className="text-2xl font-bold text-gray-900 whitespace-normal break-all">
+                                {ticket.title}
+                            </h1>
                             <p className="mt-1 text-sm text-gray-500">Tạo lúc {formatDateTime(ticket.createdAt)}</p>
                         </div>
                         <button
                             onClick={() => navigate('/ticket')}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 font-medium"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 font-medium shrink-0"
                         >
                             <span>←</span> Quay lại
                         </button>
                     </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row lg:gap-8">
-                    {/* Sidebar trái: Ticket center */}
+                {/* Thêm min-w-0 cho layout chính để cho phép bọc dòng */}
+                <div className="flex flex-col lg:flex-row lg:gap-8 min-w-0">
+                    {/* Sidebar trái */}
                     <aside className="lg:w-64 flex-shrink-0 mb-6 lg:mb-0">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
-                            <h3 className="text-base font-semibold text-gray-900 mb-4">Trung tâm ticket</h3>
+                            <h3 className="text-base font-semibold text-gray-900 mb-4">Lọc phiếu hỗ trợ</h3>
 
-                            {/* === Ticket center: 3 mục VN, điều hướng theo ?tab === */}
                             <nav className="space-y-2 mb-6">
                                 <button
                                     type="button"
                                     onClick={() => navigate('/ticket?tab=all')}
                                     className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                                 >
-                                    Tất cả ticket
+                                    Tất cả phiếu
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => navigate('/ticket?tab=approved')}
                                     className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                                 >
-                                    Ticket đã duyệt
+                                    Phiếu đã duyệt
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => navigate('/ticket?tab=rejected')}
                                     className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                                 >
-                                    Ticket bị từ chối
+                                    Phiếu bị từ chối
                                 </button>
                             </nav>
 
-                            {/* Nút tạo ticket */}
                             <button
                                 onClick={() => setIsModalOpen(true)}
                                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold shadow-sm"
                             >
-                                <span>➕</span> Tạo ticket
+                                <span>➕</span> Tạo phiếu mới
                             </button>
                         </div>
                     </aside>
 
                     {/* Main */}
-                    <div className="flex-grow">
-                        <div className="flex flex-col-reverse lg:flex-row lg:gap-8">
+                    <div className="flex-grow min-w-0">
+                        <div className="flex flex-col-reverse lg:flex-row lg:gap-8 min-w-0">
                             {/* Left: content + replies */}
-                            <section className="flex-grow space-y-6">
+                            <section className="flex-grow space-y-6 min-w-0">
                                 {/* Original message */}
                                 <article className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                                     <header className="bg-gray-50 px-5 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -221,7 +224,10 @@ function TicketDetail() {
                                         <time className="text-sm text-gray-500">{formatDateTime(ticket.createdAt)}</time>
                                     </header>
 
-                                    <div className="p-5 text-gray-800 whitespace-pre-wrap leading-relaxed">{ticket.contents}</div>
+                                    {/* Nội dung: giữ xuống dòng, đồng thời bẻ chuỗi dài không khoảng trắng */}
+                                    <div className="p-5 text-gray-800 whitespace-pre-wrap break-all leading-relaxed min-w-0">
+                                        {ticket.contents}
+                                    </div>
 
                                     {attachments.length > 0 && (
                                         <div className="border-t border-gray-200 p-5">
@@ -247,19 +253,20 @@ function TicketDetail() {
                                 </article>
 
                                 {/* Replies */}
-                                <div>
+                                <div className="min-w-0">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3">Phản hồi</h3>
                                     {ticket.response ? (
                                         <div className="bg-white rounded-2xl shadow-sm border border-yellow-200 overflow-hidden">
                                             <div className="px-5 py-3 border-b bg-yellow-50 border-yellow-200 flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-semibold text-yellow-700">Support</span>
+                                                    <span className="text-sm font-semibold text-yellow-700">Hỗ trợ bởi</span>
                                                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200">
-                                                        Staff
+                                                        Người điều hành
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="p-5 text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                            {/* Phản hồi: tương tự, bẻ chuỗi dài */}
+                                            <div className="p-5 text-gray-800 whitespace-pre-wrap break-all leading-relaxed">
                                                 {ticket.response}
                                             </div>
                                         </div>
@@ -275,15 +282,15 @@ function TicketDetail() {
                             {/* Right: ticket meta */}
                             <aside className="lg:w-80 flex-shrink-0 mb-6 lg:mb-0">
                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
-                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Thông tin ticket</h4>
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Thông tin phiếu</h4>
                                     <dl className="space-y-4 text-sm">
                                         <div className="flex items-center justify-between">
-                                            <dt className="text-gray-600">Mã Ticket</dt>
+                                            <dt className="text-gray-600">Mã Phiếu</dt>
                                             <dd className="font-semibold text-gray-900">#{ticket.ticketCode}</dd>
                                         </div>
                                         <div className="flex items-start justify-between">
                                             <dt className="text-gray-600">Trạng thái</dt>
-                                            <dd>{getStatusBadge(ticket.status)}</dd>
+                                            <dd className="shrink-0">{getStatusBadge(ticket.status)}</dd>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <dt className="text-gray-600">Ngày tạo</dt>
@@ -296,7 +303,7 @@ function TicketDetail() {
                                             className="w-full mt-5 px-4 py-2.5 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-colors"
                                             onClick={() => setIsUpdateOpen(true)}
                                         >
-                                            Cập nhật ticket
+                                            Cập nhật phiếu
                                         </button>
                                     )}
                                 </div>

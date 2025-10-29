@@ -64,5 +64,13 @@ namespace SkillUp.Repositories.Implementations
         {
             _context.SaveChanges();
         }
+
+        public async Task<List<Category>> GetCategoriesWithSubCategoriesAsync()
+        {
+            return await _context.Categories
+                .Where(c => c.IsActive == true)            
+                .Include(c => c.SubCategories.Where(sc => sc.IsActive == true))
+                .ToListAsync();
+        }
     }
 }

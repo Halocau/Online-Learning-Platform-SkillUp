@@ -39,8 +39,6 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<Course> Courses { get; set; }
 
-    public virtual DbSet<CourseImage> CourseImages { get; set; }
-
     public virtual DbSet<Enrollment> Enrollments { get; set; }
 
     public virtual DbSet<ForumCategory> ForumCategories { get; set; }
@@ -354,20 +352,6 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.SubCategoryId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Course_SubCategory");
-        });
-
-        modelBuilder.Entity<CourseImage>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK__CourseIm__3214EC07A1ECAAD3");
-
-            entity.ToTable("CourseImage");
-
-            entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-
-            entity.HasOne(d => d.Course).WithMany(p => p.CourseImages)
-                .HasForeignKey(d => d.CourseId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_CourseImage_Course");
         });
 
         modelBuilder.Entity<Enrollment>(entity =>
