@@ -270,6 +270,16 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+
                 return StatusCode(500, new APIReturn
                 {
                     code = 500,
@@ -277,6 +287,8 @@ namespace SkillUp.Controllers
                     data = new List<object>()
                 });
             }
+
+
         }
     }
 }
