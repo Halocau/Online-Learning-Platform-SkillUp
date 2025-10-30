@@ -1,4 +1,6 @@
 ﻿using CloudinaryDotNet;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Identity.Client;
 using SkillUp.BussinessObjects.DTOs.Course;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Implementations;
@@ -190,5 +192,63 @@ namespace SkillUp.Services.Implementations
             }).ToList();
         }
      
+        // Check Authorization for Roles
+        private async Task<bool> IsAuthorizedAsync(Guid accountId, int requiredRoleId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                throw new Exception("Không tìm thấy tài khoản!");
+            }
+            if (account.RoleId != requiredRoleId)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng này!");
+            }
+            return true;
+        }
+
+        public async Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId)
+        {
+            await IsAuthorizedAsync(accountId, 3); 
+
+            var courses = await _courseRepository.GetAllCourseAsync();
+            return courses.Select(course => new CourseMorderatorResponseDto
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                Price = course.Price,
+                EnrollmentCount = course.EnrollmentCount,
+                Rating = course.Rating,
+                Status = course.Status,
+                IsActive = course.IsActive,
+                SubCategoryName = course.SubCategory.Name,
+                LecturerName = course.Lecturer.Account.Fullname
+            }).ToList();
+        }
+
+        public async Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturer(Guid lecturerId)
+        {
+   
+            var courses = await _courseRepository.GetCoursesOfLecturer(lecturerId);
+            // Kiểm tra nếu danh sách khóa học rỗng hoặc null
+            if (courses == null || !courses.Any())
+            {
+                return new List<CourseLecturerResponseDto>(); // Trả về danh sách rỗng
+            }
+            return courses.Select(course => new CourseLecturerResponseDto
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                Price = course.Price,
+                EnrollmentCount = course.EnrollmentCount,
+                Rating = course.Rating,
+                Status = course.Status,
+                IsActive = course.IsActive,
+                SubCategoryName = course.SubCategory?.Name ?? "Không có danh mục",
+            }).ToList();
+        }
+
     }
 }

@@ -1,49 +1,102 @@
-import CourseSlider from "./components/CourseSlider";
+// src/pages/Home.jsx
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
+import axios from "axios";
+import CategoryBar from "./components/CategoryBar";
 import HeroCarousel from "./components/HeroCarousel";
-import PopularCourses from "./components/PopularCourses";
-import Testimonials from "./components/Testimonials";
+import PopularCoursesSection from "./components/PopularCoursesSection";
+import NewestCoursesSection from "./components/NewestCourse";
+import TestimonialsSection from "./components/TestimonialsSection";
+
+const API_URL = "http://localhost:5120/api/HomePage/GetAllHomePage";
 
 export default function Home() {
-  // Example course data for CourseSlider
-  const sampleCourses = [
-    {
-      title: "ChatGPT for Beginners",
-      instructor: "John Doe",
-      image:
-        "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80",
-      price: "$49",
-    },
-    {
-      title: "Data Science with Python",
-      instructor: "Jane Smith",
-      image:
-        "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=800&q=80",
-      price: "$59",
-    },
-    {
-      title: "Fullstack Web Development",
-      instructor: "Michael Lee",
-      image:
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80",
-      price: "$79",
-    },
-  ];
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(API_URL);
+        if (res.data.code === 200) {
+          setData(res.data.data[0]);
+        } else {
+          throw new Error(res.data.message);
+        }
+      } catch (err) {
+        setError(err.message || "Failed to load homepage data");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHomeData();
+  }, []);
+
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${
+          i < Math.floor(rating)
+            ? "fill-[#FFD54F] text-[#FFD54F]"
+            : "text-gray-300"
+        }`}
+      />
+    ));
+  };
+
+  if (loading) return <HomeSkeleton />;
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-amber-50">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Lỗi: {error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
+      </div>
+    );
 
   return (
-    <main className="overflow-x-hidden">
+    <main className="min-h-screen bg-amber-50">
+      <CategoryBar categories={data.categories} />
       <HeroCarousel />
 
-      <section id="featured-courses" className="bg-gray-50">
-        <CourseSlider title="Featured Courses" courses={sampleCourses} />
-      </section>
-
-      <section id="popular-courses">
-        <PopularCourses />
-      </section>
-
-      <section id="testimonials" className="bg-gray-50">
-        <Testimonials />
-      </section>
+      <PopularCoursesSection
+        popularCourses={data.popularCourses}
+        renderStars={renderStars}
+      />
+      <NewestCoursesSection
+        newestCourses={data.newestCourses}
+        renderStars={renderStars}
+      />
+      <TestimonialsSection />
     </main>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div className="min-h-screen bg-amber-50">
+      <div className="h-96 bg-gray-200 animate-pulse" />
+      <div className="max-w-7xl mx-auto px-4 py-12 space-y-16">
+        <div className="h-10 bg-gray-200 rounded-full w-64 animate-pulse mx-auto" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white/80 rounded-2xl p-4 space-y-3 shadow"
+            >
+              <div className="h-48 bg-gray-200 rounded-xl animate-pulse" />
+              <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse" />
+              <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

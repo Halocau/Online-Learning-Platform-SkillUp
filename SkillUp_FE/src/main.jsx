@@ -8,11 +8,11 @@ import './App.css'
 const GOOGLE_CLIENT_ID = "650445110591-seugnrenqq24dsieb4vb3fbtrar7rura.apps.googleusercontent.com"
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  <>
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <BrowserRouter>
         <App />
       </BrowserRouter>
     </GoogleOAuthProvider>
-  </StrictMode>,
+  </>,
 )

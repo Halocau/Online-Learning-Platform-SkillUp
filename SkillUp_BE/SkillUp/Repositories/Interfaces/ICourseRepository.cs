@@ -8,7 +8,8 @@ namespace SkillUp.Repositories.Interfaces
         Task<Course?> GetCourseByIdAsync(Guid courseId);
         Task<bool> SaveChangesAsync();
         void UpdateCourse(Course course);
-
+        Task<List<Course>> GetAllCourseAsync();
+        Task<List<Course>> GetCoursesOfLecturer(Guid lecturerId);
         Task<List<Course>> GetPopularCoursesAsync(int limit);
         Task<List<Course>> GetNewestCoursesAsync(int limit);
 
