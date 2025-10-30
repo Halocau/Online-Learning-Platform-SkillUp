@@ -1,6 +1,8 @@
 import { Outlet } from 'react-router-dom';
 import Header from '../components/Layout/Header';
 import Footer from '../components/Layout/Footer';
+import { Scroll } from 'lucide-react';
+import ScrollToTop from '@/components/ScrollToTop';
 
 function Layout() {
   return (
@@ -10,6 +12,7 @@ function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <ScrollToTop />
     </div>
   );
 }

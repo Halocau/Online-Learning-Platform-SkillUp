@@ -17,7 +17,6 @@ export default function NewsList() {
     navigate(`/news/${id}`);
   };
 
-  // Extract first image and plain text
   const extractImageAndText = (htmlContent) => {
     if (!htmlContent) return { image: null, text: "" };
 
