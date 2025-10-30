@@ -10,64 +10,63 @@ namespace SkillUp.Services.Implementations
     public class CartService : ICartService
     {
         private readonly ICartRepository _cartRepository;
-        public CartService(ICartRepository cartRepository)
+        private readonly IStudentRepository _studentRepository;
+
+        public CartService(ICartRepository cartRepository, IStudentRepository studentRepository)
         {
             _cartRepository = cartRepository;
+            _studentRepository = studentRepository;
         }
-        public async Task<bool> AddToCartAsync(Guid studentId, Guid courseId, decimal price)
+
+        private async Task<Student> GetStudentByAccountIdAsync(Guid accountId)
         {
-            try
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null)
             {
-                var cart = await _cartRepository.GetCartByStudentIdAsync(studentId);
-                if (cart == null)
-                {
-                    // Nếu giỏ hàng chưa có, tạo mới
-                    cart = new Cart
-                    {
-                        Id = Guid.NewGuid(),
-                        StudentId = studentId
-                    };
-                    await _cartRepository.AddCart(cart); 
-                    await _cartRepository.SaveChangesAsync(); 
-                }
+                throw new InvalidOperationException("Student not found.");
+            }
+            return student;
+        }
 
+        public async Task<bool> AddToCartByAccountIdAsync(Guid accountId, AddToCartRequestDto request)
+        {
+            var student = await GetStudentByAccountIdAsync(accountId);
 
-                // Thêm sản phẩm vào giỏ hàng
-                var cartItem = new CartItem
+            var cart = await _cartRepository.GetCartByStudentIdAsync(student.Id);
+            if (cart == null)
+            {
+                cart = new Cart
                 {
                     Id = Guid.NewGuid(),
-                    CartId = cart.Id,
-                    CourseId = courseId,
-                    Price = price
+                    StudentId = student.Id
                 };
-
-                // Thêm sản phẩm vào giỏ hàng
-                await _cartRepository.AddToCartAsync(cartItem);
-
-                // Lưu thay đổi
-                return await _cartRepository.SaveChangesAsync();
+                await _cartRepository.AddCart(cart);
             }
-            catch (Exception ex)
+
+            var cartItem = new CartItem
             {
-                // Log chi tiết lỗi
-                Console.WriteLine($"Error: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-                }
-                throw;  // Đẩy lỗi lên để API controller có thể xử lý
-            }
+                Id = Guid.NewGuid(),
+                CartId = cart.Id,
+                CourseId = request.CourseId,
+                Price = request.Price
+            };
+
+            await _cartRepository.AddToCartAsync(cartItem);
+
+            return await _cartRepository.SaveChangesAsync();
         }
 
-        public async Task<CartDto> GetCartAsync(Guid studentId)
+        public async Task<CartDto> GetCartByAccountIdAsync(Guid accountId)
         {
-           var cart = await _cartRepository.GetCartByStudentIdAsync(studentId);
+            var student = await GetStudentByAccountIdAsync(accountId);
+
+            var cart = await _cartRepository.GetCartByStudentIdAsync(student.Id);
             if (cart == null)
             {
                 return null;
             }
 
-            var cartDto = new CartDto
+            return new CartDto
             {
                 Id = cart.Id,
                 StudentId = cart.StudentId,
@@ -83,8 +82,6 @@ namespace SkillUp.Services.Implementations
                     }
                 }).ToList()
             };
-
-            return cartDto;
         }
 
         public async Task<bool> RemoveFromCartAsync(Guid cartItemId)
