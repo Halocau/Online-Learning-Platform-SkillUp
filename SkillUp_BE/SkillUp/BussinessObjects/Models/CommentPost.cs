@@ -19,6 +19,8 @@ public partial class CommentPost
 
     public Guid PostId { get; set; }
 
+    public bool IsActive { get; set; }
+
     public virtual Account Account { get; set; } = null!;
 
     public virtual ICollection<CommentReportPost> CommentReportPosts { get; set; } = new List<CommentReportPost>();
