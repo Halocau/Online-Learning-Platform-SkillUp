@@ -18,6 +18,11 @@ namespace SkillUp.Repositories.Implementations
             return quiz;
         }
 
+        public async Task<Quiz?> GetQuizByIdAsync(Guid id)
+        {
+            return await _context.Quizzes.FirstOrDefaultAsync(q => q.Id == id);
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
          

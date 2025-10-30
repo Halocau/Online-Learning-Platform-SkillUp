@@ -6,5 +6,6 @@ namespace SkillUp.Repositories.Interfaces
     {
         Task<Quiz> CreateQuizAsync (Quiz quiz);
         Task<bool> SaveChangesAsync();
+        Task<Quiz?> GetQuizByIdAsync(Guid id);
     }
 }
