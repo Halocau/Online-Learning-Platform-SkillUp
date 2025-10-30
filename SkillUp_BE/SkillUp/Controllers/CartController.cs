@@ -16,7 +16,7 @@ namespace SkillUp.Controllers
         {
             _cartService = cartService;
         }
-        [HttpGet("Cart/{accountId}")]
+        [HttpGet("{accountId}")]
         public async Task<IActionResult> ViewCart(Guid accountId)
         {
             try
@@ -49,7 +49,7 @@ namespace SkillUp.Controllers
             }
         }
 
-     
+
         [HttpPost("AddToCart/{accountId}")]
         public async Task<IActionResult> AddToCart(Guid accountId, [FromBody] AddToCartRequestDto request)
         {
