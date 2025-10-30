@@ -58,6 +58,27 @@ namespace SkillUp.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+        [HttpGet("Get-Only-Category")]
+        public IActionResult GetAllOnlyCategories()
+        {
+            try
+            {
+                var categories = _service.GetAllWithSubCategories()
+             .Select(c => new
+              {
+                  c.Id,
+                  c.Name,
+                  c.IsActive,
+                
+              });
+
+                return Ok(new { message = "Lấy danh sách danh mục (kèm danh mục con) thành công.", data = categories });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Có lỗi xảy ra: {ex.Message}" });
+            }
+        }
 
         [HttpGet("GetAll")]
         public IActionResult GetAllCategories()
@@ -89,6 +110,7 @@ namespace SkillUp.Controllers
             }
         }
 
+      
         [HttpGet("GetById/{id}")]
         public IActionResult GetCategoryById(int id)
         {
