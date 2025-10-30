@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Configuration;
+using SkillUp.Hubs;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
@@ -128,6 +129,15 @@ builder.Services.AddScoped<IForumCategoryService, ForumCategoryService>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IPostService, PostService>();
 
+// COMMENT POST MODULE
+builder.Services.AddScoped<ICommentPostRepository, CommentPostRepository>();
+builder.Services.AddScoped<ICommentPostService, CommentPostService>();
+
+
+// LIKE MODULE
+builder.Services.AddScoped<ILikeCommentPostRepository, LikeCommentPostRepository>();
+builder.Services.AddScoped<ILikeCommentPostService, LikeCommentPostService>();
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -194,5 +204,10 @@ app.UseAuthorization();
 //app.MapHub<SkillUp.Hubs.CommentHub>("/hubs/comment");
 
 app.MapControllers();
+
+// Map SignalR Hub cho Comment realtime
+app.MapHub<SkillUp.Hubs.CommentHub>("/commentHub");
+app.MapHub<LikeCommentHub>("/hubs/likeCommentHub");
+
 
 app.Run();

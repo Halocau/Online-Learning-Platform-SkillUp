@@ -14,6 +14,6 @@ public partial class LikeCommentPost
     public bool Status { get; set; }
 
     public virtual Account Account { get; set; } = null!;
-
+        
     public virtual CommentPost CommentPost { get; set; } = null!;
 }
