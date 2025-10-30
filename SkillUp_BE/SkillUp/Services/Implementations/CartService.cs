@@ -48,7 +48,7 @@ namespace SkillUp.Services.Implementations
                 Id = Guid.NewGuid(),
                 CartId = cart.Id,
                 CourseId = request.CourseId,
-                Price = request.Price
+                Price = request.Price,
             };
 
             await _cartRepository.AddToCartAsync(cartItem);
@@ -78,7 +78,10 @@ namespace SkillUp.Services.Implementations
                     Course = new CourseCartDto
                     {
                         Title = ci.Course.Title,
-                        Image = ci.Course.Image
+                        Image = ci.Course.Image,
+                        EnrollmentCount = ci.Course.EnrollmentCount,
+                        Rating = ci.Course.Rating,
+                        LecturerName = ci.Course.Lecturer?.Account?.Fullname
                     }
                 }).ToList()
             };

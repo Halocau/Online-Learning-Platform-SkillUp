@@ -19,14 +19,13 @@ import {
     Divider, // Thêm Divider
     Input, // Thêm Input
 } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
 
 // Định dạng tiền tệ
 const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-// Định dạng số (cho rating count)
+// Định dạng số (cho rating/enrollment)
 const formatNumber = (num) => {
     return new Intl.NumberFormat('vi-VN').format(num);
 };
@@ -37,37 +36,21 @@ function MyCart() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Hàm gọi API để lấy giỏ hàng (ĐÃ CHỈNH SỬA ĐỂ THÊM MOCK DATA)
+    // Hàm gọi API để lấy giỏ hàng (ĐÃ SỬA)
     const fetchCart = async () => {
         setLoading(true);
         try {
+            // Giả sử key trong config của bạn là 'CART'
             const apiUrlTemplate = getApiUrl('CART');
             const apiUrl = apiUrlTemplate.replace('{accountId}', accountId);
             const response = await axiosInstance.get(apiUrl);
 
             if (response.data && response.data.code === 200) {
+                // --- BỎ MOCK DATA ---
+                // Lấy dữ liệu giỏ hàng gốc trực tiếp
                 const originalCart = response.data.data[0];
-
-                // --- BẮT ĐẦU MOCK DATA ---
-                // Vì UI mẫu cần nhiều data hơn API của bạn có thể cung cấp
-                // Chúng ta sẽ "thêm" dữ liệu giả vào đây
-                const augmentedCartItems = originalCart.cartItems.map((item, index) => ({
-                    ...item,
-                    course: {
-                        ...item.course,
-                        // Thêm dữ liệu mock dựa trên index để có sự khác biệt
-                        instructorName: index % 3 === 0 ? 'Bởi Dr. Angela Yu, Developer and Lead Instructor' : (index % 3 === 1 ? 'Bởi Jonas Schmedtmann' : 'Bởi PapaR, #1 HR Instructor'),
-                        isBestseller: index % 3 === 0,
-                        rating: index % 3 === 0 ? 4.7 : (index % 3 === 1 ? 4.6 : 4.9),
-                        ratingCount: index % 3 === 0 ? 397747 : (index % 3 === 1 ? 456113 : 8100),
-                        totalHours: index % 3 === 0 ? 56.5 : (index % 3 === 1 ? 61.5 : 6.5),
-                        lectureCount: index % 3 === 0 ? 597 : (index % 3 === 1 ? 374 : 11),
-                        level: 'All Levels',
-                    }
-                }));
-
-                setCart({ ...originalCart, cartItems: augmentedCartItems });
-                // --- KẾT THÚC MOCK DATA ---
+                setCart(originalCart);
+                // --- KẾT THÚC SỬA ĐỔI ---
 
             } else {
                 throw new Error(response.data.message || "Không thể tải giỏ hàng");
@@ -75,8 +58,9 @@ function MyCart() {
             setError(null);
         } catch (err) {
             console.error("Lỗi khi tải giỏ hàng:", err);
+            // Xử lý 404 (Không tìm thấy giỏ hàng) bằng cách hiển thị giỏ hàng trống
             if (err.response?.status === 404) {
-                setCart({ cartItems: [] });
+                setCart({ cartItems: [] }); // Set giỏ hàng rỗng
                 setError(null);
             } else {
                 setError("Lỗi khi tải giỏ hàng. Vui lòng thử lại.");
@@ -119,7 +103,7 @@ function MyCart() {
     // Tính tổng tiền (Không thay đổi)
     const totalPrice = cart?.cartItems?.reduce((acc, item) => acc + item.price, 0) || 0;
 
-    // --- RENDER LOGIC (Không thay đổi) ---
+    // --- RENDER LOGIC ---
     if (loading) {
         return <Spin tip="Đang tải giỏ hàng..." fullscreen />;
     }
@@ -133,8 +117,7 @@ function MyCart() {
     }
 
     // --- GIAO DIỆN ĐÃ THIẾT KẾ LẠI ---
-    // (Dùng màu tím #8a2be2 để giống ảnh)
-    const primaryColor = '#8a2be2';
+    const primaryColor = '#FCCD04'; // Màu tím chủ đạo
 
     return (
         <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', background: '#fff' }}>
@@ -150,7 +133,6 @@ function MyCart() {
                         {cart.cartItems.length} khóa học trong giỏ hàng
                     </Typography.Title>
 
-                    {/* Thay vì Card, dùng List cho đẹp hơn */}
                     <List
                         itemLayout="vertical"
                         dataSource={cart.cartItems}
@@ -183,28 +165,29 @@ function MyCart() {
                                             </Typography.Title>
 
                                             <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                                                {item.course.instructorName}
+                                                {/* SỬA: Dùng lecturerName từ API */}
+                                                Giáo viên:  {item.course.lecturerName}
                                             </Typography.Text>
 
-                                            {/* Hàng Rating */}
+                                            {/* Hàng Rating (ĐÃ SỬA) */}
                                             <Space size="small" align="center" wrap>
-                                                {item.course.isBestseller && <Tag color="gold">Bán chạy nhất</Tag>}
+                                                {/* ẨN: isBestseller (Không có trong API) */}
+
                                                 <Typography.Text strong style={{ color: '#b4690e', fontSize: '14px' }}>{item.course.rating}</Typography.Text>
                                                 <Rate disabled allowHalf value={item.course.rating} style={{ fontSize: '14px', position: 'relative', top: '-2px' }} />
-                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>({formatNumber(item.course.ratingCount)} xếp hạng)</Typography.Text>
+
+                                                {/* SỬA: Dùng enrollmentCount và đổi text */}
+                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                                                    ({formatNumber(item.course.enrollmentCount)} học viên)
+                                                </Typography.Text>
                                             </Space>
 
-                                            {/* Hàng Metadata (Giờ, bài giảng...) */}
-                                            <Space size="middle" split={<span style={{ color: '#ccc', userSelect: 'none' }}>•</span>} style={{ fontSize: '12px', color: '#666' }}>
-                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>Tổng số {item.course.totalHours} giờ</Typography.Text>
-                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>{item.course.lectureCount} bài giảng</Typography.Text>
-                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>{item.course.level}</Typography.Text>
-                                            </Space>
+                                            {/* ẨN: Hàng Metadata (totalHours, lectureCount, level không có trong API) */}
 
                                         </Space>
                                     </Col>
 
-                                    {/* Nút (Xóa, Lưu,...) */}
+                                    {/* Nút (Xóa,...) */}
                                     <Col flex="150px" style={{ textAlign: 'right' }}>
                                         <Space direction="vertical" align="end" size={0}>
                                             <Button
@@ -215,7 +198,6 @@ function MyCart() {
                                             >
                                                 Xóa
                                             </Button>
-
                                         </Space>
                                     </Col>
 
@@ -229,10 +211,9 @@ function MyCart() {
                             </List.Item>
                         )}
                     />
-
                 </Col>
 
-                {/* Cột tổng tiền (Đã bỏ Card) */}
+                {/* Cột tổng tiền (Không thay đổi) */}
                 <Col xs={24} lg={8}>
                     <div style={{ position: 'sticky', top: '24px' }}>
                         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
