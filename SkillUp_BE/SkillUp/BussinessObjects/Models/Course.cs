@@ -31,6 +31,8 @@ public partial class Course
 
     public Guid LecturerId { get; set; }
 
+    public int? CategoryId { get; set; }
+
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();

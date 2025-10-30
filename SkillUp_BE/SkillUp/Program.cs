@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Configuration;
+using SkillUp.Hubs;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
@@ -80,6 +81,8 @@ builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRe
 builder.Services.AddScoped<ILecturerRepository,LecturerRepository>(); 
 builder.Services.AddScoped<IBannerRepository,BannerRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+builder.Services.AddScoped<IQuizRepository, QuizRepository>();
+builder.Services.AddScoped<ISectionRepository, SectionRepository>();
 builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
@@ -98,6 +101,7 @@ builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationServi
 builder.Services.AddScoped<ILecturerService, LecturerService>();
 builder.Services.AddScoped<IHomePageService, HomePageService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IVoucherService, VoucherService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICartService, CartService>();
@@ -137,6 +141,15 @@ builder.Services.AddScoped<IForumCategoryService, ForumCategoryService>();
 //post
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IPostService, PostService>();
+
+// COMMENT POST MODULE
+builder.Services.AddScoped<ICommentPostRepository, CommentPostRepository>();
+builder.Services.AddScoped<ICommentPostService, CommentPostService>();
+
+
+// LIKE MODULE
+builder.Services.AddScoped<ILikeCommentPostRepository, LikeCommentPostRepository>();
+builder.Services.AddScoped<ILikeCommentPostService, LikeCommentPostService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -204,5 +217,10 @@ app.UseAuthorization();
 //app.MapHub<SkillUp.Hubs.CommentHub>("/hubs/comment");
 
 app.MapControllers();
+
+// Map SignalR Hub cho Comment realtime
+app.MapHub<SkillUp.Hubs.CommentHub>("/commentHub");
+app.MapHub<LikeCommentHub>("/hubs/likeCommentHub");
+
 
 app.Run();

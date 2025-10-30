@@ -5,22 +5,25 @@ namespace SkillUp.Hubs
 {
     public class CommentHub : Hub
     {
-        // Gửi comment mới đến tất cả client trong group (bài post)
-        public async Task SendComment(string postId, string userName, string commentContent)
-        {
-            await Clients.Group(postId).SendAsync("ReceiveComment", userName, commentContent);
-        }
-
-        // Tham gia group của 1 bài post
-        public async Task JoinPost(string postId)
+        // Tham gia group bài viết (để chỉ nhận comment cùng PostId)
+        public async Task JoinPostGroup(string postId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, postId);
         }
 
-        // Rời group khi user thoát khỏi bài viết
-        public async Task LeavePost(string postId)
+        // Rời group bài viết
+        public async Task LeavePostGroup(string postId)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, postId);
+        }
+
+        // 👉 Gửi comment realtime tới tất cả client trong group postId
+        public async Task SendComment(string postId, string username, string message)
+        {
+            if (string.IsNullOrWhiteSpace(message)) return;
+
+            // Gửi comment cho tất cả người trong cùng group post
+            await Clients.Group(postId).SendAsync("ReceiveComment", username, message);
         }
     }
 }

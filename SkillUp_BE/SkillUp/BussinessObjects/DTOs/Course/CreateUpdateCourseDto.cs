@@ -14,6 +14,9 @@ namespace SkillUp.BussinessObjects.DTOs.Course
         public IFormFile Image { get; set; }
 
         [Required]
+        public int CategoryId { get; set; }
+
+        [Required]
         public int SubCategoryId { get; set; }
     }
 }
