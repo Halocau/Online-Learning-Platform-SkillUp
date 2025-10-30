@@ -11,7 +11,7 @@ const StudentRoutes = () => {
       <Route
         path="/"
         element={
-          <ProtectedRoute allowedRoles={["Student", "Teacher"]}>
+          <ProtectedRoute allowedRoles={["Student"]}>
             <MainLayout />
           </ProtectedRoute>
         }

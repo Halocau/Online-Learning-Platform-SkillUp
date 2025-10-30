@@ -23,6 +23,8 @@ import TicketDetail from "@/pages/Ticket/TicketDetail";
 import ForumRoutes from "./ForumRoute";
 import NewsList from "@/pages/News/NewsList";
 import NewsDetail from "@/pages/News/NewsDetail";
+import LecturerLayout from "@/layouts/LecturerLayout";
+import LecturerRoutes from "./LecturerRoute";
 
 function AppRouter() {
   return (
@@ -35,8 +37,6 @@ function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<MyProfile />} />
-        <Route path="/lecturer/apply-cv" element={<ApplyCV />} />
-        <Route path="/lecturer/applications" element={<MyApplications />} />
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
@@ -50,8 +50,7 @@ function AppRouter() {
         <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
         <Route path="/student/*" element={<StudentRoutes />} />
-
-        {/* Ticket routes - accessible by all authenticated users */}
+        <Route path="lecturer/*"  element={<LecturerRoutes />}/>
         <Route path="/ticket" element={<TicketList />} />
         <Route path="/ticket/:ticketCode" element={<TicketDetail />} />
 
