@@ -23,8 +23,6 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
 
   const [creating, setCreating] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  // FIX: Add state to track selected category for display
-  const [selectedCategoryName, setSelectedCategoryName] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -50,22 +48,12 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
     }
   };
 
-  // FIX: Better category change handler that tracks the selection
   const handleCategoryChange = (categoryId, subCategoryId) => {
-    console.log("📌 Create form - Category changed to:", categoryId, "Subcategory:", subCategoryId);
-    
     setFormData((prev) => ({
       ...prev,
       categoryId,
       subCategoryId: subCategoryId || undefined,
     }));
-
-    // FIX: Update display text
-    if (categoryId > 0) {
-      setSelectedCategoryName(`ID: ${categoryId}`);
-    } else {
-      setSelectedCategoryName("");
-    }
   };
 
   const validateForm = () => {
@@ -107,13 +95,6 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
         form.append("image", formData.image);
       }
 
-      console.log("📝 Creating course with data:", {
-        title: formData.title,
-        categoryId: formData.categoryId,
-        subCategoryId: formData.subCategoryId,
-        hasImage: !!formData.image,
-      });
-
       const response = await courseAPI.createDraftCourse(form);
 
       if (response.data.code === 200) {
@@ -128,7 +109,6 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
           image: null,
         });
         setPreviewImage(null);
-        setSelectedCategoryName("");
 
         onClose();
         onSuccess();
@@ -136,7 +116,6 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
         toast.error(response.data.message || "Lỗi khi tạo khóa học");
       }
     } catch (error) {
-      console.error("Error creating course:", error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -150,20 +129,20 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
   if (!isOpen) return null;
 
   return (
-    <Card className="mb-8 border-2 border-yellow-200">
+    <Card className="mb-8 border-2 border-yellow-200 shadow-lg animate-in fade-in slide-in-from-top">
       <CardHeader className="bg-yellow-50">
         <div className="flex items-center justify-between">
-          <CardTitle>Tạo khóa học mới</CardTitle>
+          <CardTitle className="text-2xl">✨ Tạo khóa học mới</CardTitle>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
         <CardDescription>
-          Điền thông tin chi tiết để tạo một khóa học mới. Khóa học sẽ được
-          lưu dưới dạng nháp.
+          Điền thông tin chi tiết để tạo một khóa học mới. Khóa học sẽ được lưu
+          dưới dạng nháp.
         </CardDescription>
       </CardHeader>
 
@@ -180,7 +159,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               value={formData.title}
               onChange={handleInputChange}
               placeholder="VD: React Advanced Patterns"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all"
             />
           </div>
 
@@ -195,13 +174,16 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               onChange={handleInputChange}
               placeholder="Mô tả chi tiết về khóa học..."
               rows="4"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all"
             />
           </div>
 
-          <div className="p-4 bg-yellow-50 rounded-lg">
-            <p className="text-sm text-gray-600 mb-3">📌 Chọn danh mục:</p>
-            <CategorySelector 
+          {/* Category Selection - Now showing both dropdowns */}
+          <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-sm text-gray-600 mb-3 font-semibold">
+              📌 Chọn danh mục:
+            </p>
+            <CategorySelector
               onCategoryChange={handleCategoryChange}
               selectedCategoryId={formData.categoryId}
               selectedSubCategoryId={formData.subCategoryId}
@@ -210,16 +192,13 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
 
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Ảnh khóa học
-            </label>
             <div className="space-y-4">
               {previewImage && (
-                <div className="relative inline-block">
+                <div className="relative inline-block animate-in fade-in">
                   <img
                     src={previewImage}
                     alt="Preview"
-                    className="h-32 w-48 object-cover rounded-lg"
+                    className="h-32 w-48 object-cover rounded-lg border-2 border-yellow-300"
                   />
                   <button
                     type="button"
@@ -227,15 +206,16 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
                       setPreviewImage(null);
                       setFormData((prev) => ({ ...prev, image: null }));
                     }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded"
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                    title="Xóa ảnh"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
               )}
-              <label className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-yellow-400">
+              <label className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-yellow-400 hover:bg-yellow-50 transition-all">
                 <Upload className="w-4 h-4" />
-                <span>Chọn ảnh</span>
+                <span>{formData.image ? "✓ Ảnh được chọn" : "Chọn ảnh"}</span>
                 <input
                   type="file"
                   onChange={handleFileChange}
@@ -247,11 +227,11 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-4 pt-4 border-t border-gray-200">
             <Button
               type="submit"
               disabled={creating}
-              className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold"
+              className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-all transform hover:scale-105"
             >
               {creating ? "⏳ Đang tạo..." : "✅ Tạo khóa học"}
             </Button>
@@ -259,7 +239,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               type="button"
               onClick={onClose}
               variant="outline"
-              className="flex-1"
+              className="flex-1 transition-all"
             >
               ❌ Hủy
             </Button>

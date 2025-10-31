@@ -9,36 +9,63 @@ function CategorySelector({
   disabled = false,
 }) {
   const [categories, setCategories] = useState([]);
+  const [categoryMap, setCategoryMap] = useState({});
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load categories on mount
   useEffect(() => {
-    loadCategories();
+    loadAllCategoriesWithSubcategories();
   }, []);
 
-  const loadCategories = async () => {
+  useEffect(() => {
+    if (selectedCategoryId && categoryMap[selectedCategoryId]) {
+      const subs = categoryMap[selectedCategoryId]?.subCategories || [];
+      setSubCategories(subs.filter((s) => s.isActive));
+    } else {
+      setSubCategories([]);
+    }
+  }, [selectedCategoryId, categoryMap]);
+
+  const loadAllCategoriesWithSubcategories = async () => {
     try {
       setLoading(true);
       setError(null);
 
       const response = await categoryAPI.getAllCategories();
-
       const cats = response.data.data || [];
 
-      if (cats.length > 0) {
-
-        setCategories(cats);
-      } else {
-        const errorMsg = "Không thể tải danh mục";
-
-        setError(errorMsg);
-        toast.error(errorMsg);
+      if (cats.length === 0) {
+        throw new Error("Không tải được danh mục");
       }
-    } catch (error) {
 
-      const errorMsg = error.response?.data?.message || "Lỗi khi tải danh mục";
+      setCategories(cats);
+
+      const newCategoryMap = {};
+      for (const cat of cats) {
+        if (cat.isActive) {
+          try {
+            const subResponse = await categoryAPI.getCategoryWithSubcategories(
+              cat.id
+            );
+            const categoryData = subResponse.data.data;
+            if (categoryData && categoryData.subCategories) {
+              newCategoryMap[cat.id] = {
+                ...cat,
+                subCategories: categoryData.subCategories.filter(
+                  (s) => s.isActive
+                ),
+              };
+            }
+          } catch (err) {
+            newCategoryMap[cat.id] = { ...cat, subCategories: [] };
+          }
+        }
+      }
+
+      setCategoryMap(newCategoryMap);
+    } catch (error) {
+      const errorMsg = error.message || "Lỗi khi tải danh mục";
       setError(errorMsg);
       toast.error(errorMsg);
     } finally {
@@ -46,42 +73,18 @@ function CategorySelector({
     }
   };
 
-  const handleCategoryChange = async (e) => {
+  const handleCategoryChange = (e) => {
     const categoryId = parseInt(e.target.value);
-
 
     if (!categoryId) {
       setSubCategories([]);
-      onCategoryChange(0);
+      onCategoryChange(0, undefined);
       return;
     }
 
-    try {
-      const response = await categoryAPI.getCategoryWithSubcategories(
-        categoryId
-      );
-
-      
-      const categoryData = response.data.data;
-      if (
-        categoryData &&
-        categoryData.subCategories &&
-        Array.isArray(categoryData.subCategories)
-      ) {
-        const active =
-          categoryData.subCategories.filter((sc) => sc.isActive) || [];
-
-        setSubCategories(active);
-        onCategoryChange(categoryId, undefined);
-      } else {
-
-        setSubCategories([]);
-        onCategoryChange(categoryId, undefined);
-      }
-    } catch (error) {
-      toast.error("Lỗi khi tải danh mục con");
-      setSubCategories([]);
-    }
+    const subs = categoryMap[categoryId]?.subCategories || [];
+    setSubCategories(subs);
+    onCategoryChange(categoryId, undefined);
   };
 
   const handleSubCategoryChange = (e) => {
@@ -89,8 +92,6 @@ function CategorySelector({
     const categoryId = parseInt(
       document.getElementById("category-select")?.value || "0"
     );
-
-
     if (categoryId) {
       onCategoryChange(categoryId, subCategoryId || undefined);
     }
@@ -107,13 +108,13 @@ function CategorySelector({
           onChange={handleCategoryChange}
           value={selectedCategoryId || ""}
           disabled={loading || disabled}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100 transition-all"
         >
           <option value="">
             {loading
-              ? "Đang tải..."
+              ? "⏳ Đang tải..."
               : categories.length === 0
-              ? "Không có danh mục"
+              ? "❌ Không có danh mục"
               : "-- Chọn danh mục --"}
           </option>
           {categories
@@ -124,27 +125,39 @@ function CategorySelector({
               </option>
             ))}
         </select>
-        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+        {error && <p className="text-red-500 text-sm mt-1">⚠️ {error}</p>}
       </div>
 
-      {subCategories.length > 0 && (
+      {!loading && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Danh mục con
+            Danh mục con {subCategories.length === 0 && "(Không có sẵn)"}
           </label>
           <select
             onChange={handleSubCategoryChange}
             value={selectedSubCategoryId || ""}
-            disabled={disabled}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100"
+            disabled={disabled || subCategories.length === 0}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100 transition-all"
           >
-            <option value="">-- Chọn danh mục con --</option>
+            <option value="">
+              {subCategories.length === 0
+                ? "-- Chọn danh mục trước --"
+                : "-- Chọn danh mục con --"}
+            </option>
             {subCategories.map((subCategory) => (
               <option key={subCategory.id} value={subCategory.id}>
                 {subCategory.name}
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500"></div>
+          <span className="text-sm text-gray-600">⏳ Đang tải danh mục...</span>
         </div>
       )}
     </div>

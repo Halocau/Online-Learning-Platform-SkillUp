@@ -54,21 +54,20 @@ function ManageCourses() {
     loadCourses();
   };
 
-  // FIX: Add handler for opening edit form
+
   const handleEditCourse = (courseId, courseData) => {
     setEditingCourseId(courseId);
     setEditingCourse(courseData);
     setShowEditForm(true);
   };
 
-  // FIX: Add handler for closing edit form
   const handleCloseEditForm = () => {
     setShowEditForm(false);
     setEditingCourse(null);
     setEditingCourseId(null);
   };
 
-  // FIX: Add handler for successful edit
+
   const handleEditSuccess = () => {
     handleCloseEditForm();
     loadCourses();
