@@ -54,7 +54,7 @@ namespace SkillUp.Services.Implementations
                 AccountId = savedComment.AccountId,
                 AccountName = savedComment.Account?.Fullname ?? "",
                 ParentCommentId = savedComment.ParentCommentId,
-                 IsActive = true
+                IsActive = true
             };
         }
 
@@ -81,7 +81,7 @@ namespace SkillUp.Services.Implementations
                 AccountId = comment.AccountId,
                 AccountName = comment.Account.Fullname,
                 ParentCommentId = comment.ParentCommentId,
-                  IsActive = true
+                IsActive = true
             };
         }
         public async Task<CommentPostDto> DeleteCommentAsync(Guid commentId, Guid accountId)

@@ -133,11 +133,39 @@ namespace SkillUp.Services.Implementations
             };
         }
 
-        // ✅ Lấy bài viết theo ID (kèm tên người đăng)
+        public async Task<bool> BanPostAsync(Guid id)
+        {
+            var post = await _postRepository.GetByIdAsync(id)
+                ?? throw new Exception("Post not found");
+
+            post.Status = "Inactive"; // Đặt trạng thái mới
+            await _postRepository.UpdateAsync(post);
+            await _postRepository.SaveAsync();
+            return true;
+        }
+
+        public async Task<bool> UnbanPostAsync(Guid id)
+        {
+            var post = await _postRepository.GetByIdAsync(id)
+                ?? throw new Exception("Post not found");
+
+          
+            post.Status = "Active";
+            await _postRepository.UpdateAsync(post);
+            await _postRepository.SaveAsync();
+            return true;
+        }
         public async Task<PostDto> GetPostByIdAsync(Guid id)
         {
             var post = await _postRepository.GetByIdAsync(id)
                 ?? throw new Exception("Không tìm thấy bài viết.");
+
+            if (post.Status == "Inactive" )
+            {
+                throw new Exception("Không tìm thấy bài viết.");
+                // TODO: Nâng cao: Có thể check role ở đây
+                // Nếu là admin/mod thì vẫn cho xem
+            }
 
             return new PostDto
             {
@@ -149,8 +177,8 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = post.CreatedAt,
                 UpdatedAt = post.UpdatedAt,
                 Status = post.Status,
-                AuthorName = post.Account.Fullname,     // ✅ Lấy tên người đăng
-                CategoryName = post.ForumCategory.Name, // ✅ Lấy tên category
+                AuthorName = post.Account.Fullname,     
+                CategoryName = post.ForumCategory.Name, 
                 ImageUrls = post.PostImages?.Select(pi => pi.ImageUrl).ToList(),
                 CommentCount = post.CommentPosts?.Count ?? 0
             };
