@@ -39,7 +39,7 @@ namespace SkillUp.Services.Implementations
                 AccountId = accountId,
                 Contents = dto.Contents,
                 ParentCommentId = dto.ParentCommentId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                   IsActive = true
             };
 
@@ -68,7 +68,7 @@ namespace SkillUp.Services.Implementations
                 throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa comment này.");
 
             comment.Contents = dto.Contents;
-            comment.UpdatedAt = DateTime.UtcNow;
+            comment.UpdatedAt = DateTime.Now;
 
             await _repo.UpdateAsync(comment);
 
@@ -95,7 +95,7 @@ namespace SkillUp.Services.Implementations
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa comment này.");
 
             comment.IsActive = false;
-            comment.UpdatedAt = DateTime.UtcNow;
+            comment.UpdatedAt = DateTime.Now;
 
             await _repo.UpdateAsync(comment);
 

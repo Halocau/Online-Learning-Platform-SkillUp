@@ -7,5 +7,6 @@ namespace SkillUp.Services.Interfaces
     public interface ICommentReportService
     {
         Task<CommentReportDto> CreateReportAsync(CreateCommentReportDto dto, Guid accountId);
+        Task<CommentReportDto> ResolveReportAsync(ResolveCommentReportDto dto);
     }
 }

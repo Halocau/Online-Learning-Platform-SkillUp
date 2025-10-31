@@ -31,5 +31,20 @@ namespace SkillUp.Repositories.Implementations
             return await _context.CommentReportPosts
                 .AnyAsync(r => r.AccountId == accountId && r.CommentPostId == commentPostId);
         }
+
+        public async Task<CommentReportPost?> GetByIdAsync(Guid reportId)
+        {
+            // Lấy report VÀ comment liên quan để xử lý
+            return await _context.CommentReportPosts
+                .Include(r => r.CommentPost)
+                .Include(r => r.Account) // Lấy luôn tên người report
+                .FirstOrDefaultAsync(r => r.Id == reportId);
+        }
+
+        public async Task UpdateAsync(CommentReportPost report)
+        {
+            _context.CommentReportPosts.Update(report);
+            await _context.SaveChangesAsync();
+        }
     }
 }

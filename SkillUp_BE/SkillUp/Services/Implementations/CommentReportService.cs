@@ -40,7 +40,7 @@ namespace SkillUp.Services.Implementations
                 CommentPostId = dto.CommentPostId,
                 Reason = dto.Reason,
                 AccountId = accountId, // Người dùng đang đăng nhập
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 Status = "Pending" // Trạng thái mặc định khi mới tạo
             };
 
@@ -57,6 +57,51 @@ namespace SkillUp.Services.Implementations
                 AccountId = savedReport.AccountId,
                 CommentPostId = savedReport.CommentPostId,
                 ReporterName = savedReport.Account?.Fullname ?? ""
+            };
+        }
+
+        public async Task<CommentReportDto> ResolveReportAsync(ResolveCommentReportDto dto)
+        {
+            var report = await _reportRepo.GetByIdAsync(dto.ReportId);
+
+            if (report == null)
+                throw new Exception("Không tìm thấy báo cáo.");
+
+            if (report.Status != "Pending")
+                throw new Exception($"Báo cáo này đã được xử lý (Trạng thái: {report.Status}).");
+
+            if (report.CommentPost == null)
+                throw new Exception("Không tìm thấy bình luận liên quan đến báo cáo này.");
+
+            if (dto.ShouldDeleteComment)
+            {
+                // Quyết định: Xóa comment
+                report.Status = "Accepted"; // Cập nhật status report
+
+                // Soft-delete comment
+                report.CommentPost.IsActive = false;
+                report.CommentPost.UpdatedAt = DateTime.Now;
+                await _commentRepo.UpdateAsync(report.CommentPost);
+            }
+            else
+            {
+                // Quyết định: Bỏ qua report
+                report.Status = "Rejected";
+            }
+
+            // Lưu thay đổi status của report
+            await _reportRepo.UpdateAsync(report);
+
+            // Trả về DTO
+            return new CommentReportDto
+            {
+                Id = report.Id,
+                Reason = report.Reason,
+                Status = report.Status, // Status mới (Resolved hoặc Dismissed)
+                CreatedAt = report.CreatedAt,
+                AccountId = report.AccountId,
+                CommentPostId = report.CommentPostId,
+                ReporterName = report.Account?.Fullname ?? ""
             };
         }
     }
