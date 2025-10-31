@@ -242,6 +242,7 @@ namespace SkillUp.Services.Implementations
                 Id = course.Id,
                 Title = course.Title,
                 Description = course.Description,
+                Image = course.Image,
                 Price = course.Price,
                 EnrollmentCount = course.EnrollmentCount,
                 Rating = course.Rating,
