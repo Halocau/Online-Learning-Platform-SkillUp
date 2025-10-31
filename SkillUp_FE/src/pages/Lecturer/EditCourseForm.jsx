@@ -69,7 +69,7 @@ function EditCourseForm({ courseId, course, isOpen, onClose, onSuccess }) {
     }
   };
 
-  // FIX: Remove current image function
+  // Remove current image function
   const handleRemoveImage = () => {
     setPreviewImage(null);
     setFormData((prev) => ({ ...prev, image: null }));
@@ -80,7 +80,7 @@ function EditCourseForm({ courseId, course, isOpen, onClose, onSuccess }) {
   const handleCategoryChange = (categoryId, subCategoryId) => {
     setFormData((prev) => ({
       ...prev,
-      categoryId,
+      categoryId: categoryId || 0,
       subCategoryId: subCategoryId || undefined,
     }));
   };
@@ -213,9 +213,9 @@ function EditCourseForm({ courseId, course, isOpen, onClose, onSuccess }) {
                   onCategoryChange={handleCategoryChange}
                   selectedCategoryId={formData.categoryId}
                   selectedSubCategoryId={formData.subCategoryId}
+                  categoryName={course?.categoryName}
+                  subCategoryName={course?.subCategoryName}
                 />
-
-                
               </div>
 
               {/* Image Upload */}

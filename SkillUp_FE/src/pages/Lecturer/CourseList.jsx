@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Plus, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -11,22 +17,18 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState(null);
 
-  // Sort and filter state
   const [sortBy, setSortBy] = useState("newest");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
 
-  // NEW: Date range filter
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [showDateFilter, setShowDateFilter] = useState(false);
 
-  // NEW: Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  // Filter courses by search, status, and date
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
       course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,7 +37,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     const matchesStatus =
       filterStatus === "all" || course.status === filterStatus;
 
-    // NEW: Date range filter
     let matchesDate = true;
     if (startDate || endDate) {
       const courseDate = new Date(course.createdAt);
@@ -70,13 +71,11 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     }
   });
 
-  // NEW: Pagination logic
   const totalPages = Math.ceil(sortedCourses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedCourses = sortedCourses.slice(startIndex, endIndex);
 
-  // Reset to page 1 when filters change
   const handleStatusChange = (status) => {
     setFilterStatus(status);
     setCurrentPage(1);
@@ -89,7 +88,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     setShowSortMenu(false);
   };
 
-  // NEW: Handle date filter change
   const handleDateChange = (type, value) => {
     if (type === "start") {
       setStartDate(value);
@@ -99,11 +97,21 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     setCurrentPage(1);
   };
 
-  // NEW: Clear date filter
   const clearDateFilter = () => {
     setStartDate("");
     setEndDate("");
     setCurrentPage(1);
+  };
+
+  const resetAllFilters = () => {
+    setSearchTerm("");
+    setSortBy("newest");
+    setFilterStatus("all");
+    setStartDate("");
+    setEndDate("");
+    setShowSortMenu(false);
+    setShowFilterMenu(false);
+    setShowDateFilter(false);
   };
 
   const handleView = (courseId) => {
@@ -127,37 +135,28 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
 
     try {
       setDeletingId(courseId);
-      console.log("Delete id:", courseId);
 
       const response = await courseAPI.deleteCourse(courseId);
-      console.log("Delete data:", response.data);
 
       if (response.data.code === 200) {
-        toast.success("Khóa học đã được xóa thành công");
-        console.log("Course deleted successfully");
+        toast.success("Khóa học đã được gỡ thành công");
         setTimeout(() => {
           onRefresh();
         }, 500);
       } else {
-        console.error("Delete failed:", response.data.message);
         toast.error(response.data.message || "Lỗi khi xóa khóa học");
         setDeletingId(null);
       }
     } catch (error) {
-      console.error("Error deleting course:", error);
       if (error.response) {
-        console.error("Response status:", error.response.status);
-        console.error("Response data:", error.response.data);
         if (error.response.data?.message) {
           toast.error(error.response.data.message);
         } else {
           toast.error("Lỗi khi xóa khóa học");
         }
       } else if (error.request) {
-        console.error("No response received:", error.request);
         toast.error("Lỗi kết nối với máy chủ");
       } else {
-        console.error("Error:", error.message);
         toast.error("Lỗi khi xóa khóa học. Vui lòng thử lại.");
       }
 
@@ -228,7 +227,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <span className="text-sm font-medium">
-                📊 Sắp xếp:{" "}
+                Sắp xếp:{" "}
                 {sortBy === "newest"
                   ? "Mới nhất"
                   : sortBy === "oldest"
@@ -273,7 +272,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
               <span className="text-sm font-medium">
-                🔍 Lọc:{" "}
+                Trạng thái:{" "}
                 {filterStatus === "all"
                   ? "Tất cả"
                   : filterStatus === "Draft"
@@ -321,7 +320,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
                   : "bg-white border-gray-300 hover:bg-gray-50"
               }`}
             >
-              <span className="text-sm">📅 Ngày</span>
+              <span className="text-sm font-medium">Khoảng thời gian</span>
               {(startDate || endDate) && (
                 <span className="text-xs bg-yellow-200 px-2 py-1 rounded">
                   ✓
@@ -365,6 +364,14 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
               </div>
             )}
           </div>
+          <button
+            onClick={resetAllFilters}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
+            title="Đặt lại tất cả bộ lọc"
+          >
+            <RotateCcw className="w-4 h-4 text-red-600" />
+            <span className="text-sm font-medium text-red-600">Đặt lại</span>
+          </button>
 
           {/* Items per page selector */}
           <div className="flex items-center gap-2">

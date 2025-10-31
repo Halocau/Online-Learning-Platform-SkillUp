@@ -6,6 +6,8 @@ function CategorySelector({
   onCategoryChange,
   selectedCategoryId,
   selectedSubCategoryId,
+  categoryName, // NEW: Accept category name as fallback
+  subCategoryName, // NEW: Accept subcategory name as fallback
   disabled = false,
 }) {
   const [categories, setCategories] = useState([]);
@@ -13,19 +15,61 @@ function CategorySelector({
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [resolvedCategoryId, setResolvedCategoryId] = useState(
+    selectedCategoryId || 0
+  );
+  const [resolvedSubCategoryId, setResolvedSubCategoryId] = useState(
+    selectedSubCategoryId
+  );
 
   useEffect(() => {
     loadAllCategoriesWithSubcategories();
   }, []);
 
+  // Resolve names to IDs once categories are loaded
   useEffect(() => {
-    if (selectedCategoryId && categoryMap[selectedCategoryId]) {
-      const subs = categoryMap[selectedCategoryId]?.subCategories || [];
+    if (!loading && categories.length > 0 && categoryMap) {
+      let newCategoryId = selectedCategoryId || 0;
+      let newSubCategoryId = selectedSubCategoryId;
+
+      if (categoryName && !selectedCategoryId) {
+        const foundCategory = categories.find(
+          (cat) => cat.name === categoryName && cat.isActive
+        );
+        if (foundCategory) {
+          newCategoryId = foundCategory.id;
+        }
+      }
+
+      if (subCategoryName && !selectedSubCategoryId && newCategoryId) {
+        const subs = categoryMap[newCategoryId]?.subCategories || [];
+        const foundSub = subs.find((sub) => sub.name === subCategoryName);
+        if (foundSub) {
+          newSubCategoryId = foundSub.id;
+        }
+      }
+
+      setResolvedCategoryId(newCategoryId);
+      setResolvedSubCategoryId(newSubCategoryId);
+    }
+  }, [
+    loading,
+    categories,
+    categoryMap,
+    selectedCategoryId,
+    selectedSubCategoryId,
+    categoryName,
+    subCategoryName,
+  ]);
+
+  useEffect(() => {
+    if (resolvedCategoryId && categoryMap[resolvedCategoryId]) {
+      const subs = categoryMap[resolvedCategoryId]?.subCategories || [];
       setSubCategories(subs.filter((s) => s.isActive));
     } else {
       setSubCategories([]);
     }
-  }, [selectedCategoryId, categoryMap]);
+  }, [resolvedCategoryId, categoryMap]);
 
   const loadAllCategoriesWithSubcategories = async () => {
     try {
@@ -78,23 +122,23 @@ function CategorySelector({
 
     if (!categoryId) {
       setSubCategories([]);
+      setResolvedCategoryId(0);
+      setResolvedSubCategoryId(undefined);
       onCategoryChange(0, undefined);
       return;
     }
 
     const subs = categoryMap[categoryId]?.subCategories || [];
     setSubCategories(subs);
+    setResolvedCategoryId(categoryId);
+    setResolvedSubCategoryId(undefined);
     onCategoryChange(categoryId, undefined);
   };
 
   const handleSubCategoryChange = (e) => {
     const subCategoryId = parseInt(e.target.value);
-    const categoryId = parseInt(
-      document.getElementById("category-select")?.value || "0"
-    );
-    if (categoryId) {
-      onCategoryChange(categoryId, subCategoryId || undefined);
-    }
+    setResolvedSubCategoryId(subCategoryId || undefined);
+    onCategoryChange(resolvedCategoryId, subCategoryId || undefined);
   };
 
   return (
@@ -106,7 +150,7 @@ function CategorySelector({
         <select
           id="category-select"
           onChange={handleCategoryChange}
-          value={selectedCategoryId || ""}
+          value={resolvedCategoryId ? String(resolvedCategoryId) : ""}
           disabled={loading || disabled}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100 transition-all"
         >
@@ -120,7 +164,7 @@ function CategorySelector({
           {categories
             .filter((cat) => cat.isActive)
             .map((category) => (
-              <option key={category.id} value={category.id}>
+              <option key={category.id} value={String(category.id)}>
                 {category.name}
               </option>
             ))}
@@ -135,7 +179,7 @@ function CategorySelector({
           </label>
           <select
             onChange={handleSubCategoryChange}
-            value={selectedSubCategoryId || ""}
+            value={resolvedSubCategoryId ? String(resolvedSubCategoryId) : ""}
             disabled={disabled || subCategories.length === 0}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100 transition-all"
           >
@@ -145,7 +189,7 @@ function CategorySelector({
                 : "-- Chọn danh mục con --"}
             </option>
             {subCategories.map((subCategory) => (
-              <option key={subCategory.id} value={subCategory.id}>
+              <option key={subCategory.id} value={String(subCategory.id)}>
                 {subCategory.name}
               </option>
             ))}
