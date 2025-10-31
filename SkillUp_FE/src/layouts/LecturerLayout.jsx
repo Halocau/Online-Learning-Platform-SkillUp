@@ -84,7 +84,6 @@ function LecturerLayout() {
       <LecturerSidebar 
         isOpen={sidebarOpen} 
         onToggle={() => setSidebarOpen(!sidebarOpen)}
-        cvApproved={cvApproved}
       />
 
       {/* Main Content */}

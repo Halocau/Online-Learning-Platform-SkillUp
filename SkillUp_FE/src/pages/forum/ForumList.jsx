@@ -2,8 +2,8 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Button, Spin, Empty } from "antd";
 import { Link, useOutletContext } from "react-router-dom";
 import { postApi } from "@/api/postAPI";
-import PostCard from "@/components/forum/PostCard";
-import { PlusCircle, RefreshCcw } from "lucide-react";
+import PostCard from "@/pages/forum/components/PostCard";
+import { Plus, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 const PAGE_SIZE = 5;
@@ -44,7 +44,11 @@ export default function ForumList() {
     if (searchTerm && searchTerm.trim()) {
       filtered = filtered.filter((p) => {
         const title = (p.title ?? p.Title ?? "").toString().toLowerCase();
-        return title.includes(searchTerm.toLowerCase());
+        const content = (p.contents ?? p.Contents ?? "").toString().toLowerCase();
+        return (
+          title.includes(searchTerm.toLowerCase()) ||
+          content.includes(searchTerm.toLowerCase())
+        );
       });
     }
 
@@ -75,108 +79,143 @@ export default function ForumList() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto py-6 px-2">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="text-base text-gray-700 font-medium">
-          {filteredPosts.length} bài viết
-          {totalPages > 1 && (
-            <span className="ml-2 text-sm text-gray-500">
-              (Trang {currentPage} / {totalPages})
-            </span>
-          )}
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Diễn đàn SkillUp</h1>
+              <p className="text-gray-600">
+                {filteredPosts.length > 0
+                  ? `${filteredPosts.length} bài viết • Trang ${currentPage}/${totalPages}`
+                  : "Không có bài viết nào"}
+              </p>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={fetchPosts}
-            icon={<RefreshCcw size={16} />}
-            className="border-gray-300 rounded-lg text-base"
-          >
-            Làm mới
-          </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={fetchPosts}
+                icon={<RefreshCw size={16} />}
+                className="rounded-lg font-medium border-gray-300 hover:border-gray-400"
+              >
+                Làm mới
+              </Button>
 
-          <Link to="/forum/create" className="hidden md:inline-block">
+              <Link to="/forum/create">
+                <Button
+                  type="primary"
+                  icon={<Plus size={16} />}
+                  className="rounded-lg bg-indigo-600 border-0 font-medium hover:bg-indigo-700 hidden sm:inline-flex"
+                >
+                  Bài viết mới
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Mobile Create Button */}
+          <Link to="/forum/create" className="sm:hidden">
             <Button
               type="primary"
-              icon={<PlusCircle size={16} />}
-              className="rounded-full bg-[#FFD54F] border-0 text-gray-800 font-semibold px-4 py-2 shadow-sm text-base"
+              icon={<Plus size={16} />}
+              className="w-full rounded-lg bg-indigo-600 border-0 font-medium hover:bg-indigo-700 h-10"
             >
-              Tạo bài viết
+              Tạo bài viết mới
             </Button>
           </Link>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="text-center py-20">
-          <Spin size="large" />
-        </div>
-      ) : filteredPosts.length === 0 ? (
-        <Empty description="Không có bài viết nào" />
-      ) : (
-        <>
-          <div className="space-y-5">
-            {paginatedPosts.map((p, i) => (
-              <motion.div
-                key={p.id ?? p.Id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-              >
-                <PostCard post={p} />
-              </motion.div>
-            ))}
+        {/* Posts Container */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Spin size="large" />
           </div>
-
-          {/* ✨ Improved Pagination ✨ */}
-          {totalPages > 1 && (
-            <nav className="flex justify-center items-center gap-2 mt-10">
-              {/* Previous */}
-              <button
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className={`w-10 h-10 flex items-center justify-center rounded-lg border text-lg ${
-                  currentPage === 1
-                    ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                ❮
-              </button>
-
-              {/* Number Buttons */}
-              {[...Array(totalPages)].map((_, index) => (
-                <button
-                  key={index + 1}
-                  onClick={() => handlePageChange(index + 1)}
-                  className={`w-10 h-10 flex items-center justify-center rounded-lg font-medium text-lg transition-all ${
-                    currentPage === index + 1
-                      ? "bg-yellow-400 text-gray-900 shadow-md scale-105"
-                      : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
+        ) : filteredPosts.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <Empty
+              description="Không có bài viết nào"
+              style={{ color: "#9CA3AF" }}
+            />
+            <Link to="/forum/create" className="inline-block mt-4">
+              <Button type="primary" className="rounded-lg bg-indigo-600 border-0">
+                Tạo bài viết đầu tiên
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* Posts List */}
+            <div className="space-y-4 mb-8">
+              {paginatedPosts.map((p, i) => (
+                <motion.div
+                  key={p.id ?? p.Id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.3 }}
                 >
-                  {index + 1}
-                </button>
+                  <PostCard post={p} />
+                </motion.div>
               ))}
+            </div>
 
-              {/* Next */}
-              <button
-                onClick={() =>
-                  handlePageChange(Math.min(totalPages, currentPage + 1))
-                }
-                disabled={currentPage === totalPages}
-                className={`w-10 h-10 flex items-center justify-center rounded-lg border text-lg ${
-                  currentPage === totalPages
-                    ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                ❯
-              </button>
-            </nav>
-          )}
-        </>
-      )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 pb-8">
+                {/* Previous Button */}
+                <button
+                  onClick={() =>
+                    handlePageChange(Math.max(1, currentPage - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 font-medium transition-all duration-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, index) => {
+                    const pageNum = index + 1;
+                    const isActive = currentPage === pageNum;
+                    const isNearCurrent =
+                      Math.abs(pageNum - currentPage) <= 1 ||
+                      pageNum === 1 ||
+                      pageNum === totalPages;
+
+                    if (!isNearCurrent && totalPages > 5) return null;
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-lg font-semibold transition-all duration-200 ${
+                          isActive
+                            ? "bg-indigo-600 text-white shadow-lg scale-105"
+                            : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 font-medium transition-all duration-200 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
