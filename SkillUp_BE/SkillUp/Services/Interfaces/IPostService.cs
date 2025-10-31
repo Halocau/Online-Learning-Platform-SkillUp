@@ -12,5 +12,8 @@ namespace SkillUp.Services.Interfaces
         Task<IEnumerable<PostResponse>> ViewAllPostsAsync();
         Task<IEnumerable<PostResponse>> ViewActivePostsAsync();
         Task<IEnumerable<PostResponse>> ViewUserPostsAsync(Guid accountId, bool includeInactive);
+
+        Task<bool> BanPostAsync(Guid id);
+        Task<bool> UnbanPostAsync(Guid id);
     }
 }

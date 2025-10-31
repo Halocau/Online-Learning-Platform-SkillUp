@@ -26,6 +26,7 @@ namespace SkillUp.Services.Implementations
                 AccountId = c.AccountId,
                 AccountName = c.Account?.Fullname ?? "",
                 ParentCommentId = c.ParentCommentId
+
             });
         }
 
@@ -38,7 +39,8 @@ namespace SkillUp.Services.Implementations
                 AccountId = accountId,
                 Contents = dto.Contents,
                 ParentCommentId = dto.ParentCommentId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now,
+                  IsActive = true
             };
 
             var savedComment = await _repo.CreateAsync(newComment);
@@ -51,7 +53,8 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = savedComment.CreatedAt,
                 AccountId = savedComment.AccountId,
                 AccountName = savedComment.Account?.Fullname ?? "",
-                ParentCommentId = savedComment.ParentCommentId
+                ParentCommentId = savedComment.ParentCommentId,
+                IsActive = true
             };
         }
 
@@ -65,7 +68,7 @@ namespace SkillUp.Services.Implementations
                 throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa comment này.");
 
             comment.Contents = dto.Contents;
-            comment.UpdatedAt = DateTime.UtcNow;
+            comment.UpdatedAt = DateTime.Now;
 
             await _repo.UpdateAsync(comment);
 
@@ -77,8 +80,37 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = comment.CreatedAt,
                 AccountId = comment.AccountId,
                 AccountName = comment.Account.Fullname,
-                ParentCommentId = comment.ParentCommentId
+                ParentCommentId = comment.ParentCommentId,
+                IsActive = true
             };
         }
+        public async Task<CommentPostDto> DeleteCommentAsync(Guid commentId, Guid accountId)
+        {
+            var comment = await _repo.GetByIdAsync(commentId);
+            if (comment == null)
+                throw new Exception("Không tìm thấy comment.");
+
+            // Thêm logic kiểm tra quyền (ví dụ: chỉ chủ comment hoặc admin mới được xóa)
+            if (comment.AccountId != accountId)
+                throw new UnauthorizedAccessException("Bạn không có quyền xóa comment này.");
+
+            comment.IsActive = false;
+            comment.UpdatedAt = DateTime.Now;
+
+            await _repo.UpdateAsync(comment);
+
+            return new CommentPostDto
+            {
+                Id = comment.Id,
+                PostId = comment.PostId,
+                Contents = comment.Contents,
+                CreatedAt = comment.CreatedAt,
+                AccountId = comment.AccountId,
+                AccountName = comment.Account?.Fullname ?? "",
+                ParentCommentId = comment.ParentCommentId,
+                IsActive = comment.IsActive // Sẽ là false
+            };
+        }
+
     }
 }

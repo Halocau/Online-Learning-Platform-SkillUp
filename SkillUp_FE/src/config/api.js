@@ -43,6 +43,11 @@ export const API_ENDPOINTS = {
     SUBCATEGORY_UPDATE: '/SubCategory/UpdateSubCategory/{id}',
     SUBCATEGORY_DELETE: '/SubCategory/DeleteSubCategory/{id}',
     SUBCATEGORY_ID: '/SubCategory/GetByIdSubCategory/{id}',
+
+    //cart endpoints
+    CART: `/Cart/{accountId}`,
+    ADD_TO_CART: '/Cart/AddToCart/{accountId}',
+    REMOVE_FROM_CART: '/Cart/RemoveFromCart/{cartItemId}'
 };
 
 

@@ -5,8 +5,8 @@ namespace SkillUp.Services.Interfaces
 {
     public interface ICartService
     {
-        Task<CartDto> GetCartAsync(Guid studentId);
-        Task<bool> AddToCartAsync(Guid studentId, Guid courseId, decimal price);
+        Task<CartDto> GetCartByAccountIdAsync(Guid accountId);
+        Task<bool> AddToCartByAccountIdAsync(Guid accountId, AddToCartRequestDto request);
         Task<bool> RemoveFromCartAsync(Guid cartItemId);
     }
 }
