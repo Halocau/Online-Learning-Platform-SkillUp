@@ -9,5 +9,6 @@ namespace SkillUp.Services.Interfaces
         Task<IEnumerable<CommentPostDto>> GetCommentsByPostIdAsync(Guid postId);
         Task<CommentPostDto> CreateCommentAsync(CreateCommentDto dto, Guid accountId);
         Task<CommentPostDto> UpdateCommentAsync(UpdateCommentDto dto, Guid accountId);
+        Task<CommentPostDto> DeleteCommentAsync(Guid commentId, Guid accountId); 
     }
 }
