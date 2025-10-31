@@ -2,6 +2,7 @@
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
+using System.Text;
 
 namespace SkillUp.Services.Implementations
 {
@@ -49,5 +50,51 @@ namespace SkillUp.Services.Implementations
             return success; 
         }
 
+        public async Task<bool> DeleteQuizAsync(Guid quizId, Guid accountId)
+        {
+            var lecturer = await _lecturerRepository.GetByAccountIdAsync(accountId);
+            if (lecturer == null)
+                throw new Exception("Không tìm thấy giảng viên tương ứng với tài khoản này.");
+
+            var quiz = await _quizRepository.GetQuizWithSectionAndCourseAsync(quizId);
+            if (quiz == null)
+                throw new Exception("Không tìm thấy quiz.");
+
+            if (quiz.Section.Course.LecturerId != lecturer.Id)
+                throw new UnauthorizedAccessException("Bạn không có quyền xóa quiz này.");
+            if (!quiz.IsActive)
+                throw new Exception("Quiz này đã bị xóa trước đó.");
+
+            quiz.IsActive = false;
+            quiz.UpdatedAt = DateTime.Now;
+
+            _quizRepository.UpdateQuiz(quiz);
+            var success = await _quizRepository.SaveChangesAsync();
+
+            return success;
+        }
+
+
+        public async Task<bool> UpdateQuizAsync(Guid quizId, UpdateQuizDTO dto, Guid accountId)
+        {
+            var lecturer = await _lecturerRepository.GetByAccountIdAsync(accountId);
+            if (lecturer == null)
+                throw new Exception("Không tìm thấy giảng viên tương ứng với tài khoản này.");
+            var quiz = await _quizRepository.GetQuizWithSectionAndCourseAsync(quizId);
+            if (quiz == null)
+                throw new Exception("Không tìm thấy quiz.");
+            if (quiz.Section.Course.LecturerId != lecturer.Id)
+                throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa quiz này.");
+            quiz.Title = dto.Title ?? quiz.Title;
+            quiz.Description = dto.Description ?? quiz.Description;
+            quiz.PassPercent = dto.PassPercent != default ? dto.PassPercent : quiz.PassPercent;
+            quiz.Timer = dto.Timer != default ? dto.Timer : quiz.Timer;
+            quiz.UpdatedAt = DateTime.Now;
+
+            _quizRepository.UpdateQuiz(quiz);
+            var success = await _quizRepository.SaveChangesAsync();
+
+            return success;
+        }
     }
 }

@@ -23,11 +23,24 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Quizzes.FirstOrDefaultAsync(q => q.Id == id);
         }
 
+        public async Task<Quiz?> GetQuizWithSectionAndCourseAsync(Guid quizId)
+        {
+            return await _context.Quizzes.Include(q => q.Section)
+                 .ThenInclude(s => s.Course)
+                 .FirstOrDefaultAsync(q => q.Id == quizId);
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
          
             return await _context.SaveChangesAsync() > 0;
         
     }
+
+        public void UpdateQuiz(Quiz quiz)
+        {
+            _context.Quizzes.Update(quiz);
+        }
+      
     }
 }
