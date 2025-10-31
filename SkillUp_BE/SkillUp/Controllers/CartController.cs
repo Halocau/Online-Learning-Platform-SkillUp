@@ -16,12 +16,12 @@ namespace SkillUp.Controllers
         {
             _cartService = cartService;
         }
-        [HttpGet("Cart/{studentId}")]
-        public async Task<IActionResult> ViewCart(Guid studentId)
+        [HttpGet("{accountId}")]
+        public async Task<IActionResult> ViewCart(Guid accountId)
         {
             try
             {
-                var cart = await _cartService.GetCartAsync(studentId);
+                var cart = await _cartService.GetCartByAccountIdAsync(accountId);
                 if (cart == null || !cart.CartItems.Any())
                 {
                     return NotFound(new APIReturn
@@ -49,13 +49,13 @@ namespace SkillUp.Controllers
             }
         }
 
-        // Thêm sản phẩm vào giỏ hàng
-        [HttpPost("AddToCart/{studentId}")]
-        public async Task<IActionResult> AddToCart(Guid studentId, [FromBody] AddToCartRequestDto request)
+
+        [HttpPost("AddToCart/{accountId}")]
+        public async Task<IActionResult> AddToCart(Guid accountId, [FromBody] AddToCartRequestDto request)
         {
             try
             {
-                var result = await _cartService.AddToCartAsync(studentId, request.CourseId, request.Price);
+                var result = await _cartService.AddToCartByAccountIdAsync(accountId, request);
                 if (result)
                 {
                     return Ok(new APIReturn
