@@ -41,10 +41,12 @@ namespace SkillUp.Repositories.Implementations
         public async Task<List<Course>> GetCoursesOfLecturer(Guid lecturerId)
         {
             return await _context.Courses
-                                 .Where(c => c.LecturerId == lecturerId)
-                                    .Include(c => c.Lecturer)
-                                    .Include(c => c.SubCategory)
-                                    .ToListAsync();
+                                 .Where(c => c.LecturerId == lecturerId &&
+                                     (c.Status == "Public" || c.Status == "Draft"))
+                         .Include(c => c.Lecturer)
+                         .Include(c => c.SubCategory)
+                             .ThenInclude(sc => sc.Category) 
+                         .ToListAsync();
         }
 
         public async Task<List<Course>> GetNewestCoursesAsync(int limit)

@@ -23,8 +23,8 @@ import TicketDetail from "@/pages/Ticket/TicketDetail";
 import ForumRoutes from "./ForumRoute";
 import NewsList from "@/pages/News/NewsList";
 import NewsDetail from "@/pages/News/NewsDetail";
-import LecturerLayout from "@/layouts/LecturerLayout";
 import LecturerRoutes from "./LecturerRoute";
+import MyCart from "@/pages/Cart/MyCart";
 
 function AppRouter() {
   return (
@@ -44,6 +44,7 @@ function AppRouter() {
 
           <Route path="/news" element={<NewsList />} />
           <Route path="/news/:id" element={<NewsDetail />} />
+          <Route path="/Cart/:id" element={<MyCart />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />

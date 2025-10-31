@@ -16,13 +16,16 @@ namespace SkillUp.Services.Implementations
         private readonly ILecturerRepository _lecturerRepository;
         private readonly CloudinaryService _cloudinaryService;
         private readonly IAccountRepository _accountRepository;
-        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository , CloudinaryService cloudinaryService , IAccountRepository accountRepository)
+        private readonly ICategoryRepository _categoryRepository;
+public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository)
         {
             _courseRepository = courseRepository;
             _lecturerRepository = lecturerRepository;
             _cloudinaryService = cloudinaryService;
             _accountRepository = accountRepository;
+            _categoryRepository = categoryRepository;
         }
+
         public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request , Guid accId)
         {
             var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image, "skillup/courses");
@@ -230,13 +233,14 @@ namespace SkillUp.Services.Implementations
 
         public async Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturer(Guid lecturerId)
         {
-   
             var courses = await _courseRepository.GetCoursesOfLecturer(lecturerId);
+
             // Kiểm tra nếu danh sách khóa học rỗng hoặc null
             if (courses == null || !courses.Any())
             {
                 return new List<CourseLecturerResponseDto>(); // Trả về danh sách rỗng
             }
+       
             return courses.Select(course => new CourseLecturerResponseDto
             {
                 Id = course.Id,
@@ -248,9 +252,13 @@ namespace SkillUp.Services.Implementations
                 Rating = course.Rating,
                 Status = course.Status,
                 IsActive = course.IsActive,
-                SubCategoryName = course.SubCategory?.Name ?? "Không có danh mục",
+                SubCategoryName = course.SubCategory?.Name ?? "Không có danh mục", 
+                CategoryName = course.SubCategory?.Category?.Name ?? "Không có danh mục cha",
+                CreatedAt = course.CreatedAt,
+                UpdatedAt = course.UpdatedAt,
             }).ToList();
         }
+
 
     }
 }

@@ -209,5 +209,56 @@ namespace SkillUp.Controllers
             }
         }
 
+        [Authorize(Roles = "Content Morderator")] 
+        [HttpPut("ban/{id}")]
+        public async Task<IActionResult> BanPost(Guid id)
+        {
+            try
+            {
+                await _postService.BanPostAsync(id);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Post banned successfully",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
+
+        // ✅ Unban bài viết (chỉ Moderator)
+        [Authorize(Roles = "Content Morderator")] 
+        [HttpPut("unban/{id}")]
+        public async Task<IActionResult> UnbanPost(Guid id)
+        {
+            try
+            {
+                await _postService.UnbanPostAsync(id);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Post unbanned successfully",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
+
     }
 }

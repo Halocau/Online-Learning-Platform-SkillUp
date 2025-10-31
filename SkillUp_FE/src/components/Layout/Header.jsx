@@ -7,7 +7,10 @@ import { toast } from "react-toastify";
 function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const cachedUser = localStorage.getItem("user");
+    return cachedUser ? JSON.parse(cachedUser) : null;
+  });
   const navigate = useNavigate();
 
   const accessToken = localStorage.getItem("accessToken");
@@ -155,22 +158,24 @@ function Header() {
             ></Link>
 
             {/* Cart */}
+            {/* Cart */}
             <Link
-              to="/cart"
+              // Nếu đã đăng nhập, trỏ đến /cart/user.id
+              // Nếu chưa, trỏ đến /login
+              to={isAuthenticated && user ? `/cart/${user.id}` : '/login'}
+
+              // Thêm onClick để thông báo nếu chưa đăng nhập
+              onClick={(e) => {
+                if (!isAuthenticated || !user) {
+                  e.preventDefault(); // Ngăn chuyển trang
+                  toast.info("Vui lòng đăng nhập để xem giỏ hàng");
+                  navigate("/login");
+                }
+              }}
               className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2"
             >
-              <svg
-                className="w-5 h-5 sm:w-6 sm:h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 8M7 13l2.5 8M13 13v8"
-                />
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 8M7 13l2.5 8M13 13v8" />
               </svg>
             </Link>
 
