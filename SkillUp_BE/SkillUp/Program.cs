@@ -151,6 +151,13 @@ builder.Services.AddScoped<ICommentPostService, CommentPostService>();
 builder.Services.AddScoped<ILikeCommentPostRepository, LikeCommentPostRepository>();
 builder.Services.AddScoped<ILikeCommentPostService, LikeCommentPostService>();
 
+// ... (Các services khác của bạn)
+
+builder.Services.AddScoped<ICommentReportRepository, CommentReportRepository>();
+builder.Services.AddScoped<ICommentReportService, CommentReportService>();
+
+// ... (builder.Build() và phần còn lại)
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
