@@ -12,10 +12,10 @@ namespace SkillUp.Services.Implementations
         private readonly IQuizRepository _quizRepository;
         private readonly ILecturerRepository _lecturerRepository;
         private readonly IQuestionBankRepository _questionBankRepository;
-        public QuestionService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository , IQuestionBankRepository questionBankRepository)
+        public QuestionService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, IQuestionBankRepository questionBankRepository)
         {
             _quizRepository = quizRepository;
-            _lecturerRepository = lecturerRepository;   
+            _lecturerRepository = lecturerRepository;
             _questionBankRepository = questionBankRepository;
         }
 
@@ -53,7 +53,7 @@ namespace SkillUp.Services.Implementations
             }
             await _questionBankRepository.CreateAsync(question);
 
-     
+
             var questionQuiz = new QuestionQuiz
             {
                 Id = Guid.NewGuid(),
@@ -62,10 +62,10 @@ namespace SkillUp.Services.Implementations
             };
             quiz.QuestionQuizzes.Add(questionQuiz);
 
-        
+
             var result = await _quizRepository.SaveChangesAsync();
 
-        
+
             return result;
         }
 
@@ -86,7 +86,19 @@ namespace SkillUp.Services.Implementations
             question.Title = dto.Title ?? question.Title;
             question.Description = dto.Description ?? question.Description;
             question.UpdatedAt = DateTime.Now;
+            
+            var answerIdsFromDto = dto.Answers
+        .Where(a => a.AnswerId.HasValue)
+        .Select(a => a.AnswerId.Value)
+        .ToList();
 
+            foreach (var answer in question.AnswerBanks)
+            {
+                if (!answerIdsFromDto.Contains(answer.Id))
+                {
+                    answer.IsActive = false;
+                }
+            }
             // update answer 
             foreach (var answerDto in dto.Answers)
             {
@@ -114,18 +126,7 @@ namespace SkillUp.Services.Implementations
                 }
             }
 
-            var answerIdsFromDto = dto.Answers
-                .Where(a => a.AnswerId.HasValue)
-                .Select(a => a.AnswerId.Value)
-                .ToList();
-
-            foreach (var answer in question.AnswerBanks)
-            {
-                if (!answerIdsFromDto.Contains(answer.Id))
-                {
-                    answer.IsActive = false;
-                }
-            }
+    
 
             _questionBankRepository.Update(question);
             return await _questionBankRepository.SaveChangesAsync();
