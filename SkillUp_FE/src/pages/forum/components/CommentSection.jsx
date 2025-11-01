@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Spin, Empty, Divider, Button } from "antd";
 import { MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
@@ -39,106 +39,88 @@ export default function CommentSection({ postId }) {
     if (postId) fetchComments();
   }, [postId]);
 
-  // Fetch comments and organize them properly
   const fetchComments = async () => {
     setLoading(true);
     try {
       const res = await commentApi.getByPost(postId);
-      let allComments = res?.data?.data ?? [];
+      const allComments = res?.data?.data ?? [];
 
-      console.log("Raw comments from API:", allComments);
-
-      const likeCounts = {};
-      await Promise.all(
-        allComments.map(async (c) => {
-          try {
-            const likeRes = await commentApi.getLikeCount(c.id);
-            likeCounts[c.id] = likeRes?.data?.data?.likeCount ?? 0;
-          } catch (err) {
-            likeCounts[c.id] = 0;
-          }
-        })
-      );
-
-      // Build comment tree structure - FIXED VERSION
       const commentMap = {};
+      const rootComments = [];
+      const seenIds = new Set(); // To prevent duplicates
 
-      // First pass: create all comment objects
+      // --- NEW LOGIC ---
+      // 1. First pass: Create a map of all comments and initialize replies
       allComments.forEach((comment) => {
+        if (!comment.id || seenIds.has(comment.id)) {
+          console.warn("Duplicate or invalid comment ID:", comment.id);
+          return; // Skip duplicates or comments without an ID
+        }
+        seenIds.add(comment.id);
+
         commentMap[comment.id] = {
           ...comment,
           commentPostId: comment.id,
           accountAvatarUrl:
             comment.accountAvatarUrl ||
             `https://api.dicebear.com/8.x/avataaars/svg?seed=${comment.accountName}`,
-          likeCount: likeCounts[comment.id] ?? 0,
-          replies: [],
+          likeCount: comment.likeCount ?? 0,
+          replies: [], // Initialize replies array
         };
       });
 
-      // Second pass: build tree structure
-      // IMPORTANT: Process in order so parents exist before children
-      const rootComments = [];
-
-      allComments.forEach((comment) => {
-        const commentObj = commentMap[comment.id];
-
-        if (!comment.parentCommentId) {
-          // This is a root comment
-          rootComments.push(commentObj);
+      // 2. Second pass: Build the tree structure
+      Object.values(commentMap).forEach((comment) => {
+        if (comment.parentCommentId && commentMap[comment.parentCommentId]) {
+          // This is a reply, add it to its parent
+          commentMap[comment.parentCommentId].replies.push(comment);
         } else {
-          // This is a reply - find its parent
-          const parent = commentMap[comment.parentCommentId];
-          if (parent) {
-            // Add to parent's replies array
-            if (!parent.replies) {
-              parent.replies = [];
-            }
-            parent.replies.push(commentObj);
-          } else {
-            // Orphaned comment (parent deleted?) - add as root
-            console.warn(
-              `Orphaned comment ${comment.id} - parent ${comment.parentCommentId} not found`
-            );
-            rootComments.push(commentObj);
-          }
+          // This is a root comment (or an orphan reply)
+          rootComments.push(comment);
         }
       });
+      // --- END NEW LOGIC ---
 
-      // Sort root comments by date (newest first)
+      // Sort root comments (newest first)
       rootComments.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
 
-      // Sort nested replies by date (oldest first for conversation flow)
+      // Sort all replies (oldest first, for chronological order)
       const sortReplies = (comments) => {
-        comments.forEach((comment) => {
-          if (comment.replies && comment.replies.length > 0) {
-            comment.replies.sort(
+        comments.forEach((c) => {
+          if (c.replies?.length) {
+            c.replies.sort(
               (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
             );
-            sortReplies(comment.replies);
+            sortReplies(c.replies); // Recursively sort replies of replies
           }
         });
       };
       sortReplies(rootComments);
 
-      console.log("Organized comments tree:", rootComments);
-
-      // Auto-expand comments that have replies
-      const autoExpanded = {};
-      const findCommentsWithReplies = (comments) => {
-        comments.forEach((comment) => {
-          if (comment.replies && comment.replies.length > 0) {
-            autoExpanded[comment.id] = true;
-            findCommentsWithReplies(comment.replies);
-          }
-        });
-      };
-      findCommentsWithReplies(rootComments);
-      setExpandedReplies(autoExpanded);
-
       setComments(rootComments);
+
+      // Log the result to be sure
+      console.log(
+        "Comments set. Root IDs:",
+        rootComments.map((c) => c.id)
+      );
+
+      // Auto-expand parents with replies
+      setExpandedReplies((prev) => {
+        const expanded = { ...prev };
+        const mark = (comments) => {
+          comments.forEach((c) => {
+            if (c.replies?.length > 0) {
+              expanded[c.id] = true;
+              mark(c.replies);
+            }
+          });
+        };
+        mark(rootComments);
+        return expanded;
+      });
     } catch (err) {
       console.error("Error fetching comments:", err);
       toast.error("Không thể tải bình luận");
@@ -160,31 +142,33 @@ export default function CommentSection({ postId }) {
     setSubmitting(true);
     try {
       if (editingId) {
+        // --- EDITING LOGIC ---
         await commentApi.update({
           commentId: editingId,
           contents: commentText,
         });
 
-        // Update comment in state
-        const updateCommentContent = (comments) => {
-          return comments.map((c) => {
+        // --- FIXED RECURSIVE UPDATE ---
+        const updateCommentInTree = (commentsList) => {
+          return commentsList.map((c) => {
             if (c.id === editingId) {
-              return { ...c, contents: commentText };
+              return { ...c, contents: commentText }; // Found it
             }
-            if (c.replies && c.replies.length > 0) {
-              return {
-                ...c,
-                replies: updateCommentContent(c.replies),
-              };
+            if (c.replies?.length > 0) {
+              // Check replies recursively
+              return { ...c, replies: updateCommentInTree(c.replies) };
             }
             return c;
           });
         };
 
-        setComments((prevComments) => updateCommentContent(prevComments));
+        setComments((prev) => updateCommentInTree(prev));
+        // --- END FIXED RECURSIVE UPDATE ---
+
         toast.success("Cập nhật bình luận thành công");
         setEditingId(null);
       } else {
+        // --- CREATING NEW COMMENT LOGIC (Unchanged) ---
         const res = await commentApi.create({
           postId,
           contents: commentText,
@@ -208,10 +192,10 @@ export default function CommentSection({ postId }) {
         newComment.accountAvatarUrl =
           newComment.accountAvatarUrl ||
           `https://api.dicebear.com/8.x/avataaars/svg?seed=${newComment.accountName}`;
-        newComment.likeCount = newComment.likeCount ?? 0;
+        newComment.likeCount = 0;
         newComment.replies = [];
 
-        setComments((prevComments) => [newComment, ...prevComments]);
+        setComments((prev) => [newComment, ...prev]);
         toast.success("Bình luận thành công");
       }
       setCommentText("");
@@ -222,81 +206,50 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // Separate handler for replies with independent text
   const handleSubmitReply = async (replyText, parentId) => {
-    if (!replyText.trim()) {
-      toast.warning("Vui lòng nhập bình luận");
-      return;
-    }
-    if (!userId) {
-      toast.warning("Vui lòng đăng nhập");
-      return;
-    }
+    if (!replyText.trim() || !userId) return;
 
     try {
-      console.log("Submitting reply to parentId:", parentId);
-
       const res = await commentApi.create({
         postId,
         contents: replyText,
         parentCommentId: parentId,
       });
 
-      const newReply = res?.data?.data ?? {
-        id: Date.now().toString(),
-        postId,
-        contents: replyText,
-        accountId: userId,
-        accountName: userName,
-        accountAvatarUrl: userAvatar,
-        likeCount: 0,
-        parentCommentId: parentId,
-        createdAt: new Date().toISOString(),
-        isActive: true,
+      const newReply = res?.data?.data;
+      if (!newReply) throw new Error("No reply data");
+
+      const normalizedReply = {
+        ...newReply,
+        commentPostId: newReply.id,
+        accountAvatarUrl:
+          newReply.accountAvatarUrl ||
+          `https://api.dicebear.com/8.x/avataaars/svg?seed=${newReply.accountName}`,
+        likeCount: newReply.likeCount ?? 0,
+        replies: [],
       };
 
-      newReply.commentPostId = newReply.id;
-      newReply.accountAvatarUrl =
-        newReply.accountAvatarUrl ||
-        `https://api.dicebear.com/8.x/avataaars/svg?seed=${newReply.accountName}`;
-      newReply.likeCount = newReply.likeCount ?? 0;
-      newReply.replies = [];
+      setComments((prevComments) => {
+        const addReply = (comments) => {
+          return comments.map((c) => {
+            if (c.id === parentId) {
+              if (c.replies.some((r) => r.id === normalizedReply.id)) return c;
+              return { ...c, replies: [...c.replies, normalizedReply] };
+            }
+            if (c.replies?.length > 0) {
+              return { ...c, replies: addReply(c.replies) };
+            }
+            return c;
+          });
+        };
+        return addReply(prevComments);
+      });
 
-      console.log("New reply created:", newReply);
-
-      // Add reply to the correct parent comment (supports nested structure)
-      const addReplyToComment = (comments) => {
-        return comments.map((c) => {
-          if (c.id === parentId) {
-            console.log("Found parent, adding reply");
-            return {
-              ...c,
-              replies: [...(c.replies ?? []), newReply],
-            };
-          }
-          // Check in nested replies
-          if (c.replies && c.replies.length > 0) {
-            return {
-              ...c,
-              replies: addReplyToComment(c.replies),
-            };
-          }
-          return c;
-        });
-      };
-
-      setComments((prevComments) => addReplyToComment(prevComments));
-      setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
-      toast.success("Trả lời bình luận thành công");
+      toast.success("Trả lời thành công");
       setReplyingToId(null);
-
-      // Optionally refresh comments to ensure consistency with backend
-      // Uncomment if nested replies still disappear:
-      // setTimeout(() => fetchComments(), 1000);
+      setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
     } catch (err) {
-      console.error("Error submitting reply:", err);
       toast.error(err?.response?.data?.message || "Lỗi khi gửi trả lời");
-      throw err; // Re-throw to handle in ReplyForm
     }
   };
 
@@ -314,46 +267,29 @@ export default function CommentSection({ postId }) {
 
   const handleDeleteComment = async () => {
     try {
-      // Get comment info before deletion
       const deletedComment = findCommentById(comments, deleteCommentId);
       const deletedBy = deletedComment?.accountName || "Bạn";
 
-      // Delete from server
       await commentApi.delete(deleteCommentId);
 
-      // Update local state immediately
       const removeCommentById = (comments, idToRemove) => {
-        return comments.reduce((acc, comment) => {
-          if (comment.id === idToRemove) {
-            // Skip this comment (delete it)
-            return acc;
+        return comments.reduce((acc, c) => {
+          if (c.id === idToRemove) return acc;
+          if (c.replies?.length > 0) {
+            return [
+              ...acc,
+              { ...c, replies: removeCommentById(c.replies, idToRemove) },
+            ];
           }
-          // Process replies recursively
-          if (comment.replies && comment.replies.length > 0) {
-            const filteredReplies = removeCommentById(
-              comment.replies,
-              idToRemove
-            );
-            return [...acc, { ...comment, replies: filteredReplies }];
-          }
-          return [...acc, comment];
+          return [...acc, c];
         }, []);
       };
 
-      setComments((prevComments) =>
-        removeCommentById(prevComments, deleteCommentId)
-      );
+      setComments((prev) => removeCommentById(prev, deleteCommentId));
 
-      // Show success notification with user info
-      const notification = `${deletedBy} đã xóa bình luận thành công`;
-
-      setDeletedCommentNotification(notification);
+      setDeletedCommentNotification(`${deletedBy} đã xóa bình luận thành công`);
       toast.success("Xóa bình luận thành công");
-
-      // Clear notification after 5 seconds
-      setTimeout(() => {
-        setDeletedCommentNotification("");
-      }, 5000);
+      setTimeout(() => setDeletedCommentNotification(""), 5000);
 
       setDeleteModalVisible(false);
       setDeleteCommentId(null);
@@ -362,12 +298,11 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // Helper function to find comment by ID
-  const findCommentById = (commentsList, commentId) => {
-    for (const comment of commentsList) {
-      if (comment.id === commentId) return comment;
-      if (comment.replies && comment.replies.length > 0) {
-        const found = findCommentById(comment.replies, commentId);
+  const findCommentById = (list, id) => {
+    for (const c of list) {
+      if (c.id === id) return c;
+      if (c.replies?.length > 0) {
+        const found = findCommentById(c.replies, id);
         if (found) return found;
       }
     }
@@ -381,46 +316,26 @@ export default function CommentSection({ postId }) {
     }
 
     try {
-      // Optimistic update
-      setComments((prevComments) =>
-        updateCommentLike(prevComments, commentId, (count) => count + 1)
-      );
-
+      setComments((prev) => updateLike(prev, commentId, (c) => c + 1));
       const res = await commentApi.toggleLike(commentId);
-      const actualCount = res?.data?.data?.totalLikes ?? 0;
+      const actual = res?.data?.data?.totalLikes ?? 0;
+      setComments((prev) => updateLike(prev, commentId, () => actual));
 
-      setComments((prevComments) =>
-        updateCommentLike(prevComments, commentId, () => actualCount)
-      );
-
-      // Fetch fresh count
       const countRes = await commentApi.getLikeCount(commentId);
-      const freshCount = countRes?.data?.data?.likeCount ?? actualCount;
-
-      setComments((prevComments) =>
-        updateCommentLike(prevComments, commentId, () => freshCount)
-      );
+      const fresh = countRes?.data?.data?.likeCount ?? actual;
+      setComments((prev) => updateLike(prev, commentId, () => fresh));
     } catch (err) {
-      // Revert on error
-      setComments((prevComments) =>
-        updateCommentLike(prevComments, commentId, (count) =>
-          Math.max(0, count - 1)
-        )
+      setComments((prev) =>
+        updateLike(prev, commentId, (c) => Math.max(0, c - 1))
       );
     }
   };
 
-  const updateCommentLike = (prevComments, commentId, updateFn) => {
-    return prevComments.map((c) => {
-      if (c.id === commentId) {
-        return { ...c, likeCount: updateFn(c.likeCount ?? 0) };
-      }
-      if (c.replies && c.replies.length > 0) {
-        return {
-          ...c,
-          replies: updateCommentLike(c.replies, commentId, updateFn),
-        };
-      }
+  const updateLike = (comments, id, fn) => {
+    return comments.map((c) => {
+      if (c.id === id) return { ...c, likeCount: fn(c.likeCount ?? 0) };
+      if (c.replies?.length > 0)
+        return { ...c, replies: updateLike(c.replies, id, fn) };
       return c;
     });
   };
@@ -435,7 +350,7 @@ export default function CommentSection({ postId }) {
         commentPostId: reportCommentId,
         reason: reportReason,
       });
-      toast.success("Báo cáo bình luận thành công");
+      toast.success("Báo cáo thành công");
       setReportModalVisible(false);
       setReportCommentId(null);
       setReportReason("");
@@ -444,6 +359,7 @@ export default function CommentSection({ postId }) {
     }
   };
 
+  // TOGGLE ONLY ONE
   const toggleReplies = (commentId) => {
     setExpandedReplies((prev) => ({
       ...prev,
@@ -456,16 +372,22 @@ export default function CommentSection({ postId }) {
     setEditingId(null);
   };
 
-  const renderComment = (comment, isReply = false, depth = 0) => {
+  // UNIQUE KEY + parentId for recursion
+  const renderComment = (
+    comment,
+    isReply = false,
+    depth = 0,
+    parentId = null
+  ) => {
     const isOwner = String(userId) === String(comment.accountId);
     const showReplies = expandedReplies[comment.id];
-
-    // Optional: Limit depth for UI reasons (but allow deep nesting)
     const maxDepth = 20;
     const canReply = depth < maxDepth;
 
+    const uniqueKey = `${comment.id}-${parentId || "root"}-${depth}`;
+
     return (
-      <div key={comment.id}>
+      <div key={uniqueKey}>
         <CommentItem
           comment={comment}
           isReply={isReply}
@@ -484,10 +406,9 @@ export default function CommentSection({ postId }) {
           onToggleLike={handleToggleLike}
           onReply={canReply ? handleReply : null}
           onToggleReplies={
-            comment.replies && comment.replies.length > 0 ? toggleReplies : null
+            comment.replies?.length > 0 ? () => toggleReplies(comment.id) : null
           }
         >
-          {/* Reply form with independent state */}
           {replyingToId === comment.id && canReply && (
             <ReplyForm
               userAvatar={userAvatar}
@@ -498,11 +419,11 @@ export default function CommentSection({ postId }) {
               parentCommentId={comment.id}
             />
           )}
-          {/* Nested replies - recursive rendering */}
-          {showReplies && comment.replies && comment.replies.length > 0 && (
+
+          {showReplies && comment.replies?.length > 0 && (
             <>
               {comment.replies.map((reply) =>
-                renderComment(reply, true, depth + 1)
+                renderComment(reply, true, depth + 1, comment.id)
               )}
             </>
           )}
@@ -530,7 +451,6 @@ export default function CommentSection({ postId }) {
         </Button>
       </div>
 
-      {/* Deletion notification */}
       {deletedCommentNotification && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-800">{deletedCommentNotification}</p>
@@ -539,7 +459,6 @@ export default function CommentSection({ postId }) {
 
       <Divider />
 
-      {/* Main comment form */}
       <CommentForm
         userAvatar={userAvatar}
         userId={userId}
@@ -554,7 +473,6 @@ export default function CommentSection({ postId }) {
 
       <Divider />
 
-      {/* Comments list */}
       <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-12">
@@ -563,11 +481,10 @@ export default function CommentSection({ postId }) {
         ) : comments.length === 0 ? (
           <Empty description="Chưa có bình luận nào" />
         ) : (
-          comments.map((comment) => renderComment(comment))
+          comments.map((comment) => renderComment(comment, false, 0))
         )}
       </div>
 
-      {/* Modals */}
       <CommentModals
         deleteModalVisible={deleteModalVisible}
         setDeleteModalVisible={setDeleteModalVisible}
