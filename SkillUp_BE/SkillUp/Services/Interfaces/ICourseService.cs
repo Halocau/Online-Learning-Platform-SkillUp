@@ -10,9 +10,9 @@ namespace SkillUp.Services.Interfaces
         Task<CourseResponseDto?> UpdateCourseAsync(CreateUpdateCourseDto request , Guid courseId , Guid accountId);
         Task<bool> DeleteCourseAsync(Guid courseId, Guid accountId);
         Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId);
-
         Task<List<CourseSummaryDTO>> GetListCourseBySubCateId(int id);
         Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId);
         Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturer(Guid lecturerId);
+        Task<CourseDetailDto> GetCourseDetailsAsync(Guid courseId);
     }
 }

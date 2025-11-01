@@ -390,5 +390,40 @@ namespace SkillUp.Controllers
 
 
         }
+
+        [HttpGet("{courseId}")]
+        public async Task<IActionResult> GetCourseDetails(Guid courseId)
+        {
+            try
+            {
+                var courseDetails = await _courseService.GetCourseDetailsAsync(courseId);
+
+                if (courseDetails == null)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Khóa học không tồn tại",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy chi tiết khóa học thành công",
+                    data = new List<object> { courseDetails }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }
