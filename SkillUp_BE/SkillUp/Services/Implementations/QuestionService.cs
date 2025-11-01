@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.DTOs.Question;
+﻿using Microsoft.Identity.Client;
+using SkillUp.BussinessObjects.DTOs.Question;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
@@ -66,6 +67,68 @@ namespace SkillUp.Services.Implementations
 
         
             return result;
+        }
+
+        public async Task<bool> UpdateQuestionWithAnswersAsync(Guid questionId, UpdateQuestionDTO dto, Guid accId)
+        {
+            var lecturer = await _lecturerRepository.GetByAccountIdAsync(accId);
+            if (lecturer == null)
+                throw new UnauthorizedAccessException("Không tìm thấy giảng viên tương ứng với tài khoản này.");
+
+            var question = await _questionBankRepository.GetQuestionWithAnswersAsync(questionId);
+            if (question == null)
+                throw new Exception("Không tìm thấy câu hỏi.");
+
+            if (question.LecturerId != lecturer.Id)
+                throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa câu hỏi này.");
+
+            // update question
+            question.Title = dto.Title ?? question.Title;
+            question.Description = dto.Description ?? question.Description;
+            question.UpdatedAt = DateTime.Now;
+
+            // update answer 
+            foreach (var answerDto in dto.Answers)
+            {
+                if (answerDto.AnswerId.HasValue)
+                {
+                    var existingAnswer = question.AnswerBanks.FirstOrDefault(a => a.Id == answerDto.AnswerId.Value);
+                    if (existingAnswer != null)
+                    {
+                        existingAnswer.AnswerName = answerDto.AnswerName;
+                        existingAnswer.IsCorrect = answerDto.IsCorrect;
+                        existingAnswer.IsActive = true;
+                    }
+                }
+                else
+                {
+                    var newAnswer = new AnswerBank
+                    {
+                        Id = Guid.NewGuid(),
+                        QuestionBankId = question.Id,
+                        AnswerName = answerDto.AnswerName,
+                        IsCorrect = answerDto.IsCorrect,
+                        IsActive = true
+                    };
+                    question.AnswerBanks.Add(newAnswer);
+                }
+            }
+
+            var answerIdsFromDto = dto.Answers
+                .Where(a => a.AnswerId.HasValue)
+                .Select(a => a.AnswerId.Value)
+                .ToList();
+
+            foreach (var answer in question.AnswerBanks)
+            {
+                if (!answerIdsFromDto.Contains(answer.Id))
+                {
+                    answer.IsActive = false;
+                }
+            }
+
+            _questionBankRepository.Update(question);
+            return await _questionBankRepository.SaveChangesAsync();
         }
     }
 }
