@@ -438,6 +438,8 @@ public partial class SkillUpContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsFree).HasDefaultValue(false);
+            entity.Property(e => e.Title).HasMaxLength(400);
             entity.Property(e => e.Type).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -446,7 +448,7 @@ public partial class SkillUpContext : DbContext
             entity.HasOne(d => d.Section).WithMany(p => p.Lessons)
                 .HasForeignKey(d => d.SectionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Lecture_Section");
+                .HasConstraintName("FK_Lesson_Section");
         });
 
         modelBuilder.Entity<LikeCommentLesson>(entity =>
