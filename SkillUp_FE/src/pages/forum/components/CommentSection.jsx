@@ -1,34 +1,12 @@
-import React, { useState, useEffect } from "react";
-import {
-  Input,
-  Button,
-  Avatar,
-  Spin,
-  Empty,
-  Modal,
-  Divider,
-  Tooltip,
-} from "antd";
-import {
-  Heart,
-  Trash2,
-  Edit2,
-  MessageCircle,
-  Send,
-  Flag,
-  ChevronDown,
-  ChevronUp,
-  RefreshCw,
-} from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Spin, Empty, Divider, Button } from "antd";
+import { MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
-
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import "dayjs/locale/vi";
+import CommentItem from "./CommentItem";
+import CommentForm from "./CommentForm";
+import CommentModals from "./CommentModal";
 import commentApi from "@/api/commentAPI";
-
-dayjs.extend(relativeTime);
-dayjs.locale("vi");
+import ReplyForm from "./ReplyForm";
 
 export default function CommentSection({ postId }) {
   const [comments, setComments] = useState([]);
@@ -38,13 +16,17 @@ export default function CommentSection({ postId }) {
   const [editingId, setEditingId] = useState(null);
   const [replyingToId, setReplyingToId] = useState(null);
   const [expandedReplies, setExpandedReplies] = useState({});
+  const [deletedCommentNotification, setDeletedCommentNotification] =
+    useState("");
 
+  // Modal states
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteCommentId, setDeleteCommentId] = useState(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportCommentId, setReportCommentId] = useState(null);
   const [reportReason, setReportReason] = useState("");
 
+  // User info
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = currentUser.id ?? currentUser.Id;
   const userName = currentUser.name ?? currentUser.userName ?? "Anonymous";
@@ -52,6 +34,7 @@ export default function CommentSection({ postId }) {
     currentUser.avatarUrl ||
     `https://api.dicebear.com/8.x/avataaars/svg?seed=${userId}`;
 
+  // Fetch comments
   useEffect(() => {
     if (postId) fetchComments();
   }, [postId]);
@@ -63,9 +46,8 @@ export default function CommentSection({ postId }) {
       const res = await commentApi.getByPost(postId);
       let allComments = res?.data?.data ?? [];
 
-      console.log("📥 RAW COMMENTS FROM API:", allComments);
+      console.log("Raw comments from API:", allComments);
 
-      // Fetch like counts for all comments
       const likeCounts = {};
       await Promise.all(
         allComments.map(async (c) => {
@@ -78,36 +60,87 @@ export default function CommentSection({ postId }) {
         })
       );
 
-      console.log("❤️ LIKE COUNTS:", likeCounts);
+      // Build comment tree structure - FIXED VERSION
+      const commentMap = {};
 
-      // Separate top-level comments and replies
-      const topLevelComments = allComments.filter((c) => !c.parentCommentId);
-      const replies = allComments.filter((c) => c.parentCommentId);
+      // First pass: create all comment objects
+      allComments.forEach((comment) => {
+        commentMap[comment.id] = {
+          ...comment,
+          commentPostId: comment.id,
+          accountAvatarUrl:
+            comment.accountAvatarUrl ||
+            `https://api.dicebear.com/8.x/avataaars/svg?seed=${comment.accountName}`,
+          likeCount: likeCounts[comment.id] ?? 0,
+          replies: [],
+        };
+      });
 
-      // Map comments with proper fields
-      const mappedComments = topLevelComments.map((c) => ({
-        ...c,
-        commentPostId: c.id,
-        accountAvatarUrl:
-          c.accountAvatarUrl ||
-          `https://api.dicebear.com/8.x/avataaars/svg?seed=${c.accountName}`,
-        likeCount: likeCounts[c.id] ?? 0,
-        replies: replies
-          .filter((r) => r.parentCommentId === c.id)
-          .map((r) => ({
-            ...r,
-            commentPostId: r.id,
-            accountAvatarUrl:
-              r.accountAvatarUrl ||
-              `https://api.dicebear.com/8.x/avataaars/svg?seed=${r.accountName}`,
-            likeCount: likeCounts[r.id] ?? 0,
-          })),
-      }));
+      // Second pass: build tree structure
+      // IMPORTANT: Process in order so parents exist before children
+      const rootComments = [];
 
-      console.log("✅ FINAL MAPPED COMMENTS:", mappedComments);
-      setComments(mappedComments);
+      allComments.forEach((comment) => {
+        const commentObj = commentMap[comment.id];
+
+        if (!comment.parentCommentId) {
+          // This is a root comment
+          rootComments.push(commentObj);
+        } else {
+          // This is a reply - find its parent
+          const parent = commentMap[comment.parentCommentId];
+          if (parent) {
+            // Add to parent's replies array
+            if (!parent.replies) {
+              parent.replies = [];
+            }
+            parent.replies.push(commentObj);
+          } else {
+            // Orphaned comment (parent deleted?) - add as root
+            console.warn(
+              `Orphaned comment ${comment.id} - parent ${comment.parentCommentId} not found`
+            );
+            rootComments.push(commentObj);
+          }
+        }
+      });
+
+      // Sort root comments by date (newest first)
+      rootComments.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      // Sort nested replies by date (oldest first for conversation flow)
+      const sortReplies = (comments) => {
+        comments.forEach((comment) => {
+          if (comment.replies && comment.replies.length > 0) {
+            comment.replies.sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
+            sortReplies(comment.replies);
+          }
+        });
+      };
+      sortReplies(rootComments);
+
+      console.log("Organized comments tree:", rootComments);
+
+      // Auto-expand comments that have replies
+      const autoExpanded = {};
+      const findCommentsWithReplies = (comments) => {
+        comments.forEach((comment) => {
+          if (comment.replies && comment.replies.length > 0) {
+            autoExpanded[comment.id] = true;
+            findCommentsWithReplies(comment.replies);
+          }
+        });
+      };
+      findCommentsWithReplies(rootComments);
+      setExpandedReplies(autoExpanded);
+
+      setComments(rootComments);
     } catch (err) {
-      console.error("❌ Fetch comments error:", err);
+      console.error("Error fetching comments:", err);
       toast.error("Không thể tải bình luận");
     } finally {
       setLoading(false);
@@ -131,27 +164,31 @@ export default function CommentSection({ postId }) {
           commentId: editingId,
           contents: commentText,
         });
-        setComments((prevComments) =>
-          prevComments.map((c) => {
-            if (c.id === editingId) return { ...c, contents: commentText };
-            if (c.replies) {
+
+        // Update comment in state
+        const updateCommentContent = (comments) => {
+          return comments.map((c) => {
+            if (c.id === editingId) {
+              return { ...c, contents: commentText };
+            }
+            if (c.replies && c.replies.length > 0) {
               return {
                 ...c,
-                replies: c.replies.map((r) =>
-                  r.id === editingId ? { ...r, contents: commentText } : r
-                ),
+                replies: updateCommentContent(c.replies),
               };
             }
             return c;
-          })
-        );
+          });
+        };
+
+        setComments((prevComments) => updateCommentContent(prevComments));
         toast.success("Cập nhật bình luận thành công");
         setEditingId(null);
       } else {
         const res = await commentApi.create({
           postId,
           contents: commentText,
-          parentCommentId: replyingToId || null,
+          parentCommentId: null,
         });
 
         const newComment = res?.data?.data ?? {
@@ -162,7 +199,7 @@ export default function CommentSection({ postId }) {
           accountName: userName,
           accountAvatarUrl: userAvatar,
           likeCount: 0,
-          parentCommentId: replyingToId || null,
+          parentCommentId: null,
           createdAt: new Date().toISOString(),
           isActive: true,
         };
@@ -172,42 +209,101 @@ export default function CommentSection({ postId }) {
           newComment.accountAvatarUrl ||
           `https://api.dicebear.com/8.x/avataaars/svg?seed=${newComment.accountName}`;
         newComment.likeCount = newComment.likeCount ?? 0;
+        newComment.replies = [];
 
-        if (replyingToId) {
-          console.log("📝 ADDING REPLY TO:", replyingToId);
-          setComments((prevComments) =>
-            prevComments.map((c) => {
-              if (c.id === replyingToId) {
-                return {
-                  ...c,
-                  replies: [...(c.replies ?? []), newComment],
-                };
-              }
-              return c;
-            })
-          );
-          setExpandedReplies((prev) => ({ ...prev, [replyingToId]: true }));
-          toast.success("Trả lời bình luận thành công");
-          setReplyingToId(null);
-        } else {
-          console.log("📝 ADDING TOP-LEVEL COMMENT");
-          newComment.replies = [];
-          setComments((prevComments) => [newComment, ...prevComments]);
-          toast.success("Bình luận thành công");
-        }
+        setComments((prevComments) => [newComment, ...prevComments]);
+        toast.success("Bình luận thành công");
       }
       setCommentText("");
     } catch (err) {
-      console.error("❌ Submit comment error:", err);
       toast.error(err?.response?.data?.message || "Lỗi khi gửi bình luận");
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Separate handler for replies with independent text
+  const handleSubmitReply = async (replyText, parentId) => {
+    if (!replyText.trim()) {
+      toast.warning("Vui lòng nhập bình luận");
+      return;
+    }
+    if (!userId) {
+      toast.warning("Vui lòng đăng nhập");
+      return;
+    }
+
+    try {
+      console.log("Submitting reply to parentId:", parentId);
+
+      const res = await commentApi.create({
+        postId,
+        contents: replyText,
+        parentCommentId: parentId,
+      });
+
+      const newReply = res?.data?.data ?? {
+        id: Date.now().toString(),
+        postId,
+        contents: replyText,
+        accountId: userId,
+        accountName: userName,
+        accountAvatarUrl: userAvatar,
+        likeCount: 0,
+        parentCommentId: parentId,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      };
+
+      newReply.commentPostId = newReply.id;
+      newReply.accountAvatarUrl =
+        newReply.accountAvatarUrl ||
+        `https://api.dicebear.com/8.x/avataaars/svg?seed=${newReply.accountName}`;
+      newReply.likeCount = newReply.likeCount ?? 0;
+      newReply.replies = [];
+
+      console.log("New reply created:", newReply);
+
+      // Add reply to the correct parent comment (supports nested structure)
+      const addReplyToComment = (comments) => {
+        return comments.map((c) => {
+          if (c.id === parentId) {
+            console.log("Found parent, adding reply");
+            return {
+              ...c,
+              replies: [...(c.replies ?? []), newReply],
+            };
+          }
+          // Check in nested replies
+          if (c.replies && c.replies.length > 0) {
+            return {
+              ...c,
+              replies: addReplyToComment(c.replies),
+            };
+          }
+          return c;
+        });
+      };
+
+      setComments((prevComments) => addReplyToComment(prevComments));
+      setExpandedReplies((prev) => ({ ...prev, [parentId]: true }));
+      toast.success("Trả lời bình luận thành công");
+      setReplyingToId(null);
+
+      // Optionally refresh comments to ensure consistency with backend
+      // Uncomment if nested replies still disappear:
+      // setTimeout(() => fetchComments(), 1000);
+    } catch (err) {
+      console.error("Error submitting reply:", err);
+      toast.error(err?.response?.data?.message || "Lỗi khi gửi trả lời");
+      throw err; // Re-throw to handle in ReplyForm
+    }
+  };
+
   const handleEditComment = (comment) => {
     setEditingId(comment.id);
     setCommentText(comment.contents);
+    setReplyingToId(null);
   };
 
   const handleCancelEdit = () => {
@@ -218,17 +314,64 @@ export default function CommentSection({ postId }) {
 
   const handleDeleteComment = async () => {
     try {
+      // Get comment info before deletion
+      const deletedComment = findCommentById(comments, deleteCommentId);
+      const deletedBy = deletedComment?.accountName || "Bạn";
+
+      // Delete from server
       await commentApi.delete(deleteCommentId);
+
+      // Update local state immediately
+      const removeCommentById = (comments, idToRemove) => {
+        return comments.reduce((acc, comment) => {
+          if (comment.id === idToRemove) {
+            // Skip this comment (delete it)
+            return acc;
+          }
+          // Process replies recursively
+          if (comment.replies && comment.replies.length > 0) {
+            const filteredReplies = removeCommentById(
+              comment.replies,
+              idToRemove
+            );
+            return [...acc, { ...comment, replies: filteredReplies }];
+          }
+          return [...acc, comment];
+        }, []);
+      };
+
       setComments((prevComments) =>
-        prevComments.filter((c) => c.id !== deleteCommentId)
+        removeCommentById(prevComments, deleteCommentId)
       );
+
+      // Show success notification with user info
+      const notification = `${deletedBy} đã xóa bình luận thành công`;
+
+      setDeletedCommentNotification(notification);
       toast.success("Xóa bình luận thành công");
+
+      // Clear notification after 5 seconds
+      setTimeout(() => {
+        setDeletedCommentNotification("");
+      }, 5000);
+
       setDeleteModalVisible(false);
       setDeleteCommentId(null);
     } catch (err) {
-      console.error("❌ Delete comment error:", err);
       toast.error(err?.response?.data?.message || "Lỗi khi xóa bình luận");
     }
+  };
+
+  // Helper function to find comment by ID
+  const findCommentById = (commentsList, commentId) => {
+    for (const comment of commentsList) {
+      if (comment.id === commentId) return comment;
+      if (comment.replies && comment.replies.length > 0) {
+        const found = findCommentById(comment.replies, commentId);
+        if (found) return found;
+      }
+    }
+    return null;
   };
 
   const handleToggleLike = async (commentId) => {
@@ -238,24 +381,19 @@ export default function CommentSection({ postId }) {
     }
 
     try {
-      // Optimistically update
+      // Optimistic update
       setComments((prevComments) =>
         updateCommentLike(prevComments, commentId, (count) => count + 1)
       );
 
-      // Toggle like on backend
       const res = await commentApi.toggleLike(commentId);
-      console.log("❤️ TOGGLE RESPONSE:", res.data);
-
-      // Get actual count from backend
       const actualCount = res?.data?.data?.totalLikes ?? 0;
 
-      // Update with actual count
       setComments((prevComments) =>
         updateCommentLike(prevComments, commentId, () => actualCount)
       );
 
-      // Also fetch fresh count to be sure
+      // Fetch fresh count
       const countRes = await commentApi.getLikeCount(commentId);
       const freshCount = countRes?.data?.data?.likeCount ?? actualCount;
 
@@ -263,7 +401,7 @@ export default function CommentSection({ postId }) {
         updateCommentLike(prevComments, commentId, () => freshCount)
       );
     } catch (err) {
-      console.error("❌ Toggle like error:", err);
+      // Revert on error
       setComments((prevComments) =>
         updateCommentLike(prevComments, commentId, (count) =>
           Math.max(0, count - 1)
@@ -277,14 +415,10 @@ export default function CommentSection({ postId }) {
       if (c.id === commentId) {
         return { ...c, likeCount: updateFn(c.likeCount ?? 0) };
       }
-      if (c.replies) {
+      if (c.replies && c.replies.length > 0) {
         return {
           ...c,
-          replies: c.replies.map((r) =>
-            r.id === commentId
-              ? { ...r, likeCount: updateFn(r.likeCount ?? 0) }
-              : r
-          ),
+          replies: updateCommentLike(c.replies, commentId, updateFn),
         };
       }
       return c;
@@ -306,7 +440,6 @@ export default function CommentSection({ postId }) {
       setReportCommentId(null);
       setReportReason("");
     } catch (err) {
-      console.error("❌ Report comment error:", err);
       toast.error(err?.response?.data?.message || "Lỗi khi báo cáo");
     }
   };
@@ -318,164 +451,62 @@ export default function CommentSection({ postId }) {
     }));
   };
 
-  const renderComment = (comment, isReply = false) => {
+  const handleReply = (commentId) => {
+    setReplyingToId(replyingToId === commentId ? null : commentId);
+    setEditingId(null);
+  };
+
+  const renderComment = (comment, isReply = false, depth = 0) => {
     const isOwner = String(userId) === String(comment.accountId);
-    const commentId = comment.id;
-    const likeCount = comment.likeCount ?? 0;
-    const replies = comment.replies ?? [];
-    const showReplies = expandedReplies[commentId];
+    const showReplies = expandedReplies[comment.id];
+
+    // Optional: Limit depth for UI reasons (but allow deep nesting)
+    const maxDepth = 20;
+    const canReply = depth < maxDepth;
 
     return (
-      <div
-        key={commentId}
-        className={`flex gap-4 pb-4 ${
-          !isReply ? "border-b border-gray-100" : ""
-        }`}
-      >
-        <Avatar
-          src={comment.accountAvatarUrl}
-          size={isReply ? 32 : 40}
-          className="flex-shrink-0 border border-gray-200"
-        />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-gray-900 text-sm">
-                {comment.accountName}
-              </h4>
-              <p className="text-xs text-gray-500">
-                {dayjs(comment.createdAt).fromNow()}
-              </p>
-            </div>
-            {isOwner && (
-              <div className="flex gap-1 flex-shrink-0">
-                <Tooltip title="Sửa">
-                  <button
-                    onClick={() => handleEditComment(comment)}
-                    className="text-gray-400 hover:text-indigo-600 p-1 hover:bg-gray-100 rounded transition-colors"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                </Tooltip>
-                <Tooltip title="Xóa">
-                  <button
-                    onClick={() => {
-                      setDeleteCommentId(commentId);
-                      setDeleteModalVisible(true);
-                    }}
-                    className="text-gray-400 hover:text-red-600 p-1 hover:bg-gray-100 rounded transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </Tooltip>
-              </div>
-            )}
-            {!isOwner && (
-              <Tooltip title="Báo cáo">
-                <button
-                  onClick={() => {
-                    setReportCommentId(commentId);
-                    setReportModalVisible(true);
-                  }}
-                  className="text-gray-400 hover:text-red-600 p-1 hover:bg-gray-100 rounded transition-colors"
-                >
-                  <Flag size={14} />
-                </button>
-              </Tooltip>
-            )}
-          </div>
-
-          <p className="text-sm text-gray-700 leading-relaxed mb-3 whitespace-pre-wrap break-words">
-            {comment.contents}
-          </p>
-
-          <div className="flex items-center gap-4 text-xs">
-            <button
-              onClick={() => handleToggleLike(commentId)}
-              className="flex items-center gap-1 text-gray-500 hover:text-pink-600 font-medium transition-colors"
-            >
-              <Heart size={14} />
-              <span>{likeCount}</span>
-            </button>
-            {!isReply && (
-              <button
-                onClick={() =>
-                  setReplyingToId(replyingToId === commentId ? null : commentId)
-                }
-                className="flex items-center gap-1 text-gray-500 hover:text-indigo-600 font-medium transition-colors"
-              >
-                <MessageCircle size={14} />
-                <span>Trả lời</span>
-              </button>
-            )}
-          </div>
-
-          {replyingToId === commentId && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex gap-2">
-                <Avatar src={userAvatar} size={32} className="flex-shrink-0" />
-                <div className="flex-1">
-                  <Input.TextArea
-                    placeholder="Viết trả lời..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    rows={2}
-                    className="rounded resize-none"
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      size="small"
-                      onClick={() => {
-                        setReplyingToId(null);
-                        setCommentText("");
-                      }}
-                      className="rounded"
-                    >
-                      Hủy
-                    </Button>
-                    <Button
-                      type="primary"
-                      size="small"
-                      onClick={handleSubmitComment}
-                      loading={submitting}
-                      className="rounded bg-indigo-600 border-0"
-                    >
-                      Trả lời
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div key={comment.id}>
+        <CommentItem
+          comment={comment}
+          isReply={isReply}
+          isOwner={isOwner}
+          showReplies={showReplies}
+          replyingToId={replyingToId}
+          onEdit={handleEditComment}
+          onDelete={(id) => {
+            setDeleteCommentId(id);
+            setDeleteModalVisible(true);
+          }}
+          onReport={(id) => {
+            setReportCommentId(id);
+            setReportModalVisible(true);
+          }}
+          onToggleLike={handleToggleLike}
+          onReply={canReply ? handleReply : null}
+          onToggleReplies={
+            comment.replies && comment.replies.length > 0 ? toggleReplies : null
+          }
+        >
+          {/* Reply form with independent state */}
+          {replyingToId === comment.id && canReply && (
+            <ReplyForm
+              userAvatar={userAvatar}
+              userId={userId}
+              onSubmit={handleSubmitReply}
+              onCancel={() => setReplyingToId(null)}
+              submitting={submitting}
+              parentCommentId={comment.id}
+            />
           )}
-
-          {replies.length > 0 && !isReply && (
-            <div className="mt-3">
-              <button
-                onClick={() => toggleReplies(commentId)}
-                className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
-                {showReplies ? (
-                  <>
-                    <ChevronUp size={14} />
-                    Ẩn {replies.length} trả lời
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown size={14} />
-                    Hiển thị {replies.length} trả lời
-                  </>
-                )}
-              </button>
-
-              {showReplies && (
-                <div className="mt-3 pl-4 border-l-2 border-gray-200 space-y-3">
-                  {replies.map((reply) => renderComment(reply, true))}
-                </div>
+          {/* Nested replies - recursive rendering */}
+          {showReplies && comment.replies && comment.replies.length > 0 && (
+            <>
+              {comment.replies.map((reply) =>
+                renderComment(reply, true, depth + 1)
               )}
-            </div>
+            </>
           )}
-        </div>
+        </CommentItem>
       </div>
     );
   };
@@ -499,53 +530,31 @@ export default function CommentSection({ postId }) {
         </Button>
       </div>
 
-      <Divider />
-
-      <div className="mb-8">
-        <div className="flex gap-3 items-start">
-          <Avatar
-            src={userAvatar}
-            size={40}
-            className="flex-shrink-0 border border-gray-200"
-          />
-          <div className="flex-1 w-full">
-            <Input.TextArea
-              placeholder={userId ? "Chia sẻ ý kiến..." : "Vui lòng đăng nhập"}
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              disabled={!userId || submitting}
-              rows={editingId || replyingToId ? 4 : 3}
-              maxLength={1000}
-              className="rounded-lg resize-none"
-            />
-            <div className="flex items-center justify-between mt-3">
-              <span className="text-xs text-gray-400">
-                {commentText.length}/1000 ký tự
-              </span>
-              <div className="flex gap-2">
-                {(editingId || replyingToId) && (
-                  <Button onClick={handleCancelEdit} className="rounded-lg">
-                    Hủy
-                  </Button>
-                )}
-                <Button
-                  type="primary"
-                  onClick={handleSubmitComment}
-                  loading={submitting}
-                  disabled={!userId || !commentText.trim()}
-                  icon={<Send size={14} />}
-                  className="rounded-lg bg-indigo-600 border-0"
-                >
-                  {editingId ? "Cập nhật" : replyingToId ? "Trả lời" : "Gửi"}
-                </Button>
-              </div>
-            </div>
-          </div>
+      {/* Deletion notification */}
+      {deletedCommentNotification && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-800">{deletedCommentNotification}</p>
         </div>
-      </div>
+      )}
 
       <Divider />
 
+      {/* Main comment form */}
+      <CommentForm
+        userAvatar={userAvatar}
+        userId={userId}
+        commentText={commentText}
+        setCommentText={setCommentText}
+        submitting={submitting}
+        editingId={editingId}
+        replyingToId={replyingToId}
+        onSubmit={handleSubmitComment}
+        onCancel={handleCancelEdit}
+      />
+
+      <Divider />
+
+      {/* Comments list */}
       <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-12">
@@ -558,46 +567,17 @@ export default function CommentSection({ postId }) {
         )}
       </div>
 
-      <Modal
-        title="Xóa bình luận"
-        open={deleteModalVisible}
-        onOk={handleDeleteComment}
-        onCancel={() => setDeleteModalVisible(false)}
-        okText="Xóa"
-        cancelText="Hủy"
-        okButtonProps={{ danger: true }}
-        centered
-      >
-        <p>Bạn chắc chắn muốn xóa bình luận này không?</p>
-      </Modal>
-
-      <Modal
-        title="Báo cáo bình luận"
-        open={reportModalVisible}
-        onOk={handleReportComment}
-        onCancel={() => {
-          setReportModalVisible(false);
-          setReportReason("");
-        }}
-        okText="Báo cáo"
-        cancelText="Hủy"
-        centered
-      >
-        <div className="space-y-4">
-          <p>Lý do báo cáo:</p>
-          <Input.TextArea
-            placeholder="Nhập lý do..."
-            value={reportReason}
-            onChange={(e) => setReportReason(e.target.value)}
-            rows={4}
-            maxLength={500}
-            className="rounded"
-          />
-          <p className="text-xs text-gray-400">
-            {reportReason.length}/500 ký tự
-          </p>
-        </div>
-      </Modal>
+      {/* Modals */}
+      <CommentModals
+        deleteModalVisible={deleteModalVisible}
+        setDeleteModalVisible={setDeleteModalVisible}
+        reportModalVisible={reportModalVisible}
+        setReportModalVisible={setReportModalVisible}
+        reportReason={reportReason}
+        setReportReason={setReportReason}
+        onDeleteConfirm={handleDeleteComment}
+        onReportConfirm={handleReportComment}
+      />
     </div>
   );
 }

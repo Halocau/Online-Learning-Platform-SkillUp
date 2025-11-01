@@ -18,15 +18,6 @@ export const commentApi = {
           },
         }
       );
-
-      // Log the exact response structure
-      console.log("🔍 API RESPONSE STRUCTURE:", {
-        code: response.data.code,
-        message: response.data.message,
-        firstComment: response.data.data?.[0],
-        firstCommentKeys: Object.keys(response.data.data?.[0] || {}),
-      });
-
       return response;
     } catch (error) {
       console.error("❌ Error fetching comments:", error);
@@ -143,7 +134,6 @@ export const commentApi = {
           },
         }
       );
-      console.log("✅ Like count fetched:", response.data);
       return response;
     } catch (error) {
       console.error("❌ Error fetching like count:", error);
