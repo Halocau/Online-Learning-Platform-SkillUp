@@ -87,7 +87,5 @@ namespace SkillUp.Services.Common
 
             throw new Exception($"Upload failed: {result.Error?.Message}");
         }
-
-
     }
 }

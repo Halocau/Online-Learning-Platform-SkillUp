@@ -21,7 +21,7 @@ namespace SkillUp.Services.Implementations
         private readonly CloudinaryService _cloudinaryService;
         private readonly IAccountRepository _accountRepository;
         private readonly ICategoryRepository _categoryRepository;
-public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository)
+        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository)
         {
             _courseRepository = courseRepository;
             _lecturerRepository = lecturerRepository;
@@ -30,7 +30,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
             _categoryRepository = categoryRepository;
         }
 
-        public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request , Guid accId)
+        public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
         {
             var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image, "skillup/courses");
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accId);
@@ -70,27 +70,27 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
                 Description = course.Description,
                 Image = course.Image,
                 Status = course.Status,
-                LecturerId = lecturer.Id            
+                LecturerId = lecturer.Id
             };
         }
         //giảng viên xóa khóa học
         public async Task<bool> DeleteCourseAsync(Guid courseId, Guid accountId)
         {
-           
+
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
             if (lecturer == null)
             {
                 throw new Exception("Không tìm thấy giảng viên cho tài khoản này!");
             }
 
-            
+
             var course = await _courseRepository.GetCourseByIdAsync(courseId);
             if (course == null)
             {
                 throw new Exception("Không tìm thấy khoá học!");
             }
 
-           
+
             if (course.LecturerId != lecturer.Id)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa khoá học này!");
@@ -98,7 +98,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
 
             course.Status = "Unpublish";
             course.UpdatedAt = DateTime.Now;
-      
+
             _courseRepository.UpdateCourse(course);
             return await _courseRepository.SaveChangesAsync();
         }
@@ -147,13 +147,13 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
         }
         public async Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId)
         {
-            
+
             var adminAccount = await _accountRepository.GetByIdAsync(adminAccountId);
             if (adminAccount == null)
             {
                 throw new Exception("Không tìm thấy tài khoản quản trị viên!");
             }
-           
+
             var isAdminOrMod = adminAccount.RoleId == 3;
 
             if (!isAdminOrMod)
@@ -167,7 +167,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
                 throw new Exception("Không tìm thấy khoá học!");
             }
 
-            course.IsActive = !course.IsActive; 
+            course.IsActive = !course.IsActive;
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.UpdateCourse(course);
@@ -199,7 +199,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
                 LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
             }).ToList();
         }
-     
+
         // Check Authorization for Roles
         private async Task<bool> IsAuthorizedAsync(Guid accountId, int requiredRoleId)
         {
@@ -217,7 +217,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
 
         public async Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId)
         {
-            await IsAuthorizedAsync(accountId, 3); 
+            await IsAuthorizedAsync(accountId, 3);
 
             var courses = await _courseRepository.GetAllCourseAsync();
             return courses.Select(course => new CourseMorderatorResponseDto
@@ -244,7 +244,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
             {
                 return new List<CourseLecturerResponseDto>(); // Trả về danh sách rỗng
             }
-       
+
             return courses.Select(course => new CourseLecturerResponseDto
             {
                 Id = course.Id,
@@ -256,7 +256,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
                 Rating = course.Rating,
                 Status = course.Status,
                 IsActive = course.IsActive,
-                SubCategoryName = course.SubCategory?.Name ?? "Không có danh mục", 
+                SubCategoryName = course.SubCategory?.Name ?? "Không có danh mục",
                 CategoryName = course.SubCategory?.Category?.Name ?? "Không có danh mục cha",
                 CreatedAt = course.CreatedAt,
                 UpdatedAt = course.UpdatedAt,
@@ -291,7 +291,7 @@ public CourseService(ICourseRepository courseRepository, ILecturerRepository lec
                     Title = course.Lecturer.Title ?? "N/A",
                     Profession = course.Lecturer.Profession ?? "N/A"
                 } : null,
-                
+
                 Sections = course.Sections.Select(section => new SectionCourseDetailDto
                 {
                     Id = section.Id,
