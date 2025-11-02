@@ -23,6 +23,18 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Quizzes.FirstOrDefaultAsync(q => q.Id == id);
         }
 
+        public async Task<Quiz?> GetQuizWithQuestionsAsync(Guid quizId)
+        {
+            return await _context.Quizzes
+                .Include(q => q.Section)
+                    .ThenInclude(s => s.Course)
+                .Include(q => q.QuestionQuizzes)
+                    .ThenInclude(qq => qq.QuestionBank)
+                        .ThenInclude(qb => qb.AnswerBanks)
+                .FirstOrDefaultAsync(q => q.Id == quizId && q.IsActive);
+        }
+
+
         public async Task<Quiz?> GetQuizWithSectionAndCourseAsync(Guid quizId)
         {
             return await _context.Quizzes.Include(q => q.Section)
