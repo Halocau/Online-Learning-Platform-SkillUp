@@ -47,14 +47,13 @@ export default function CommentSection({ postId }) {
 
       const commentMap = {};
       const rootComments = [];
-      const seenIds = new Set(); // To prevent duplicates
+      const seenIds = new Set();
 
-      // --- NEW LOGIC ---
       // 1. First pass: Create a map of all comments and initialize replies
       allComments.forEach((comment) => {
         if (!comment.id || seenIds.has(comment.id)) {
           console.warn("Duplicate or invalid comment ID:", comment.id);
-          return; // Skip duplicates or comments without an ID
+          return;
         }
         seenIds.add(comment.id);
 
@@ -65,7 +64,7 @@ export default function CommentSection({ postId }) {
             comment.accountAvatarUrl ||
             `https://api.dicebear.com/8.x/avataaars/svg?seed=${comment.accountName}`,
           likeCount: comment.likeCount ?? 0,
-          replies: [], // Initialize replies array
+          replies: [],
         };
       });
 
@@ -79,7 +78,6 @@ export default function CommentSection({ postId }) {
           rootComments.push(comment);
         }
       });
-      // --- END NEW LOGIC ---
 
       // Sort root comments (newest first)
       rootComments.sort(
@@ -93,19 +91,13 @@ export default function CommentSection({ postId }) {
             c.replies.sort(
               (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
             );
-            sortReplies(c.replies); // Recursively sort replies of replies
+            sortReplies(c.replies);
           }
         });
       };
       sortReplies(rootComments);
 
       setComments(rootComments);
-
-      // Log the result to be sure
-      console.log(
-        "Comments set. Root IDs:",
-        rootComments.map((c) => c.id)
-      );
 
       // Auto-expand parents with replies
       setExpandedReplies((prev) => {
@@ -142,20 +134,17 @@ export default function CommentSection({ postId }) {
     setSubmitting(true);
     try {
       if (editingId) {
-        // --- EDITING LOGIC ---
         await commentApi.update({
           commentId: editingId,
           contents: commentText,
         });
 
-        // --- FIXED RECURSIVE UPDATE ---
         const updateCommentInTree = (commentsList) => {
           return commentsList.map((c) => {
             if (c.id === editingId) {
-              return { ...c, contents: commentText }; // Found it
+              return { ...c, contents: commentText };
             }
             if (c.replies?.length > 0) {
-              // Check replies recursively
               return { ...c, replies: updateCommentInTree(c.replies) };
             }
             return c;
@@ -163,12 +152,10 @@ export default function CommentSection({ postId }) {
         };
 
         setComments((prev) => updateCommentInTree(prev));
-        // --- END FIXED RECURSIVE UPDATE ---
 
         toast.success("Cập nhật bình luận thành công");
         setEditingId(null);
       } else {
-        // --- CREATING NEW COMMENT LOGIC (Unchanged) ---
         const res = await commentApi.create({
           postId,
           contents: commentText,
@@ -359,7 +346,6 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // TOGGLE ONLY ONE
   const toggleReplies = (commentId) => {
     setExpandedReplies((prev) => ({
       ...prev,
@@ -372,7 +358,6 @@ export default function CommentSection({ postId }) {
     setEditingId(null);
   };
 
-  // UNIQUE KEY + parentId for recursion
   const renderComment = (
     comment,
     isReply = false,
@@ -392,7 +377,7 @@ export default function CommentSection({ postId }) {
           comment={comment}
           isReply={isReply}
           isOwner={isOwner}
-          showReplies={showReplies}
+          showReplies={false}
           replyingToId={replyingToId}
           onEdit={handleEditComment}
           onDelete={(id) => {
@@ -419,15 +404,15 @@ export default function CommentSection({ postId }) {
               parentCommentId={comment.id}
             />
           )}
-
-          {showReplies && comment.replies?.length > 0 && (
-            <>
-              {comment.replies.map((reply) =>
-                renderComment(reply, true, depth + 1, comment.id)
-              )}
-            </>
-          )}
         </CommentItem>
+
+        {showReplies && comment.replies?.length > 0 && (
+          <div className="ml-12 mt-3 pl-4 border-l-2 border-gray-200 space-y-3">
+            {comment.replies.map((reply) =>
+              renderComment(reply, true, depth + 1, comment.id)
+            )}
+          </div>
+        )}
       </div>
     );
   };
