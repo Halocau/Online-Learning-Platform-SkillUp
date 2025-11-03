@@ -82,6 +82,46 @@ namespace SkillUp.Controllers
                 return BadRequest(new { code = 400, message = ex.Message });
             }
         }
-        
+        [HttpGet("All")]
+        [Authorize(Roles = "Content Morderator")] // Chỉ Content Moderator mới được xem
+        public async Task<IActionResult> GetAllReports()
+        {
+            try
+            {
+                var reports = await _reportService.GetAllReportsAsync();
+                return Ok(new
+                {
+                    code = 200,
+                    message = "Lấy danh sách báo cáo thành công",
+                    data = reports
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { code = 400, message = ex.Message });
+                   }
+        }
+
+        [HttpGet("Pending")]
+        [Authorize(Roles = "Content Morderator")] // Chỉ Content Moderator mới được xem
+        public async Task<IActionResult> GetPendingReports()
+
+        {
+            try
+            {
+                // Gọi service mới
+                var reports = await _reportService.GetPendingReportsAsync();
+                return Ok(new
+                {
+                    code = 200,
+                    message = "Lấy danh sách báo cáo chờ xử lý thành công",
+                    data = reports
+    });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { code = 400, message = ex.Message });
+            }
+        }
     }
 }
