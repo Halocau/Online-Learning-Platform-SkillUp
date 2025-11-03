@@ -51,7 +51,7 @@ export const getRedirectPath = (role) => {
     case 'Student':
       return '/'  
     case 'Lecturer':
-      return '/lecturer/apply-cv'
+      return '/lecturer/dashboard'
     default:
       return '/'
   }

@@ -16,7 +16,9 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.Set<Cart>()
                 .Include(c => c.CartItems)
-                .ThenInclude(ci => ci.Course)
+                    .ThenInclude(ci => ci.Course) 
+                        .ThenInclude(course => course.Lecturer) 
+                            .ThenInclude(lecturer => lecturer.Account) 
                 .FirstOrDefaultAsync(c => c.StudentId == studentId);
         }
 

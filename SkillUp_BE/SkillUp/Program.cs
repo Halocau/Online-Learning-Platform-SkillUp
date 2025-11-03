@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SkillUp.Bussiness.Services;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Configuration;
 using SkillUp.Hubs;
@@ -153,6 +154,16 @@ builder.Services.AddScoped<ICommentPostService, CommentPostService>();
 // LIKE MODULE
 builder.Services.AddScoped<ILikeCommentPostRepository, LikeCommentPostRepository>();
 builder.Services.AddScoped<ILikeCommentPostService, LikeCommentPostService>();
+
+// ... (Các services khác của bạn)
+
+builder.Services.AddScoped<ICommentReportRepository, CommentReportRepository>();
+builder.Services.AddScoped<ICommentReportService, CommentReportService>();
+
+//Section
+builder.Services.AddScoped<ISectionRepository, SectionRepository>();
+builder.Services.AddScoped<ISectionService, SectionService>();
+// ... (builder.Build() và phần còn lại)
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

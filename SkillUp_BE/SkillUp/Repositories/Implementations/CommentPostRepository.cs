@@ -17,7 +17,7 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.CommentPosts
                 .Include(c => c.Account)
-                .Where(c => c.PostId == postId)
+                 .Where(c => c.PostId == postId && c.IsActive)
                 .OrderBy(c => c.CreatedAt)
                 .ToListAsync();
         }

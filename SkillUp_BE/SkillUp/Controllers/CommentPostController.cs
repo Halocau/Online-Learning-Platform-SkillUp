@@ -87,5 +87,39 @@ namespace SkillUp.Controllers
                 return BadRequest(new { code = 400, message = ex.Message });
             }
         }
+
+        [Authorize]
+        [HttpDelete("Delete/{commentId}")]
+        public async Task<IActionResult> Delete(Guid commentId)
+        {
+            if (_currentUserService.UserId == null)
+                return BadRequest(new { code = 400, message = "Người dùng chưa đăng nhập" });
+
+            var accountId = _currentUserService.UserId.Value;
+
+            try
+            {
+                var deletedComment = await _commentService.DeleteCommentAsync(commentId, accountId);
+
+                // Gửi realtime qua SignalR (chỉ cần gửi Id)
+                await _hubContext.Clients.Group(deletedComment.PostId.ToString())
+                    .SendAsync("DeleteComment", deletedComment.Id);
+
+                return Ok(new
+                {
+                    code = 200,
+                    message = "Xóa comment thành công",
+                    data = new { id = deletedComment.Id } // Trả về Id của comment đã xóa
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid(); // 403
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { code = 400, message = ex.Message }); // 400
+            }
+        }
     }
 }

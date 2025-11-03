@@ -15,5 +15,7 @@ public partial class Asset
 
     public string? Contents { get; set; }
 
+    public string? FileUrl { get; set; }
+
     public virtual Lesson Lesson { get; set; } = null!;
 }

@@ -6,5 +6,10 @@ namespace SkillUp.Services.Interfaces
     public interface IQuizService
     {
         Task<bool> CreateQuizAsync(CreateQuizDTO dto, Guid accId);
+
+        Task<bool> UpdateQuizAsync(Guid quizId, UpdateQuizDTO dto, Guid accountId);
+
+        Task<bool> DeleteQuizAsync(Guid quizId, Guid accountId);
+        Task<QuizDetailDTO?> GetQuizDetailAsync(Guid quizId, Guid accountId);
     }
 }

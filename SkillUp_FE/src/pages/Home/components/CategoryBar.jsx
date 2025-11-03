@@ -7,7 +7,6 @@ export default function CategoryBar({ categories }) {
 
   return (
     <section className="bg-white border-b border-gray-200 shadow-sm relative z-40">
-      {/* === Top Category Bar === */}
       <div className="max-w-7xl mx-auto px-4 py-3 overflow-visible">
         <div className="flex justify-center gap-6 overflow-visible">
           {categories.map((cat) => (
@@ -28,7 +27,6 @@ export default function CategoryBar({ categories }) {
         </div>
       </div>
 
-      {/* === Horizontal Subcategory Bar (Udemy-style) === */}
       <AnimatePresence>
         {hoveredCategory &&
           categories.find((c) => c.id === hoveredCategory)?.subCategories

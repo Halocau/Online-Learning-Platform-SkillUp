@@ -51,6 +51,53 @@ namespace SkillUp.Controllers
                 return StatusCode(500, new APIReturn { code = 500, message = ex.Message });
             }
         }
+        [HttpPut("UpdateQuestion/{questionId}")]
+        public async Task<IActionResult> UpdateQuestion(Guid questionId, [FromBody] UpdateQuestionDTO dto)
+        {
+            try
+            {
+                var accId = _currentUserService.UserId;
+                if (!accId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
 
+                var success = await _questionService.UpdateQuestionWithAnswersAsync(questionId, dto, accId.Value);
+
+                if (!success)
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Cập nhật câu hỏi thất bại"
+                    });
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Cập nhật câu hỏi thành công"
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new APIReturn
+                {
+                    code = 401,
+                    message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = ex.Message
+                });
+            }
+        }
     }
 }

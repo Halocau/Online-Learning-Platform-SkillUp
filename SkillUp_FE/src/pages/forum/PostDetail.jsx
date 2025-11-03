@@ -6,11 +6,11 @@ import {
   useNavigate,
   useOutletContext,
 } from "react-router-dom";
-import { Spin, Button, Modal } from "antd";
+import { Spin, Button, Modal, Avatar, Divider } from "antd";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import CommentSection from "@/components/forum/CommentSection";
-import { Edit, Trash2, ArrowLeft } from "lucide-react";
+import CommentSection from "@/pages/forum/components/CommentSection";
+import { Edit, Trash2, ArrowLeft, Calendar, User } from "lucide-react";
 import { toast } from "react-toastify";
 
 export default function PostDetail() {
@@ -34,21 +34,38 @@ export default function PostDetail() {
         setPost(p);
       })
       .catch(() => {
-        toast.error("Failed to load post");
+        toast.error("Không thể tải bài viết");
       })
       .finally(() => setLoading(false));
   }, [postId]);
 
   if (loading)
     return (
-      <div className="text-center py-12">
+      <div className="flex items-center justify-center py-20">
         <Spin size="large" />
       </div>
     );
 
   if (!post)
     return (
-      <div className="p-6 bg-white rounded-lg shadow-sm">Post not found</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center max-w-md">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Không tìm thấy bài viết
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Bài viết này có thể đã bị xóa hoặc bạn không có quyền truy cập
+          </p>
+          <Link to="/forum">
+            <Button
+              type="primary"
+              className="rounded-lg bg-indigo-600 border-0"
+            >
+              Quay lại diễn đàn
+            </Button>
+          </Link>
+        </div>
+      </div>
     );
 
   const images = post.imageUrls ?? [];
@@ -59,10 +76,11 @@ export default function PostDetail() {
   const handleDelete = async () => {
     try {
       setDeleting(true);
-      console.log("Deleting post:", post);
       await postApi.delete(post.id);
       toast.success("Xóa bài viết thành công!");
-      navigate("/forum");
+      // Navigate to user's profile instead of forum home
+      const userId = post.accountId ?? post.AccountId;
+      navigate(`/forum/user/${userId}`);
     } catch (err) {
       console.error("Delete error:", err);
       toast.error("Xóa bài viết thất bại");
@@ -72,105 +90,169 @@ export default function PostDetail() {
     }
   };
 
-  const categoryName = post.categoryName || "Uncategorized";
+  const categoryName = post.categoryName || "Chưa phân loại";
+  const createdDate = post.createdAt
+    ? new Date(post.createdAt).toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 py-6">
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Back Button */}
+        <Link to="/forum" className="inline-flex mb-6">
+          <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200 p-2 hover:bg-white rounded-lg">
+            <ArrowLeft size={18} />
+            <span>Quay lại diễn đàn</span>
+          </button>
+        </Link>
+
+        {/* Main Post Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Featured Image */}
+          {images.length > 0 && (
+            <div className="relative h-80 bg-gradient-to-br from-gray-300 to-gray-400 overflow-hidden">
               <img
-                src={
-                  post.avatarUrl ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    post.accountName || "User"
-                  )}&background=random`
-                }
-                alt={post.accountName}
-                className="w-10 h-10 rounded-full border border-gray-200"
+                src={images[0]}
+                alt={post.title}
+                className="w-full h-full object-cover"
               />
-              <div>
-                <div className="font-medium text-gray-800">
-                  {post.accountName}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="p-8 md:p-10">
+            {/* Header with Author Info */}
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-6">
+              <div className="flex-1">
+                {/* Category */}
+                <div className="inline-flex items-center gap-2 mb-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+                  <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                    {categoryName}
+                  </span>
                 </div>
+
+                {/* Title */}
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                  {post.title}
+                </h1>
+
+                {/* Author Info */}
+                <div className="flex items-center gap-4">
+                  <Avatar
+                    src={
+                      post.avatarUrl ||
+                      `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(
+                        post.accountName || "User"
+                      )}&background=random`
+                    }
+                    alt={post.accountName}
+                    size={48}
+                    className="border-2 border-gray-200"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <User size={14} className="text-gray-400" />
+                      <h3 className="font-semibold text-gray-900">
+                        {post.accountName}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                      <Calendar size={14} />
+                      <span>{createdDate}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              {isOwner && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    type="default"
+                    icon={<Edit size={14} />}
+                    onClick={() => navigate(`/forum/edit/${post.id}`)}
+                    className="rounded-lg border-gray-300 font-medium"
+                  >
+                    Sửa
+                  </Button>
+                  <Button
+                    type="primary"
+                    danger
+                    icon={<Trash2 size={14} />}
+                    onClick={() => setDeleteModalVisible(true)}
+                    className="rounded-lg font-medium"
+                  >
+                    Xóa
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <Divider className="my-8" />
+
+            {/* Post Content */}
+            <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed mb-8">
+              <div className="text-base leading-relaxed whitespace-pre-wrap">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.contents}
+                </ReactMarkdown>
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {post.title}
-            </h1>
-            <div className="text-xs text-gray-400">
-              {post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link to="/forum">
-              <Button icon={<ArrowLeft size={14} />}>Quay lại</Button>
-            </Link>
-
-            {isOwner && (
-              <>
-                <Button
-                  type="default"
-                  icon={<Edit size={14} />}
-                  onClick={() => navigate(`/forum/edit/${post.id}`)}
-                >
-                  Sửa
-                </Button>
-                <Button
-                  type="primary"
-                  danger
-                  icon={<Trash2 size={14} />}
-                  onClick={() => setDeleteModalVisible(true)}
-                >
-                  Xóa
-                </Button>
-              </>
+            {/* Images Gallery */}
+            {images.length > 1 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Hình ảnh ({images.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {images.slice(1).map((u, i) => (
+                    <div
+                      key={i}
+                      className="relative overflow-hidden rounded-xl border border-gray-200 hover:border-indigo-300 transition-all duration-300 group"
+                    >
+                      <img
+                        src={u}
+                        alt={`Post image ${i + 1}`}
+                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="mt-6 prose prose-lg max-w-none text-gray-700 leading-relaxed">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {post.contents}
-          </ReactMarkdown>
-        </div>
+        {/* Delete Modal */}
+        <Modal
+          title="Xóa bài viết"
+          open={deleteModalVisible}
+          onOk={handleDelete}
+          onCancel={() => setDeleteModalVisible(false)}
+          okText="Xóa"
+          cancelText="Hủy"
+          okButtonProps={{ danger: true, loading: deleting }}
+          centered
+          wrapClassName="rounded-lg"
+        >
+          <p className="text-gray-700">
+            Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không
+            thể hoàn tác.
+          </p>
+        </Modal>
 
-        {images.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 mt-6">
-            {images.map((u, i) => (
-              <img
-                key={i}
-                src={u}
-                alt=""
-                className="w-full h-56 object-cover rounded-lg border border-gray-100 hover:opacity-90 transition"
-              />
-            ))}
-          </div>
-        )}
-
-        <div className="mt-6 text-sm text-gray-500">
-          Danh mục: <strong className="text-indigo-600">{categoryName}</strong>
+        {/* Comments Section */}
+        <div className="mt-8">
+          <CommentSection postId={postId} />
         </div>
       </div>
-
-      <Modal
-        title="Xóa bài viết"
-        open={deleteModalVisible}
-        onOk={handleDelete}
-        onCancel={() => setDeleteModalVisible(false)}
-        okText="Xóa bài viết"
-        cancelText="Hủy"
-        okButtonProps={{ danger: true, loading: deleting }}
-        centered
-      >
-        <p>Bạn có chắc chắn muốn xóa bài viết này không?</p>
-      </Modal>
-
-      {/* Comment section */}
-      <CommentSection postId={postId} />
     </div>
   );
 }

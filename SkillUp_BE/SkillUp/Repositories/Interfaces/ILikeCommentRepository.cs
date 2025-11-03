@@ -9,5 +9,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<LikeCommentPost?> GetByAccountAndCommentAsync(Guid accountId, Guid commentPostId);
         Task<LikeCommentPost> AddOrToggleLikeAsync(Guid accountId, Guid commentPostId);
         Task<int> CountLikesAsync(Guid commentPostId);
+
+        Task<Dictionary<Guid, int>> GetLikeCountsForCommentListAsync(IEnumerable<Guid> commentPostIds);
     }
 }

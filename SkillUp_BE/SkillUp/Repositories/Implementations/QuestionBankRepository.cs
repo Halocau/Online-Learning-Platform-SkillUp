@@ -40,5 +40,22 @@ namespace SkillUp.Repositories.Implementations
 		{
 			_context.QuestionBanks.Update(question);
 		}
-	}
+	
+        public async Task<QuestionBank?> GetQuestionWithAnswersAsync(Guid questionId)
+        {
+            return await _context.QuestionBanks
+                .Include(q => q.AnswerBanks)
+                .FirstOrDefaultAsync(q => q.Id == questionId && q.IsActive);
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public void Update(QuestionBank question)
+        {
+            _context.QuestionBanks.Update(question);
+        }
+    }
 }

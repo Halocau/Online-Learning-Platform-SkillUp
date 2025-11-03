@@ -23,6 +23,8 @@ import TicketDetail from "@/pages/Ticket/TicketDetail";
 import ForumRoutes from "./ForumRoute";
 import NewsList from "@/pages/News/NewsList";
 import NewsDetail from "@/pages/News/NewsDetail";
+import LecturerRoutes from "./LecturerRoute";
+import MyCart from "@/pages/Cart/MyCart";
 
 function AppRouter() {
   return (
@@ -35,8 +37,6 @@ function AppRouter() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<MyProfile />} />
-        <Route path="/lecturer/apply-cv" element={<ApplyCV />} />
-        <Route path="/lecturer/applications" element={<MyApplications />} />
 
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
@@ -44,14 +44,14 @@ function AppRouter() {
 
           <Route path="/news" element={<NewsList />} />
           <Route path="/news/:id" element={<NewsDetail />} />
+          <Route path="/Cart/:id" element={<MyCart />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
         <Route path="/student/*" element={<StudentRoutes />} />
-
-        {/* Ticket routes - accessible by all authenticated users */}
+        <Route path="lecturer/*"  element={<LecturerRoutes />}/>
         <Route path="/ticket" element={<TicketList />} />
         <Route path="/ticket/:ticketCode" element={<TicketDetail />} />
 

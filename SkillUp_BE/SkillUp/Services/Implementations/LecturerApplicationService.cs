@@ -1,10 +1,11 @@
-using System.Data.Common;
+using CloudinaryDotNet;
 using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
+using System.Data.Common;
 
 namespace SkillUp.Services.Implementations
 {
@@ -15,16 +16,17 @@ namespace SkillUp.Services.Implementations
         private readonly CloudinaryService _cloudinaryService;
         private readonly ICurrentUserService _currentUserService;
         private readonly ILecturerService _lecturerService;
+        private readonly IEmailService _emailService;
 
-        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, CloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService)
+        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, CloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService, IEmailService emailService)
         {
             _lecturerApplicationRepository = lecturerApplicationRepository;
             _accountRepository = accountRepository;
             _cloudinaryService = cloudinaryService;
             _currentUserService = currentUserService;
             _lecturerService = lecturerService;
+            _emailService = emailService;
         }
-
 
         public async Task<bool> ApplyCvAsync(Guid accountId, ApplyCvRequestDto request)
         {
@@ -198,6 +200,7 @@ namespace SkillUp.Services.Implementations
 
                     var created = await _lecturerService.CreateLecturerAsync(newLecturer);
                     if (!created) return false;
+
                 }
                 // Nếu đã tồn tại thì bỏ qua tạo mới (có thể cập nhật Title/Profession nếu cần)
 
@@ -221,7 +224,17 @@ namespace SkillUp.Services.Implementations
                     if (!accountUpdateResult) return false;
                 }
             }
-
+            // 6) Gửi Email thông báo(THÊM MỚI)
+            try
+            {
+                var account = await _accountRepository.GetByIdAsync(application.AccountId.Value);
+                await _emailService.SendLecturerApplicationStatusEmailAsync(account, request.Status, request.Reason);
+            }
+            catch (Exception)
+            {
+                // Tùy chọn: Log lỗi gửi email, nhưng không làm hỏng toàn bộ giao dịch
+                // Việc gửi mail thất bại không nên làm cho request `UpdateStatusAsync` trả về false
+            }
             return true;
         }
 

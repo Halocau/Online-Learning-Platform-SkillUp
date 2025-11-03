@@ -107,9 +107,8 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<VoucherType> VoucherTypes { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=(local);Database=SkillUp;User Id=sa;Password=123;Encrypt=False");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){}
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -438,6 +437,8 @@ public partial class SkillUpContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsFree).HasDefaultValue(false);
+            entity.Property(e => e.Title).HasMaxLength(400);
             entity.Property(e => e.Type).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -446,7 +447,7 @@ public partial class SkillUpContext : DbContext
             entity.HasOne(d => d.Section).WithMany(p => p.Lessons)
                 .HasForeignKey(d => d.SectionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Lecture_Section");
+                .HasConstraintName("FK_Lesson_Section");
         });
 
         modelBuilder.Entity<LikeCommentLesson>(entity =>

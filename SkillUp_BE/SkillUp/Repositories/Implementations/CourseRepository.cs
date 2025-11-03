@@ -41,10 +41,12 @@ namespace SkillUp.Repositories.Implementations
         public async Task<List<Course>> GetCoursesOfLecturer(Guid lecturerId)
         {
             return await _context.Courses
-                                 .Where(c => c.LecturerId == lecturerId)
-                                    .Include(c => c.Lecturer)
-                                    .Include(c => c.SubCategory)
-                                    .ToListAsync();
+                                 //.Where(c => c.LecturerId == lecturerId &&
+                                 //    (c.Status == "Public" || c.Status == "Draft"))
+                         .Include(c => c.Lecturer)
+                         .Include(c => c.SubCategory)
+                             .ThenInclude(sc => sc.Category) 
+                         .ToListAsync();
         }
 
         public async Task<List<Course>> GetNewestCoursesAsync(int limit)
@@ -68,6 +70,28 @@ namespace SkillUp.Repositories.Implementations
                 .ThenByDescending(c => c.Rating)
                 .Take(limit)
                 .ToListAsync();
+        }
+
+        public async Task<List<Section>> GetSectionsByCourseIdAsync(Guid courseId)
+        {
+            return await _context.Sections
+            .Where(s => s.CourseId == courseId)
+            .Include(s => s.Lessons)  
+            .ThenInclude(l => l.Assets)  
+            .ToListAsync();
+        }
+
+        public async Task<Course?> GetCourseWithDetailsAsync(Guid courseId)
+        {
+            return await _context.Courses
+                .Include(c => c.Lecturer)
+                    .ThenInclude(l => l.Account)
+                .Include(c => c.SubCategory)
+                    .ThenInclude(sc => sc.Category)
+                .Include(c => c.Sections.OrderBy(s => s.CreatedAt))
+                    .ThenInclude(s => s.Lessons.OrderBy(l => l.CreatedAt))
+                        .ThenInclude(l => l.Assets)
+                .FirstOrDefaultAsync(c => c.Id == courseId);
         }
 
         public async Task<bool> SaveChangesAsync()
