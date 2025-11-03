@@ -21,10 +21,10 @@ export default function ModeratorLayout() {
   };
 
   const menuItems = [
-    { label: "Dashboard", icon: <LayoutDashboard size={18} />, path: "/contentmod" },
-    { label: "Manage News", icon: <FileText size={18} />, path: "/contentmod/news" },
-    { label: "Tickets Request", icon: <MessageSquare size={18} />, path: "/contentmod/tickets" },
-    { label: "Comment Reports", icon: <MessageSquare size={18} />, path: "/contentmod/cmt" },
+    { label: "Bảng điều khiển", icon: <LayoutDashboard size={18} />, path: "/contentmod" },
+    { label: "Quản lý tin tức", icon: <FileText size={18} />, path: "/contentmod/news" },
+    { label: "Quản lý khóa học", icon: <MessageSquare size={18} />, path: "/contentmod/course" },
+    { label: "Báo cáo bình luận", icon: <MessageSquare size={18} />, path: "/contentmod/rpcmt" },
   ];
 
   return (

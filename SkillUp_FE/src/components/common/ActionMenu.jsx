@@ -1,7 +1,7 @@
 // src/components/ActionMenu.js
 
-import React from 'react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 const ActionMenu = ({ onEdit, onDelete }) => {
   return (
