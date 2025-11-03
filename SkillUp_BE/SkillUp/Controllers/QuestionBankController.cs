@@ -12,14 +12,10 @@ namespace SkillUp.Controllers
 	{
 		private readonly IQuestionBankService _questionBankService;
 		private readonly ICurrentUserService _currentUserService;
-		private readonly ILecturerService _lecturerService;
-		private readonly ICourseService _courseService;
-		public QuestionBankController(IQuestionBankService questionBankService, ICurrentUserService currentUserService, ILecturerService lecturerService, ICourseService courseService)
+		public QuestionBankController(IQuestionBankService questionBankService, ICurrentUserService currentUserService)
 		{
 			_questionBankService = questionBankService;
 			_currentUserService = currentUserService;
-			_lecturerService = lecturerService;
-			_courseService = courseService;
 		}
 
 		[HttpPost("create")]

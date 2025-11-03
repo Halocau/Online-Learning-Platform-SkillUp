@@ -26,7 +26,7 @@ namespace SkillUp.Services.Implementations
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course =  await _courseRepository.GetCourseByIdAsync(courseId);
 
-			if (lecturer == null || course.LecturerId != lecturer.Id)
+			if (lecturer == null || course!.LecturerId != lecturer.Id)
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
@@ -59,7 +59,7 @@ namespace SkillUp.Services.Implementations
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
-			if (lecturer == null || course.LecturerId != lecturer.Id)
+			if (lecturer == null || course!.LecturerId != lecturer.Id)
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
@@ -77,7 +77,7 @@ namespace SkillUp.Services.Implementations
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
-			if (lecturer == null || course.LecturerId != lecturer.Id)
+			if (lecturer == null || course!.LecturerId != lecturer.Id)
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
@@ -104,7 +104,7 @@ namespace SkillUp.Services.Implementations
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
-			if (lecturer == null || course.LecturerId != lecturer.Id)
+			if (lecturer == null || course!.LecturerId != lecturer.Id)
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
@@ -127,7 +127,7 @@ namespace SkillUp.Services.Implementations
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
-			if (lecturer == null || course.LecturerId != lecturer.Id)
+			if (lecturer == null || course!.LecturerId != lecturer.Id)
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}

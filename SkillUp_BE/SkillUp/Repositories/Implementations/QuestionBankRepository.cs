@@ -31,11 +31,6 @@ namespace SkillUp.Repositories.Implementations
 				.ToListAsync();
 		}
 
-		public async Task SaveChangesAsync()
-		{
-			await _context.SaveChangesAsync();
-		}
-
 		public void Update(QuestionBank question)
 		{
 			_context.QuestionBanks.Update(question);
@@ -51,11 +46,6 @@ namespace SkillUp.Repositories.Implementations
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;
-        }
-
-        public void Update(QuestionBank question)
-        {
-            _context.QuestionBanks.Update(question);
         }
     }
 }
