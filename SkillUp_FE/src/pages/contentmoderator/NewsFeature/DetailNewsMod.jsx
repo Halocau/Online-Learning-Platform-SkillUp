@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal } from "antd";
 
-export default function NewsDetailMod({ visible, onClose, news }) {
+export default function NewsDetailModal({ visible, onClose, news }) {
   if (!news) return null;
 
   return (
@@ -11,37 +11,29 @@ export default function NewsDetailMod({ visible, onClose, news }) {
       footer={null}
       centered
       width={800}
-      title={<h2 className="text-xl font-semibold text-gray-800">{news.title}</h2>}
+      title={
+        <h2 className="text-xl font-semibold text-gray-800">{news.title}</h2>
+      }
     >
       <div className="space-y-4">
-        
+        {/* Author and Date */}
         <div className="flex justify-between text-gray-600 text-sm">
           <p>
-            <span className="font-semibold">Author:</span>{" "}
-            {news.authorEmail || "N/A"}
+            <span className="font-semibold">Tác giả:</span> {news.email || "N/A"}
           </p>
           <p>
-            <span className="font-semibold">Date:</span>{" "}
-            {news.date ? new Date(news.date).toLocaleDateString("en-GB") : "N/A"}
+            <span className="font-semibold">Ngày đăng:</span>{" "}
+            {news.date
+              ? new Date(news.date).toLocaleDateString("vi-VN")
+              : "N/A"}
           </p>
         </div>
 
-        
-        {news.image && (
-          <div className="flex justify-center">
-            <img
-              src={news.image}
-              alt="News"
-              className="rounded-lg max-h-64 object-cover shadow-md"
-            />
-          </div>
-        )}
-
-        
+        {/* Content */}
         <div
-          className="text-gray-700 leading-relaxed"
+          className="text-gray-700 leading-relaxed prose max-w-none"
           dangerouslySetInnerHTML={{
-            __html: news.content || "<i>No content available</i>",
+            __html: news.contents || "<i>Không có nội dung</i>",
           }}
         />
       </div>
