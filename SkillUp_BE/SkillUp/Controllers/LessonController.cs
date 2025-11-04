@@ -103,17 +103,6 @@ namespace SkillUp.Controllers
                     return BadRequest(new APIReturn(400, "Dữ liệu không hợp lệ", errors.Cast<object>().ToList()));
                 }
 
-                // Server-side explicit validation for FileUrl extension to ensure immediate, clear error
-                if (dto.FileUrl != null && dto.FileUrl.Length > 0)
-                {
-                    var allowed = new[] { ".pdf", ".docx" };
-                    var ext = Path.GetExtension(dto.FileUrl.FileName)?.ToLowerInvariant();
-                    if (string.IsNullOrEmpty(ext) || !allowed.Contains(ext))
-                    {
-                        return BadRequest(new APIReturn(400, $"Tài liệu chỉ chấp nhận PDF hoặc DOCX. File bạn gửi có định dạng: {ext}", new List<object>()));
-                    }
-                }
-
                 var accountId = _currentUserService.UserId ?? Guid.Empty;
                 var lesson = await _lessonService.CreateLessonAsync(dto, accountId);
                 return Ok(new APIReturn(200, "Tạo bài học thành công", new List<object> { lesson }));
@@ -140,24 +129,6 @@ namespace SkillUp.Controllers
         {
             try
             {
-                // Validate ModelState
-                if (!ModelState.IsValid)
-                {
-                    var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
-                    return BadRequest(new APIReturn(400, "Dữ liệu không hợp lệ", errors.Cast<object>().ToList()));
-                }
-
-                // Server-side explicit validation for FileUrl extension
-                if (dto.FileUrl != null && dto.FileUrl.Length > 0)
-                {
-                    var allowed = new[] { ".pdf", ".docx" };
-                    var ext = Path.GetExtension(dto.FileUrl.FileName)?.ToLowerInvariant();
-                    if (string.IsNullOrEmpty(ext) || !allowed.Contains(ext))
-                    {
-                        return BadRequest(new APIReturn(400, $"Tài liệu chỉ chấp nhận PDF hoặc DOCX. File bạn gửi có định dạng: {ext}", new List<object>()));
-                    }
-                }
-
                 var accountId = _currentUserService.UserId ?? Guid.Empty;
                 var lesson = await _lessonService.UpdateLessonAsync(id, dto, accountId);
                 return Ok(new APIReturn(200, "Cập nhật bài học thành công", new List<object> { lesson }));
