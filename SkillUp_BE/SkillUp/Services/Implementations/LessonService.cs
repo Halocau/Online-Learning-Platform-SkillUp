@@ -13,19 +13,22 @@ namespace SkillUp.Services.Implementations
         private readonly ICourseRepository _courseRepository;
         private readonly ILecturerRepository _lecturerRepository;
         private readonly FtpVideoUploadService _ftpVideoUploadService;
+        private readonly CloudinaryService _cloudinaryService;
 
         public LessonService(
             ILessonRepository lessonRepository,
             ISectionRepository sectionRepository,
             ICourseRepository courseRepository,
             ILecturerRepository lecturerRepository,
-            FtpVideoUploadService ftpVideoUploadService)
+            FtpVideoUploadService ftpVideoUploadService,
+            CloudinaryService cloudinaryService)
         {
             _lessonRepository = lessonRepository;
             _sectionRepository = sectionRepository;
             _courseRepository = courseRepository;
             _lecturerRepository = lecturerRepository;
             _ftpVideoUploadService = ftpVideoUploadService;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<IEnumerable<LessonResponseDto>> GetAllLessonsAsync()
@@ -142,7 +145,7 @@ namespace SkillUp.Services.Implementations
                 // Upload video lên VPS qua FTP
                 var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
                 asset.Url = videoUrl;
-                asset.FileUrl = videoUrl;
+                asset.FileUrl = null; // Video không dùng FileUrl trong Asset
             }
             else if (dto.Type == "Text")
             {
@@ -153,6 +156,13 @@ namespace SkillUp.Services.Implementations
 
                 // Lưu content vào database
                 asset.Contents = dto.Content;
+            }
+
+            // Upload tài liệu khóa học nếu có (dùng cho cả Video và Text)
+            if (dto.FileUrl != null && dto.FileUrl.Length > 0)
+            {
+                var documentUrl = await _cloudinaryService.UploadDocumentAsync(dto.FileUrl, "skillup/lesson-documents");
+                asset.FileUrl = documentUrl;
             }
 
             lesson.Assets.Add(asset);
@@ -179,7 +189,7 @@ namespace SkillUp.Services.Implementations
 
             // 2. Kiểm tra quyền
             var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);
-            var course = await _courseRepository.GetCourseByIdAsync(section!.CourseId);
+            var course = await _courseRepository.GetCourseByIdAsync(section!.CourseId);//ko dc null
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 
             if (lecturer == null || course!.LecturerId != lecturer.Id)
@@ -209,12 +219,18 @@ namespace SkillUp.Services.Implementations
                     // Upload video mới lên VPS qua FTP
                     var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
                     asset.Url = videoUrl;
-                    asset.FileUrl = videoUrl;
                 }
                 else if (lesson.Type == "Text" && !string.IsNullOrEmpty(dto.Content))
                 {
                     // Cập nhật content
                     asset.Contents = dto.Content;
+                }
+
+                // Upload tài liệu khóa học mới nếu có (dùng cho cả Video và Text)
+                if (dto.FileUrl != null && dto.FileUrl.Length > 0)
+                {
+                    var documentUrl = await _cloudinaryService.UploadDocumentAsync(dto.FileUrl, "skillup/lesson-documents");
+                    asset.FileUrl = documentUrl;
                 }
             }
 
@@ -283,7 +299,8 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = lesson.CreatedAt,
                 UpdatedAt = lesson.UpdatedAt,
                 VideoUrl = lesson.Type == "Video" ? asset?.Url : null,
-                TextContent = lesson.Type == "Text" ? asset?.Contents : null
+                TextContent = lesson.Type == "Text" ? asset?.Contents : null,
+                FileUrl = asset?.FileUrl // Tài liệu khóa học
             };
         }
     }

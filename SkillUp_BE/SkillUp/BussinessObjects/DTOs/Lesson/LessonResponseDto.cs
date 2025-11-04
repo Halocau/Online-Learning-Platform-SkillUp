@@ -17,5 +17,6 @@ namespace SkillUp.BussinessObjects.DTOs.Lesson
         // Asset information
         public string? VideoUrl { get; set; }
         public string? TextContent { get; set; }
+        public string? FileUrl { get; set; } // Tài liệu khóa học (PDF/DOCX)
     }
 }

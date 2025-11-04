@@ -22,5 +22,9 @@ namespace SkillUp.BussinessObjects.DTOs.Lesson
 
         // Cho Video type - update video
         public IFormFile? VideoFile { get; set; }
+
+        // Tài liệu khóa học (PDF hoặc DOCX) - Optional
+        [AllowedExtensions(new[] { ".pdf", ".docx" }, ErrorMessage = "Tài liệu chỉ chấp nhận file PDF hoặc DOCX")]
+        public IFormFile? FileUrl { get; set; }
     }
 }
