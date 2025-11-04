@@ -150,7 +150,39 @@ namespace SkillUp.Controllers
             }
         }
 
+        [HttpGet("All-Users")]
+        [Authorize]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {            
+                var users = await _userService.GetAllUsersAsync();
 
+                if (users == null)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy danh sách người dùng."
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy danh sách người dùng thành công",
+                    data = new List<object> { users } 
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Lỗi máy chủ nội bộ: {ex.Message}"
+                });
+            }
+        }
 
     }
 }

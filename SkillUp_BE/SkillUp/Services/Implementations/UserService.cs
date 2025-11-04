@@ -15,6 +15,26 @@ namespace SkillUp.Services.Implementations
             _accountRepository = accountRepository;
             _cloudinaryService = cloudinaryService;
         }
+
+        public async Task<List<UserSummaryDTO>> GetAllUsersAsync()
+        {
+           
+            var accounts = await _accountRepository.GetAllAccountsAsync();
+
+           
+            var userSummaries = accounts.Select(a => new UserSummaryDTO
+            {
+                Id = a.Id,
+                Email = a.Email,
+                Fullname = a.Fullname,
+                Avatar = a.Avatar,
+                RoleName = a.Role?.Name ?? "Unknown",
+                Status = a.Status
+            }).ToList();
+
+            return userSummaries;
+        }
+
         public async Task<UserProfileDTO?> GetMyProfileAsync(Guid userId)
         {
             var user = await _accountRepository.GetByIdAsync(userId);

@@ -7,5 +7,7 @@ namespace SkillUp.Services.Interfaces
         Task<UserProfileDTO?> GetMyProfileAsync(Guid userId);
         Task<bool> UpdateProfileAsync(Guid userId , UpdateProfileDTO updateProfileDTO);
         Task<string?> UpdateAvatarAsync (Guid userId , IFormFile avatar);
+
+        Task<List<UserSummaryDTO>> GetAllUsersAsync();
     }
 }
