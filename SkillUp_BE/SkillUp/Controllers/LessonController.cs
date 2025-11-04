@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.Lesson;
 using SkillUp.Services.Interfaces;
 using SkillUp.ExceptionHandling;
+using SkillUp.Services.Common;
 
 namespace SkillUp.Controllers
 {
@@ -12,11 +13,16 @@ namespace SkillUp.Controllers
     {
         private readonly ILessonService _lessonService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly FtpVideoUploadService _ftpVideoUploadService;
 
-        public LessonController(ILessonService lessonService, ICurrentUserService currentUserService)
+        public LessonController(
+            ILessonService lessonService, 
+            ICurrentUserService currentUserService,
+            FtpVideoUploadService ftpVideoUploadService)
         {
             _lessonService = lessonService;
             _currentUserService = currentUserService;
+            _ftpVideoUploadService = ftpVideoUploadService;
         }
 
         [HttpGet]
