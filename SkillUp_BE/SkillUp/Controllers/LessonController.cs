@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.Lesson;
 using SkillUp.Services.Interfaces;
+using SkillUp.ExceptionHandling;
 
 namespace SkillUp.Controllers
 {
@@ -18,53 +19,34 @@ namespace SkillUp.Controllers
             _currentUserService = currentUserService;
         }
 
-        /// <summary>
-        /// Lấy tất cả bài học
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAllLessons()
         {
             try
             {
                 var lessons = await _lessonService.GetAllLessonsAsync();
-                return Ok(new
-                {
-                    code = 200,
-                    message = "Lấy danh sách bài học thành công",
-                    data = lessons
-                });
+                return Ok(new APIReturn(200, "Lấy danh sách bài học thành công", new List<object> { lessons }));
             }
             catch (Exception ex)
             {
-                return BadRequest(new { code = 400, message = ex.Message });
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
 
-        /// <summary>
-        /// Lấy các bài học đang active
-        /// </summary>
         [HttpGet("active")]
         public async Task<IActionResult> GetActiveLessons()
         {
             try
             {
                 var lessons = await _lessonService.GetActiveLessonsAsync();
-                return Ok(new
-                {
-                    code = 200,
-                    message = "Lấy danh sách bài học đang hoạt động thành công",
-                    data = lessons
-                });
+                return Ok(new APIReturn(200, "Lấy danh sách bài học đang hoạt động thành công", new List<object> { lessons }));
             }
             catch (Exception ex)
             {
-                return BadRequest(new { code = 400, message = ex.Message });
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
 
-        /// <summary>
-        /// Lấy bài học theo ID
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLessonById(Guid id)
         {
@@ -73,47 +55,32 @@ namespace SkillUp.Controllers
                 var lesson = await _lessonService.GetLessonByIdAsync(id);
                 if (lesson == null)
                 {
-                    return NotFound(new { code = 404, message = "Không tìm thấy bài học" });
+                    return NotFound(new APIReturn(404, "Không tìm thấy bài học", new List<object>()));
                 }
 
-                return Ok(new
-                {
-                    code = 200,
-                    message = "Lấy thông tin bài học thành công",
-                    data = lesson
-                });
+                return Ok(new APIReturn(200, "Lấy thông tin bài học thành công", new List<object> { lesson }));
             }
             catch (Exception ex)
             {
-                return BadRequest(new { code = 400, message = ex.Message });
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
 
-        /// <summary>
-        /// Lấy tất cả bài học theo Section ID
-        /// </summary>
+
         [HttpGet("section/{sectionId}")]
         public async Task<IActionResult> GetLessonsBySection(Guid sectionId)
         {
             try
             {
                 var lessons = await _lessonService.GetLessonsBySectionIdAsync(sectionId);
-                return Ok(new
-                {
-                    code = 200,
-                    message = "Lấy danh sách bài học theo section thành công",
-                    data = lessons
-                });
+                return Ok(new APIReturn(200, "Lấy danh sách bài học theo section thành công", new List<object> { lessons }));
             }
             catch (Exception ex)
             {
-                return BadRequest(new { code = 400, message = ex.Message });
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
 
-        /// <summary>
-        /// Tạo bài học mới (Giảng viên)
-        /// </summary>
         [HttpPost]
         [Consumes("multipart/form-data")]
         [Authorize]
@@ -121,14 +88,20 @@ namespace SkillUp.Controllers
         {
             try
             {
+                // Validate ModelState
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)).ToList();
+                    return BadRequest(new APIReturn(400, "Dữ liệu không hợp lệ", errors.Cast<object>().ToList()));
+                }
+
                 var accountId = _currentUserService.UserId ?? Guid.Empty;
                 var lesson = await _lessonService.CreateLessonAsync(dto, accountId);
-                return Ok(new
-                {
-                    code = 200,
-                    message = "Tạo bài học thành công",
-                    data = lesson
-                });
+                return Ok(new APIReturn(200, "Tạo bài học thành công", new List<object> { lesson }));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -136,13 +109,11 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { code = 400, message = ex.Message });
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
 
-        /// <summary>
-        /// Cập nhật bài học (Giảng viên)
-        /// </summary>
+
         [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
         [Authorize]
@@ -152,12 +123,7 @@ namespace SkillUp.Controllers
             {
                 var accountId = _currentUserService.UserId ?? Guid.Empty;
                 var lesson = await _lessonService.UpdateLessonAsync(id, dto, accountId);
-                return Ok(new
-                {
-                    code = 200,
-                    message = "Cập nhật bài học thành công",
-                    data = lesson
-                });
+                return Ok(new APIReturn(200, "Cập nhật bài học thành công", new List<object> { lesson }));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -165,13 +131,11 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { code = 400, message = ex.Message });
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
 
-        /// <summary>
-        /// Xóa bài học (Soft delete - Giảng viên)
-        /// </summary>
+
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> DeleteLesson(Guid id)
@@ -183,15 +147,10 @@ namespace SkillUp.Controllers
 
                 if (!result)
                 {
-                    return NotFound(new { code = 404, message = "Không thể xóa bài học" });
+                    return NotFound(new APIReturn(404, "Không thể xóa bài học", new List<object>()));
                 }
 
-                return Ok(new
-                {
-                    code = 200,
-                    message = "Xóa bài học thành công",
-                    data = result
-                });
+                return Ok(new APIReturn(200, "Xóa bài học thành công", new List<object> { result }));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -199,7 +158,7 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { code = 400, message = ex.Message });
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
     }

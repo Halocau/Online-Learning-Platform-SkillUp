@@ -63,6 +63,30 @@ namespace SkillUp.Services.Implementations
 
         public async Task<LessonResponseDto> CreateLessonAsync(CreateLessonDto dto, Guid accountId)
         {
+            // Validate Type phải là "Text" hoặc "Video"
+            if (dto.Type != "Text" && dto.Type != "Video")
+            {
+                throw new ArgumentException("Type chỉ có thể là 'Text' hoặc 'Video'");
+            }
+
+            // Validate logic theo Type
+            if (dto.Type == "Video")
+            {
+                // Nếu là Video thì VideoFile không được để trống
+                if (dto.VideoFile == null || dto.VideoFile.Length == 0)
+                {
+                    throw new ArgumentException("VideoFile không được để trống khi Type là 'Video'");
+                }
+            }
+            else if (dto.Type == "Text")
+            {
+                // Nếu là Text thì Content không được để trống
+                if (string.IsNullOrWhiteSpace(dto.Content))
+                {
+                    throw new ArgumentException("Content không được để trống khi Type là 'Text'");
+                }
+            }
+
             // 1. Kiểm tra section tồn tại
             var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId);
             if (section == null)
