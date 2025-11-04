@@ -238,7 +238,10 @@ namespace SkillUp.Services.Implementations
             {
                 throw new Exception("Không tìm thấy bài học!");
             }
-
+            if (lesson.IsActive == false)
+            {
+                throw new Exception("Bài học đã được xoá từ trước!");
+            }
             // 2. Kiểm tra quyền
             var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);
             var course = await _courseRepository.GetCourseByIdAsync(section!.CourseId);
@@ -248,9 +251,17 @@ namespace SkillUp.Services.Implementations
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa bài học này!");
             }
-
+            if (!lesson.IsActive) return true;
+            lesson.IsActive = false;
+            lesson.UpdatedAt = DateTime.Now;
             // 3. Soft delete
-            return await _lessonRepository.DeleteLessonAsync(id);
+            if (lesson.Assets != null)
+            {
+                foreach (var a in lesson.Assets) a.IsActive = false;
+            }
+
+            _lessonRepository.UpdateLesson(lesson);
+            return await _lessonRepository.SaveChangesAsync();
         }
 
         // Helper method to map Lesson to DTO

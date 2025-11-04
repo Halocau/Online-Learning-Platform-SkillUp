@@ -24,6 +24,7 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.Lessons
                 .Include(l => l.Section)
+                .Include(l => l.Assets)
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
 
