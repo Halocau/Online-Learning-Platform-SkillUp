@@ -27,7 +27,7 @@ export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
                 colSpan={columns.length + (onEdit || onDelete ? 1 : 0)}
                 className="text-center text-gray-400 py-6"
               >
-                No records found
+                Không tìm thấy dữ liệu
               </td>
             </tr>
           ) : (
@@ -56,7 +56,7 @@ export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
                         size="sm"
                         onClick={() => onEdit(item)}
                       >
-                        Edit
+                        Sửa
                       </Button>
                     )}
                     {onDelete && (
@@ -65,7 +65,7 @@ export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
                         size="sm"
                         onClick={() => onDelete(item.id)}
                       >
-                        Delete
+                        Xóa
                       </Button>
                     )}
                   </td>

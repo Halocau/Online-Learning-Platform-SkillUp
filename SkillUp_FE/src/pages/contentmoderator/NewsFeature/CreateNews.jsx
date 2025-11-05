@@ -4,6 +4,7 @@ import { Editor } from "@tinymce/tinymce-react";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { ArrowLeft } from "lucide-react";
 const { Option } = Select;
 
 const CreateNews = () => {
@@ -126,99 +127,107 @@ const CreateNews = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex justify-center py-8 px-4">
-      <Card
-        title="📝 Create News"
-        className="w-full max-w-4xl shadow-lg rounded-2xl"
-      >
-        <Space direction="vertical" size="large" className="w-full">
-          {/* Title Input */}
-          <div>
-            <label className="text-sm font-medium mb-1 block">Title</label>
-            <Input
-              placeholder="Enter news title..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              size="large"
+      <div className="max-w-4xl mx-auto">
+        <Button
+          icon={<ArrowLeft size={16} />}
+          onClick={() => navigate("/contentmod/news")}
+          className="mb-4"
+        >
+          Quay lại
+        </Button>
+        <Card
+          title="📝 Create News"
+          className="w-full max-w-4xl shadow-lg rounded-2xl"
+        >
+          <Space direction="vertical" size="large" className="w-full">
+            {/* Title Input */}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Tiêu đề</label>
+              <Input
+                placeholder="Nhập tiêu đề tin tức..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                size="large"
+              />
+            </div>
+
+            {/* TinyMCE Editor */}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Nội dung</label>
+            </div>
+            <Editor
+              apiKey="tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i"
+              init={{
+                height: 500,
+                plugins: [
+                  "anchor",
+                  "autolink",
+                  "charmap",
+                  "codesample",
+                  "emoticons",
+                  "image",
+                  "link",
+                  "lists",
+                  "media",
+                  "searchreplace",
+                  "table",
+                  "visualblocks",
+                  "wordcount",
+                  "fullscreen",
+                ],
+                toolbar:
+                  "undo redo | blocks | " +
+                  "bold italic underline strikethrough | alignleft aligncenter " +
+                  "alignright alignjustify | bullist numlist outdent indent | " +
+                  "removeformat | image media link | fullscreen",
+                content_style:
+                  "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                element_format: "xhtml",
+                file_picker_types: "image",
+                image_caption: true,
+                image_advtab: true,
+                automatic_uploads: true,
+                images_upload_handler: async function (blobInfo) {
+                  try {
+                    const formData = new FormData();
+                    formData.append(
+                      "image",
+                      blobInfo.blob(),
+                      blobInfo.filename()
+                    );
+
+                    const response = await axiosInstance.post(
+                      API_ENDPOINTS.UPLOAD_IMAGE,
+                      formData,
+                      {
+                        headers: { "Content-Type": "multipart/form-data" },
+                      }
+                    );
+
+                    // On success, return the URL of the uploaded image
+                    return response.data.data[0].url;
+                  } catch (err) {
+                    // On failure, throw an error with a message
+                    throw new Error(
+                      "Image upload failed. Error: " + err.message
+                    );
+                  }
+                },
+              }}
+              value={contents}
+              onEditorChange={(newContent) => setContents(newContent)}
             />
-          </div>
 
-          {/* TinyMCE Editor */}
-          <div>
-            <label className="text-sm font-medium mb-1 block">Contents</label>
-          </div>
-          <Editor
-            apiKey="tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i"
-            init={{
-              height: 500,
-              plugins: [
-                "anchor",
-                "autolink",
-                "charmap",
-                "codesample",
-                "emoticons",
-                "image",
-                "link",
-                "lists",
-                "media",
-                "searchreplace",
-                "table",
-                "visualblocks",
-                "wordcount",
-                "fullscreen",
-              ],
-              toolbar:
-                "undo redo | blocks | " +
-                "bold italic underline strikethrough | alignleft aligncenter " +
-                "alignright alignjustify | bullist numlist outdent indent | " +
-                "removeformat | image media link | fullscreen",
-              content_style:
-                "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-              element_format: "xhtml",
-              file_picker_types: "image",
-              image_caption: true,
-              image_advtab: true,
-              automatic_uploads: true,
-              images_upload_handler: async function (blobInfo) {
-                try {
-                  const formData = new FormData();
-                  formData.append(
-                    "image",
-                    blobInfo.blob(),
-                    blobInfo.filename()
-                  );
-
-                  const response = await axiosInstance.post(
-                    API_ENDPOINTS.UPLOAD_IMAGE,
-                    formData,
-                    {
-                      headers: { "Content-Type": "multipart/form-data" },
-                    }
-                  );
-
-                  // On success, return the URL of the uploaded image
-                  return response.data.data[0].url;
-                } catch (err) {
-                  // On failure, throw an error with a message
-                  throw new Error("Image upload failed. Error: " + err.message);
-                }
-              },
-            }}
-            value={contents}
-            onEditorChange={(newContent) => setContents(newContent)}
-          />
-
-          {/* Submit Button */}
-          <Button
-            type="primary"
-            size="large"
-            loading={loading}
-            onClick={handleSubmit}
-            className="w-full"
-          >
-            Publish News
-          </Button>
-        </Space>
-      </Card>
+            {/* Submit Button */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button onClick={() => navigate("/contentmod/news")}>Hủy</Button>
+              <Button type="primary" loading={loading} onClick={handleSubmit}>
+                Tạo tin
+              </Button>
+            </div>
+          </Space>
+        </Card>
+      </div>
     </div>
   );
 };

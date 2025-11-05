@@ -1,9 +1,11 @@
-﻿using SkillUp.BussinessObjects.DTOs.Comment; // <-- Sửa namespace DTO
+﻿using SkillUp.BussinessObjects.DTOs.Comment; 
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SkillUp.Services.Implementations
 {
@@ -103,6 +105,41 @@ namespace SkillUp.Services.Implementations
                 CommentPostId = report.CommentPostId,
                 ReporterName = report.Account?.Fullname ?? ""
             };
+        }
+
+        public async Task<IEnumerable<CommentReportDto>> GetAllReportsAsync()
+        {
+            var reports = await _reportRepo.GetAllAsync();
+
+            // Map danh sách Model sang danh sách DTO
+            return reports.Select(report => new CommentReportDto
+            {
+                Id = report.Id,
+                Reason = report.Reason,
+                Status = report.Status,
+                CreatedAt = report.CreatedAt,
+                AccountId = report.AccountId,
+                CommentPostId = report.CommentPostId,
+                ReporterName = report.Account?.Fullname ?? "" // Lấy tên người report
+            });
+        }
+
+        public async Task<IEnumerable<CommentReportDto>> GetPendingReportsAsync()
+        {
+            // Gọi phương thức mới của repo
+            var reports = await _reportRepo.GetAllPendingAsync();
+
+            // Map sang DTO (logic map giống hệt hàm GetAll)
+            return reports.Select(report => new CommentReportDto
+            {
+                Id = report.Id,
+                Reason = report.Reason,
+                Status = report.Status,
+                CreatedAt = report.CreatedAt,
+                AccountId = report.AccountId,
+                CommentPostId = report.CommentPostId,
+                ReporterName = report.Account?.Fullname ?? ""
+            });
         }
     }
 }

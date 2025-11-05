@@ -1,5 +1,6 @@
 ﻿using SkillUp.BussinessObjects.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SkillUp.Repositories.Interfaces
@@ -12,5 +13,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<bool> HasAlreadyReportedAsync(Guid accountId, Guid commentPostId);
         Task<CommentReportPost?> GetByIdAsync(Guid reportId);
         Task UpdateAsync(CommentReportPost report);
+        Task<IEnumerable<CommentReportPost>> GetAllAsync();
+        Task<IEnumerable<CommentReportPost>> GetAllPendingAsync();
     }
 }

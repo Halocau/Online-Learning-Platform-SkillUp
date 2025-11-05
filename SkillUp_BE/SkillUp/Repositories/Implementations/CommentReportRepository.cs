@@ -3,6 +3,8 @@ using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic; 
+using System.Linq;
 
 namespace SkillUp.Repositories.Implementations
 {
@@ -45,6 +47,26 @@ namespace SkillUp.Repositories.Implementations
         {
             _context.CommentReportPosts.Update(report);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<CommentReportPost>> GetAllAsync()
+        {
+            // Lấy tất cả report, bao gồm thông tin người report (Account)
+            // Sắp xếp theo ngày tạo mới nhất để dễ theo dõi
+            return await _context.CommentReportPosts
+        .Include(r => r.Account)
+        .OrderByDescending(r => r.CreatedAt)
+        .ToListAsync();
+        }
+
+        public async Task<IEnumerable<CommentReportPost>> GetAllPendingAsync()
+        {
+            // Thêm .Where(r => r.Status == "Pending")
+            return await _context.CommentReportPosts
+        .Include(r => r.Account) // Vẫn lấy tên người report
+                .Where(r => r.Status == "Pending")
+        .OrderByDescending(r => r.CreatedAt) // Sắp xếp cái mới nhất lên đầu
+                .ToListAsync();
         }
     }
 }
