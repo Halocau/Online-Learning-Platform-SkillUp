@@ -107,18 +107,16 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<VoucherType> VoucherTypes { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder){}
-
-
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Account>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Account__3214EC076DFB9FE6");
+            entity.HasKey(e => e.Id).HasName("PK__Account__3214EC07579DA9C0");
 
             entity.ToTable("Account");
 
-            entity.HasIndex(e => e.Email, "UQ__Account__A9D1053471E03F71").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Account__A9D1053488A2E4A8").IsUnique();
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Avatar).IsUnicode(false);
@@ -163,7 +161,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Asset>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Asset__3214EC07EFDF1467");
+            entity.HasKey(e => e.Id).HasName("PK__Asset__3214EC07F41E44DC");
 
             entity.ToTable("Asset");
 
@@ -192,11 +190,11 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Cart__3214EC07901B86FE");
+            entity.HasKey(e => e.Id).HasName("PK__Cart__3214EC07DFA74943");
 
             entity.ToTable("Cart");
 
-            entity.HasIndex(e => e.StudentId, "UQ__Cart__349DA5A799245AEB").IsUnique();
+            entity.HasIndex(e => e.StudentId, "UQ__Cart__32C52B98D322E848").IsUnique();
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
@@ -208,7 +206,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<CartItem>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__CartItem__3214EC07F923177E");
+            entity.HasKey(e => e.Id).HasName("PK__CartItem__3214EC070BFEACE0");
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
@@ -331,6 +329,7 @@ public partial class SkillUpContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Image).IsUnicode(false);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.OriginalPrice).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Rating).HasDefaultValue(0.0);
             entity.Property(e => e.Status)
@@ -355,11 +354,11 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Enrollment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Enrollme__3214EC0783BD5100");
+            entity.HasKey(e => e.Id).HasName("PK__Enrollme__3214EC07F99288FE");
 
             entity.ToTable("Enrollment");
 
-            entity.HasIndex(e => new { e.StudentId, e.CourseId }, "UQ__Enrollme__580F72BD9A06D074").IsUnique();
+            entity.HasIndex(e => new { e.StudentId, e.CourseId }, "UQ__Enrollme__5E57FC82F8B0B459").IsUnique();
 
             entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
             entity.Property(e => e.CompletedAt).HasColumnType("datetime");
@@ -401,7 +400,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<LecturerApplication>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Lecturer__3214EC07C36A8885");
+            entity.HasKey(e => e.Id).HasName("PK__Lecturer__3214EC07F3FCF6D9");
 
             entity.ToTable("LecturerApplication");
 
@@ -497,7 +496,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<NewsImage>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__NewImage__3214EC07A76F4C1B");
+            entity.HasKey(e => e.Id).HasName("PK__NewsImag__3214EC07479426DB");
 
             entity.ToTable("NewsImage");
 
@@ -511,7 +510,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Notify>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Notify__3214EC07DDA0E4F0");
+            entity.HasKey(e => e.Id).HasName("PK__Notify__3214EC07216CDF0F");
 
             entity.ToTable("Notify");
 
@@ -637,7 +636,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Quiz>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Quiz__3214EC0701E7A384");
+            entity.HasKey(e => e.Id).HasName("PK__Quiz__3214EC07575BFBB5");
 
             entity.ToTable("Quiz");
 
@@ -659,7 +658,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<QuizAnswerSubmission>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__QuizAnsw__3214EC07B0327BF3");
+            entity.HasKey(e => e.Id).HasName("PK__QuizAnsw__3214EC07E0877B97");
 
             entity.ToTable("QuizAnswerSubmission");
 
@@ -683,7 +682,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<QuizSubmission>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__QuizSubm__3214EC07A94B0ED3");
+            entity.HasKey(e => e.Id).HasName("PK__QuizSubm__3214EC07E3E22E7F");
 
             entity.ToTable("QuizSubmission");
 
@@ -707,7 +706,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Rating>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Rating__3214EC0722C04234");
+            entity.HasKey(e => e.Id).HasName("PK__Rating__3214EC0727D20D91");
 
             entity.ToTable("Rating");
 
@@ -808,7 +807,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Section>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Section__3214EC07F0F74A07");
+            entity.HasKey(e => e.Id).HasName("PK__Section__3214EC07CEAF98DA");
 
             entity.ToTable("Section");
 
@@ -900,7 +899,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<Transaction>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Transact__3214EC07B00F053B");
+            entity.HasKey(e => e.Id).HasName("PK__Transact__3214EC070594872D");
 
             entity.ToTable("Transaction");
 
@@ -963,7 +962,7 @@ public partial class SkillUpContext : DbContext
 
         modelBuilder.Entity<VoucherType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__VoucherT__3214EC07860BE4E5");
+            entity.HasKey(e => e.Id).HasName("PK__VoucherT__3214EC076ED72665");
 
             entity.ToTable("VoucherType");
 
