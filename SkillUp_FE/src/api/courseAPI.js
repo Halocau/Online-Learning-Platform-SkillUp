@@ -1,3 +1,4 @@
+// src/api/courseAPI.js
 import axiosInstance from "@/lib/axios";
 
 const API_BASE_URL = "/Course";
@@ -61,7 +62,6 @@ export const courseAPI = {
     }
   },
 
-  // New APIs for content moderator
   getAllCourses: async () => {
     try {
       const response = await axiosInstance.get(`${API_BASE_URL}/All-Courses`);
@@ -80,6 +80,17 @@ export const courseAPI = {
       return response;
     } catch (error) {
       console.error("Error banning/unbanning course:", error);
+      throw error;
+    }
+  },
+
+  // Get course detail by ID
+  getCourseDetail: async (courseId) => {
+    try {
+      const response = await axiosInstance.get(`${API_BASE_URL}/${courseId}`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching course detail:", error);
       throw error;
     }
   },

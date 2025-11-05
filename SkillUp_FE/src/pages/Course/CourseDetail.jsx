@@ -1,0 +1,128 @@
+// src/pages/CourseDetail.jsx
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { courseAPI } from "@/api/courseAPI";
+import CourseDetailSkeleton from "@/components/course-detail/CourseDetailSkeleton";
+import CourseDetailHero from "@/components/course-detail/CourseDetailHero";
+import MobileStickyBar from "@/components/course-detail/StickyBar";
+import CourseCurriculumSection from "@/components/course-detail/CourseCurriculumnSection";
+import CourseDescriptionSection from "@/components/course-detail/CourseDescription";
+import ReviewsSection from "@/components/course-detail/ReviewSection";
+import RelatedTopicsSection from "@/components/course-detail/RelatedTopic";
+import MoreCoursesByLecturerSection from "@/components/course-detail/MoreCourseBy";
+import CourseEnrollmentCard from "@/components/course-detail/CourseEnrollmentCard";
+import LecturerSection from "@/components/course-detail/LecturerSection";
+
+export default function CourseDetail() {
+  const { courseId } = useParams();
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const fetchCourseDetail = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await courseAPI.getCourseDetail(courseId);
+
+        if (response.data.code === 200) {
+          setCourse(response.data.data[0]);
+        } else {
+          throw new Error(response.data.message);
+        }
+      } catch (err) {
+        console.error("Error fetching course:", err);
+        setError(err.message || "Không thể tải thông tin khóa học");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (courseId) {
+      fetchCourseDetail();
+    }
+  }, [courseId]);
+
+  if (loading) return <CourseDetailSkeleton />;
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😞</div>
+          <p className="text-red-600 text-xl mb-4 font-semibold">
+            Lỗi: {error}
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900"
+          >
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔍</div>
+          <p className="text-gray-600 mb-4 text-xl">Không tìm thấy khóa học</p>
+          <Button
+            onClick={() => window.history.back()}
+            className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900"
+          >
+            Quay lại
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <CourseDetailHero course={course} />
+
+      <MobileStickyBar course={course} />
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-12 lg:pb-12 pb-28">
+        <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <CourseDescriptionSection description={course.description} />
+            <RelatedTopicsSection
+              categoryName={course.categoryName}
+              subCategoryName={course.subCategoryName}
+            />
+            <CourseCurriculumSection sections={course.sections} />
+
+            <LecturerSection
+              lecturer={course.lecturer}
+              rating={course.rating}
+              enrollmentCount={course.enrollmentCount}
+            />
+
+            <ReviewsSection
+              courseRating={course.rating}
+              totalReviews={course.enrollmentCount}
+            />
+            <MoreCoursesByLecturerSection
+              lecturerName={course.lecturer.fullName}
+            />
+          </div>
+
+          <div className="hidden lg:block">
+            <CourseEnrollmentCard course={course} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

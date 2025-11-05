@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo_skillup.png";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { toast } from "react-toastify";
-
+import { useCart } from "@/context/CartContext";
 function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -12,7 +12,7 @@ function Header() {
     return cachedUser ? JSON.parse(cachedUser) : null;
   });
   const navigate = useNavigate();
-
+  const { cartCount } = useCart();
   const accessToken = localStorage.getItem("accessToken");
   const isAuthenticated = !!accessToken;
 
@@ -157,26 +157,37 @@ function Header() {
               className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm"
             ></Link>
 
-            {/* Cart */}
+            
             {/* Cart */}
             <Link
-              // Nếu đã đăng nhập, trỏ đến /cart/user.id
-              // Nếu chưa, trỏ đến /login
-              to={isAuthenticated && user ? `/cart/${user.id}` : '/login'}
-
-              // Thêm onClick để thông báo nếu chưa đăng nhập
+              to={isAuthenticated && user ? `/cart/${user.id}` : "/login"}
               onClick={(e) => {
                 if (!isAuthenticated || !user) {
-                  e.preventDefault(); // Ngăn chuyển trang
+                  e.preventDefault();
                   toast.info("Vui lòng đăng nhập để xem giỏ hàng");
                   navigate("/login");
                 }
               }}
-              className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2"
+              className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2 relative"
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 8M7 13l2.5 8M13 13v8" />
+              <svg
+                className="w-5 h-5 sm:w-6 sm:h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 8M7 13l2.5 8M13 13v8"
+                />
               </svg>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  {cartCount}
+                </span>
+              )}
             </Link>
 
             {/* Auth Buttons */}
