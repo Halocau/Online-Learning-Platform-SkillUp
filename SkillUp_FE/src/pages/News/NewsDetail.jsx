@@ -6,7 +6,6 @@ import {
   CalendarIcon,
   UserIcon,
   ShareIcon,
-  ClockIcon,
 } from "@heroicons/react/24/outline";
 import axiosInstance from "../../lib/axios";
 import { getAllNews } from "../../api/newsAPI";
@@ -28,9 +27,8 @@ export default function NewsDetail() {
         const data = res.data.data?.[0];
         setNews(data);
 
-        // Fetch all news for recommendations
         const allNews = await getAllNews();
-        // Filter out current news and get 3 random recommendations
+
         const filtered = allNews.filter((item) => item.id !== id);
         const shuffled = filtered.sort(() => 0.5 - Math.random());
         setRecommendedNews(shuffled.slice(0, 3));
@@ -42,18 +40,6 @@ export default function NewsDetail() {
     };
     fetchData();
   }, [id]);
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: news.title,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("Đã sao chép liên kết!");
-    }
-  };
 
   const extractImageAndText = (htmlContent) => {
     if (!htmlContent) return { image: null, text: "" };
@@ -126,14 +112,7 @@ export default function NewsDetail() {
                     })}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <ClockIcon className="h-5 w-5" />
-                  <span className="text-sm">5 phút đọc</span>
-                </div>
-                <button
-                  onClick={handleShare}
-                  className="ml-auto flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-                >
+                <button className="ml-auto flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium">
                   <ShareIcon className="h-5 w-5" />
                   Chia sẻ
                 </button>
