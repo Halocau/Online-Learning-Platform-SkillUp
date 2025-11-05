@@ -183,6 +183,47 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpPut("update-status")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserStatus([FromBody] UserStatusDTO dto)
+        {
+            if (dto == null || dto.Id == Guid.Empty || string.IsNullOrWhiteSpace(dto.Status))
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = "Dữ liệu đầu vào không hợp lệ."
+                });
+            }
+
+            try
+            {
+                var result = await _userService.ToggleStatusUser(dto.Id, dto.Status);
+
+                if (!result)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy người dùng cần cập nhật."
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = $"Cập nhật trạng thái người dùng thành công: {dto.Status}"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = $"Lỗi khi cập nhật trạng thái: {ex.Message}"
+                });
+            }
+        }
 
     }
 }

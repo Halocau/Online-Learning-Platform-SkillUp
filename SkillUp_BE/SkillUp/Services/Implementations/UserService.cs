@@ -58,6 +58,18 @@ namespace SkillUp.Services.Implementations
             return userProfileDTO;
         }
 
+        public async Task<bool> ToggleStatusUser(Guid userId, string newStatus)
+        {
+            var user = await _accountRepository.GetByIdAsync(userId);
+
+            if (user == null)
+            {
+                return false;
+            }
+            var rs = await _accountRepository.UpdateStatusAsync(userId, newStatus);
+            return rs;
+        }
+
         public async Task<string?> UpdateAvatarAsync(Guid userId, IFormFile avatar)
         {
             if (avatar == null || avatar.Length == 0)
