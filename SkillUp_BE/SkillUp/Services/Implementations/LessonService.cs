@@ -3,6 +3,7 @@ using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace SkillUp.Services.Implementations
 {
@@ -66,36 +67,10 @@ namespace SkillUp.Services.Implementations
 
         public async Task<LessonResponseDto> CreateLessonAsync(CreateLessonDto dto, Guid accountId)
         {
-            // Validate Type phải là "Text" hoặc "Video"
-            if (dto.Type != "Text" && dto.Type != "Video")
-            {
-                throw new ArgumentException("Type chỉ có thể là 'Text' hoặc 'Video'");
-            }
-
-            // Validate logic theo Type
-            if (dto.Type == "Video")
-            {
-                // Nếu là Video thì VideoFile không được để trống
-                if (dto.VideoFile == null || dto.VideoFile.Length == 0)
-                {
-                    throw new ArgumentException("VideoFile không được để trống khi Type là 'Video'");
-                }
-            }
-            else if (dto.Type == "Text")
-            {
-                // Nếu là Text thì Content không được để trống
-                if (string.IsNullOrWhiteSpace(dto.Content))
-                {
-                    throw new ArgumentException("Content không được để trống khi Type là 'Text'");
-                }
-            }
-
+            ValidateCreate(dto);
             // 1. Kiểm tra section tồn tại
-            var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId);
-            if (section == null)
-            {
-                throw new Exception("Không tìm thấy section!");
-            }
+            var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId) 
+                ?? throw new Exception("Không tìm thấy section!");
 
             // 2. Kiểm tra quyền: giảng viên phải sở hữu course
             var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);
@@ -176,6 +151,20 @@ namespace SkillUp.Services.Implementations
             // 5. Lấy lại lesson với đầy đủ thông tin
             var createdLesson = await _lessonRepository.GetLessonWithDetailsAsync(lesson.Id);
             return MapToResponseDto(createdLesson!);
+        }
+
+        private void ValidateCreate(CreateLessonDto dto)
+        {
+            var isVideo = dto.Type == "Video";
+            var isText = dto.Type == "Text";
+
+            if (!isVideo && ! isText) throw new ValidationException("Type chỉ có thể là 'Text' hoặc 'Video'.");
+
+            if (isText && (dto.VideoFile == null || dto.VideoFile.Length == 0))
+                throw new ValidationException("VideoFile bắt buộc khi Type = 'Video'.");
+
+            if (isText && string.IsNullOrEmpty(dto.Content))
+                throw new ValidationException("Content bắt buộc khi Type = 'Text'.");
         }
 
         public async Task<LessonResponseDto> UpdateLessonAsync(Guid id, UpdateLessonDto dto, Guid accountId)
