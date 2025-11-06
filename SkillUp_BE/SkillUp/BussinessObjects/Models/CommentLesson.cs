@@ -23,6 +23,8 @@ public partial class CommentLesson
 
     public virtual ICollection<CommentLesson> InverseParentComment { get; set; } = new List<CommentLesson>();
 
+    public virtual Lesson Lesson { get; set; } = null!;
+
     public virtual ICollection<LikeCommentLesson> LikeCommentLessons { get; set; } = new List<LikeCommentLesson>();
 
     public virtual CommentLesson? ParentComment { get; set; }
