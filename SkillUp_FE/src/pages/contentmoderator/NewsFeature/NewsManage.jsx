@@ -23,7 +23,7 @@ import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { toast } from "sonner";
 import NewsDetailModal from "./DetailNewsMod";
-
+import { extractCleanText, extractFirstImage } from "@/utils/htmlUtils";
 export default function NewsManage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -177,37 +177,34 @@ export default function NewsManage() {
       key: "contents",
       title: "Nội dung",
       render: (value) => {
-        if (!value) return null;
+        if (!value) {
+          return (
+            <span className="text-gray-400 italic text-sm">
+              Không có nội dung
+            </span>
+          );
+        }
 
-        const imgMatch = value.match(/<img[^>]+src="([^">]+)"/);
-        const imgSrc = imgMatch ? imgMatch[1] : null;
-        const cleanText = value
-          .replace(/<img[^>]*>/g, "")
-          .replace(/<\/?[^>]+(>|$)/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
+        const imgSrc = extractFirstImage(value);
+        const cleanText = extractCleanText(value, 180);
 
         return (
-          <div className="flex items-start gap-3 max-w-[420px] overflow-hidden">
+          <div className="flex items-start gap-3 max-w-[500px]">
             {imgSrc && (
               <img
                 src={imgSrc}
-                alt="thumb"
-                className="w-[100px] h-[70px] object-cover rounded-lg flex-shrink-0"
+                alt="thumbnail"
+                className="w-20 h-20 object-cover rounded-lg flex-shrink-0 shadow-sm border border-gray-100"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
               />
             )}
-            <p
-              className="text-gray-700 leading-snug overflow-hidden"
-              style={{
-                display: "-webkit-box",
-                WebkitLineClamp: 4,
-                WebkitBoxOrient: "vertical",
-                maxHeight: "5.6em",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {cleanText}
-            </p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-gray-700 line-clamp-3 leading-relaxed break-words">
+                {cleanText}
+              </p>
+            </div>
           </div>
         );
       },
