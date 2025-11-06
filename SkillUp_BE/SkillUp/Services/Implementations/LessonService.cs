@@ -40,7 +40,7 @@ namespace SkillUp.Services.Implementations
                 lesson => new GetLessonResponseDto
                 {
                     Id = lesson.Id,
-                    LessonOrder = lesson.LessonOrder,
+                    LessonOrder = lesson.Orders,
                     Title = lesson.Title,
                     Type = lesson.Type,
                     Description = lesson.Description ?? string.Empty,
@@ -68,7 +68,7 @@ namespace SkillUp.Services.Implementations
                 lessons => new GetLessonActiveResponseDto
                 {
                     Id = lessons.Id,
-                    LessonOrder = lessons.LessonOrder,
+                    LessonOrder = lessons.Orders,
                     Title = lessons.Title,
                     Type = lessons.Type,
                     Description = lessons.Description ?? string.Empty,
@@ -111,7 +111,7 @@ namespace SkillUp.Services.Implementations
         {
             ValidateCreate(dto);
             // 1. Kiểm tra section tồn tại
-            var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId) 
+            var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId)
                 ?? throw new Exception("Không tìm thấy section!");
 
             // 2. Kiểm tra quyền: giảng viên phải sở hữu course
@@ -135,7 +135,7 @@ namespace SkillUp.Services.Implementations
                 Title = dto.Title,
                 Type = dto.Type,
                 Description = dto.Description,
-                LessonOrder = dto.LessonOrder,
+                Orders = dto.LessonOrder,
                 IsFree = dto.IsFree,
                 IsActive = true,
                 CreatedAt = DateTime.Now,
@@ -200,7 +200,7 @@ namespace SkillUp.Services.Implementations
             var isVideo = dto.Type == "Video";
             var isText = dto.Type == "Text";
 
-            if (!isVideo && ! isText) throw new ValidationException("Type chỉ có thể là 'Text' hoặc 'Video'.");
+            if (!isVideo && !isText) throw new ValidationException("Type chỉ có thể là 'Text' hoặc 'Video'.");
 
             if (isVideo && (dto.VideoFile == null || dto.VideoFile.Length == 0))
                 throw new ValidationException("VideoFile bắt buộc khi Type = 'Video'.");
@@ -231,7 +231,7 @@ namespace SkillUp.Services.Implementations
             // 3. Update lesson info
             lesson.Title = dto.Title;
             lesson.Description = dto.Description;
-            lesson.LessonOrder = dto.LessonOrder;
+            lesson.Orders = dto.LessonOrder;
             lesson.IsFree = dto.IsFree;
             lesson.UpdatedAt = DateTime.Now;
 
@@ -324,7 +324,7 @@ namespace SkillUp.Services.Implementations
                 Title = lesson.Title,
                 Type = lesson.Type ?? "Text",
                 Description = lesson.Description,
-                LessonOrder = lesson.LessonOrder,
+                LessonOrder = lesson.Orders,
                 IsFree = lesson.IsFree ?? false,
                 IsActive = lesson.IsActive,
                 CreatedAt = lesson.CreatedAt,

@@ -93,7 +93,15 @@ namespace SkillUp.Repositories.Implementations
                         .ThenInclude(l => l.Assets)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
         }
-
+        public async Task<List<Course>> GetCoursesOfLecturerByAccountIdAsync(Guid accountId)
+        {
+            return await _context.Courses
+                .Where(c => c.Lecturer != null && c.Lecturer.AccountId == accountId)
+                .Include(c => c.SubCategory)
+                    .ThenInclude(sc => sc.Category)
+                .Where(c => c.IsActive) 
+                .ToListAsync();
+        }
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

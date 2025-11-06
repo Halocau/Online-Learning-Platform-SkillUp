@@ -340,18 +340,7 @@ namespace SkillUp.Controllers
                         data = new List<object>()
                     });
                 }
-                // Lấy lecturerId từ AccountId
-                var lecturer = await _lecturerService.GetLecturerByAccountIdAsync(accountId.Value);
-                if (lecturer == null)
-                {
-                    return NotFound(new APIReturn
-                    {
-                        code = 404,
-                        message = "Không tìm thấy giảng viên cho tài khoản này!",
-                        data = new List<object>()
-                    });
-                }
-                var courses = await _courseService.GetCoursesOfLecturer(lecturer.Id);
+                var courses = await _courseService.GetCoursesOfLecturerByAccountId(accountId.Value);
                 if (courses == null || courses.Count == 0)
                 {
                     return NotFound(new APIReturn

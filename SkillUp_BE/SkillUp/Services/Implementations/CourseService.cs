@@ -235,15 +235,11 @@ namespace SkillUp.Services.Implementations
             }).ToList();
         }
 
-        public async Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturer(Guid lecturerId)
+        public async Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturerByAccountId(Guid accountId)
         {
-            var courses = await _courseRepository.GetCoursesOfLecturer(lecturerId);
-
-            // Kiểm tra nếu danh sách khóa học rỗng hoặc null
-            if (courses == null || !courses.Any())
-            {
-                return new List<CourseLecturerResponseDto>(); // Trả về danh sách rỗng
-            }
+            var courses = await _courseRepository.GetCoursesOfLecturerByAccountIdAsync(accountId);
+            if (courses == null || courses.Count == 0)
+                return new List<CourseLecturerResponseDto>();
 
             return courses.Select(course => new CourseLecturerResponseDto
             {
@@ -302,7 +298,7 @@ namespace SkillUp.Services.Implementations
                     Lessons = section.Lessons.Select(lesson => new LessonCourseDetailDto
                     {
                         Id = lesson.Id,
-                        LessonOrder = (double)lesson.LessonOrder,
+                        LessonOrder = (double)lesson.Orders,
                         Title = lesson.Title,
                         Type = lesson.Type,
                         Description = lesson.Description,
