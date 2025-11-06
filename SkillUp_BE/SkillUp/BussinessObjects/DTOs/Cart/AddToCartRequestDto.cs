@@ -1,8 +1,13 @@
-﻿namespace SkillUp.BussinessObjects.DTOs.Cart
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SkillUp.BussinessObjects.DTOs.Cart
 {
     public class AddToCartRequestDto
     {
-        public Guid CourseId { get; set; } 
-        public decimal Price { get; set; }
+        [Required]
+        public Guid CourseId { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Price không hợp lệ.")]
+        public decimal Price { get; set; } = 0;
     }
 }

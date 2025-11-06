@@ -111,6 +111,10 @@ namespace SkillUp.Repositories.Implementations
         {
             _context.Update(course);
         }
+        public async Task<bool> ExistsAsync(Guid courseId)
+        {
+            return await _context.Courses.AnyAsync(c => c.Id == courseId);
+        }
 
     }
 }

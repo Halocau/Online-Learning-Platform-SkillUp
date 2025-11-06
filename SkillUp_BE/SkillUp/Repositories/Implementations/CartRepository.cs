@@ -45,5 +45,19 @@ namespace SkillUp.Repositories.Implementations
         {
             await _context.Carts.AddAsync(cart);
         }
+
+        public async Task AddCartItemsRangeAsync(IEnumerable<CartItem> items)
+        {
+            await _context.CartItems.AddRangeAsync(items);
+        }
+
+        //lấy danh sách CourseId đã có trong cart để lọc trùng nhanh
+        public async Task<HashSet<Guid>> GetCourseIdsInCartAsync(Guid cartId)
+        {
+            return (await _context.CartItems
+                .Where(ci => ci.CartId == cartId)
+                .Select(ci => ci.CourseId)
+                .ToListAsync()).ToHashSet();
+        }
     }
 }
