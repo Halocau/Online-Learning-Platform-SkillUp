@@ -19,7 +19,7 @@ import {
 
 import { toast } from "react-toastify";
 import { courseAPI } from "@/api/courseAPI";
-import Table from "@/components/common/Table";
+
 
 export default function CourseManagement() {
   const [courses, setCourses] = useState([]);
