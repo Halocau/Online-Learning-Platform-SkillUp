@@ -3,15 +3,13 @@ import { Routes, Route } from "react-router-dom";
 import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
-// Import admin pages
 import Dashboard from "../pages/admin/AdminDashboard";
-
 
 const AdminRoutes = () => {
   return (
     <Routes>
       <Route
-        path="/"
+        path="/*"
         element={
           <ProtectedRoute allowedRoles={["Admin"]}>
             <AdminLayout />
@@ -19,7 +17,7 @@ const AdminRoutes = () => {
         }
       >
         <Route index element={<Dashboard />} />
-        // Routes chức năng khác
+        {/* Other admin routes */}
       </Route>
     </Routes>
   );
