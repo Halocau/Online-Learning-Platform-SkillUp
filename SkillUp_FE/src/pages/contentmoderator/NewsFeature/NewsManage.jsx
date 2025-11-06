@@ -91,8 +91,7 @@ export default function NewsManage() {
 
     const matchesDate =
       dateFilter === "all" ||
-      (dateFilter === "today" &&
-        news.date === dayjs().format("YYYY-MM-DD")) ||
+      (dateFilter === "today" && news.date === dayjs().format("YYYY-MM-DD")) ||
       (dateFilter === "week" &&
         dayjs(news.date).isAfter(dayjs().subtract(7, "days"))) ||
       (dateFilter === "month" &&
