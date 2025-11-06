@@ -25,6 +25,7 @@ import NewsList from "@/pages/News/NewsList";
 import NewsDetail from "@/pages/News/NewsDetail";
 import LecturerRoutes from "./LecturerRoute";
 import MyCart from "@/pages/Cart/MyCart";
+import CourseDetail from "@/pages/Course/CourseDetail";
 
 function AppRouter() {
   return (
@@ -45,6 +46,7 @@ function AppRouter() {
           <Route path="/news" element={<NewsList />} />
           <Route path="/news/:id" element={<NewsDetail />} />
           <Route path="/Cart/:id" element={<MyCart />} />
+          <Route path="/course/:courseId" element={<CourseDetail />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />
