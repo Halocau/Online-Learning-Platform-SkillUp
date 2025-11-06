@@ -23,7 +23,7 @@ import { Modal } from "antd";
 import Table from "@/components/common/Table";
 import { getAllReports, resolveReport } from "@/api/commentReport";
 import dayjs from "dayjs";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 export default function CommentReport() {
   const [data, setData] = useState([]);
