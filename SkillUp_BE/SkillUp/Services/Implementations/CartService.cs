@@ -43,6 +43,13 @@ namespace SkillUp.Services.Implementations
                 await _cartRepository.AddCart(cart);
             }
 
+            //block duplicate course add
+            if (cart.CartItems != null && cart.CartItems.Any(c=> c.CourseId == request.CourseId))
+            {
+                return true;// có add thêm thì vẫn 1 course, ko báo lỗi
+            }
+
+
             var cartItem = new CartItem
             {
                 Id = Guid.NewGuid(),
