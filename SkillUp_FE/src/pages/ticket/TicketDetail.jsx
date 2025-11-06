@@ -6,6 +6,7 @@ import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
 import CreateTicketModal from '../../components/Ticket/CreateTicketModal';
 import UpdateTicketModal from '../../components/Ticket/UpdateTicketModal';
+import TicketFilterPanel from '@/components/Ticket/TicketFilterPanel';
 
 function TicketDetail() {
     const { ticketCode } = useParams();
@@ -174,39 +175,15 @@ function TicketDetail() {
                 <div className="flex flex-col lg:flex-row lg:gap-8 min-w-0">
                     {/* Sidebar trái */}
                     <aside className="lg:w-64 flex-shrink-0 mb-6 lg:mb-0">
-                        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sticky top-8">
-                            <h3 className="text-base font-semibold text-gray-900 mb-4">Lọc phiếu hỗ trợ</h3>
-
-                            <nav className="space-y-2 mb-6">
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/ticket?tab=all')}
-                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                                >
-                                    Tất cả phiếu
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/ticket?tab=approved')}
-                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                                >
-                                    Phiếu đã duyệt
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/ticket?tab=rejected')}
-                                    className="w-full text-left px-4 py-2.5 rounded-lg font-medium transition-all text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                                >
-                                    Phiếu bị từ chối
-                                </button>
-                            </nav>
-
-                            <button
-                                onClick={() => setIsModalOpen(true)}
-                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold shadow-sm"
-                            >
-                                <span>➕</span> Tạo phiếu mới
-                            </button>
+                        <div className="sticky top-8">
+                            <TicketFilterPanel
+                                // ở trang detail không cần activeTab chính xác từ URL, vì bấm sẽ điều hướng sang trang list
+                                activeTab="all"
+                                onChangeTab={(tab) => navigate(`/ticket?tab=${tab}`)}
+                                onCreateNew={() => setIsModalOpen(true)}
+                                title="Lọc phiếu hỗ trợ"
+                                variant="card"
+                            />
                         </div>
                     </aside>
 

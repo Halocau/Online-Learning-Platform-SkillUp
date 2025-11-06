@@ -5,6 +5,8 @@ import Footer from '@/components/Layout/Footer';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
 import CreateTicketModal from '../../components/Ticket/CreateTicketModal';
+import { jwtDecode } from 'jwt-decode';
+import TicketFilterPanel from '@/components/Ticket/TicketFilterPanel';
 
 const PAGE_SIZE = 5;
 
@@ -51,16 +53,45 @@ function TicketList() {
     }
   }, []);
 
+  const getCurrentUserId = useCallback(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      const parsed = stored ? JSON.parse(stored) : null;
+      if (parsed?.userId) return parsed.userId;
+
+      // Fallback: decode accessToken nếu chưa có "user"
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        const decoded = jwtDecode(accessToken);
+        if (decoded?.userId) return decoded.userId;
+      }
+    } catch { }
+    return null;
+  }, []);
+
   useEffect(() => {
     const fetchTickets = async () => {
       try {
         setLoading(true);
-        const endpoint = API_ENDPOINTS.ALL_TICKETS;
+
+        const accountId = getCurrentUserId();
+        if (!accountId) {
+          toast.error('Không xác định được người dùng. Vui lòng đăng nhập lại.');
+          setAllTickets([]);
+          setFilteredTickets([]);
+          setTotalPages(1);
+          setCurrentPage(1);
+          return;
+        }
+
+        // Build endpoint: /Ticket/account-tickets/{accountId}
+        const endpoint = API_ENDPOINTS.ACCOUNT_TICKETS.replace('{accountId}', accountId);
+
         const response = await axiosInstance.get(endpoint);
 
-        if (response.data.code === 200) {
-          const raw = response.data.data[0] || [];
-          // sort newest first
+        if (response.data?.code === 200) {
+          // giả định backend trả về dạng mảng ở data[0] giống endpoint cũ
+          const raw = response.data.data?.[0] || [];
           const sorted = [...raw].sort((a, b) => {
             const ta = new Date(a.createdAt).getTime();
             const tb = new Date(b.createdAt).getTime();
@@ -74,16 +105,23 @@ function TicketList() {
           setTotalPages(Math.ceil(filtered.length / PAGE_SIZE) || 1);
           setCurrentPage(1);
         }
+        {/** 
+          else {
+          toast.error('Không thể tải danh sách ticket');
+        }
+          */}
       } catch (error) {
         console.error('Error fetching tickets:', error);
-        toast.error('Không thể tải danh sách ticket');
+        // toast.error('Không thể tải danh sách ticket');
       } finally {
         setLoading(false);
       }
     };
+
     fetchTickets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refetchTrigger]); // không phụ thuộc activeTab => chỉ lọc lại client-side
+  }, [refetchTrigger]); // giữ nguyên: refetch khi tạo mới/trigger
+
 
   // Re-filter khi đổi tab hoặc dữ liệu gốc thay đổi
   useEffect(() => {
@@ -174,45 +212,13 @@ function TicketList() {
         <div className="flex gap-8">
           {/* Sidebar */}
           <aside className="w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Lọc phiếu hỗ trợ</h3>
-              <nav className="space-y-2 mb-6">
-                <button
-                  onClick={() => setActiveTab('all')}
-                  className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${activeTab === 'all'
-                    ? 'bg-yellow-400 text-gray-900 shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                >
-                  Tất cả phiếu
-                </button>
-                <button
-                  onClick={() => setActiveTab('approved')}
-                  className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${activeTab === 'approved'
-                    ? 'bg-yellow-400 text-gray-900 shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                >
-                  Phiếu đã duyệt
-                </button>
-                <button
-                  onClick={() => setActiveTab('rejected')}
-                  className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all ${activeTab === 'rejected'
-                    ? 'bg-yellow-400 text-gray-900 shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                >
-                  Phiếu bị từ chối
-                </button>
-              </nav>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition-all shadow-md hover:shadow-lg"
-              >
-                <span className="text-xl">➕</span>
-                Tạo phiếu mới
-              </button>
-            </div>
+            <TicketFilterPanel
+              activeTab={activeTab}
+              onChangeTab={setActiveTab} // vẫn set state cục bộ
+              onCreateNew={() => setIsModalOpen(true)}
+              title="Lọc phiếu hỗ trợ"
+              variant="card"
+            />
           </aside>
 
           {/* Main Content */}
