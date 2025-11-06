@@ -15,16 +15,13 @@ namespace SkillUp.Controllers
     {
         private readonly ILessonService _lessonService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly FtpVideoUploadService _ftpVideoUploadService;
 
         public LessonController(
             ILessonService lessonService, 
-            ICurrentUserService currentUserService,
-            FtpVideoUploadService ftpVideoUploadService)
+            ICurrentUserService currentUserService)
         {
             _lessonService = lessonService;
             _currentUserService = currentUserService;
-            _ftpVideoUploadService = ftpVideoUploadService;
         }
 
         [HttpGet]
@@ -105,7 +102,7 @@ namespace SkillUp.Controllers
 
                 var accountId = _currentUserService.UserId ?? Guid.Empty;
                 var lesson = await _lessonService.CreateLessonAsync(dto, accountId);
-                return Ok(new APIReturn(200, "Tạo bài học thành công", new List<object> { lesson }));
+                return Ok(new APIReturn(200, "Tạo bài học thành công", new List<object>()));
             }
             catch (ArgumentException ex)
             {

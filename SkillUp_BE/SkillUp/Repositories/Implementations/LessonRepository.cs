@@ -16,6 +16,7 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.Lessons
                 .Include(l => l.Section)
+                .Include(a=> a.Assets)
                 .OrderBy(l => l.LessonOrder)
                 .ToListAsync();
         }
@@ -50,6 +51,8 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Lessons
                 .Where(l => l.IsActive)
                 .Include(l => l.Section)
+                .Include(l => l.Assets)
+                    .Where(l => l.IsActive)
                 .OrderBy(l => l.LessonOrder)
                 .ToListAsync();
         }

@@ -4,8 +4,8 @@ namespace SkillUp.Services.Interfaces
 {
     public interface ILessonService
     {
-        Task<IEnumerable<LessonResponseDto>> GetAllLessonsAsync();
-        Task<IEnumerable<LessonResponseDto>> GetActiveLessonsAsync();
+        Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync();
+        Task<IEnumerable<GetLessonActiveResponseDto>> GetActiveLessonsAsync();
         Task<IEnumerable<LessonResponseDto>> GetLessonsBySectionIdAsync(Guid sectionId);
         Task<LessonResponseDto?> GetLessonByIdAsync(Guid id);
         Task<LessonResponseDto> CreateLessonAsync(CreateLessonDto dto, Guid accountId);

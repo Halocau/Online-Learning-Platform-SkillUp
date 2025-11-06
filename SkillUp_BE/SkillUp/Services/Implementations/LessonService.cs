@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.DTOs.Lesson;
+﻿using SkillUp.BussinessObjects.DTOs.Asset;
+using SkillUp.BussinessObjects.DTOs.Lesson;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
@@ -32,16 +33,57 @@ namespace SkillUp.Services.Implementations
             _cloudinaryService = cloudinaryService;
         }
 
-        public async Task<IEnumerable<LessonResponseDto>> GetAllLessonsAsync()
+        public async Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync()
         {
-            var lessons = await _lessonRepository.GetAllLessonsAsync();
-            return lessons.Select(MapToResponseDto);
+            var lessons = await _lessonRepository.GetAllLessonsAsync() ?? new List<Lesson>();
+            return lessons.Select(
+                lesson => new GetLessonResponseDto
+                {
+                    Id = lesson.Id,
+                    LessonOrder = lesson.LessonOrder,
+                    Title = lesson.Title,
+                    Type = lesson.Type,
+                    Description = lesson.Description ?? string.Empty,
+                    IsFree = lesson.IsFree ?? false,
+                    IsActive = lesson.IsActive,
+                    CreatedAt = lesson.CreatedAt,
+                    UpdatedAt = lesson.UpdatedAt,
+                    Assets = lesson.Assets?.Select(a => new AssetGetLessonResponseDto
+                    {
+                        Id = a.Id,
+                        Url = a.Url,
+                        Contents = a.Contents,
+                        FileUrl = a.FileUrl,
+                        IsActive = a.IsActive
+                    }).ToList() ?? new List<AssetGetLessonResponseDto>()
+                }
+                );
+
         }
 
-        public async Task<IEnumerable<LessonResponseDto>> GetActiveLessonsAsync()
+        public async Task<IEnumerable<GetLessonActiveResponseDto>> GetActiveLessonsAsync()
         {
             var lessons = await _lessonRepository.GetActiveLessonsAsync();
-            return lessons.Select(MapToResponseDto);
+            return lessons.Select(
+                lessons => new GetLessonActiveResponseDto
+                {
+                    Id = lessons.Id,
+                    LessonOrder = lessons.LessonOrder,
+                    Title = lessons.Title,
+                    Type = lessons.Type,
+                    Description = lessons.Description ?? string.Empty,
+                    IsFree = lessons.IsFree ?? false,
+                    CreatedAt = lessons.CreatedAt,
+                    UpdatedAt = lessons.UpdatedAt,
+                    Assets = lessons.Assets?.Where(a => a.IsActive).Select(a => new AssetGetActiveLessonResponseDto
+                    {
+                        Id = a.Id,
+                        Url = a.Url,
+                        Contents = a.Contents,
+                        FileUrl = a.FileUrl
+                    }).ToList() ?? new List<AssetGetActiveLessonResponseDto>()
+                }
+                );
         }
 
         public async Task<IEnumerable<LessonResponseDto>> GetLessonsBySectionIdAsync(Guid sectionId)
@@ -160,7 +202,7 @@ namespace SkillUp.Services.Implementations
 
             if (!isVideo && ! isText) throw new ValidationException("Type chỉ có thể là 'Text' hoặc 'Video'.");
 
-            if (isText && (dto.VideoFile == null || dto.VideoFile.Length == 0))
+            if (isVideo && (dto.VideoFile == null || dto.VideoFile.Length == 0))
                 throw new ValidationException("VideoFile bắt buộc khi Type = 'Video'.");
 
             if (isText && string.IsNullOrEmpty(dto.Content))
