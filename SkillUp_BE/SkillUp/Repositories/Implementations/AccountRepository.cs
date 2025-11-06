@@ -72,5 +72,15 @@ namespace SkillUp.Repositories.Implementations
 
             return await _context.SaveChangesAsync() > 0;
         }
+
+
+        public async Task<List<Account>> GetAllAccountsAsync()
+        {
+            return await _context.Accounts
+                .Where(a => a.RoleId == 4 || a.RoleId == 5) 
+                .Include(a => a.Role) 
+                .OrderBy(a => a.Fullname)
+                .ToListAsync();
+        }
     }
 }

@@ -11,6 +11,8 @@ namespace SkillUp.Repositories.Interfaces
         Task AddAsync(Account account);
         Task UpdateAsync(Account account);
         Task<bool> SaveChangesAsync();
-        Task<bool> UpdateStatusAsync(Guid accountId, string newStatus); 
+        Task<bool> UpdateStatusAsync(Guid accountId, string newStatus);
+
+        Task<List<Account>> GetAllAccountsAsync();
     }
 }

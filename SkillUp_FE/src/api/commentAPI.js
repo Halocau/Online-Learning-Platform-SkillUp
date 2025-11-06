@@ -20,7 +20,6 @@ export const commentApi = {
       );
       return response;
     } catch (error) {
-      console.error("❌ Error fetching comments:", error);
       throw error;
     }
   },
@@ -38,10 +37,9 @@ export const commentApi = {
           },
         }
       );
-      console.log("✅ Comment created:", response.data);
+
       return response;
     } catch (error) {
-      console.error("❌ Error creating comment:", error);
       throw error;
     }
   },
@@ -58,10 +56,9 @@ export const commentApi = {
           },
         }
       );
-      console.log("✅ Comment updated:", response.data);
+
       return response;
     } catch (error) {
-      console.error("❌ Error updating comment:", error);
       throw error;
     }
   },
@@ -77,10 +74,9 @@ export const commentApi = {
           },
         }
       );
-      console.log("✅ Comment deleted:", response.data);
+
       return response;
     } catch (error) {
-      console.error("❌ Error deleting comment:", error);
       throw error;
     }
   },
@@ -97,10 +93,8 @@ export const commentApi = {
           },
         }
       );
-      console.log("✅ Comment reported:", response.data);
       return response;
     } catch (error) {
-      console.error("❌ Error reporting comment:", error);
       throw error;
     }
   },
@@ -116,10 +110,9 @@ export const commentApi = {
           },
         }
       );
-      console.log("✅ Like toggled:", response.data);
+
       return response;
     } catch (error) {
-      console.error("❌ Error toggling like:", error);
       throw error;
     }
   },
@@ -136,7 +129,6 @@ export const commentApi = {
       );
       return response;
     } catch (error) {
-      console.error("❌ Error fetching like count:", error);
       throw error;
     }
   },
