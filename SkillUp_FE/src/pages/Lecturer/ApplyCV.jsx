@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Award,
   CheckCircle2,
+  X,
 } from "lucide-react";
 
 function ApplyCV() {
@@ -31,7 +32,7 @@ function ApplyCV() {
     profession: "",
     description: "",
     cvFile: null,
-    degreeFile: null,
+    degreeFiles: [], 
   });
 
   // Kiểm tra xem đã có đơn ứng tuyển chưa
@@ -76,28 +77,65 @@ function ApplyCV() {
           e.target.value = "";
           return;
         }
-      } else if (name === "degreeFile") {
-        // Bằng cấp chấp nhận ảnh (JPG, PNG, JPEG)
-        const validImageTypes = ["image/jpeg", "image/jpg", "image/png"];
-        if (!validImageTypes.includes(file.type)) {
-          toast.error("Bằng cấp chỉ chấp nhận file ảnh (JPG, PNG)!");
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error("File không được vượt quá 5MB!");
           e.target.value = "";
           return;
         }
+
+        setFormData((prev) => ({
+          ...prev,
+          cvFile: file,
+        }));
+      }
+    }
+  };
+
+  const handleDegreeFilesChange = (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (files.length === 0) return;
+
+    // Validate từng file
+    const validImageTypes = ["image/jpeg", "image/jpg", "image/png"];
+    const validFiles = [];
+
+    for (const file of files) {
+      // Validate file type
+      if (!validImageTypes.includes(file.type)) {
+        toast.error(`File ${file.name} không hợp lệ! Chỉ chấp nhận ảnh JPG, PNG.`);
+        continue;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("File không được vượt quá 5MB!");
-        e.target.value = "";
-        return;
+        toast.error(`File ${file.name} vượt quá 5MB!`);
+        continue;
       }
 
+      validFiles.push(file);
+    }
+
+    if (validFiles.length > 0) {
       setFormData((prev) => ({
         ...prev,
-        [name]: file,
+        degreeFiles: [...prev.degreeFiles, ...validFiles],
       }));
+      toast.success(`Đã thêm ${validFiles.length} ảnh bằng cấp`);
     }
+
+    // Reset input
+    e.target.value = "";
+  };
+
+  const removeDegreeFile = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      degreeFiles: prev.degreeFiles.filter((_, i) => i !== index),
+    }));
+    toast.info("Đã xóa ảnh");
   };
 
   const handleSubmit = async (e) => {
@@ -107,7 +145,7 @@ function ApplyCV() {
       !formData.title ||
       !formData.profession ||
       !formData.cvFile ||
-      !formData.degreeFile
+      formData.degreeFiles.length === 0
     ) {
       toast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
@@ -122,7 +160,11 @@ function ApplyCV() {
       submitData.append("Profession", formData.profession);
       submitData.append("Description", formData.description || "");
       submitData.append("CvFile", formData.cvFile);
-      submitData.append("DegreeFile", formData.degreeFile);
+      
+      // Append nhiều ảnh degree
+      formData.degreeFiles.forEach((file) => {
+        submitData.append("DegreeFile", file);
+      });
 
       const response = await axiosInstance.post(
         "/LecturerApplication/apply",
@@ -352,36 +394,63 @@ function ApplyCV() {
                   </div>
                 </div>
 
-                {/* Degree Upload */}
+                {/* Degree Upload - Multiple Images */}
                 <div>
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <GraduationCap className="w-5 h-5 text-yellow-500" />
                     Tải lên ảnh bằng cấp <span className="text-red-500">*</span>
+                    <span className="text-xs text-gray-500 font-normal ml-2">
+                      (Có thể tải nhiều ảnh)
+                    </span>
                   </h3>
+
+                  {/* Preview uploaded images */}
+                  {formData.degreeFiles.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                      {formData.degreeFiles.map((file, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Degree ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeDegreeFile(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          <p className="text-xs text-gray-600 mt-1 truncate">
+                            {file.name}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yellow-400 transition-colors">
                     <input
                       type="file"
-                      id="degreeFile"
-                      name="degreeFile"
+                      id="degreeFiles"
+                      name="degreeFiles"
                       accept="image/jpeg,image/jpg,image/png"
-                      onChange={handleFileChange}
+                      onChange={handleDegreeFilesChange}
                       className="hidden"
-                      required
+                      multiple
                     />
-                    <label htmlFor="degreeFile" className="cursor-pointer">
-                      <GraduationCap className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      {formData.degreeFile ? (
-                        <p className="text-sm text-green-600 font-medium">
-                          ✓ {formData.degreeFile.name}
+                    <label htmlFor="degreeFiles" className="cursor-pointer">
+                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-sm text-gray-600 mb-1">
+                        Click để tải lên ảnh bằng cấp (JPG, PNG)
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Có thể chọn nhiều ảnh cùng lúc - Mỗi file tối đa 5MB
+                      </p>
+                      {formData.degreeFiles.length > 0 && (
+                        <p className="text-sm text-green-600 font-medium mt-2">
+                          ✓ Đã chọn {formData.degreeFiles.length} ảnh
                         </p>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-600 mb-1">
-                            Click để tải lên ảnh bằng cấp (JPG, PNG)
-                          </p>
-                          <p className="text-xs text-gray-500">Tối đa 5MB</p>
-                        </>
                       )}
                     </label>
                   </div>
