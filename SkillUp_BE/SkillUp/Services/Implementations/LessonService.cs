@@ -40,7 +40,7 @@ namespace SkillUp.Services.Implementations
                 lesson => new GetLessonResponseDto
                 {
                     Id = lesson.Id,
-                    LessonOrder = lesson.Orders,
+                    Orders = lesson.Orders,
                     Title = lesson.Title,
                     Type = lesson.Type,
                     Description = lesson.Description ?? string.Empty,
@@ -68,7 +68,7 @@ namespace SkillUp.Services.Implementations
                 lessons => new GetLessonActiveResponseDto
                 {
                     Id = lessons.Id,
-                    LessonOrder = lessons.Orders,
+                    Orders = lessons.Orders,
                     Title = lessons.Title,
                     Type = lessons.Type,
                     Description = lessons.Description ?? string.Empty,
@@ -324,7 +324,7 @@ namespace SkillUp.Services.Implementations
                 Title = lesson.Title,
                 Type = lesson.Type ?? "Text",
                 Description = lesson.Description,
-                LessonOrder = lesson.Orders,
+                Orders = lesson.Orders,
                 IsFree = lesson.IsFree ?? false,
                 IsActive = lesson.IsActive,
                 CreatedAt = lesson.CreatedAt,

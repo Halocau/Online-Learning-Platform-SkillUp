@@ -2,7 +2,7 @@
 {
     public class AssetCourseDetailDto
     {
-        public string Url { get; set; }
-        public string Content { get; set; }
+        public string Url { get; set; } = "default-url";
+        public string Content { get; set; } = "No content";
     }
 }

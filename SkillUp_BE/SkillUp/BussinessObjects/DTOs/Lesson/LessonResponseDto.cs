@@ -8,7 +8,7 @@ namespace SkillUp.BussinessObjects.DTOs.Lesson
         public string Title { get; set; } = null!;
         public string Type { get; set; } = null!;
         public string? Description { get; set; }
-        public double LessonOrder { get; set; }
+        public double Orders { get; set; }
         public bool IsFree { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }

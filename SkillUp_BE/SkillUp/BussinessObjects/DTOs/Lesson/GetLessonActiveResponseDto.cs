@@ -5,7 +5,7 @@ namespace SkillUp.BussinessObjects.DTOs.Lesson
     public class GetLessonActiveResponseDto
     {
         public Guid Id { get; set; }
-        public double LessonOrder { get; set; }
+        public double Orders { get; set; }
         public string Title { get; set; }
         public string Type { get; set; } // Video, Document, etc.
         public string Description { get; set; }

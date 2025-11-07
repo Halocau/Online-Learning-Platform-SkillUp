@@ -89,8 +89,10 @@ namespace SkillUp.Repositories.Implementations
                 .Include(c => c.SubCategory)
                     .ThenInclude(sc => sc.Category)
                 .Include(c => c.Sections.OrderBy(s => s.CreatedAt))
-                    .ThenInclude(s => s.Lessons.OrderBy(l => l.CreatedAt))
+                    .ThenInclude(s => s.Lessons)
                         .ThenInclude(l => l.Assets)
+                .Include(c => c.Sections)
+                    .ThenInclude(s => s.Quizzes)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
         }
         public async Task<List<Course>> GetCoursesOfLecturerByAccountIdAsync(Guid accountId)
