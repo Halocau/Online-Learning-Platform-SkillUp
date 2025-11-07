@@ -9,7 +9,7 @@ public partial class Lesson
 
     public Guid SectionId { get; set; }
 
-    public double Orders { get; set; }
+    public double? Orders { get; set; }
 
     public string Title { get; set; } = null!;
 

@@ -19,6 +19,8 @@ public partial class Section
 
     public bool IsActive { get; set; }
 
+    public double? Orders { get; set; }
+
     public virtual Course Course { get; set; } = null!;
 
     public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
