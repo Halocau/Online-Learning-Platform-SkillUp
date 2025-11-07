@@ -122,12 +122,6 @@ namespace SkillUp.Services.Implementations
                 return null;
             return account.RoleId;
         }
-
-
-
-
-
-
         public string HashPassword(string password)
         {
             return BCrypt.Net.BCrypt.HashPassword(password);
@@ -276,31 +270,44 @@ namespace SkillUp.Services.Implementations
 
         public async Task<GoogleLoginResponseDto?> GoogleLoginAsync(GoogleLoginRequestDto request)
         {
+            // 1) Input guard
+            if (request == null || string.IsNullOrWhiteSpace(request.IdToken))
+                return null;
+
             try
             {
-                // Verify Google ID token
+                // 2) Lấy ClientId và verify token Google
                 var googleClientId = _configuration["GoogleAuth:ClientId"];
                 if (string.IsNullOrEmpty(googleClientId))
                 {
                     throw new Exception("Google ClientId chưa được cấu hình");
                 }
 
-                var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings
-                {
-                    Audience = new[] { googleClientId }
-                });
+                var payload = await GoogleJsonWebSignature.ValidateAsync(
+                    request.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[] { googleClientId }
+                    });
+
+                // 3) Chặn đăng nhập nếu email Google chưa verify
+                var emailVerified = payload.EmailVerified; 
+                if (payload == null
+                    || string.IsNullOrWhiteSpace(payload.Email)
+                    || !emailVerified)
+                    return null;
+
 
                 var email = payload.Email;
                 var fullname = payload.Name;
                 var avatar = payload.Picture;
 
-                var existingAccount = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email);
-
+                // 4) Tìm account theo email 
+                var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email);
                 bool isNewUser = false;
-                Account account;
 
                 // Create new account if not exists
-                if (existingAccount == null)
+                if (account == null)
                 {
                     account = new Account
                     {
@@ -308,44 +315,52 @@ namespace SkillUp.Services.Implementations
                         Email = email,
                         Fullname = fullname,
                         Avatar = avatar,
-                        Password = HashPassword(Guid.NewGuid().ToString()), // Random password for Google auth
-                        Status = "Active", // Auto-activate since Google verified email
+                        Password = HashPassword(Guid.NewGuid().ToString()), // Random password 
+                        Status = "Active",
                         RoleId = request.DefaultRoleId,
                         CreatedAt = DateTime.Now
                     };
 
                     await _accountRepository.AddAsync(account);
-                    await _accountRepository.SaveChangesAsync();
 
-                    // Reload account with role and permissions for token generation
+                    try
+                    {
+                        await _accountRepository.SaveChangesAsync();
+                    }
+                    catch
+                    {
+                        // Race condition: 2 request tạo cùng email => reload
+                        var existedAfterRace = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email);
+                        if (existedAfterRace == null) return null;
+                        account = existedAfterRace;
+                    }
+
+                    // Reload để chắc chắn có Role/Perms cho bước phát token
                     account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email) ?? account;
-
                     isNewUser = true;
                 }
                 else
                 {
-                    account = existingAccount;
-
-                    if (account.Status == "Banned")
-                    {
+                    if (string.Equals(account.Status, "Banned", StringComparison.OrdinalIgnoreCase))
                         return null;
-                    }
+
 
                     // Batch updates to minimize database calls
                     var needUpdate = false;
 
-                    if (account.Status == "InActive")
+                    if (string.Equals(account.Status, "InActive", StringComparison.OrdinalIgnoreCase))
                     {
                         account.Status = "Active";
                         needUpdate = true;
                     }
 
-                    if (string.IsNullOrEmpty(account.Avatar) && !string.IsNullOrEmpty(avatar))
+                    // Cập nhật Avatar nếu account chưa có & Google có avatar
+                    if (string.IsNullOrWhiteSpace(account.Avatar) && !string.IsNullOrWhiteSpace(avatar))
                     {
                         account.Avatar = avatar;
                         needUpdate = true;
                     }
-
+ 
                     if (needUpdate)
                     {
                         await _accountRepository.UpdateAsync(account);
@@ -354,7 +369,7 @@ namespace SkillUp.Services.Implementations
                 }
 
                 var token = await GenerateAndSaveTokensAsync(account);
-
+                if (token == null) return null;
                 return new GoogleLoginResponseDto
                 {
                     UserId = account.Id,
@@ -461,7 +476,7 @@ namespace SkillUp.Services.Implementations
             return await _accountRepository.SaveChangesAsync();
 
         }
-      
+
         //TOKEN GENERATION
         #region token generation
         private async Task<TokenDto> GenerateAndSaveTokensAsync(Account account)
