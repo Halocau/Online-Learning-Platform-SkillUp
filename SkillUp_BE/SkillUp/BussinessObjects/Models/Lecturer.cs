@@ -13,6 +13,12 @@ public partial class Lecturer
 
     public string? Profession { get; set; }
 
+    public string? BankNumber { get; set; }
+
+    public string? BankName { get; set; }
+
+    public string? ReceiverName { get; set; }
+
     public virtual Account Account { get; set; } = null!;
 
     public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
