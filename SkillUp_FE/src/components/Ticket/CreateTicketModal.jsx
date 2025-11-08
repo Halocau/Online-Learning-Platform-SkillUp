@@ -220,49 +220,50 @@ export default function CreateTicketModal({ isOpen, onClose, onSuccess }) {
             }
         >
             <Form form={form} layout="vertical" requiredMark={false} autoComplete="off">
+
                 <Form.Item
                     label={TitleLabel}
                     name="Tiêu đề"
                     rules={[
                         { required: true, message: 'Vui lòng nhập tiêu đề' },
-                        { max: 200, message: 'Tối đa 200 ký tự' },
+                        { max: 200, message: `Tối đa 200 ký tự` },
                         {
                             validator: (_, v) =>
-                                v && v.trim()
-                                    ? Promise.resolve()
-                                    : Promise.reject(new Error('Không chỉ nhập khoảng trắng')),
+                                v && v.trim() ? Promise.resolve() : Promise.reject(new Error('Không chỉ nhập khoảng trắng')),
                         },
                     ]}
-                    extra={<Text type="secondary">Tiêu đề ngắn gọn, ≤ 200 ký tự.</Text>}
+                    extra={
+                        <Text type="secondary">
+                            Tiêu đề ngắn gọn, ≤ 200 ký tự. ({titleInput.length}/200)
+                        </Text>
+                    }
                 >
                     <AutoComplete
                         value={titleInput}
                         onChange={(v) => {
-                            setTitleInput(v);
-                            form.setFieldValue('Tiêu đề', v); // đồng bộ Form
+                            const next = (v ?? '').slice(0, 200);   // ✅ tự cắt độ dài
+                            setTitleInput(next);
+                            form.setFieldValue('Tiêu đề', next);
                         }}
                         onSearch={(v) => {
-                            setTitleInput(v);
-                            debouncedSearch(v);
-                            form.setFieldValue('Tiêu đề', v);
+                            const next = (v ?? '').slice(0, 200);
+                            setTitleInput(next);
+                            debouncedSearch(next);
+                            form.setFieldValue('Tiêu đề', next);
                         }}
                         onSelect={(v) => {
-                            setTitleInput(v);
-                            form.setFieldValue('Tiêu đề', v);
+                            const next = (v ?? '').slice(0, 200);
+                            setTitleInput(next);
+                            form.setFieldValue('Tiêu đề', next);
                         }}
                         options={options}
                         filterOption={false}
                         popupMatchSelectWidth
-                    >
-                        <Input
-                            placeholder="VD: Không đăng nhập được"
-                            maxLength={200}
-                            showCount
-                            allowClear
-                            disabled={submitting}
-                        />
-                    </AutoComplete>
+                        allowClear           // ✅ Select hỗ trợ
+                        placeholder="VD: Không đăng nhập được"
+                    />
                 </Form.Item>
+
 
                 <Form.Item
                     label={ContentsLabel}

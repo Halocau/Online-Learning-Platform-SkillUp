@@ -44,15 +44,17 @@ export const saveUserFromToken = (accessToken, refreshToken) => {
  */
 export const getRedirectPath = (role) => {
   switch (role) {
-    case 'Admin':
-      return '/admin/dashboard'
-    case 'Moderator':
-      return '/mod/dashboard'
-    case 'Student':
-      return '/'  
-    case 'Lecturer':
-      return '/lecturer/dashboard'
+    case "Admin":
+      return "/admin/";
+    case "Content Morderator":
+      return "/contentmod/";
+    case "System Morderator":
+      return "/sysmod/";
+    case "Lecturer":
+      return "/lecturer/";
+    case "Student":
+      return "/";
     default:
-      return '/'
+      return "/";
   }
 }

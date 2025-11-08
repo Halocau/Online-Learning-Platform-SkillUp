@@ -1,23 +1,17 @@
-import axios from "axios";
+// src/api/courseAPI.js
+import axiosInstance from "@/lib/axios";
 
-const API_BASE_URL = "http://localhost:5120/api/Course";
-
-// Helper function to get token - FIX: Use consistent token retrieval
-const getAuthToken = () => {
-  return localStorage.getItem("accessToken") || localStorage.getItem("token");
-};
+const API_BASE_URL = "/Course";
 
 export const courseAPI = {
-  
   createDraftCourse: async (formData) => {
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         `${API_BASE_URL}/Add-Course`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${getAuthToken()}`,
           },
         }
       );
@@ -30,13 +24,8 @@ export const courseAPI = {
 
   getCoursesOfLecturer: async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/Courses-Of-Lecturer`,
-        {
-          headers: {
-            Authorization: `Bearer ${getAuthToken()}`,
-          },
-        }
+      const response = await axiosInstance.get(
+        `${API_BASE_URL}/Courses-Of-Lecturer`
       );
       return response;
     } catch (error) {
@@ -47,39 +36,61 @@ export const courseAPI = {
 
   updateCourse: async (courseId, formData) => {
     try {
-      const response = await axios.put(
+      const response = await axiosInstance.put(
         `${API_BASE_URL}/Update-Course/${courseId}`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${getAuthToken()}`,
           },
         }
       );
       return response;
     } catch (error) {
-      console.error("Error updating course:", error);
       throw error;
     }
   },
 
-  // FIX: Ensure proper error handling and return
   deleteCourse: async (courseId) => {
     try {
-      console.log("🗑️ Deleting course with ID:", courseId);
-      const response = await axios.delete(
-        `${API_BASE_URL}/Delete-Course/${courseId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${getAuthToken()}`,
-          },
-        }
+      const response = await axiosInstance.delete(
+        `${API_BASE_URL}/Delete-Course/${courseId}`
       );
-      console.log("✅ Delete response received:", response.data);
       return response;
     } catch (error) {
-      console.error("❌ Error deleting course:", error);
+      throw error;
+    }
+  },
+
+  getAllCourses: async () => {
+    try {
+      const response = await axiosInstance.get(`${API_BASE_URL}/All-Courses`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching all courses:", error);
+      throw error;
+    }
+  },
+
+  banUnbanCourse: async (courseId) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_BASE_URL}/ban-unban-course/${courseId}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error banning/unbanning course:", error);
+      throw error;
+    }
+  },
+
+  // Get course detail by ID
+  getCourseDetail: async (courseId) => {
+    try {
+      const response = await axiosInstance.get(`${API_BASE_URL}/${courseId}`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching course detail:", error);
       throw error;
     }
   },

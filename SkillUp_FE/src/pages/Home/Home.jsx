@@ -1,7 +1,6 @@
 // src/pages/Home.jsx
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
 import axios from "axios";
 import CategoryBar from "./components/CategoryBar";
 import HeroCarousel from "./components/HeroCarousel";
@@ -36,19 +35,6 @@ export default function Home() {
     fetchHomeData();
   }, []);
 
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < Math.floor(rating)
-            ? "fill-[#FFD54F] text-[#FFD54F]"
-            : "text-gray-300"
-        }`}
-      />
-    ));
-  };
-
   if (loading) return <HomeSkeleton />;
   if (error)
     return (
@@ -65,14 +51,8 @@ export default function Home() {
       <CategoryBar categories={data.categories} />
       <HeroCarousel />
 
-      <PopularCoursesSection
-        popularCourses={data.popularCourses}
-        renderStars={renderStars}
-      />
-      <NewestCoursesSection
-        newestCourses={data.newestCourses}
-        renderStars={renderStars}
-      />
+      <PopularCoursesSection popularCourses={data.popularCourses} />
+      <NewestCoursesSection newestCourses={data.newestCourses} />
       <TestimonialsSection />
     </main>
   );

@@ -1,15 +1,15 @@
-﻿using SkillUp.BussinessObjects.Models;
+﻿using SkillUp.BussinessObjects.DTOs.Lesson;
 
 namespace SkillUp.Services.Interfaces
 {
     public interface ILessonService
     {
-        Task<IEnumerable<Lesson>> GetAllLessonsAsync();
-        Task<Lesson> GetLessonByIdAsync(Guid id);
-        Task<Lesson> CreateLessonAsync(Lesson lesson);
-        Task<Lesson> UpdateLessonAsync(Lesson lesson);
-        Task<bool> DeleteLessonAsync(Guid id);
-        Task<IEnumerable<Lesson>> GetActiveLessonsAsync();
-        //Task<Asset> AddAssetToLessonAsync(Guid lessonId, Asset asset);
+        Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync();
+        Task<IEnumerable<GetLessonActiveResponseDto>> GetActiveLessonsAsync();
+        Task<IEnumerable<LessonResponseDto>> GetLessonsBySectionIdAsync(Guid sectionId);
+        Task<LessonResponseDto?> GetLessonByIdAsync(Guid id);
+        Task<LessonResponseDto> CreateLessonAsync(CreateLessonDto dto, Guid accountId);
+        Task<LessonResponseDto> UpdateLessonAsync(Guid id, UpdateLessonDto dto, Guid accountId);
+        Task<bool> DeleteLessonAsync(Guid id, Guid accountId);
     }
 }

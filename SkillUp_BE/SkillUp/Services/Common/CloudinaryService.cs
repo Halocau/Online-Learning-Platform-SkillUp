@@ -88,6 +88,48 @@ namespace SkillUp.Services.Common
             throw new Exception($"Upload failed: {result.Error?.Message}");
         }
 
+        public async Task<string> UploadDocumentAsync(IFormFile file, string? folderName = "skillup/lesson-documents")
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("Tài liệu không được để trống");
 
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".pdf", ".docx" };
+
+            if (string.IsNullOrEmpty(extension))
+                throw new ArgumentException("File phải có định dạng rõ ràng (PDF hoặc DOCX)");
+
+            if (!allowedExtensions.Contains(extension))
+                throw new ArgumentException($"Chỉ chấp nhận file PDF hoặc DOCX. File bạn chọn có định dạng: {extension}");
+
+            await using var stream = file.OpenReadStream();
+            // important: make sure stream position is at start
+            if (stream.CanSeek)
+                stream.Position = 0;
+
+            var uploadParams = new RawUploadParams
+            {
+                File = new FileDescription(file.FileName, stream),
+                Folder = folderName,
+                UseFilename = true,
+                UniqueFilename = true,  // Unique filename to avoid conflicts
+                Overwrite = false
+            };
+
+            var result = await _cloudinary.UploadAsync(uploadParams);
+
+            // extra sanity checks
+            if (result == null)
+                throw new Exception("Upload trả về kết quả null");
+
+            if (result.StatusCode == System.Net.HttpStatusCode.OK ||
+                result.StatusCode == System.Net.HttpStatusCode.Created)
+            {
+                // Return the secure URL directly
+                return result.SecureUrl.ToString();
+            }
+
+            throw new Exception($"Upload thất bại: {result.Error?.Message}");
+        }
     }
 }

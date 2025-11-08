@@ -1,38 +1,36 @@
-// src/routes/ModeratorRoutes.jsx
+// src/routes/ContentModeratorRoutes.jsx
 import { Routes, Route } from "react-router-dom";
 import ModeratorLayout from "../layouts/ContentModeratorLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 // Import moderator pages
-import ModDashboard from "../pages/contentmoderator/ModDashboard";
-import TicketManage from "@/pages/contentmoderator/TicketManage";
+import ContentModeratorDashboard from "../pages/contentmoderator/ModDashboard";
 import NewsManage from "@/pages/contentmoderator/NewsFeature/NewsManage";
 import CommentReport from "@/pages/contentmoderator/CommentReport";
 import CreateNews from "@/pages/contentmoderator/NewsFeature/CreateNews";
-import ContentModeratorDashboard from "../pages/contentmoderator/ModDashboard";
 import EditNews from "@/pages/contentmoderator/NewsFeature/EditNews";
 import NewsDetailMod from "@/pages/contentmoderator/NewsFeature/DetailNewsMod";
-
+import CourseManage from "@/pages/contentmoderator/CourseManage";
 
 const ContentModeratorRoutes = () => {
   return (
     <Routes>
       <Route
-        path="/"
+        path="/*"
         element={
-          // <ProtectedRoute allowedRoles={["Moderator"]}>
+          <ProtectedRoute allowedRoles={["Content Morderator"]}>
             <ModeratorLayout />
-          // </ProtectedRoute>
+          </ProtectedRoute>
         }
       >
         <Route index element={<ContentModeratorDashboard />} />
+        <Route path="dashboard" element={<ContentModeratorDashboard />} />
         <Route path="news" element={<NewsManage />} />
         <Route path="createnews" element={<CreateNews />} />
         <Route path="detailnews/:id" element={<NewsDetailMod />} />
         <Route path="editnews/:id" element={<EditNews />} />
-        <Route path="tickets" element={<TicketManage />} />
-        <Route path="cmt" element={<CommentReport />} />
-        // Routes chức năng khác
+        <Route path="course" element={<CourseManage />} />
+        <Route path="rpcmt" element={<CommentReport />} />
       </Route>
     </Routes>
   );

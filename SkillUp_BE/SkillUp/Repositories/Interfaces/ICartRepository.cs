@@ -9,5 +9,8 @@ namespace SkillUp.Repositories.Interfaces
         Task AddCart(Cart cart);
         Task RemoveFromCartAsync(Guid cartItemId);
         Task<bool> SaveChangesAsync();
+
+        Task<HashSet<Guid>> GetCourseIdsInCartAsync(Guid cartId);
+        Task AddCartItemsRangeAsync(IEnumerable<CartItem> items);
     }
 }

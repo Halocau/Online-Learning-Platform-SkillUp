@@ -79,8 +79,8 @@ builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 builder.Services.AddScoped<INewsRepository, NewsRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<ILecturerApplicationRepository, LecturerApplicationRepository>();
-builder.Services.AddScoped<ILecturerRepository,LecturerRepository>(); 
-builder.Services.AddScoped<IBannerRepository,BannerRepository>();
+builder.Services.AddScoped<ILecturerRepository, LecturerRepository>();
+builder.Services.AddScoped<IBannerRepository, BannerRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IQuizRepository, QuizRepository>();
 builder.Services.AddScoped<ISectionRepository, SectionRepository>();
@@ -89,6 +89,8 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
+builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+
 
 
 // Register Services
@@ -97,6 +99,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<FtpVideoUploadService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationService>();
@@ -109,6 +112,7 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
 
 
 // POST
@@ -219,6 +223,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Enable serving static files from wwwroot folder
+app.UseStaticFiles();
 
 // Use CORS
 app.UseCors("AllowAll");

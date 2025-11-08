@@ -12,7 +12,7 @@ namespace SkillUp.Services.Interfaces
         Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId);
         Task<List<CourseSummaryDTO>> GetListCourseBySubCateId(int id);
         Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId);
-        Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturer(Guid lecturerId);
+        Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturerByAccountId(Guid accountId);
         Task<CourseDetailDto> GetCourseDetailsAsync(Guid courseId);
     }
 }

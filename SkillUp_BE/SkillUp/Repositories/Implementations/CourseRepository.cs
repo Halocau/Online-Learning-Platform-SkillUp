@@ -41,11 +41,11 @@ namespace SkillUp.Repositories.Implementations
         public async Task<List<Course>> GetCoursesOfLecturer(Guid lecturerId)
         {
             return await _context.Courses
-                                 //.Where(c => c.LecturerId == lecturerId &&
-                                 //    (c.Status == "Public" || c.Status == "Draft"))
+                         //.Where(c => c.LecturerId == lecturerId &&
+                         //    (c.Status == "Public" || c.Status == "Draft"))
                          .Include(c => c.Lecturer)
                          .Include(c => c.SubCategory)
-                             .ThenInclude(sc => sc.Category) 
+                             .ThenInclude(sc => sc.Category)
                          .ToListAsync();
         }
 
@@ -76,8 +76,8 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.Sections
             .Where(s => s.CourseId == courseId)
-            .Include(s => s.Lessons)  
-            .ThenInclude(l => l.Assets)  
+            .Include(s => s.Lessons)
+            .ThenInclude(l => l.Assets)
             .ToListAsync();
         }
 
@@ -89,11 +89,21 @@ namespace SkillUp.Repositories.Implementations
                 .Include(c => c.SubCategory)
                     .ThenInclude(sc => sc.Category)
                 .Include(c => c.Sections.OrderBy(s => s.CreatedAt))
-                    .ThenInclude(s => s.Lessons.OrderBy(l => l.CreatedAt))
+                    .ThenInclude(s => s.Lessons)
                         .ThenInclude(l => l.Assets)
+                .Include(c => c.Sections)
+                    .ThenInclude(s => s.Quizzes)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
         }
-
+        public async Task<List<Course>> GetCoursesOfLecturerByAccountIdAsync(Guid accountId)
+        {
+            return await _context.Courses
+                .Where(c => c.Lecturer != null && c.Lecturer.AccountId == accountId)
+                .Include(c => c.SubCategory)
+                    .ThenInclude(sc => sc.Category)
+                .Where(c => c.IsActive) 
+                .ToListAsync();
+        }
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;
@@ -102,6 +112,10 @@ namespace SkillUp.Repositories.Implementations
         public void UpdateCourse(Course course)
         {
             _context.Update(course);
+        }
+        public async Task<bool> ExistsAsync(Guid courseId)
+        {
+            return await _context.Courses.AnyAsync(c => c.Id == courseId);
         }
 
     }

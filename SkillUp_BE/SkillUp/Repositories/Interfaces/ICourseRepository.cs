@@ -15,5 +15,8 @@ namespace SkillUp.Repositories.Interfaces
         Task<List<Course>> GetCoursesBySubCategoryId(int id);
         Task<List<Section>> GetSectionsByCourseIdAsync(Guid courseId);
         Task<Course?> GetCourseWithDetailsAsync(Guid courseId);
+        Task<List<Course>> GetCoursesOfLecturerByAccountIdAsync(Guid accountId);
+
+        Task<bool> ExistsAsync(Guid courseId);
     }
 }

@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36301.6 d17.14
+VisualStudioVersion = 17.14.36301.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkillUp", "SkillUp\SkillUp.csproj", "{E2CBA359-3252-4A80-A0F2-282782286402}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSkillUp", "TestSkillUp\TestSkillUp.csproj", "{6082B00C-BDBA-4B78-A3FA-06E2C687D820}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{E2CBA359-3252-4A80-A0F2-282782286402}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2CBA359-3252-4A80-A0F2-282782286402}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2CBA359-3252-4A80-A0F2-282782286402}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6082B00C-BDBA-4B78-A3FA-06E2C687D820}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6082B00C-BDBA-4B78-A3FA-06E2C687D820}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6082B00C-BDBA-4B78-A3FA-06E2C687D820}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6082B00C-BDBA-4B78-A3FA-06E2C687D820}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

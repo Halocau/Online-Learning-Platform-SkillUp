@@ -9,10 +9,49 @@ namespace SkillUp.Controllers
 	public class UploadController : ControllerBase
 	{
 		private readonly CloudinaryService _cloudinaryService;
+		private readonly FtpVideoUploadService _ftpVideoUploadService;
 
-		public UploadController(CloudinaryService cloudinaryService)
+		public UploadController(CloudinaryService cloudinaryService, FtpVideoUploadService ftpVideoUploadService)
 		{
 			_cloudinaryService = cloudinaryService;
+			_ftpVideoUploadService = ftpVideoUploadService;
+		}
+
+		[HttpGet("test-ftp")]
+		public async Task<IActionResult> TestFtpConnection()
+		{
+			try
+			{
+				var result = await _ftpVideoUploadService.TestConnectionDetailedAsync();
+
+				if (result.success)
+				{
+					return Ok(new
+					{
+						message = result.message,
+						status = "success",
+						details = result.details
+					});
+				}
+				else
+				{
+					return BadRequest(new
+					{
+						message = result.message,
+						status = "failed",
+						details = result.details
+					});
+				}
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new
+				{
+					message = $"Lỗi khi test FTP: {ex.Message}",
+					status = "error",
+					stackTrace = ex.ToString()
+				});
+			}
 		}
 
 		[HttpPost("image")]

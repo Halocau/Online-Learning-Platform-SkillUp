@@ -11,11 +11,13 @@ namespace SkillUp.Services.Implementations
     {
         private readonly ICartRepository _cartRepository;
         private readonly IStudentRepository _studentRepository;
+        private readonly ICourseRepository _courseRepository;
 
-        public CartService(ICartRepository cartRepository, IStudentRepository studentRepository)
+        public CartService(ICartRepository cartRepository, IStudentRepository studentRepository, ICourseRepository courseRepository)
         {
             _cartRepository = cartRepository;
             _studentRepository = studentRepository;
+            _courseRepository = courseRepository;
         }
 
         private async Task<Student> GetStudentByAccountIdAsync(Guid accountId)
@@ -42,6 +44,13 @@ namespace SkillUp.Services.Implementations
                 };
                 await _cartRepository.AddCart(cart);
             }
+
+            //block duplicate course add
+            if (cart.CartItems != null && cart.CartItems.Any(c=> c.CourseId == request.CourseId))
+            {
+                return true;// có add thêm thì vẫn 1 course, ko báo lỗi
+            }
+
 
             var cartItem = new CartItem
             {
@@ -91,6 +100,83 @@ namespace SkillUp.Services.Implementations
         {
             await _cartRepository.RemoveFromCartAsync(cartItemId);
             return await _cartRepository.SaveChangesAsync();
+        }
+
+
+        public async Task<BulkAddToCartResultDto> BulkAddToCartByAccountIdAsync(Guid accountId, IEnumerable<AddToCartRequestDto> items)
+        {
+            var result = new BulkAddToCartResultDto();
+            if (items == null) return result;
+
+            // 1) Lấy student theo accountId
+            var student = await GetStudentByAccountIdAsync(accountId);
+
+            // 2) Lấy/khởi tạo cart
+            var cart = await _cartRepository.GetCartByStudentIdAsync(student.Id);
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    CartItems = new List<CartItem>()
+                };
+                await _cartRepository.AddCart(cart);
+                await _cartRepository.SaveChangesAsync(); // cần Save để có CartId ràng buộc
+            }
+
+            // 3) Lấy các CourseId đã có trong cart để lọc trùng
+            var existedCourseIds = await _cartRepository.GetCourseIdsInCartAsync(cart.Id);
+
+            // 4) Chuẩn hoá input, loại item lỗi & trùng courseId trong input
+            var distinctInput = items
+               .Where(x => x != null && x.CourseId != Guid.Empty && x.Price >= 0)
+               .GroupBy(x => x.CourseId)
+               .Select(g => g.First())
+               .ToList();
+
+            // 5) Lọc để chỉ Add những cái chưa có
+            var toAdd = new List<CartItem>();
+            foreach (var it in distinctInput)
+            {
+                if (existedCourseIds.Contains(it.CourseId))
+                {
+                    result.Skipped++;
+                    result.SkippedCourseIds.Add(it.CourseId);
+                    continue;
+                }
+
+                // (Tuỳ chọn) validate course tồn tại
+                var courseExists = await _courseRepository.ExistsAsync(it.CourseId);
+                if (!courseExists)
+                {
+                    result.Skipped++;
+                    result.SkippedCourseIds.Add(it.CourseId);
+                    continue;
+                }
+
+                toAdd.Add(new CartItem
+                {
+                    Id = Guid.NewGuid(),
+                    CartId = cart.Id,
+                    CourseId = it.CourseId,
+                    Price = it.Price,              // nhận từ FE
+                });
+            }
+
+            // 6) Thêm range + SaveChanges 1 lần
+            if (toAdd.Count > 0)
+            {
+                await _cartRepository.AddCartItemsRangeAsync(toAdd);
+                var saved = await _cartRepository.SaveChangesAsync();
+                if (saved)
+                {
+                    result.Added = toAdd.Count;
+                    result.AddedCourseIds.AddRange(toAdd.Select(ci => ci.CourseId));
+                }
+            }
+
+            return result;
         }
     }
 }

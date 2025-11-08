@@ -11,32 +11,65 @@ namespace SkillUp.Repositories.Implementations
         {
             _context = context;
         }
+
         public async Task<IEnumerable<Lesson>> GetAllLessonsAsync()
         {
-            return await _context.Lessons.Include(l => l.Section).ToListAsync();
+            return await _context.Lessons
+                .Include(l => l.Section)
+                .Include(a=> a.Assets)
+                .OrderBy(l => l.Orders)
+                .ToListAsync();
         }
 
-        public async Task<Lesson> GetLessonByIdAsync(Guid id)
+        public async Task<Lesson?> GetLessonByIdAsync(Guid id)
         {
-            return await _context.Lessons.Include(l => l.Section)
-                                         .FirstOrDefaultAsync(l => l.Id == id);
+            return await _context.Lessons
+                .Include(l => l.Section)
+                .Include(l => l.Assets)
+                .FirstOrDefaultAsync(l => l.Id == id);
         }
+
+        public async Task<Lesson?> GetLessonWithDetailsAsync(Guid id)
+        {
+            return await _context.Lessons
+                .Include(l => l.Section)
+                .Include(l => l.Assets)
+                .FirstOrDefaultAsync(l => l.Id == id);
+        }
+
+        public async Task<IEnumerable<Lesson>> GetLessonsBySectionIdAsync(Guid sectionId)
+        {
+            return await _context.Lessons
+                .Where(l => l.SectionId == sectionId)
+                .Include(l => l.Assets)
+                .OrderBy(l => l.Orders)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Lesson>> GetActiveLessonsAsync()
         {
-            return await _context.Lessons.Where(l => l.IsActive).ToListAsync();
-        }
-        public async Task<Lesson> CreateLessonAsync(Lesson lesson)
-        {
-            _context.Lessons.Add(lesson);
-            await _context.SaveChangesAsync();
-            return lesson;
+            return await _context.Lessons
+                .Where(l => l.IsActive)
+                .Include(l => l.Section)
+                .Include(l => l.Assets)
+                    .Where(l => l.IsActive)
+                .OrderBy(l => l.Orders)
+                .ToListAsync();
         }
 
-        public async Task<Lesson> UpdateLessonAsync(Lesson lesson)
+        public async Task AddLessonAsync(Lesson lesson)
+        {
+            await _context.Lessons.AddAsync(lesson);
+        }
+
+        public void UpdateLesson(Lesson lesson)
         {
             _context.Lessons.Update(lesson);
-            await _context.SaveChangesAsync();
-            return lesson;
+        }
+
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> DeleteLessonAsync(Guid id)

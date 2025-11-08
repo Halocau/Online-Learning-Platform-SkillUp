@@ -9,7 +9,7 @@ public partial class Lesson
 
     public Guid SectionId { get; set; }
 
-    public double LessonOrder { get; set; }
+    public double? Orders { get; set; }
 
     public string Title { get; set; } = null!;
 
@@ -26,6 +26,8 @@ public partial class Lesson
     public bool? IsFree { get; set; }
 
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
+
+    public virtual ICollection<CommentLesson> CommentLessons { get; set; } = new List<CommentLesson>();
 
     public virtual Section Section { get; set; } = null!;
 

@@ -1,9 +1,10 @@
 // src/components/home/CourseCard.jsx
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Users } from "lucide-react";
+import { Users } from "lucide-react";
+import StarRating from "@/components/ui/StarRating";
 
-export default function CourseCard({ course, renderStars }) {
+export default function CourseCard({ course }) {
   return (
     <Link to={`/course/${course.id}`}>
       <Card className="group h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-200">
@@ -20,7 +21,7 @@ export default function CourseCard({ course, renderStars }) {
           </h3>
           <p className="text-sm text-gray-600">{course.lecturerName}</p>
           <div className="flex items-center gap-1">
-            {renderStars(course.rating)}
+            <StarRating rating={course.rating} />
           </div>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-3 text-gray-500">
