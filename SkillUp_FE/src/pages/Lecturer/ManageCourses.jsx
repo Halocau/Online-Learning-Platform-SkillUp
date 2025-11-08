@@ -1,23 +1,17 @@
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import CreateCourseForm from "./CreateCourseForm";
-import EditCourseForm from "./EditCourseForm";
 import CourseList from "./CourseList";
 
-
-
 function ManageCourses() {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  
-  // FIX: Add state for edit form
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [editingCourse, setEditingCourse] = useState(null);
-  const [editingCourseId, setEditingCourseId] = useState(null);
 
   // Load courses on mount
   useEffect(() => {
@@ -55,22 +49,8 @@ function ManageCourses() {
   };
 
 
-  const handleEditCourse = (courseId, courseData) => {
-    setEditingCourseId(courseId);
-    setEditingCourse(courseData);
-    setShowEditForm(true);
-  };
-
-  const handleCloseEditForm = () => {
-    setShowEditForm(false);
-    setEditingCourse(null);
-    setEditingCourseId(null);
-  };
-
-
-  const handleEditSuccess = () => {
-    handleCloseEditForm();
-    loadCourses();
+  const handleEditCourse = (courseId) => {
+    navigate(`/lecturer/courses/${courseId}`);
   };
 
   return (
@@ -89,23 +69,12 @@ function ManageCourses() {
         </Button>
       </div>
 
-      {/* Create Course Form */}
       <CreateCourseForm
         isOpen={showCreateForm}
         onClose={() => setShowCreateForm(false)}
         onSuccess={handleCreateSuccess}
       />
 
-      {/* FIX: Add Edit Course Form */}
-      <EditCourseForm
-        courseId={editingCourseId}
-        course={editingCourse}
-        isOpen={showEditForm}
-        onClose={handleCloseEditForm}
-        onSuccess={handleEditSuccess}
-      />
-
-      {/* Courses List */}
       <CourseList
         courses={courses}
         loading={loading}

@@ -24,7 +24,8 @@ namespace SkillUp.Bussiness.Services
                 Title = section.Title,
                 Description = section.Description,
                 CreatedAt = section.CreatedAt,
-                IsActive = section.IsActive
+                IsActive = section.IsActive,
+               Orders = section.Orders
             };
         }
 
@@ -39,13 +40,12 @@ namespace SkillUp.Bussiness.Services
                 Description = createDto.Description,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
-                IsActive = true
+                IsActive = true,
+                Orders = createDto.Orders
             };
             var createdSection = await _sectionRepository.CreateAsync(section);
             return MapToDto(createdSection);
         }
-
-        
 
         public async Task<SectionDto?> GetSectionByIdAsync(Guid id)
         {

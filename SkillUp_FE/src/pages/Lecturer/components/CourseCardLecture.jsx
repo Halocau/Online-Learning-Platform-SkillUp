@@ -56,14 +56,6 @@ function CourseCardLecture({
             {/* Action Buttons - Top Right */}
             <div className="absolute top-4 right-4 flex gap-1 md:gap-2 bg-white rounded-lg p-1 md:p-2 shadow-sm border border-gray-100">
               <button
-                onClick={() => onView(course.id)}
-                className="p-2 hover:bg-blue-50 rounded text-blue-600 transition-all duration-200 transform hover:scale-110"
-                title="Xem chi tiết"
-                disabled={isDeleting}
-              >
-                <Eye className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
-              <button
                 onClick={() => onEdit(course.id)}
                 className="p-2 hover:bg-yellow-50 rounded text-yellow-600 transition-all duration-200 transform hover:scale-110"
                 title="Chỉnh sửa"
