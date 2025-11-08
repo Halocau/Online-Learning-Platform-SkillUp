@@ -288,7 +288,7 @@ namespace SkillUp.Services.Implementations
                 } : null
             };
 
-            detail.Sections = course.Sections.Select(section =>
+            detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
             {
                 // Map Lesson -> SectionItemDto (CÓ Assets)
                 // Only include active lessons and their active assets
