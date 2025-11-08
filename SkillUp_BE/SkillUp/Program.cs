@@ -167,6 +167,13 @@ builder.Services.AddScoped<ISectionRepository, SectionRepository>();
 builder.Services.AddScoped<ISectionService, SectionService>();
 // ... (builder.Build() và phần còn lại)
 
+// --- Thêm vào khu vực Register Repositories ---
+builder.Services.AddScoped<ICommentLessonRepository, CommentLessonRepository>();
+builder.Services.AddScoped<ILikeCommentLessonRepository, LikeCommentLessonRepository>();
+
+// --- Thêm vào khu vực Register Services ---
+builder.Services.AddScoped<ICommentLessonService, CommentLessonService>();
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -240,6 +247,7 @@ app.MapControllers();
 // Map SignalR Hub cho Comment realtime
 app.MapHub<SkillUp.Hubs.CommentHub>("/commentHub");
 app.MapHub<LikeCommentHub>("/hubs/likeCommentHub");
+app.MapHub<CommentLessonHub>("/commentLessonHub");
 
 
 app.Run();
