@@ -42,7 +42,8 @@ namespace SkillUp.Services.Implementations
                 Timer = dto.Timer,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
-                IsActive = true
+                IsActive = true,
+                Orders = dto.Orders
             };
 
             await _quizRepository.CreateQuizAsync(quiz);
