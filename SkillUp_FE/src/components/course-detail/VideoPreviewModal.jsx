@@ -4,66 +4,60 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { PlayCircle, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 export default function VideoPreviewModal({ isOpen, onClose, lesson }) {
   if (!lesson) return null;
 
-  const videoUrl = lesson.assets?.[0]?.url;
+  // Get video URL from assets array
+  const videoUrl = lesson.assets?.[0]?.url || null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
-                {lesson.title}
-              </DialogTitle>
-              {lesson.description && (
-                <DialogDescription className="text-gray-600">
-                  {lesson.description}
-                </DialogDescription>
-              )}
-              <div className="flex items-center gap-2 mt-3">
-                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                  Miễn phí xem trước
-                </span>
-                <span className="px-3 py-1 bg-[#FFD54F]/20 text-gray-700 text-xs font-semibold rounded-full">
-                  Video
-                </span>
-              </div>
-            </div>
+        <DialogHeader className="p-6 pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-xl font-bold text-gray-900 pr-8">
+              {lesson.title}
+            </DialogTitle>
+            <button
+              onClick={onClose}
+              className="absolute right-6 top-6 rounded-full p-2 hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
           </div>
+          {lesson.description && (
+            <p className="text-sm text-gray-600 mt-2">{lesson.description}</p>
+          )}
         </DialogHeader>
 
-        {/* Video Player */}
-        <div className="relative bg-black aspect-video">
-          {videoUrl && videoUrl !== "default-url" ? (
-            <video
-              controls
-              autoPlay
-              className="w-full h-full"
-              controlsList="nodownload"
-            >
-              <source src={videoUrl} type="video/mp4" />
-              Trình duyệt của bạn không hỗ trợ video.
-            </video>
+        <div className="p-6 pt-4">
+          {videoUrl ? (
+            <div className="relative w-full bg-black rounded-lg overflow-hidden aspect-video">
+              <video
+                controls
+                className="w-full h-full"
+                src={videoUrl}
+                controlsList="nodownload"
+              >
+                <source src={videoUrl} type="video/mp4" />
+                Trình duyệt của bạn không hỗ trợ video.
+              </video>
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-full text-white">
-              <div className="text-center">
-                <PlayCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p>Video không khả dụng</p>
-              </div>
+            <div className="flex items-center justify-center aspect-video bg-gray-100 rounded-lg">
+              <p className="text-gray-500">Không có video để hiển thị</p>
             </div>
           )}
-        </div>
 
-        <div className="p-6 pt-4 bg-gray-50">
-          <p className="text-sm text-gray-600">Nội dung miễn phí</p>
+          <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <p className="text-sm text-green-800 font-medium">
+              ✨ Đây là bài học miễn phí. Đăng ký khóa học để truy cập toàn bộ
+              nội dung!
+            </p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
