@@ -118,8 +118,8 @@ function LecturerSidebar({ isOpen, onToggle }) {
           {/* Analytics */}
           <NavItem
             icon={BarChart3}
-            label="Thống kê"
-            path="/lecturer/analytics"
+            label="Ngân hàng đề"
+            path="/lecturer/question-bank"
           />
 
           {/* Messages */}

@@ -18,26 +18,22 @@ export const extractCleanText = (html, maxLength = 200) => {
     ""
   );
 
-  // Remove img tags
   cleaned = cleaned.replace(/<img[^>]*>/gi, "");
 
-  // Replace common block-level tags with space
   cleaned = cleaned.replace(
     /<\/?(div|p|br|h[1-6]|li|tr|ul|ol|article|section|figure|figcaption)[^>]*>/gi,
     " "
   );
 
-  // Remove all remaining HTML tags
   cleaned = cleaned.replace(/<\/?[^>]+(>|$)/g, "");
 
-  // Decode ALL HTML entities (including Vietnamese characters)
   cleaned = decodeHTMLEntities(cleaned);
 
   // Clean up whitespace
   cleaned = cleaned
-    .replace(/\s+/g, " ") // Multiple spaces to single space
-    .replace(/\r\n/g, " ") // Remove carriage returns
-    .replace(/\n/g, " ") // Remove newlines
+    .replace(/\s+/g, " ")
+    .replace(/\r\n/g, " ")
+    .replace(/\n/g, " ")
     .trim();
 
   // Truncate if needed
