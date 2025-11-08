@@ -131,7 +131,7 @@ function CourseDetailManagement() {
         <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)] sticky top-[73px] hidden lg:block">
           <div className="p-4">
             <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4 px-3">
-              Plan Your Course
+              Quản lý nội dung khóa học
             </h2>
             <nav className="space-y-1">
               {tabs.map((tab) => {

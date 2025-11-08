@@ -78,7 +78,10 @@ export const getSectionsByCourse = async (courseId) => {
 // Manage section (update section manager)
 export const manageSection = async (id, managerData) => {
   try {
-    const res = await axiosInstance.put(`${API_URL}/ManagerSection/${id}`, managerData);
+    const res = await axiosInstance.put(
+      `${API_URL}/ManagerSection/${id}`,
+      managerData
+    );
     handleAPIResponse(res, "Cập nhật quản lý chương thành công!");
     return res.data;
   } catch (err) {

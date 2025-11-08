@@ -70,6 +70,50 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }));
   };
 
+  // Helper function to add lesson optimistically to local state
+  const addLessonToLocalState = (sectionId, lessonData) => {
+    setLocalCourse((prevCourse) => {
+      if (!prevCourse) return prevCourse;
+
+      const newCourse = { ...prevCourse };
+      newCourse.sections = newCourse.sections.map((section) => {
+        if (section.id === sectionId) {
+          const lessonOrder = lessonData.orders || 1;
+
+          const newLesson = {
+            kind: "Lesson",
+            id: `temp-${Date.now()}`,
+            orders: lessonOrder,
+            title: lessonData.title,
+            description: lessonData.description,
+            lessonType: lessonData.type,
+            isFree: lessonData.isFree,
+            assets: [
+              {
+                url:
+                  lessonData.type === "Video" ? "uploading..." : "default-url",
+                content:
+                  lessonData.type === "Text"
+                    ? lessonData.content
+                    : "No content",
+              },
+            ],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          return {
+            ...section,
+            items: [...(section.items || []), newLesson],
+          };
+        }
+        return section;
+      });
+
+      return newCourse;
+    });
+  };
+
   // Helper function to add quiz optimistically to local state
   const addQuizToLocalState = (sectionId, quizData) => {
     setLocalCourse((prevCourse) => {
@@ -79,8 +123,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       newCourse.sections = newCourse.sections.map((section) => {
         if (section.id === sectionId) {
           const quizOrder = quizData.orders || 1;
-
-          console.log(`Adding quiz to section with order: ${quizOrder}`);
 
           const newQuiz = {
             kind: "Quiz",
@@ -119,18 +161,52 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
 
     setLoading(true);
-    const result = await createSection({
-      courseId: courseId,
-      title: sectionForm.title,
-      description: sectionForm.description,
-    });
 
-    if (result) {
-      setShowAddSection(false);
-      setSectionForm({ title: "", description: "" });
-      await onUpdate();
+    try {
+      // Calculate next order number for the section
+      let nextOrder = 1;
+      if (displayCourse?.sections && displayCourse.sections.length > 0) {
+        const maxOrder = Math.max(
+          ...displayCourse.sections.map((s) => s.orders || 0)
+        );
+        nextOrder = maxOrder + 1;
+      }
+
+      console.log("Creating section with order:", nextOrder);
+
+      const result = await createSection({
+        courseId: courseId,
+        title: sectionForm.title,
+        description: sectionForm.description,
+        orders: nextOrder, // ← ADD THIS FIELD
+      });
+
+      if (result) {
+        setShowAddSection(false);
+        setSectionForm({ title: "", description: "" });
+
+        toast.success(`✅ Chương đã được tạo (Thứ tự: ${nextOrder})!`);
+
+        // Try to update, but don't fail if it errors
+        try {
+          await onUpdate();
+        } catch (updateError) {
+          console.error(
+            "Error updating course after section creation:",
+            updateError
+          );
+          // Show warning but don't block the UI
+          toast.warning("Vui lòng làm mới trang để xem cập nhật đầy đủ.", {
+            autoClose: 3000,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error creating section:", error);
+      toast.error("Không thể tạo chương. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleEditSectionClick = (section) => {
@@ -148,25 +224,83 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
 
     setLoading(true);
-    const result = await updateSection(sectionId, {
-      title: sectionForm.title,
-      description: sectionForm.description,
-    });
 
-    if (result) {
-      setEditingSectionId(null);
-      setSectionForm({ title: "", description: "" });
-      await onUpdate();
+    try {
+      const result = await updateSection(sectionId, {
+        title: sectionForm.title,
+        description: sectionForm.description,
+        // Note: orders is not updated - it's set at creation time
+      });
+
+      if (result) {
+        setEditingSectionId(null);
+        setSectionForm({ title: "", description: "" });
+
+        // Update local state immediately
+        setLocalCourse((prevCourse) => {
+          if (!prevCourse) return prevCourse;
+          const newCourse = { ...prevCourse };
+          newCourse.sections = newCourse.sections.map((section) =>
+            section.id === sectionId
+              ? {
+                  ...section,
+                  title: sectionForm.title,
+                  description: sectionForm.description,
+                  // Preserve orders field
+                }
+              : section
+          );
+          return newCourse;
+        });
+
+        toast.success("Chương đã được cập nhật!");
+
+        // Try to sync with backend but don't break if it fails
+        try {
+          await onUpdate();
+        } catch (updateError) {
+          console.error("Error syncing after section update:", updateError);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating section:", error);
+      toast.error("Không thể cập nhật chương. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDeleteSection = async (sectionId) => {
     if (window.confirm("Xóa chương này?")) {
       setLoading(true);
-      await deleteSection(sectionId);
-      await onUpdate();
-      setLoading(false);
+
+      try {
+        await deleteSection(sectionId);
+
+        // Remove from local state immediately
+        setLocalCourse((prevCourse) => {
+          if (!prevCourse) return prevCourse;
+          const newCourse = { ...prevCourse };
+          newCourse.sections = newCourse.sections.filter(
+            (section) => section.id !== sectionId
+          );
+          return newCourse;
+        });
+
+        toast.success("Chương đã được xóa!");
+
+        // Try to sync with backend but don't break if it fails
+        try {
+          await onUpdate();
+        } catch (updateError) {
+          console.error("Error syncing after section delete:", updateError);
+        }
+      } catch (error) {
+        console.error("Error deleting section:", error);
+        toast.error("Không thể xóa chương. Vui lòng thử lại.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -198,7 +332,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  // Lesson handlers
+  // Lesson handlers - WITH OPTIMISTIC UPDATES
   const handleSaveLesson = async (sectionId) => {
     if (!lessonForm.title.trim()) {
       toast.error("Vui lòng nhập tên bài học");
@@ -222,25 +356,59 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       const maxOrder = section?.items?.length
         ? Math.max(...section.items.map((item) => item.orders || 0))
         : 0;
+      const nextOrder = maxOrder + 1;
 
+      // Add optimistically to local state FIRST
+      const optimisticLesson = {
+        title: lessonForm.title.trim(),
+        description: lessonForm.description.trim(),
+        type: lessonForm.type,
+        isFree: lessonForm.isFree,
+        orders: nextOrder,
+        content: lessonForm.type === "Text" ? lessonForm.content.trim() : "",
+      };
+
+      addLessonToLocalState(sectionId, optimisticLesson);
+
+      // Keep section expanded
+      setExpandedSections((prev) => ({
+        ...prev,
+        [sectionId]: true,
+      }));
+
+      // Clear form and close add item UI
+      setAddingItemToSection(null);
+      setLessonForm({
+        title: "",
+        description: "",
+        type: "Video",
+        isFree: false,
+        lessonOrder: 0,
+        content: "",
+        videoFile: null,
+        pdfFile: null,
+      });
+
+      // Then create in backend
       const result = await createLesson({
         sectionId: sectionId,
         title: lessonForm.title.trim(),
         description: lessonForm.description.trim(),
         type: lessonForm.type,
         isFree: lessonForm.isFree,
-        lessonOrder: maxOrder + 1,
+        lessonOrder: nextOrder,
         content: lessonForm.type === "Text" ? lessonForm.content.trim() : "",
         videoFile: lessonForm.type === "Video" ? lessonForm.videoFile : null,
         fileUrl: lessonForm.pdfFile || null,
       });
 
       if (result) {
-        setAddingItemToSection(null);
-        await onUpdate();
+        toast.success(`✅ Bài học đã được tạo (Thứ tự: ${nextOrder})`);
+        // Don't call onUpdate() to avoid reload
       }
     } catch (error) {
       console.error("Error saving lesson:", error);
+      toast.error("Lỗi khi tạo bài học");
     } finally {
       setLoading(false);
     }
@@ -279,7 +447,29 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
     if (result) {
       setEditingLessonId(null);
-      await onUpdate();
+
+      // Update local state
+      setLocalCourse((prevCourse) => {
+        if (!prevCourse) return prevCourse;
+        const newCourse = { ...prevCourse };
+        newCourse.sections = newCourse.sections.map((section) => ({
+          ...section,
+          items: section.items?.map((item) =>
+            item.id === lessonId
+              ? {
+                  ...item,
+                  title: lessonForm.title,
+                  description: lessonForm.description,
+                  isFree: lessonForm.isFree,
+                  orders: lessonForm.lessonOrder,
+                }
+              : item
+          ),
+        }));
+        return newCourse;
+      });
+
+      toast.success("Bài học đã được cập nhật!");
     }
     setLoading(false);
   };
@@ -289,17 +479,29 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       setLoading(true);
       try {
         await deleteLesson(lessonId);
-        await onUpdate();
+
+        // Remove from local state
+        setLocalCourse((prevCourse) => {
+          if (!prevCourse) return prevCourse;
+          const newCourse = { ...prevCourse };
+          newCourse.sections = newCourse.sections.map((section) => ({
+            ...section,
+            items: section.items?.filter((item) => item.id !== lessonId),
+          }));
+          return newCourse;
+        });
+
+        toast.success("Bài học đã được xóa!");
       } catch (error) {
         console.error("Delete lesson error:", error);
+        toast.error("Lỗi khi xóa bài học");
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // Quiz handlers
-  // Quiz handlers - PASS ORDERS TO BACKEND
+  // Quiz handlers - WITH OPTIMISTIC UPDATES
   const handleSaveQuiz = async (sectionId) => {
     if (!quizForm.title || quizForm.title.trim() === "") {
       toast.error("Vui lòng nhập tên quiz");
@@ -322,9 +524,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     setLoading(true);
 
     try {
-      console.log("=== Starting Quiz Creation ===");
-
-      // Calculate the next order number
       const section = displayCourse?.sections?.find((s) => s.id === sectionId);
       let nextOrder = 1;
 
@@ -335,53 +534,44 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         nextOrder = maxOrder + 1;
       }
 
-      console.log("Section items count:", section?.items?.length || 0);
-      console.log("Calculated next order:", nextOrder);
-
       const quizData = {
         sectionId: sectionId,
         title: quizForm.title.trim(),
         description: quizForm.description.trim(),
         passPercent: passPercent,
         timer: timer,
-        orders: nextOrder, // INCLUDE ORDERS IN API CALL
+        orders: nextOrder,
       };
 
-      console.log("Quiz data WITH orders:", quizData);
+      // Add to local state FIRST
+      addQuizToLocalState(sectionId, quizData);
 
+      // Keep section expanded
+      setExpandedSections((prev) => ({
+        ...prev,
+        [sectionId]: true,
+      }));
+
+      // Clear form and close add item UI
+      setAddingItemToSection(null);
+      setQuizForm({
+        title: "",
+        description: "",
+        passPercent: 70,
+        timer: 15,
+      });
+
+      // Then create in backend
       const result = await createQuiz(quizData);
 
       if (result !== null && result !== undefined) {
-        console.log("✅ Quiz created successfully!");
-
-        // Add to local state
-        const optimisticQuiz = {
-          ...quizData,
-          orders: nextOrder,
-        };
-
-        console.log("Adding quiz to local state with order:", nextOrder);
-        addQuizToLocalState(sectionId, optimisticQuiz);
-
-        setAddingItemToSection(null);
-        setQuizForm({
-          title: "",
-          description: "",
-          passPercent: 70,
-          timer: 15,
-        });
-
-        toast.success(`✅ Quiz đã được tạo (Thứ tự: ${nextOrder})`, {
-          autoClose: 3000,
-        });
-
-        console.log("⚠️ NOT refreshing from backend due to known bug");
+        toast.success(`✅ Quiz đã được tạo (Thứ tự: ${nextOrder})`);
+        // Don't call onUpdate() to avoid reload
       } else {
         toast.error("Không thể tạo quiz - vui lòng thử lại");
       }
     } catch (error) {
-      console.error("=== Quiz Creation Failed ===");
-      console.error("Error:", error);
+      console.error("Quiz creation error:", error);
       toast.error("Lỗi khi tạo quiz: " + (error.message || "Vui lòng thử lại"));
     } finally {
       setLoading(false);
@@ -495,10 +685,15 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     return <FileText className="w-4 h-4 text-blue-500" />;
   };
 
+  // Sort sections by orders field
+  const sortedSections = displayCourse?.sections
+    ? [...displayCourse.sections].sort(
+        (a, b) => (a.orders || 0) - (b.orders || 0)
+      )
+    : [];
+
   return (
     <div className="max-w-5xl mx-auto">
-      
-
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -506,7 +701,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             Nội dung khóa học
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {displayCourse?.sections?.length || 0} chương
+            {sortedSections.length || 0} chương
           </p>
         </div>
         <Button
@@ -575,8 +770,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
       {/* Sections List */}
       <div className="space-y-3">
-        {displayCourse?.sections && displayCourse.sections.length > 0 ? (
-          displayCourse.sections.map((section, index) => (
+        {sortedSections.length > 0 ? (
+          sortedSections.map((section, index) => (
             <Card key={section.id} className="overflow-hidden">
               {/* Section Header */}
               {editingSectionId === section.id ? (
@@ -630,7 +825,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                   onClick={() => toggleSection(section.id)}
                 >
                   <span className="flex items-center justify-center w-8 h-8 bg-purple-100 text-purple-700 rounded-full font-semibold text-sm">
-                    {index + 1}
+                    {section.orders || index + 1}
                   </span>
 
                   <div className="flex-1">
@@ -995,7 +1190,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                     {/* Add Content Choice */}
                     {addingItemToSection?.sectionId === section.id &&
                       addingItemToSection.type === "choose" && (
-                        <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded">
+                        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                           <p className="text-sm font-medium mb-3">
                             Chọn loại nội dung:
                           </p>
