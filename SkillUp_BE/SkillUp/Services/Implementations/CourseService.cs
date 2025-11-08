@@ -288,40 +288,49 @@ namespace SkillUp.Services.Implementations
                 } : null
             };
 
-            detail.Sections = course.Sections.Select(section =>
+            detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
             {
                 // Map Lesson -> SectionItemDto (CÓ Assets)
-                var lessonItems = section.Lessons.Select(l => new SectionItemDto
-                {
-                    Kind = "Lesson",
-                    Id = l.Id,
-                    Orders = (double)l.Orders,
-                    Title = l.Title,
-                    Description = l.Description,
-                    LessonType = l.Type,                 // "Video" | "Text"
-                    IsFree = l.IsFree ?? false,
-                    Assets = l.Assets.Select(a => new AssetCourseDetailDto
+                // Only include active lessons and their active assets
+                var lessonItems = section.Lessons
+                    .Where(l => l.IsActive)
+                    .Select(l => new SectionItemDto
                     {
-                        Url = a.Url ?? "default-url",
-                        Content = a.Contents ?? "No content"
-                    }).ToList(),
-                    CreatedAt = l.CreatedAt,
-                    UpdatedAt = l.UpdatedAt
-                });
+                        Kind = "Lesson",
+                        Id = l.Id,
+                        Orders = (double)l.Orders,
+                        Title = l.Title,
+                        Description = l.Description,
+                        LessonType = l.Type,                 // "Video" | "Text"
+                        IsFree = l.IsFree ?? false,
+                        Assets = l.Assets?
+                            .Where(a => a.IsActive)
+                            .Select(a => new AssetCourseDetailDto
+                            {
+                                Url = a.Url ?? "default-url",
+                                Content = a.Contents ?? "No content"
+                            })
+                            .ToList() ?? new List<AssetCourseDetailDto>(),
+                        CreatedAt = l.CreatedAt,
+                        UpdatedAt = l.UpdatedAt
+                    });
 
                 // Map Quiz -> SectionItemDto (KHÔNG có Assets)
-                var quizItems = section.Quizzes.Select(q => new SectionItemDto
-                {
-                    Kind = "Quiz",
-                    Id = q.Id,
-                    Orders = (double)q.Orders,
-                    Title = q.Title,
-                    Description = q.Description,
-                    PassPercent = q.PassPercent,
-                    Timer = q.Timer,
-                    CreatedAt = q.CreatedAt,
-                    UpdatedAt = q.UpdatedAt
-                });
+                // Only include active quizzes
+                var quizItems = section.Quizzes
+                    .Where(q => q.IsActive)
+                    .Select(q => new SectionItemDto
+                    {
+                        Kind = "Quiz",
+                        Id = q.Id,
+                        Orders = (double)q.Orders,
+                        Title = q.Title,
+                        Description = q.Description,
+                        PassPercent = q.PassPercent,
+                        Timer = q.Timer,
+                        CreatedAt = q.CreatedAt,
+                        UpdatedAt = q.UpdatedAt
+                    });
 
                 // Gộp & sort tăng dần theo Orders
                 var items = lessonItems

@@ -19,7 +19,9 @@ namespace SkillUp.Repositories.Implementations
         public async Task<List<Course>> GetAllCourseAsync()
         {
             return await _context.Courses
-                                 .Include(c => c.Lecturer).ThenInclude(l => l.Account)
+                .Where(c=> c.Status !="Draft")
+                                 .Include(c => c.Lecturer)
+                                 .ThenInclude(l => l.Account)
                                  .Include(c => c.SubCategory)
                                  .ToListAsync();
         }
