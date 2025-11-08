@@ -51,6 +51,7 @@ function CourseDetailManagement() {
     try {
       setLoading(true);
       const response = await courseAPI.getCourseDetail(courseId);
+
       if (response.data.code === 200 && response.data.data.length > 0) {
         setCourse(response.data.data[0]);
       } else {
@@ -58,8 +59,21 @@ function CourseDetailManagement() {
         navigate("/lecturer/courses");
       }
     } catch (error) {
-      toast.error("Lỗi khi tải thông tin khóa học");
-      navigate("/lecturer/courses");
+      console.error("Error loading course:", error);
+
+      // Don't navigate away on error - just show error message
+      if (error.response?.status === 500) {
+        toast.error(
+          "Lỗi server: " + (error.response?.data?.message || "Vui lòng thử lại")
+        );
+      } else {
+        toast.error("Lỗi khi tải thông tin khóa học");
+      }
+
+      // Only navigate away if it's a 404
+      if (error.response?.status === 404) {
+        navigate("/lecturer/courses");
+      }
     } finally {
       setLoading(false);
     }

@@ -132,7 +132,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
     <Card className="mb-8 border-2 border-yellow-200 shadow-lg animate-in fade-in slide-in-from-top">
       <CardHeader className="bg-yellow-50">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl">✨ Tạo khóa học mới</CardTitle>
+          <CardTitle className="text-2xl"> Tạo khóa học mới</CardTitle>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -181,7 +181,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
           {/* Category Selection - Now showing both dropdowns */}
           <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
             <p className="text-sm text-gray-600 mb-3 font-semibold">
-              📌 Chọn danh mục:
+              Chọn danh mục:
             </p>
             <CategorySelector
               onCategoryChange={handleCategoryChange}

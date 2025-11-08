@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   ChevronDown,
@@ -11,23 +11,35 @@ import {
   X,
   Check,
   Upload,
+  FileDown,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "react-toastify";
 import { createSection, updateSection, deleteSection } from "@/api/sectionAPI";
 import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
-import { message } from "antd";
-import { toast } from "react-toastify";
+import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
   const [expandedSections, setExpandedSections] = useState({});
   const [loading, setLoading] = useState(false);
+  const [localCourse, setLocalCourse] = useState(course);
+
+  // Update local course when prop changes
+  useEffect(() => {
+    setLocalCourse(course);
+  }, [course]);
+
+  // Use localCourse for display
+  const displayCourse = localCourse || course;
 
   // Form states
   const [showAddSection, setShowAddSection] = useState(false);
   const [editingSectionId, setEditingSectionId] = useState(null);
-  const [addingLessonToSection, setAddingLessonToSection] = useState(null);
+  const [addingItemToSection, setAddingItemToSection] = useState(null);
   const [editingLessonId, setEditingLessonId] = useState(null);
+  const [editingQuizId, setEditingQuizId] = useState(null);
 
   // Form data
   const [sectionForm, setSectionForm] = useState({
@@ -42,6 +54,13 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     lessonOrder: 0,
     content: "",
     videoFile: null,
+    pdfFile: null,
+  });
+  const [quizForm, setQuizForm] = useState({
+    title: "",
+    description: "",
+    passPercent: 70,
+    timer: 15,
   });
 
   const toggleSection = (sectionId) => {
@@ -51,6 +70,42 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }));
   };
 
+  // Helper function to add quiz optimistically to local state
+  const addQuizToLocalState = (sectionId, quizData) => {
+    setLocalCourse((prevCourse) => {
+      if (!prevCourse) return prevCourse;
+
+      const newCourse = { ...prevCourse };
+      newCourse.sections = newCourse.sections.map((section) => {
+        if (section.id === sectionId) {
+          const quizOrder = quizData.orders || 1;
+
+          console.log(`Adding quiz to section with order: ${quizOrder}`);
+
+          const newQuiz = {
+            kind: "Quiz",
+            id: `temp-${Date.now()}`,
+            orders: quizOrder,
+            title: quizData.title,
+            description: quizData.description,
+            passPercent: quizData.passPercent,
+            timer: quizData.timer,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          return {
+            ...section,
+            items: [...(section.items || []), newQuiz],
+          };
+        }
+        return section;
+      });
+
+      return newCourse;
+    });
+  };
+
   // Section handlers
   const handleAddSectionClick = () => {
     setShowAddSection(true);
@@ -58,7 +113,10 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const handleSaveSection = async () => {
-    if (!sectionForm.title.trim()) return;
+    if (!sectionForm.title.trim()) {
+      toast.error("Vui lòng nhập tên chương");
+      return;
+    }
 
     setLoading(true);
     const result = await createSection({
@@ -84,7 +142,10 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const handleUpdateSection = async (sectionId) => {
-    if (!sectionForm.title.trim()) return;
+    if (!sectionForm.title.trim()) {
+      toast.error("Vui lòng nhập tên chương");
+      return;
+    }
 
     setLoading(true);
     const result = await updateSection(sectionId, {
@@ -109,42 +170,55 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  // Lesson handlers
-  const handleAddLessonClick = (sectionId) => {
-    setAddingLessonToSection(sectionId);
-    setLessonForm({
-      title: "",
-      description: "",
-      type: "Video",
-      isFree: false,
-      lessonOrder: 0,
-      content: "",
-      videoFile: null,
-    });
+  // Content type selection
+  const handleAddContentClick = (sectionId) => {
+    setAddingItemToSection({ sectionId, type: "choose" });
   };
 
+  const handleSelectContentType = (sectionId, type) => {
+    setAddingItemToSection({ sectionId, type });
+    if (type === "lesson") {
+      setLessonForm({
+        title: "",
+        description: "",
+        type: "Video",
+        isFree: false,
+        lessonOrder: 0,
+        content: "",
+        videoFile: null,
+        pdfFile: null,
+      });
+    } else if (type === "quiz") {
+      setQuizForm({
+        title: "",
+        description: "",
+        passPercent: 70,
+        timer: 15,
+      });
+    }
+  };
+
+  // Lesson handlers
   const handleSaveLesson = async (sectionId) => {
-    // Validation
     if (!lessonForm.title.trim()) {
       toast.error("Vui lòng nhập tên bài học");
       return;
     }
 
     if (lessonForm.type === "Video" && !lessonForm.videoFile) {
-      toast.error("Vui lòng nhập video cho bài học");
+      toast.error("Vui lòng chọn file video");
       return;
     }
 
     if (lessonForm.type === "Text" && !lessonForm.content.trim()) {
-      toast.error("Vui lòng nhập nội dung cho bài học");
+      toast.error("Vui lòng nhập nội dung bài học");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Get the current section to calculate lesson order
-      const section = course?.sections?.find((s) => s.id === sectionId);
+      const section = displayCourse?.sections?.find((s) => s.id === sectionId);
       const maxOrder = section?.items?.length
         ? Math.max(...section.items.map((item) => item.orders || 0))
         : 0;
@@ -155,28 +229,18 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         description: lessonForm.description.trim(),
         type: lessonForm.type,
         isFree: lessonForm.isFree,
-        lessonOrder: maxOrder + 1, // Auto-increment order
+        lessonOrder: maxOrder + 1,
         content: lessonForm.type === "Text" ? lessonForm.content.trim() : "",
         videoFile: lessonForm.type === "Video" ? lessonForm.videoFile : null,
+        fileUrl: lessonForm.pdfFile || null,
       });
 
       if (result) {
-        toast.success("Thêm bài học thành công");
-        setAddingLessonToSection(null);
-        setLessonForm({
-          title: "",
-          description: "",
-          type: "Video",
-          isFree: false,
-          lessonOrder: 0,
-          content: "",
-          videoFile: null,
-        });
+        setAddingItemToSection(null);
         await onUpdate();
       }
     } catch (error) {
       console.error("Error saving lesson:", error);
-      toast.error("Không thể thêm bài học");
     } finally {
       setLoading(false);
     }
@@ -192,11 +256,15 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       lessonOrder: lesson.orders,
       content: lesson.assets?.[0]?.content || "",
       videoFile: null,
+      pdfFile: null,
     });
   };
 
   const handleUpdateLesson = async (lessonId) => {
-    if (!lessonForm.title.trim()) return;
+    if (!lessonForm.title.trim()) {
+      toast.error("Vui lòng nhập tên bài học");
+      return;
+    }
 
     setLoading(true);
     const result = await updateLesson(lessonId, {
@@ -206,6 +274,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       lessonOrder: lessonForm.lessonOrder,
       content: lessonForm.content,
       videoFile: lessonForm.videoFile,
+      fileUrl: lessonForm.pdfFile,
     });
 
     if (result) {
@@ -218,9 +287,204 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   const handleDeleteLesson = async (lessonId) => {
     if (window.confirm("Xóa bài học này?")) {
       setLoading(true);
-      await deleteLesson(lessonId);
-      await onUpdate();
+      try {
+        await deleteLesson(lessonId);
+        await onUpdate();
+      } catch (error) {
+        console.error("Delete lesson error:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Quiz handlers
+  // Quiz handlers - PASS ORDERS TO BACKEND
+  const handleSaveQuiz = async (sectionId) => {
+    if (!quizForm.title || quizForm.title.trim() === "") {
+      toast.error("Vui lòng nhập tên quiz");
+      return;
+    }
+
+    const passPercent = parseInt(quizForm.passPercent);
+    const timer = parseInt(quizForm.timer);
+
+    if (isNaN(passPercent) || passPercent < 0 || passPercent > 100) {
+      toast.error("Điểm đạt phải từ 0 đến 100");
+      return;
+    }
+
+    if (isNaN(timer) || timer <= 0) {
+      toast.error("Thời gian phải lớn hơn 0");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      console.log("=== Starting Quiz Creation ===");
+
+      // Calculate the next order number
+      const section = displayCourse?.sections?.find((s) => s.id === sectionId);
+      let nextOrder = 1;
+
+      if (section?.items && section.items.length > 0) {
+        const maxOrder = Math.max(
+          ...section.items.map((item) => item.orders || 0)
+        );
+        nextOrder = maxOrder + 1;
+      }
+
+      console.log("Section items count:", section?.items?.length || 0);
+      console.log("Calculated next order:", nextOrder);
+
+      const quizData = {
+        sectionId: sectionId,
+        title: quizForm.title.trim(),
+        description: quizForm.description.trim(),
+        passPercent: passPercent,
+        timer: timer,
+        orders: nextOrder, // INCLUDE ORDERS IN API CALL
+      };
+
+      console.log("Quiz data WITH orders:", quizData);
+
+      const result = await createQuiz(quizData);
+
+      if (result !== null && result !== undefined) {
+        console.log("✅ Quiz created successfully!");
+
+        // Add to local state
+        const optimisticQuiz = {
+          ...quizData,
+          orders: nextOrder,
+        };
+
+        console.log("Adding quiz to local state with order:", nextOrder);
+        addQuizToLocalState(sectionId, optimisticQuiz);
+
+        setAddingItemToSection(null);
+        setQuizForm({
+          title: "",
+          description: "",
+          passPercent: 70,
+          timer: 15,
+        });
+
+        toast.success(`✅ Quiz đã được tạo (Thứ tự: ${nextOrder})`, {
+          autoClose: 3000,
+        });
+
+        console.log("⚠️ NOT refreshing from backend due to known bug");
+      } else {
+        toast.error("Không thể tạo quiz - vui lòng thử lại");
+      }
+    } catch (error) {
+      console.error("=== Quiz Creation Failed ===");
+      console.error("Error:", error);
+      toast.error("Lỗi khi tạo quiz: " + (error.message || "Vui lòng thử lại"));
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditQuizClick = (quiz) => {
+    setEditingQuizId(quiz.id);
+    setQuizForm({
+      title: quiz.title,
+      description: quiz.description || "",
+      passPercent: quiz.passPercent,
+      timer: quiz.timer,
+    });
+  };
+
+  const handleUpdateQuiz = async (quizId) => {
+    if (!quizForm.title || quizForm.title.trim() === "") {
+      toast.error("Vui lòng nhập tên quiz");
+      return;
+    }
+
+    const passPercent = parseInt(quizForm.passPercent);
+    const timer = parseInt(quizForm.timer);
+
+    if (isNaN(passPercent) || passPercent < 0 || passPercent > 100) {
+      toast.error("Điểm đạt phải từ 0 đến 100");
+      return;
+    }
+
+    if (isNaN(timer) || timer <= 0) {
+      toast.error("Thời gian phải lớn hơn 0");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await updateQuiz(quizId, {
+        title: quizForm.title.trim(),
+        description: quizForm.description.trim(),
+        passPercent: passPercent,
+        timer: timer,
+      });
+
+      if (result !== null) {
+        setEditingQuizId(null);
+
+        // Update local state
+        setLocalCourse((prevCourse) => {
+          if (!prevCourse) return prevCourse;
+          const newCourse = { ...prevCourse };
+          newCourse.sections = newCourse.sections.map((section) => ({
+            ...section,
+            items: section.items?.map((item) =>
+              item.id === quizId
+                ? {
+                    ...item,
+                    title: quizForm.title,
+                    description: quizForm.description,
+                    passPercent,
+                    timer,
+                  }
+                : item
+            ),
+          }));
+          return newCourse;
+        });
+
+        toast.success("Quiz đã được cập nhật!");
+      }
+    } catch (error) {
+      console.error("Quiz update error:", error);
+      toast.error("Lỗi khi cập nhật quiz");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteQuiz = async (quizId) => {
+    if (window.confirm("Xóa quiz này?")) {
+      setLoading(true);
+      try {
+        await deleteQuiz(quizId);
+
+        // Remove from local state
+        setLocalCourse((prevCourse) => {
+          if (!prevCourse) return prevCourse;
+          const newCourse = { ...prevCourse };
+          newCourse.sections = newCourse.sections.map((section) => ({
+            ...section,
+            items: section.items?.filter((item) => item.id !== quizId),
+          }));
+          return newCourse;
+        });
+
+        toast.success("Quiz đã được xóa!");
+      } catch (error) {
+        console.error("Delete quiz error:", error);
+        toast.error("Lỗi khi xóa quiz");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -233,6 +497,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   return (
     <div className="max-w-5xl mx-auto">
+      
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -240,7 +506,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             Nội dung khóa học
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            {course?.sections?.length || 0} chương
+            {displayCourse?.sections?.length || 0} chương
           </p>
         </div>
         <Button
@@ -309,8 +575,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
       {/* Sections List */}
       <div className="space-y-3">
-        {course?.sections && course.sections.length > 0 ? (
-          course.sections.map((section, index) => (
+        {displayCourse?.sections && displayCourse.sections.length > 0 ? (
+          displayCourse.sections.map((section, index) => (
             <Card key={section.id} className="overflow-hidden">
               {/* Section Header */}
               {editingSectionId === section.id ? (
@@ -372,7 +638,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                       {section.title}
                     </h3>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {section.items?.length || 0} bài học
+                      {section.items?.length || 0} mục
                     </p>
                   </div>
 
@@ -418,9 +684,9 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                     {section.items && section.items.length > 0 ? (
                       section.items.map((item) => (
                         <div key={item.id}>
+                          {/* Edit Lesson Form */}
                           {item.kind === "Lesson" &&
                           editingLessonId === item.id ? (
-                            // Edit Lesson Form
                             <div className="p-3 bg-yellow-50 border rounded">
                               <div className="space-y-2">
                                 <input
@@ -512,6 +778,27 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                                     </label>
                                   </div>
                                 )}
+                                <div>
+                                  <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+                                    <FileDown className="w-4 h-4" />
+                                    <span className="text-sm">
+                                      {lessonForm.pdfFile
+                                        ? lessonForm.pdfFile.name
+                                        : "Tài liệu PDF (không bắt buộc)"}
+                                    </span>
+                                    <input
+                                      type="file"
+                                      accept=".pdf"
+                                      onChange={(e) =>
+                                        setLessonForm({
+                                          ...lessonForm,
+                                          pdfFile: e.target.files[0],
+                                        })
+                                      }
+                                      className="hidden"
+                                    />
+                                  </label>
+                                </div>
                                 <div className="flex gap-2">
                                   <Button
                                     onClick={() => handleUpdateLesson(item.id)}
@@ -532,8 +819,104 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                                 </div>
                               </div>
                             </div>
+                          ) : item.kind === "Quiz" &&
+                            editingQuizId === item.id ? (
+                            /* Edit Quiz Form */
+                            <div className="p-3 bg-yellow-50 border rounded">
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={quizForm.title}
+                                  onChange={(e) =>
+                                    setQuizForm({
+                                      ...quizForm,
+                                      title: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Tên quiz"
+                                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                                />
+                                <textarea
+                                  value={quizForm.description}
+                                  onChange={(e) =>
+                                    setQuizForm({
+                                      ...quizForm,
+                                      description: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Mô tả"
+                                  rows="2"
+                                  className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="text-xs text-gray-600">
+                                      Điểm đạt (%)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      value={quizForm.passPercent}
+                                      onChange={(e) => {
+                                        const value =
+                                          e.target.value === ""
+                                            ? 0
+                                            : parseInt(e.target.value);
+                                        setQuizForm({
+                                          ...quizForm,
+                                          passPercent: value,
+                                        });
+                                      }}
+                                      min="0"
+                                      max="100"
+                                      step="1"
+                                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-xs text-gray-600">
+                                      Thời gian (phút)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      value={quizForm.timer}
+                                      onChange={(e) => {
+                                        const value =
+                                          e.target.value === ""
+                                            ? 0
+                                            : parseInt(e.target.value);
+                                        setQuizForm({
+                                          ...quizForm,
+                                          timer: value,
+                                        });
+                                      }}
+                                      min="1"
+                                      step="1"
+                                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => handleUpdateQuiz(item.id)}
+                                    size="sm"
+                                    className="bg-orange-600"
+                                  >
+                                    <Check className="w-3 h-3 mr-1" />
+                                    Lưu
+                                  </Button>
+                                  <Button
+                                    onClick={() => setEditingQuizId(null)}
+                                    variant="outline"
+                                    size="sm"
+                                  >
+                                    <X className="w-3 h-3 mr-1" />
+                                    Hủy
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
                           ) : (
-                            // Display Lesson
+                            /* Display Item */
                             <div className="flex items-center gap-3 p-3 bg-white border rounded hover:shadow-sm">
                               {item.kind === "Lesson" && getLessonIcon(item)}
                               {item.kind === "Quiz" && (
@@ -542,9 +925,13 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-500">
-                                    {item.kind === "Lesson" ? "Bài" : "Quiz"}{" "}
+                                  <span className="flex items-center justify-center w-6 h-6 bg-gray-100 text-gray-700 rounded font-semibold text-xs">
                                     {item.orders}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {item.kind === "Lesson"
+                                      ? "Bài học"
+                                      : "Quiz"}
                                   </span>
                                   <h4 className="font-medium text-gray-900 truncate">
                                     {item.title}
@@ -573,26 +960,26 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                               </div>
 
                               <div className="flex gap-1">
-                                {item.kind === "Lesson" && (
-                                  <>
-                                    <button
-                                      onClick={() =>
-                                        handleEditLessonClick(item)
-                                      }
-                                      className="p-2 hover:bg-yellow-100 rounded text-yellow-600"
-                                    >
-                                      <Edit2 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteLesson(item.id)
-                                      }
-                                      className="p-2 hover:bg-red-100 rounded text-red-600"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                )}
+                                <button
+                                  onClick={() =>
+                                    item.kind === "Lesson"
+                                      ? handleEditLessonClick(item)
+                                      : handleEditQuizClick(item)
+                                  }
+                                  className="p-2 hover:bg-yellow-100 rounded text-yellow-600"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    item.kind === "Lesson"
+                                      ? handleDeleteLesson(item.id)
+                                      : handleDeleteQuiz(item.id)
+                                  }
+                                  className="p-2 hover:bg-red-100 rounded text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
                               </div>
                             </div>
                           )}
@@ -601,136 +988,300 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                     ) : (
                       <div className="text-center py-6 text-gray-400">
                         <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Chưa có bài học</p>
+                        <p className="text-sm">Chưa có nội dung</p>
                       </div>
                     )}
 
+                    {/* Add Content Choice */}
+                    {addingItemToSection?.sectionId === section.id &&
+                      addingItemToSection.type === "choose" && (
+                        <div className="p-4 bg-purple-50 border-2 border-purple-200 rounded">
+                          <p className="text-sm font-medium mb-3">
+                            Chọn loại nội dung:
+                          </p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              onClick={() =>
+                                handleSelectContentType(section.id, "lesson")
+                              }
+                              className="p-4 border-2 border-purple-300 rounded-lg hover:bg-purple-100 text-left transition-colors"
+                            >
+                              <FileText className="w-6 h-6 text-purple-600 mb-2" />
+                              <h4 className="font-semibold text-sm">Bài học</h4>
+                              <p className="text-xs text-gray-600">
+                                Video hoặc văn bản
+                              </p>
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleSelectContentType(section.id, "quiz")
+                              }
+                              className="p-4 border-2 border-orange-300 rounded-lg hover:bg-orange-100 text-left transition-colors"
+                            >
+                              <HelpCircle className="w-6 h-6 text-orange-600 mb-2" />
+                              <h4 className="font-semibold text-sm">Quiz</h4>
+                              <p className="text-xs text-gray-600">
+                                Bài kiểm tra
+                              </p>
+                            </button>
+                          </div>
+                          <Button
+                            onClick={() => setAddingItemToSection(null)}
+                            variant="outline"
+                            size="sm"
+                            className="mt-3 w-full"
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Hủy
+                          </Button>
+                        </div>
+                      )}
+
                     {/* Add Lesson Form */}
-                    {addingLessonToSection === section.id && (
-                      <div className="p-3 bg-purple-50 border-2 border-purple-200 rounded">
-                        <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={lessonForm.title}
-                            onChange={(e) =>
-                              setLessonForm({
-                                ...lessonForm,
-                                title: e.target.value,
-                              })
-                            }
-                            placeholder="Tên bài học"
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                            autoFocus
-                          />
-                          <textarea
-                            value={lessonForm.description}
-                            onChange={(e) =>
-                              setLessonForm({
-                                ...lessonForm,
-                                description: e.target.value,
-                              })
-                            }
-                            placeholder="Mô tả bài học (không bắt buộc)"
-                            rows="2"
-                            className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                          />
-                          <div className="flex gap-3">
-                            <select
-                              value={lessonForm.type}
+                    {addingItemToSection?.sectionId === section.id &&
+                      addingItemToSection.type === "lesson" && (
+                        <div className="p-3 bg-purple-50 border-2 border-purple-200 rounded">
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={lessonForm.title}
                               onChange={(e) =>
                                 setLessonForm({
                                   ...lessonForm,
-                                  type: e.target.value,
+                                  title: e.target.value,
                                 })
                               }
-                              className="px-3 py-2 border rounded-lg text-sm"
-                            >
-                              <option value="Video">Video</option>
-                              <option value="Text">Văn bản</option>
-                            </select>
-                            <label className="flex items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={lessonForm.isFree}
+                              placeholder="Tên bài học"
+                              className="w-full px-3 py-2 border rounded-lg text-sm"
+                              autoFocus
+                            />
+                            <textarea
+                              value={lessonForm.description}
+                              onChange={(e) =>
+                                setLessonForm({
+                                  ...lessonForm,
+                                  description: e.target.value,
+                                })
+                              }
+                              placeholder="Mô tả bài học"
+                              rows="2"
+                              className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
+                            />
+                            <div className="flex gap-3">
+                              <select
+                                value={lessonForm.type}
                                 onChange={(e) =>
                                   setLessonForm({
                                     ...lessonForm,
-                                    isFree: e.target.checked,
+                                    type: e.target.value,
                                   })
                                 }
-                              />
-                              <span className="text-sm">Miễn phí</span>
-                            </label>
-                          </div>
-                          {lessonForm.type === "Text" && (
-                            <textarea
-                              value={lessonForm.content}
-                              onChange={(e) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  content: e.target.value,
-                                })
-                              }
-                              placeholder="Nội dung bài học..."
-                              rows="4"
-                              className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                            />
-                          )}
-                          {lessonForm.type === "Video" && (
-                            <div>
-                              <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-purple-100">
-                                <Upload className="w-4 h-4" />
-                                <span className="text-sm">
-                                  {lessonForm.videoFile
-                                    ? lessonForm.videoFile.name
-                                    : "Chọn video"}
-                                </span>
+                                className="px-3 py-2 border rounded-lg text-sm"
+                              >
+                                <option value="Video">Video</option>
+                                <option value="Text">Văn bản</option>
+                              </select>
+                              <label className="flex items-center gap-2">
                                 <input
-                                  type="file"
-                                  accept="video/*"
+                                  type="checkbox"
+                                  checked={lessonForm.isFree}
                                   onChange={(e) =>
                                     setLessonForm({
                                       ...lessonForm,
-                                      videoFile: e.target.files[0],
+                                      isFree: e.target.checked,
+                                    })
+                                  }
+                                />
+                                <span className="text-sm">Miễn phí</span>
+                              </label>
+                            </div>
+                            {lessonForm.type === "Text" && (
+                              <textarea
+                                value={lessonForm.content}
+                                onChange={(e) =>
+                                  setLessonForm({
+                                    ...lessonForm,
+                                    content: e.target.value,
+                                  })
+                                }
+                                placeholder="Nội dung bài học..."
+                                rows="4"
+                                className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
+                              />
+                            )}
+                            {lessonForm.type === "Video" && (
+                              <div>
+                                <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-purple-100">
+                                  <Upload className="w-4 h-4" />
+                                  <span className="text-sm">
+                                    {lessonForm.videoFile
+                                      ? lessonForm.videoFile.name
+                                      : "Chọn video"}
+                                  </span>
+                                  <input
+                                    type="file"
+                                    accept="video/*"
+                                    onChange={(e) =>
+                                      setLessonForm({
+                                        ...lessonForm,
+                                        videoFile: e.target.files[0],
+                                      })
+                                    }
+                                    className="hidden"
+                                  />
+                                </label>
+                              </div>
+                            )}
+                            <div>
+                              <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-purple-100">
+                                <FileDown className="w-4 h-4" />
+                                <span className="text-sm">
+                                  {lessonForm.pdfFile
+                                    ? lessonForm.pdfFile.name
+                                    : "Tài liệu PDF (không bắt buộc)"}
+                                </span>
+                                <input
+                                  type="file"
+                                  accept=".pdf"
+                                  onChange={(e) =>
+                                    setLessonForm({
+                                      ...lessonForm,
+                                      pdfFile: e.target.files[0],
                                     })
                                   }
                                   className="hidden"
                                 />
                               </label>
                             </div>
-                          )}
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => handleSaveLesson(section.id)}
-                              disabled={loading || !lessonForm.title.trim()}
-                              size="sm"
-                              className="bg-purple-600"
-                            >
-                              <Check className="w-4 h-4 mr-1" />
-                              Thêm bài học
-                            </Button>
-                            <Button
-                              onClick={() => setAddingLessonToSection(null)}
-                              variant="outline"
-                              size="sm"
-                            >
-                              <X className="w-4 h-4 mr-1" />
-                              Hủy
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleSaveLesson(section.id)}
+                                disabled={loading || !lessonForm.title.trim()}
+                                size="sm"
+                                className="bg-purple-600"
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Thêm bài học
+                              </Button>
+                              <Button
+                                onClick={() => setAddingItemToSection(null)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Hủy
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                    {/* Add Quiz Form */}
+                    {addingItemToSection?.sectionId === section.id &&
+                      addingItemToSection.type === "quiz" && (
+                        <div className="p-3 bg-orange-50 border-2 border-orange-200 rounded">
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={quizForm.title}
+                              onChange={(e) =>
+                                setQuizForm({
+                                  ...quizForm,
+                                  title: e.target.value,
+                                })
+                              }
+                              placeholder="Tên quiz"
+                              className="w-full px-3 py-2 border rounded-lg text-sm"
+                              autoFocus
+                            />
+                            <textarea
+                              value={quizForm.description}
+                              onChange={(e) =>
+                                setQuizForm({
+                                  ...quizForm,
+                                  description: e.target.value,
+                                })
+                              }
+                              placeholder="Mô tả quiz"
+                              rows="2"
+                              className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs text-gray-600">
+                                  Điểm đạt (%)
+                                </label>
+                                <input
+                                  type="number"
+                                  value={quizForm.passPercent}
+                                  onChange={(e) => {
+                                    const value =
+                                      e.target.value === ""
+                                        ? 0
+                                        : parseInt(e.target.value);
+                                    setQuizForm({
+                                      ...quizForm,
+                                      passPercent: value,
+                                    });
+                                  }}
+                                  min="0"
+                                  max="100"
+                                  step="1"
+                                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-600">
+                                  Thời gian (phút)
+                                </label>
+                                <input
+                                  type="number"
+                                  value={quizForm.timer}
+                                  onChange={(e) => {
+                                    const value =
+                                      e.target.value === ""
+                                        ? 0
+                                        : parseInt(e.target.value);
+                                    setQuizForm({ ...quizForm, timer: value });
+                                  }}
+                                  min="1"
+                                  step="1"
+                                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleSaveQuiz(section.id)}
+                                disabled={loading || !quizForm.title.trim()}
+                                size="sm"
+                                className="bg-orange-600 hover:bg-orange-700"
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Tạo quiz
+                              </Button>
+                              <Button
+                                onClick={() => setAddingItemToSection(null)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Hủy
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                   </div>
 
-                  {/* Add Lesson Button */}
-                  {addingLessonToSection !== section.id && (
+                  {/* Add Content Button */}
+                  {!addingItemToSection && (
                     <button
-                      onClick={() => handleAddLessonClick(section.id)}
+                      onClick={() => handleAddContentClick(section.id)}
                       className="w-full p-3 border-2 border-dashed rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-sm font-medium text-gray-600 hover:text-purple-600 flex items-center justify-center gap-2"
                     >
                       <Plus className="w-4 h-4" />
-                      Thêm bài học
+                      Thêm nội dung
                     </button>
                   )}
                 </CardContent>
