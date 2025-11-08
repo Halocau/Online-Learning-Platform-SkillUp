@@ -118,5 +118,16 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Courses.AnyAsync(c => c.Id == courseId);
         }
 
+        public async Task<List<Course>> GetCoursesByCategoryId(int id)
+        {
+            return await _context.Courses
+                  .Where(c => c.IsActive == true
+                         && c.Status == "Public"                 
+                         && c.SubCategory.CategoryId == id)
+                  .Include(c => c.Lecturer)
+              .ThenInclude(l => l.Account)
+              .OrderByDescending(c => c.CreatedAt)
+              .ToListAsync();
+        }
     }
 }
