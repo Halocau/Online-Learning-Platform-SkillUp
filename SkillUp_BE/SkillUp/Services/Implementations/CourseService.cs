@@ -47,7 +47,6 @@ namespace SkillUp.Services.Implementations
                 Description = request.Description,
                 Image = imageUrl,
                 SubCategoryId = request.SubCategoryId,
-                CategoryId = request.CategoryId,
                 LecturerId = lecturer.Id,
                 Price = 0,
                 EnrollmentCount = 0,
@@ -334,13 +333,15 @@ namespace SkillUp.Services.Implementations
                 return new SectionCourseDetailDto
                 {
                     Id = section.Id,
+                    Orders = (double)section.Orders,
                     Title = section.Title,
                     Description = section.Description,
                     CreatedAt = section.CreatedAt,
                     UpdatedAt = section.UpdatedAt,
                     Items = items
                 };
-            }).ToList();
+            }).OrderBy(i => i.Orders)
+              .ToList();
 
             return detail;
         }

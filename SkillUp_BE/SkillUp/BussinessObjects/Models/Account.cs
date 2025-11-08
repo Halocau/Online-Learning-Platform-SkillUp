@@ -29,6 +29,8 @@ public partial class Account
 
     public int? RoleId { get; set; }
 
+    public virtual ICollection<CommentLesson> CommentLessons { get; set; } = new List<CommentLesson>();
+
     public virtual ICollection<CommentPost> CommentPosts { get; set; } = new List<CommentPost>();
 
     public virtual ICollection<CommentReportLesson> CommentReportLessons { get; set; } = new List<CommentReportLesson>();

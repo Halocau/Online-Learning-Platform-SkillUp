@@ -1,42 +1,41 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  BarChart3, 
-  Users, 
-  DollarSign, 
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  BarChart3,
+  Users,
+  DollarSign,
   TrendingUp,
   BookOpen,
   Clock,
   Star,
-  ArrowRight
-} from 'lucide-react';
+  ArrowRight,
+} from "lucide-react";
 
-/**
- * LecturerDashboard - Main dashboard for accepted lecturers
- * Shows overview of courses, earnings, students, etc.
- */
 function LecturerDashboard() {
   const [stats, setStats] = useState({
     totalCourses: 0,
     totalStudents: 0,
     totalEarnings: 0,
-    totalHours: 0
+    totalHours: 0,
   });
 
   useEffect(() => {
-    // TODO: Fetch dashboard stats from API
-    // API endpoint: GET /api/Lecturer/dashboard-stats
     loadDashboardStats();
   }, []);
 
   const loadDashboardStats = async () => {
-    // Placeholder data - replace with actual API call
     setStats({
       totalCourses: 3,
       totalStudents: 145,
       totalEarnings: 12500,
-      totalHours: 24
+      totalHours: 24,
     });
   };
 
@@ -48,9 +47,14 @@ function LecturerDashboard() {
             <p className="text-sm text-gray-600 mb-2">{label}</p>
             <p className="text-3xl font-bold text-gray-900">{value}</p>
             {trend && (
-              <p className={`text-xs mt-2 flex items-center gap-1 ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p
+                className={`text-xs mt-2 flex items-center gap-1 ${
+                  trend > 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
                 <TrendingUp className="w-3 h-3" />
-                {trend > 0 ? '+' : ''}{trend}% so với tuần trước
+                {trend > 0 ? "+" : ""}
+                {trend}% so với tuần trước
               </p>
             )}
           </div>
@@ -67,7 +71,9 @@ function LecturerDashboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Bảng điều khiển</h1>
-        <p className="text-gray-600 mt-2">Chào mừng trở lại! Dưới đây là tổng quan về hoạt động của bạn.</p>
+        <p className="text-gray-600 mt-2">
+          Chào mừng trở lại! Dưới đây là tổng quan về hoạt động của bạn.
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -154,7 +160,9 @@ function LecturerDashboard() {
                 <div className="flex gap-3">
                   <div className="w-2 h-2 mt-2 rounded-full bg-yellow-500 flex-shrink-0"></div>
                   <div>
-                    <p className="font-medium text-gray-900">Học viên mới đăng ký</p>
+                    <p className="font-medium text-gray-900">
+                      Học viên mới đăng ký
+                    </p>
                     <p className="text-gray-600">5 học viên vừa đăng ký</p>
                     <p className="text-xs text-gray-500 mt-1">2 giờ trước</p>
                   </div>
@@ -162,7 +170,9 @@ function LecturerDashboard() {
                 <div className="flex gap-3">
                   <div className="w-2 h-2 mt-2 rounded-full bg-green-500 flex-shrink-0"></div>
                   <div>
-                    <p className="font-medium text-gray-900">Bài tập được nộp</p>
+                    <p className="font-medium text-gray-900">
+                      Bài tập được nộp
+                    </p>
                     <p className="text-gray-600">12 bài tập cần chấm điểm</p>
                     <p className="text-xs text-gray-500 mt-1">1 ngày trước</p>
                   </div>
