@@ -6,6 +6,7 @@ namespace SkillUp.BussinessObjects.DTOs.Section
     public class SectionCourseDetailDto
     {
         public Guid Id { get; set; }
+        public double? Orders { get; set; }
         public string Title { get; set; } = "";
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
