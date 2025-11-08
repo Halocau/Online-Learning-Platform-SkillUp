@@ -47,7 +47,6 @@ namespace SkillUp.Services.Implementations
                 Description = request.Description,
                 Image = imageUrl,
                 SubCategoryId = request.SubCategoryId,
-                CategoryId = request.CategoryId,
                 LecturerId = lecturer.Id,
                 Price = 0,
                 EnrollmentCount = 0,

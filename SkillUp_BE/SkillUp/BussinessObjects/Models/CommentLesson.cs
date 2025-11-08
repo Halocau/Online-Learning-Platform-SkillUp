@@ -15,9 +15,13 @@ public partial class CommentLesson
 
     public DateTime CreatedAt { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public string? Contents { get; set; }
+
+    public bool IsActive { get; set; }
+
+    public virtual Account Account { get; set; } = null!;
 
     public virtual ICollection<CommentReportLesson> CommentReportLessons { get; set; } = new List<CommentReportLesson>();
 
