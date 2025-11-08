@@ -239,6 +239,11 @@ public partial class SkillUpContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
+            entity.HasOne(d => d.Account).WithMany(p => p.CommentLessons)
+                .HasForeignKey(d => d.AccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CommentLesson_Account");
+
             entity.HasOne(d => d.Lesson).WithMany(p => p.CommentLessons)
                 .HasForeignKey(d => d.LessonId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -394,7 +399,12 @@ public partial class SkillUpContext : DbContext
             entity.ToTable("Lecturer");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.BankName).HasMaxLength(255);
+            entity.Property(e => e.BankNumber)
+                .HasMaxLength(255)
+                .IsUnicode(false);
             entity.Property(e => e.Profession).HasMaxLength(255);
+            entity.Property(e => e.ReceiverName).HasMaxLength(255);
             entity.Property(e => e.Title).HasMaxLength(255);
 
             entity.HasOne(d => d.Account).WithMany(p => p.Lecturers)
