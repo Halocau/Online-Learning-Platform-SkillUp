@@ -46,7 +46,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
 
   return (
     <Modal
-      title="Edit Question"
+      title="Sửa câu hỏi"
       open={open}
       onCancel={onClose}
       footer={null}
