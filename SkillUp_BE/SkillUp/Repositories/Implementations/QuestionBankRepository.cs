@@ -20,12 +20,15 @@ namespace SkillUp.Repositories.Implementations
 
 		public async Task<QuestionBank?> GetByIdAsync(Guid id)
 		{
-			return await _context.QuestionBanks.FindAsync(id);
+			return await _context.QuestionBanks
+                .Include(q => q.AnswerBanks)
+				.FirstOrDefaultAsync(q => q.Id == id);
 		}
 
 		public async Task<List<QuestionBank>> GetBySectionId(Guid sectionId)
 		{
 			return await _context.QuestionBanks
+                .Include(q => q.AnswerBanks)
 				.Where(q => q.SectionId == sectionId)
 				.Where(q => q.IsActive)
 				.ToListAsync();

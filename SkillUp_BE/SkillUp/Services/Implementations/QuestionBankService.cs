@@ -1,4 +1,5 @@
 ﻿using Microsoft.Identity.Client;
+using SkillUp.BussinessObjects.DTOs.Question;
 using SkillUp.BussinessObjects.DTOs.QuestionBank;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Implementations;
@@ -21,7 +22,7 @@ namespace SkillUp.Services.Implementations
 			_lecturerRepository = lecturerRepository;
 			_courseRepository = courseRepository;
 		}
-		public async Task<CreateQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId)
+		public async Task<DetailQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId)
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course =  await _courseRepository.GetCourseByIdAsync(courseId);
@@ -41,17 +42,38 @@ namespace SkillUp.Services.Implementations
 				UpdatedAt = DateTime.Now,
 				IsActive = true
 			};
+			foreach (var answerDto in createQuestionBankDTO.Answers)
+			{
+				var answer = new AnswerBank
+				{
+					Id = Guid.NewGuid(),
+					QuestionBankId = questionBank.Id,
+					AnswerName = answerDto.AnswerName,
+					IsCorrect = answerDto.IsCorrect,
+					IsActive = true
+				};
+				questionBank.AnswerBanks.Add(answer);
+			}
+
 			await _questionBankRepository.CreateAsync(questionBank);
 			await _questionBankRepository.SaveChangesAsync();
 
-			return new CreateQuestionBankDTO
+			return new DetailQuestionBankDTO
 			{
+				Id = (Guid)questionBank.Id,
 				SectionId = questionBank.SectionId,
 				LecturerId = questionBank.LecturerId,
 				Title = questionBank.Title,
 				Description = questionBank.Description,
 				CreatedAt = questionBank.CreatedAt,
-				UpdatedAt = questionBank.UpdatedAt
+				UpdatedAt = questionBank.UpdatedAt,
+				IsActive = questionBank.IsActive,
+				Answers = questionBank.AnswerBanks.Select(a => new AnswerDetailDTO
+				{
+					AnswerId = (Guid)a.Id,
+					AnswerName = a.AnswerName,
+					IsCorrect = a.IsCorrect,
+				}).ToList()
 			};
 		}
 
@@ -73,7 +95,7 @@ namespace SkillUp.Services.Implementations
 			await _questionBankRepository.SaveChangesAsync();
 		}
 
-		public async Task<ViewQuestionBankDTO> GetQuestionBankByIdAsync(Guid id, Guid accountId, Guid courseId)
+		public async Task<DetailQuestionBankDTO> GetQuestionBankByIdAsync(Guid id, Guid accountId, Guid courseId)
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
@@ -87,7 +109,7 @@ namespace SkillUp.Services.Implementations
 				throw new Exception("Không tìm thấy câu hỏi!");
 			}
 
-			return new ViewQuestionBankDTO
+			return new DetailQuestionBankDTO
 			{
 				Id = (Guid)questionBank.Id,
 				SectionId = questionBank.SectionId,
@@ -96,11 +118,17 @@ namespace SkillUp.Services.Implementations
 				Description = questionBank.Description,
 				CreatedAt = questionBank.CreatedAt,
 				UpdatedAt = questionBank.UpdatedAt,
-				IsActive = questionBank.IsActive
+				IsActive = questionBank.IsActive,
+				Answers = questionBank.AnswerBanks.Select(a => new AnswerDetailDTO
+				{
+					AnswerId = (Guid)a.Id,
+					AnswerName = a.AnswerName,
+					IsCorrect = a.IsCorrect,
+				}).ToList()
 			};
 		}
 
-		public async Task<List<ViewQuestionBankDTO>> GetQuestionBanksBySectionIdAsync(Guid sectionId, Guid accountId, Guid courseId)
+		public async Task<List<DetailQuestionBankDTO>> GetQuestionBanksBySectionIdAsync(Guid sectionId, Guid accountId, Guid courseId)
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
@@ -109,7 +137,7 @@ namespace SkillUp.Services.Implementations
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
 			var questionBanks = await _questionBankRepository.GetBySectionId(sectionId);
-			var questionBankDTOs = questionBanks.Select(q => new ViewQuestionBankDTO
+			var questionBankDTOs = questionBanks.Select(q => new DetailQuestionBankDTO
 			{
 				Id = (Guid)q.Id,
 				SectionId = q.SectionId,
@@ -118,7 +146,13 @@ namespace SkillUp.Services.Implementations
 				Description = q.Description,
 				CreatedAt = q.CreatedAt,
 				UpdatedAt = q.UpdatedAt,
-				IsActive = q.IsActive
+				IsActive = q.IsActive,
+				Answers = q.AnswerBanks.Select(a => new AnswerDetailDTO
+				{
+					AnswerId = (Guid)a.Id,
+					AnswerName = a.AnswerName,
+					IsCorrect = a.IsCorrect,
+				}).ToList()
 			}).ToList();
 			return questionBankDTOs;
 		}
@@ -138,8 +172,16 @@ namespace SkillUp.Services.Implementations
 			}
 			existingQuestion.SectionId = updateQuestionBankDTO.SectionId;
 			existingQuestion.Title = updateQuestionBankDTO.Title;
-			existingQuestion.Description = updateQuestionBankDTO.Description;
 			existingQuestion.UpdatedAt = DateTime.Now;
+			foreach(var answerDTO in updateQuestionBankDTO.Answers)
+			{
+				var answer = existingQuestion.AnswerBanks.FirstOrDefault(existingQuestion => existingQuestion.Id == answerDTO.AnswerId);
+				if (answer != null)
+				{
+					answer.AnswerName = answerDTO.AnswerName;
+					answer.IsCorrect = answerDTO.IsCorrect;
+				}
+			}
 
 			_questionBankRepository.Update(existingQuestion);
 			await _questionBankRepository.SaveChangesAsync();
@@ -148,9 +190,42 @@ namespace SkillUp.Services.Implementations
 			{
 				SectionId = existingQuestion.SectionId,
 				Title = existingQuestion.Title,
-				Description = existingQuestion.Description,
-				UpdatedAt = existingQuestion.UpdatedAt
+				Answers = existingQuestion.AnswerBanks.Select(a => new UpdateAnswerDTO
+				{
+					AnswerId = (Guid)a.Id,
+					AnswerName = a.AnswerName,
+					IsCorrect = a.IsCorrect,
+				}).ToList()
 			};
 		}
+
+		//public async Task<List<QuestionBank>> BulkAddQuestionsWithAnswersAsync(List<CreateQuestionBankDTO> questionDTOs, Guid accountId, Guid courseId)
+		//{
+		//	var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+		//	var course = await _courseRepository.GetCourseByIdAsync(courseId);
+		//	if (lecturer == null || course!.LecturerId != lecturer.Id)
+		//	{
+		//		throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
+		//	}
+		//	List<QuestionBank> createdQuestions = new List<QuestionBank>();
+		//	foreach (var dto in questionDTOs)
+		//	{
+		//		QuestionBank questionBank = new QuestionBank
+		//		{
+		//			Id = Guid.NewGuid(),
+		//			SectionId = dto.SectionId,
+		//			LecturerId = lecturer.Id,
+		//			Title = dto.Title,
+		//			Description = dto.Description,
+		//			CreatedAt = DateTime.Now,
+		//			UpdatedAt = DateTime.Now,
+		//			IsActive = true
+		//		};
+		//		await _questionBankRepository.CreateAsync(questionBank);
+		//		createdQuestions.Add(questionBank);
+		//	}
+		//	await _questionBankRepository.SaveChangesAsync();
+		//	return createdQuestions;
+		//}
 	}
 }

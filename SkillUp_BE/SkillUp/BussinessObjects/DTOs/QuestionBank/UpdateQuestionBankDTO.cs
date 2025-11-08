@@ -1,4 +1,6 @@
-﻿namespace SkillUp.BussinessObjects.DTOs.QuestionBank
+﻿using SkillUp.BussinessObjects.DTOs.Question;
+
+namespace SkillUp.BussinessObjects.DTOs.QuestionBank
 {
 	public class UpdateQuestionBankDTO
 	{
@@ -6,8 +8,6 @@
 
 		public string Title { get; set; } = null!;
 
-		public string Description { get; set; } = null!;
-
-		public DateTime UpdatedAt { get; set; }
+		public List<UpdateAnswerDTO> Answers { get; set; } = new List<UpdateAnswerDTO>();
 	}
 }

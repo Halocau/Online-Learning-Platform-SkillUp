@@ -47,7 +47,17 @@ export const API_ENDPOINTS = {
     //cart endpoints
     CART: `/Cart/{accountId}`,
     ADD_TO_CART: '/Cart/AddToCart/{accountId}',
-    REMOVE_FROM_CART: '/Cart/RemoveFromCart/{cartItemId}'
+    REMOVE_FROM_CART: '/Cart/RemoveFromCart/{cartItemId}',
+
+    //Question Bank endpoints
+    GET_BY_ID: '/QuestionBank/getById/{questionBankId}',
+    GET_BY_SECTION: '/QuestionBank/getBySection/{sectionId}',
+    QUESTION_BANK_DELETE: '/QuestionBank/delete/{questionBankId}',
+    QUESTION_BANK_CREATE: '/QuestionBank/create',
+    QUESTION_BANK_UPDATE: '/QuestionBank/update/{questionBankId}',
+
+    //Section endpoints
+    GET_BY_COURSE: '/Sections/ByCourse/{courseId}',
 };
 
 

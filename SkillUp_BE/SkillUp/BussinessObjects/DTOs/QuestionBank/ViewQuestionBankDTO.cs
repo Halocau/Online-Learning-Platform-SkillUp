@@ -1,4 +1,7 @@
-﻿namespace SkillUp.BussinessObjects.DTOs.QuestionBank
+﻿using SkillUp.BussinessObjects.DTOs.Question;
+using SkillUp.BussinessObjects.Models;
+
+namespace SkillUp.BussinessObjects.DTOs.QuestionBank
 {
 	public class ViewQuestionBankDTO
 	{
