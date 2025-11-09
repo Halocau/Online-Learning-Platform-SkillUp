@@ -172,7 +172,7 @@ builder.Services.AddScoped<ISectionService, SectionService>();
 // --- Thêm vào khu vực Register Repositories ---
 builder.Services.AddScoped<ICommentLessonRepository, CommentLessonRepository>();
 builder.Services.AddScoped<ILikeCommentLessonRepository, LikeCommentLessonRepository>();
-
+builder.Services.AddScoped<ILikeCommentLessonService, LikeCommentLessonService>();
 // --- Thêm vào khu vực Register Services ---
 builder.Services.AddScoped<ICommentLessonService, CommentLessonService>();
 

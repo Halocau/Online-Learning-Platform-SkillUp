@@ -59,20 +59,20 @@ namespace SkillUp.Services.Implementations
                 Contents = dto.Contents,
                 ParentCommentId = dto.ParentCommentId,
                 CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now, // <-- THÊM VÀO ĐÂY (ĐÚNG)
+                UpdatedAt = DateTime.Now, 
                 IsActive = true
             };
 
             var savedComment = await _repo.CreateAsync(newComment);
 
-            // DTO này không có UpdatedAt, nên XÓA NÓ ĐI
+          
             return new CommentLessonDto
             {
                 Id = savedComment.Id,
                 LessonId = savedComment.LessonId,
                 Contents = savedComment.Contents,
                 CreatedAt = savedComment.CreatedAt,
-                // UpdatedAt = DateTime.Now, // <-- XÓA DÒNG NÀY
+               
                 IsActive = true,
                 LikeCount = 0
             };
