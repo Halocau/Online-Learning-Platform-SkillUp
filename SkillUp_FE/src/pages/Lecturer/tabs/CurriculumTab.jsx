@@ -1,38 +1,18 @@
+// src/pages/Lecturer/tabs/CurriculumTab.jsx
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  ChevronDown,
-  ChevronUp,
-  Edit2,
-  Trash2,
-  Video,
-  FileText,
-  HelpCircle,
-  X,
-  Check,
-  Upload,
-  FileDown,
-  AlertTriangle,
-} from "lucide-react";
+import { Plus, FileText, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "react-toastify";
 import { createSection, updateSection, deleteSection } from "@/api/sectionAPI";
 import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
+import SectionCard from "../components/Sectioncard";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
   const [expandedSections, setExpandedSections] = useState({});
   const [loading, setLoading] = useState(false);
   const [localCourse, setLocalCourse] = useState(course);
-
-  // Update local course when prop changes
-  useEffect(() => {
-    setLocalCourse(course);
-  }, [course]);
-
-  // Use localCourse for display
-  const displayCourse = localCourse || course;
 
   // Form states
   const [showAddSection, setShowAddSection] = useState(false);
@@ -63,6 +43,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     timer: 15,
   });
 
+  useEffect(() => {
+    setLocalCourse(course);
+  }, [course]);
+
+  const displayCourse = localCourse || course;
+
   const toggleSection = (sectionId) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -70,85 +56,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }));
   };
 
-  // Helper function to add lesson optimistically to local state
-  const addLessonToLocalState = (sectionId, lessonData) => {
-    setLocalCourse((prevCourse) => {
-      if (!prevCourse) return prevCourse;
-
-      const newCourse = { ...prevCourse };
-      newCourse.sections = newCourse.sections.map((section) => {
-        if (section.id === sectionId) {
-          const lessonOrder = lessonData.orders || 1;
-
-          const newLesson = {
-            kind: "Lesson",
-            id: `temp-${Date.now()}`,
-            orders: lessonOrder,
-            title: lessonData.title,
-            description: lessonData.description,
-            lessonType: lessonData.type,
-            isFree: lessonData.isFree,
-            assets: [
-              {
-                url:
-                  lessonData.type === "Video" ? "uploading..." : "default-url",
-                content:
-                  lessonData.type === "Text"
-                    ? lessonData.content
-                    : "No content",
-              },
-            ],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-
-          return {
-            ...section,
-            items: [...(section.items || []), newLesson],
-          };
-        }
-        return section;
-      });
-
-      return newCourse;
-    });
-  };
-
-  // Helper function to add quiz optimistically to local state
-  const addQuizToLocalState = (sectionId, quizData) => {
-    setLocalCourse((prevCourse) => {
-      if (!prevCourse) return prevCourse;
-
-      const newCourse = { ...prevCourse };
-      newCourse.sections = newCourse.sections.map((section) => {
-        if (section.id === sectionId) {
-          const quizOrder = quizData.orders || 1;
-
-          const newQuiz = {
-            kind: "Quiz",
-            id: `temp-${Date.now()}`,
-            orders: quizOrder,
-            title: quizData.title,
-            description: quizData.description,
-            passPercent: quizData.passPercent,
-            timer: quizData.timer,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-
-          return {
-            ...section,
-            items: [...(section.items || []), newQuiz],
-          };
-        }
-        return section;
-      });
-
-      return newCourse;
-    });
-  };
-
-  // Section handlers
+  // ========== SECTION HANDLERS ==========
   const handleAddSectionClick = () => {
     setShowAddSection(true);
     setSectionForm({ title: "", description: "" });
@@ -163,22 +71,19 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     setLoading(true);
 
     try {
-      // Calculate next order number for the section
       let nextOrder = 1;
-      if (displayCourse?.sections && displayCourse.sections.length > 0) {
+      if (displayCourse?.sections?.length > 0) {
         const maxOrder = Math.max(
           ...displayCourse.sections.map((s) => s.orders || 0)
         );
         nextOrder = maxOrder + 1;
       }
 
-      console.log("Creating section with order:", nextOrder);
-
       const result = await createSection({
         courseId: courseId,
         title: sectionForm.title,
         description: sectionForm.description,
-        orders: nextOrder, // ← ADD THIS FIELD
+        orders: nextOrder,
       });
 
       if (result) {
@@ -187,18 +92,11 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
         toast.success(`✅ Chương đã được tạo (Thứ tự: ${nextOrder})!`);
 
-        // Try to update, but don't fail if it errors
         try {
           await onUpdate();
         } catch (updateError) {
-          console.error(
-            "Error updating course after section creation:",
-            updateError
-          );
-          // Show warning but don't block the UI
-          toast.warning("Vui lòng làm mới trang để xem cập nhật đầy đủ.", {
-            autoClose: 3000,
-          });
+          console.error("Error updating course:", updateError);
+          toast.warning("Vui lòng làm mới trang để xem cập nhật đầy đủ.");
         }
       }
     } catch (error) {
@@ -229,14 +127,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       const result = await updateSection(sectionId, {
         title: sectionForm.title,
         description: sectionForm.description,
-        // Note: orders is not updated - it's set at creation time
       });
 
       if (result) {
         setEditingSectionId(null);
         setSectionForm({ title: "", description: "" });
 
-        // Update local state immediately
         setLocalCourse((prevCourse) => {
           if (!prevCourse) return prevCourse;
           const newCourse = { ...prevCourse };
@@ -246,7 +142,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                   ...section,
                   title: sectionForm.title,
                   description: sectionForm.description,
-                  // Preserve orders field
                 }
               : section
           );
@@ -255,16 +150,15 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
         toast.success("Chương đã được cập nhật!");
 
-        // Try to sync with backend but don't break if it fails
         try {
           await onUpdate();
         } catch (updateError) {
-          console.error("Error syncing after section update:", updateError);
+          console.error("Error syncing:", updateError);
         }
       }
     } catch (error) {
       console.error("Error updating section:", error);
-      toast.error("Không thể cập nhật chương. Vui lòng thử lại.");
+      toast.error("Không thể cập nhật chương.");
     } finally {
       setLoading(false);
     }
@@ -277,7 +171,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       try {
         await deleteSection(sectionId);
 
-        // Remove from local state immediately
         setLocalCourse((prevCourse) => {
           if (!prevCourse) return prevCourse;
           const newCourse = { ...prevCourse };
@@ -289,22 +182,21 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
         toast.success("Chương đã được xóa!");
 
-        // Try to sync with backend but don't break if it fails
         try {
           await onUpdate();
         } catch (updateError) {
-          console.error("Error syncing after section delete:", updateError);
+          console.error("Error syncing:", updateError);
         }
       } catch (error) {
         console.error("Error deleting section:", error);
-        toast.error("Không thể xóa chương. Vui lòng thử lại.");
+        toast.error("Không thể xóa chương.");
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // Content type selection
+  // ========== CONTENT TYPE SELECTION ==========
   const handleAddContentClick = (sectionId) => {
     setAddingItemToSection({ sectionId, type: "choose" });
   };
@@ -332,7 +224,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  // Lesson handlers - WITH OPTIMISTIC UPDATES
+  // ========== LESSON HANDLERS ==========
   const handleSaveLesson = async (sectionId) => {
     if (!lessonForm.title.trim()) {
       toast.error("Vui lòng nhập tên bài học");
@@ -358,17 +250,48 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         : 0;
       const nextOrder = maxOrder + 1;
 
-      // Add optimistically to local state FIRST
+      const tempId = `temp-${Date.now()}`;
+
+      // Save form before clearing
+      const savedLessonForm = { ...lessonForm };
+
+      // Add optimistically to local state
       const optimisticLesson = {
-        title: lessonForm.title.trim(),
-        description: lessonForm.description.trim(),
-        type: lessonForm.type,
-        isFree: lessonForm.isFree,
+        kind: "Lesson",
+        id: tempId,
         orders: nextOrder,
-        content: lessonForm.type === "Text" ? lessonForm.content.trim() : "",
+        title: savedLessonForm.title.trim(),
+        description: savedLessonForm.description.trim(),
+        lessonType: savedLessonForm.type,
+        isFree: savedLessonForm.isFree,
+        assets: [
+          {
+            url:
+              savedLessonForm.type === "Video" ? "uploading..." : "default-url",
+            content:
+              savedLessonForm.type === "Text"
+                ? savedLessonForm.content.trim()
+                : "No content",
+          },
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
-      addLessonToLocalState(sectionId, optimisticLesson);
+      setLocalCourse((prevCourse) => {
+        if (!prevCourse) return prevCourse;
+        const newCourse = { ...prevCourse };
+        newCourse.sections = newCourse.sections.map((section) => {
+          if (section.id === sectionId) {
+            return {
+              ...section,
+              items: [...(section.items || []), optimisticLesson],
+            };
+          }
+          return section;
+        });
+        return newCourse;
+      });
 
       // Keep section expanded
       setExpandedSections((prev) => ({
@@ -376,7 +299,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         [sectionId]: true,
       }));
 
-      // Clear form and close add item UI
+      // Clear form
       setAddingItemToSection(null);
       setLessonForm({
         title: "",
@@ -389,26 +312,108 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         pdfFile: null,
       });
 
-      // Then create in backend
+      // Create in backend
       const result = await createLesson({
         sectionId: sectionId,
-        title: lessonForm.title.trim(),
-        description: lessonForm.description.trim(),
-        type: lessonForm.type,
-        isFree: lessonForm.isFree,
+        title: savedLessonForm.title.trim(),
+        description: savedLessonForm.description.trim(),
+        type: savedLessonForm.type,
+        isFree: savedLessonForm.isFree,
         lessonOrder: nextOrder,
-        content: lessonForm.type === "Text" ? lessonForm.content.trim() : "",
-        videoFile: lessonForm.type === "Video" ? lessonForm.videoFile : null,
-        fileUrl: lessonForm.pdfFile || null,
+        content:
+          savedLessonForm.type === "Text" ? savedLessonForm.content.trim() : "",
+        videoFile:
+          savedLessonForm.type === "Video" ? savedLessonForm.videoFile : null,
+        fileUrl: savedLessonForm.pdfFile || null,
       });
 
-      if (result) {
+      console.log("📥 Backend response:", result);
+      console.log(
+        "📊 Type:",
+        typeof result,
+        "| Is array:",
+        Array.isArray(result),
+        "| Length:",
+        Array.isArray(result) ? result.length : "N/A"
+      );
+
+      // ✅ Extract real ID from backend response
+      let realId = null;
+
+      // Check if result is an array with items
+      if (Array.isArray(result)) {
+        if (result.length > 0 && result[0]?.id) {
+          realId = result[0].id;
+          console.log("✅ Extracted ID from array[0]:", realId);
+        } else if (result.length === 0) {
+          console.warn(
+            "⚠️ Backend returned empty array - lesson may be created but ID unavailable"
+          );
+        }
+      }
+      // Check if result is an object with id
+      else if (result && typeof result === "object" && result.id) {
+        realId = result.id;
+        console.log("✅ Extracted ID from object:", realId);
+      }
+      // Check if result is direct ID (string or number)
+      else if (typeof result === "string" || typeof result === "number") {
+        realId = result;
+        console.log("✅ Using direct ID:", realId);
+      }
+
+      // If we got a real ID, replace the temp ID
+      if (realId) {
+        console.log("🔄 Replacing temp ID:", tempId, "with real ID:", realId);
+
+        setLocalCourse((prevCourse) => {
+          if (!prevCourse) return prevCourse;
+          const newCourse = { ...prevCourse };
+          newCourse.sections = newCourse.sections.map((section) => {
+            if (section.id === sectionId) {
+              return {
+                ...section,
+                items: section.items?.map((item) =>
+                  item.id === tempId ? { ...item, id: realId } : item
+                ),
+              };
+            }
+            return section;
+          });
+          return newCourse;
+        });
+
         toast.success(`✅ Bài học đã được tạo (Thứ tự: ${nextOrder})`);
-        // Don't call onUpdate() to avoid reload
+      } else {
+        // Keep temp ID but warn user
+        console.warn(
+          "⚠️ Could not extract real ID from backend - keeping temp ID"
+        );
+        toast.warning(
+          "⚠️ Bài học đã được tạo nhưng chưa có ID. Vui lòng làm mới trang để xóa hoặc chỉnh sửa."
+        );
       }
     } catch (error) {
-      console.error("Error saving lesson:", error);
+      console.error("❌ Error saving lesson:", error);
       toast.error("Lỗi khi tạo bài học");
+
+      // On error, remove the optimistic item
+      setLocalCourse((prevCourse) => {
+        if (!prevCourse) return prevCourse;
+        const newCourse = { ...prevCourse };
+        newCourse.sections = newCourse.sections.map((section) => {
+          if (section.id === sectionId) {
+            return {
+              ...section,
+              items: section.items?.filter(
+                (item) => !String(item.id).startsWith("temp-")
+              ),
+            };
+          }
+          return section;
+        });
+        return newCourse;
+      });
     } finally {
       setLoading(false);
     }
@@ -448,7 +453,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     if (result) {
       setEditingLessonId(null);
 
-      // Update local state
       setLocalCourse((prevCourse) => {
         if (!prevCourse) return prevCourse;
         const newCourse = { ...prevCourse };
@@ -475,12 +479,18 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const handleDeleteLesson = async (lessonId) => {
+    // Convert to string and check if this is a temp ID
+    const idString = String(lessonId);
+    if (idString.startsWith("temp-")) {
+      toast.error("Bài học đang được tải lên. Vui lòng đợi...");
+      return;
+    }
+
     if (window.confirm("Xóa bài học này?")) {
       setLoading(true);
       try {
         await deleteLesson(lessonId);
 
-        // Remove from local state
         setLocalCourse((prevCourse) => {
           if (!prevCourse) return prevCourse;
           const newCourse = { ...prevCourse };
@@ -501,7 +511,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  // Quiz handlers - WITH OPTIMISTIC UPDATES
+  // ========== QUIZ HANDLERS ==========
   const handleSaveQuiz = async (sectionId) => {
     if (!quizForm.title || quizForm.title.trim() === "") {
       toast.error("Vui lòng nhập tên quiz");
@@ -534,6 +544,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         nextOrder = maxOrder + 1;
       }
 
+      const tempId = `temp-${Date.now()}`;
+
       const quizData = {
         sectionId: sectionId,
         title: quizForm.title.trim(),
@@ -543,8 +555,31 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         orders: nextOrder,
       };
 
-      // Add to local state FIRST
-      addQuizToLocalState(sectionId, quizData);
+      console.log("📤 Creating quiz:", quizData);
+
+      // Add optimistically
+      const optimisticQuiz = {
+        kind: "Quiz",
+        id: tempId,
+        ...quizData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setLocalCourse((prevCourse) => {
+        if (!prevCourse) return prevCourse;
+        const newCourse = { ...prevCourse };
+        newCourse.sections = newCourse.sections.map((section) => {
+          if (section.id === sectionId) {
+            return {
+              ...section,
+              items: [...(section.items || []), optimisticQuiz],
+            };
+          }
+          return section;
+        });
+        return newCourse;
+      });
 
       // Keep section expanded
       setExpandedSections((prev) => ({
@@ -552,7 +587,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         [sectionId]: true,
       }));
 
-      // Clear form and close add item UI
+      // Clear form
       setAddingItemToSection(null);
       setQuizForm({
         title: "",
@@ -561,18 +596,101 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         timer: 15,
       });
 
-      // Then create in backend
+      // Create in backend
       const result = await createQuiz(quizData);
 
-      if (result !== null && result !== undefined) {
+      console.log("📥 Backend quiz response:", result);
+      console.log(
+        "📊 Type:",
+        typeof result,
+        "| Is array:",
+        Array.isArray(result),
+        "| Length:",
+        Array.isArray(result) ? result.length : "N/A"
+      );
+
+      // ✅ Extract real ID from backend response
+      let realId = null;
+
+      // Check if result is an array with items
+      if (Array.isArray(result)) {
+        if (result.length > 0 && result[0]?.id) {
+          realId = result[0].id;
+          console.log("✅ Extracted quiz ID from array[0]:", realId);
+        } else if (result.length === 0) {
+          console.warn(
+            "⚠️ Backend returned empty array - quiz may be created but ID unavailable"
+          );
+        }
+      }
+      // Check if result is an object with id
+      else if (result && typeof result === "object" && result.id) {
+        realId = result.id;
+        console.log("✅ Extracted quiz ID from object:", realId);
+      }
+      // Check if result is direct ID (string or number)
+      else if (typeof result === "string" || typeof result === "number") {
+        realId = result;
+        console.log("✅ Using direct quiz ID:", realId);
+      }
+
+      // If we got a real ID, replace the temp ID
+      if (realId) {
+        console.log(
+          "🔄 Replacing temp quiz ID:",
+          tempId,
+          "with real ID:",
+          realId
+        );
+
+        setLocalCourse((prevCourse) => {
+          if (!prevCourse) return prevCourse;
+          const newCourse = { ...prevCourse };
+          newCourse.sections = newCourse.sections.map((section) => {
+            if (section.id === sectionId) {
+              return {
+                ...section,
+                items: section.items?.map((item) =>
+                  item.id === tempId ? { ...item, id: realId } : item
+                ),
+              };
+            }
+            return section;
+          });
+          return newCourse;
+        });
+
         toast.success(`✅ Quiz đã được tạo (Thứ tự: ${nextOrder})`);
-        // Don't call onUpdate() to avoid reload
       } else {
-        toast.error("Không thể tạo quiz - vui lòng thử lại");
+        // Keep temp ID but warn user
+        console.warn(
+          "⚠️ Could not extract real quiz ID from backend - keeping temp ID"
+        );
+        toast.warning(
+          "⚠️ Quiz đã được tạo nhưng chưa có ID. Vui lòng làm mới trang để xóa hoặc chỉnh sửa."
+        );
       }
     } catch (error) {
-      console.error("Quiz creation error:", error);
-      toast.error("Lỗi khi tạo quiz: " + (error.message || "Vui lòng thử lại"));
+      console.error("❌ Quiz creation error:", error);
+      toast.error("Lỗi khi tạo quiz");
+
+      // On error, remove the optimistic item
+      setLocalCourse((prevCourse) => {
+        if (!prevCourse) return prevCourse;
+        const newCourse = { ...prevCourse };
+        newCourse.sections = newCourse.sections.map((section) => {
+          if (section.id === sectionId) {
+            return {
+              ...section,
+              items: section.items?.filter(
+                (item) => !String(item.id).startsWith("temp-")
+              ),
+            };
+          }
+          return section;
+        });
+        return newCourse;
+      });
     } finally {
       setLoading(false);
     }
@@ -620,7 +738,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       if (result !== null) {
         setEditingQuizId(null);
 
-        // Update local state
         setLocalCourse((prevCourse) => {
           if (!prevCourse) return prevCourse;
           const newCourse = { ...prevCourse };
@@ -652,12 +769,18 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const handleDeleteQuiz = async (quizId) => {
+    // Convert to string and check if this is a temp ID
+    const idString = String(quizId);
+    if (idString.startsWith("temp-")) {
+      toast.error("Quiz đang được tạo. Vui lòng đợi...");
+      return;
+    }
+
     if (window.confirm("Xóa quiz này?")) {
       setLoading(true);
       try {
         await deleteQuiz(quizId);
 
-        // Remove from local state
         setLocalCourse((prevCourse) => {
           if (!prevCourse) return prevCourse;
           const newCourse = { ...prevCourse };
@@ -678,14 +801,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  const getLessonIcon = (lesson) => {
-    if (lesson.lessonType === "Video") {
-      return <Video className="w-4 h-4 text-purple-500" />;
-    }
-    return <FileText className="w-4 h-4 text-blue-500" />;
-  };
-
-  // Sort sections by orders field
   const sortedSections = displayCourse?.sections
     ? [...displayCourse.sections].sort(
         (a, b) => (a.orders || 0) - (b.orders || 0)
@@ -707,7 +822,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         <Button
           onClick={handleAddSectionClick}
           disabled={loading || showAddSection}
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
         >
           <Plus className="w-4 h-4 mr-2" />
           Chương mới
@@ -716,7 +831,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
       {/* Add Section Form */}
       {showAddSection && (
-        <Card className="mb-4 border-2 border-purple-200">
+        <Card className="mb-4 border-2 border-[#FFD54F]/30">
           <CardContent className="p-4">
             <div className="space-y-3">
               <input
@@ -726,7 +841,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                 onChange={(e) =>
                   setSectionForm({ ...sectionForm, title: e.target.value })
                 }
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F]"
                 autoFocus
               />
               <textarea
@@ -739,14 +854,14 @@ function CurriculumTab({ course, courseId, onUpdate }) {
                   })
                 }
                 rows="2"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 resize-none"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F] resize-none"
               />
               <div className="flex gap-2">
                 <Button
                   onClick={handleSaveSection}
                   disabled={loading || !sectionForm.title.trim()}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
                 >
                   <Check className="w-4 h-4 mr-1" />
                   Lưu
@@ -772,716 +887,41 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       <div className="space-y-3">
         {sortedSections.length > 0 ? (
           sortedSections.map((section, index) => (
-            <Card key={section.id} className="overflow-hidden">
-              {/* Section Header */}
-              {editingSectionId === section.id ? (
-                <div className="p-4 bg-yellow-50 border-b">
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={sectionForm.title}
-                      onChange={(e) =>
-                        setSectionForm({
-                          ...sectionForm,
-                          title: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border rounded-lg"
-                    />
-                    <textarea
-                      value={sectionForm.description}
-                      onChange={(e) =>
-                        setSectionForm({
-                          ...sectionForm,
-                          description: e.target.value,
-                        })
-                      }
-                      rows="2"
-                      className="w-full px-3 py-2 border rounded-lg resize-none"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleUpdateSection(section.id)}
-                        size="sm"
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Lưu
-                      </Button>
-                      <Button
-                        onClick={() => setEditingSectionId(null)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Hủy
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center gap-3 p-4 bg-gray-50 cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSection(section.id)}
-                >
-                  <span className="flex items-center justify-center w-8 h-8 bg-purple-100 text-purple-700 rounded-full font-semibold text-sm">
-                    {section.orders || index + 1}
-                  </span>
-
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">
-                      {section.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {section.items?.length || 0} mục
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditSectionClick(section);
-                      }}
-                      className="p-2 hover:bg-yellow-100 rounded text-yellow-600"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteSection(section.id);
-                      }}
-                      className="p-2 hover:bg-red-100 rounded text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    {expandedSections[section.id] ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Section Content */}
-              {expandedSections[section.id] && (
-                <CardContent className="p-4 pt-0">
-                  {section.description && (
-                    <p className="text-sm text-gray-600 mb-3 p-3 bg-blue-50 rounded">
-                      {section.description}
-                    </p>
-                  )}
-
-                  {/* Items List */}
-                  <div className="space-y-2 mb-3">
-                    {section.items && section.items.length > 0 ? (
-                      section.items.map((item) => (
-                        <div key={item.id}>
-                          {/* Edit Lesson Form */}
-                          {item.kind === "Lesson" &&
-                          editingLessonId === item.id ? (
-                            <div className="p-3 bg-yellow-50 border rounded">
-                              <div className="space-y-2">
-                                <input
-                                  type="text"
-                                  value={lessonForm.title}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      title: e.target.value,
-                                    })
-                                  }
-                                  placeholder="Tên bài học"
-                                  className="w-full px-3 py-2 border rounded-lg text-sm"
-                                />
-                                <textarea
-                                  value={lessonForm.description}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      description: e.target.value,
-                                    })
-                                  }
-                                  placeholder="Mô tả"
-                                  rows="2"
-                                  className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                                />
-                                <div className="flex gap-3">
-                                  <select
-                                    value={lessonForm.type}
-                                    onChange={(e) =>
-                                      setLessonForm({
-                                        ...lessonForm,
-                                        type: e.target.value,
-                                      })
-                                    }
-                                    className="px-3 py-2 border rounded-lg text-sm"
-                                  >
-                                    <option value="Video">Video</option>
-                                    <option value="Text">Văn bản</option>
-                                  </select>
-                                  <label className="flex items-center gap-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={lessonForm.isFree}
-                                      onChange={(e) =>
-                                        setLessonForm({
-                                          ...lessonForm,
-                                          isFree: e.target.checked,
-                                        })
-                                      }
-                                    />
-                                    <span className="text-sm">Miễn phí</span>
-                                  </label>
-                                </div>
-                                {lessonForm.type === "Text" && (
-                                  <textarea
-                                    value={lessonForm.content}
-                                    onChange={(e) =>
-                                      setLessonForm({
-                                        ...lessonForm,
-                                        content: e.target.value,
-                                      })
-                                    }
-                                    placeholder="Nội dung bài học..."
-                                    rows="4"
-                                    className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                                  />
-                                )}
-                                {lessonForm.type === "Video" && (
-                                  <div>
-                                    <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
-                                      <Upload className="w-4 h-4" />
-                                      <span className="text-sm">
-                                        {lessonForm.videoFile
-                                          ? lessonForm.videoFile.name
-                                          : "Chọn video mới"}
-                                      </span>
-                                      <input
-                                        type="file"
-                                        accept="video/*"
-                                        onChange={(e) =>
-                                          setLessonForm({
-                                            ...lessonForm,
-                                            videoFile: e.target.files[0],
-                                          })
-                                        }
-                                        className="hidden"
-                                      />
-                                    </label>
-                                  </div>
-                                )}
-                                <div>
-                                  <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
-                                    <FileDown className="w-4 h-4" />
-                                    <span className="text-sm">
-                                      {lessonForm.pdfFile
-                                        ? lessonForm.pdfFile.name
-                                        : "Tài liệu PDF (không bắt buộc)"}
-                                    </span>
-                                    <input
-                                      type="file"
-                                      accept=".pdf"
-                                      onChange={(e) =>
-                                        setLessonForm({
-                                          ...lessonForm,
-                                          pdfFile: e.target.files[0],
-                                        })
-                                      }
-                                      className="hidden"
-                                    />
-                                  </label>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    onClick={() => handleUpdateLesson(item.id)}
-                                    size="sm"
-                                    className="bg-purple-600"
-                                  >
-                                    <Check className="w-3 h-3 mr-1" />
-                                    Lưu
-                                  </Button>
-                                  <Button
-                                    onClick={() => setEditingLessonId(null)}
-                                    variant="outline"
-                                    size="sm"
-                                  >
-                                    <X className="w-3 h-3 mr-1" />
-                                    Hủy
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          ) : item.kind === "Quiz" &&
-                            editingQuizId === item.id ? (
-                            /* Edit Quiz Form */
-                            <div className="p-3 bg-yellow-50 border rounded">
-                              <div className="space-y-2">
-                                <input
-                                  type="text"
-                                  value={quizForm.title}
-                                  onChange={(e) =>
-                                    setQuizForm({
-                                      ...quizForm,
-                                      title: e.target.value,
-                                    })
-                                  }
-                                  placeholder="Tên quiz"
-                                  className="w-full px-3 py-2 border rounded-lg text-sm"
-                                />
-                                <textarea
-                                  value={quizForm.description}
-                                  onChange={(e) =>
-                                    setQuizForm({
-                                      ...quizForm,
-                                      description: e.target.value,
-                                    })
-                                  }
-                                  placeholder="Mô tả"
-                                  rows="2"
-                                  className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                                />
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div>
-                                    <label className="text-xs text-gray-600">
-                                      Điểm đạt (%)
-                                    </label>
-                                    <input
-                                      type="number"
-                                      value={quizForm.passPercent}
-                                      onChange={(e) => {
-                                        const value =
-                                          e.target.value === ""
-                                            ? 0
-                                            : parseInt(e.target.value);
-                                        setQuizForm({
-                                          ...quizForm,
-                                          passPercent: value,
-                                        });
-                                      }}
-                                      min="0"
-                                      max="100"
-                                      step="1"
-                                      className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="text-xs text-gray-600">
-                                      Thời gian (phút)
-                                    </label>
-                                    <input
-                                      type="number"
-                                      value={quizForm.timer}
-                                      onChange={(e) => {
-                                        const value =
-                                          e.target.value === ""
-                                            ? 0
-                                            : parseInt(e.target.value);
-                                        setQuizForm({
-                                          ...quizForm,
-                                          timer: value,
-                                        });
-                                      }}
-                                      min="1"
-                                      step="1"
-                                      className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    />
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    onClick={() => handleUpdateQuiz(item.id)}
-                                    size="sm"
-                                    className="bg-orange-600"
-                                  >
-                                    <Check className="w-3 h-3 mr-1" />
-                                    Lưu
-                                  </Button>
-                                  <Button
-                                    onClick={() => setEditingQuizId(null)}
-                                    variant="outline"
-                                    size="sm"
-                                  >
-                                    <X className="w-3 h-3 mr-1" />
-                                    Hủy
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            /* Display Item */
-                            <div className="flex items-center gap-3 p-3 bg-white border rounded hover:shadow-sm">
-                              {item.kind === "Lesson" && getLessonIcon(item)}
-                              {item.kind === "Quiz" && (
-                                <HelpCircle className="w-4 h-4 text-orange-500" />
-                              )}
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="flex items-center justify-center w-6 h-6 bg-gray-100 text-gray-700 rounded font-semibold text-xs">
-                                    {item.orders}
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    {item.kind === "Lesson"
-                                      ? "Bài học"
-                                      : "Quiz"}
-                                  </span>
-                                  <h4 className="font-medium text-gray-900 truncate">
-                                    {item.title}
-                                  </h4>
-                                </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {item.kind === "Lesson" && (
-                                    <>
-                                      <span className="text-xs px-2 py-0.5 bg-gray-100 rounded">
-                                        {item.lessonType}
-                                      </span>
-                                      {item.isFree && (
-                                        <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">
-                                          Miễn phí
-                                        </span>
-                                      )}
-                                    </>
-                                  )}
-                                  {item.kind === "Quiz" && (
-                                    <span className="text-xs text-gray-500">
-                                      Pass: {item.passPercent}% • {item.timer}{" "}
-                                      phút
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="flex gap-1">
-                                <button
-                                  onClick={() =>
-                                    item.kind === "Lesson"
-                                      ? handleEditLessonClick(item)
-                                      : handleEditQuizClick(item)
-                                  }
-                                  className="p-2 hover:bg-yellow-100 rounded text-yellow-600"
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    item.kind === "Lesson"
-                                      ? handleDeleteLesson(item.id)
-                                      : handleDeleteQuiz(item.id)
-                                  }
-                                  className="p-2 hover:bg-red-100 rounded text-red-600"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 text-gray-400">
-                        <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Chưa có nội dung</p>
-                      </div>
-                    )}
-
-                    {/* Add Content Choice */}
-                    {addingItemToSection?.sectionId === section.id &&
-                      addingItemToSection.type === "choose" && (
-                        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <p className="text-sm font-medium mb-3">
-                            Chọn loại nội dung:
-                          </p>
-                          <div className="grid grid-cols-2 gap-3">
-                            <button
-                              onClick={() =>
-                                handleSelectContentType(section.id, "lesson")
-                              }
-                              className="p-4 border-2 border-purple-300 rounded-lg hover:bg-purple-100 text-left transition-colors"
-                            >
-                              <FileText className="w-6 h-6 text-purple-600 mb-2" />
-                              <h4 className="font-semibold text-sm">Bài học</h4>
-                              <p className="text-xs text-gray-600">
-                                Video hoặc văn bản
-                              </p>
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleSelectContentType(section.id, "quiz")
-                              }
-                              className="p-4 border-2 border-orange-300 rounded-lg hover:bg-orange-100 text-left transition-colors"
-                            >
-                              <HelpCircle className="w-6 h-6 text-orange-600 mb-2" />
-                              <h4 className="font-semibold text-sm">Quiz</h4>
-                              <p className="text-xs text-gray-600">
-                                Bài kiểm tra
-                              </p>
-                            </button>
-                          </div>
-                          <Button
-                            onClick={() => setAddingItemToSection(null)}
-                            variant="outline"
-                            size="sm"
-                            className="mt-3 w-full"
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Hủy
-                          </Button>
-                        </div>
-                      )}
-
-                    {/* Add Lesson Form */}
-                    {addingItemToSection?.sectionId === section.id &&
-                      addingItemToSection.type === "lesson" && (
-                        <div className="p-3 bg-purple-50 border-2 border-purple-200 rounded">
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              value={lessonForm.title}
-                              onChange={(e) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  title: e.target.value,
-                                })
-                              }
-                              placeholder="Tên bài học"
-                              className="w-full px-3 py-2 border rounded-lg text-sm"
-                              autoFocus
-                            />
-                            <textarea
-                              value={lessonForm.description}
-                              onChange={(e) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  description: e.target.value,
-                                })
-                              }
-                              placeholder="Mô tả bài học"
-                              rows="2"
-                              className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                            />
-                            <div className="flex gap-3">
-                              <select
-                                value={lessonForm.type}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    type: e.target.value,
-                                  })
-                                }
-                                className="px-3 py-2 border rounded-lg text-sm"
-                              >
-                                <option value="Video">Video</option>
-                                <option value="Text">Văn bản</option>
-                              </select>
-                              <label className="flex items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={lessonForm.isFree}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      isFree: e.target.checked,
-                                    })
-                                  }
-                                />
-                                <span className="text-sm">Miễn phí</span>
-                              </label>
-                            </div>
-                            {lessonForm.type === "Text" && (
-                              <textarea
-                                value={lessonForm.content}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    content: e.target.value,
-                                  })
-                                }
-                                placeholder="Nội dung bài học..."
-                                rows="4"
-                                className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                              />
-                            )}
-                            {lessonForm.type === "Video" && (
-                              <div>
-                                <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-purple-100">
-                                  <Upload className="w-4 h-4" />
-                                  <span className="text-sm">
-                                    {lessonForm.videoFile
-                                      ? lessonForm.videoFile.name
-                                      : "Chọn video"}
-                                  </span>
-                                  <input
-                                    type="file"
-                                    accept="video/*"
-                                    onChange={(e) =>
-                                      setLessonForm({
-                                        ...lessonForm,
-                                        videoFile: e.target.files[0],
-                                      })
-                                    }
-                                    className="hidden"
-                                  />
-                                </label>
-                              </div>
-                            )}
-                            <div>
-                              <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer hover:bg-purple-100">
-                                <FileDown className="w-4 h-4" />
-                                <span className="text-sm">
-                                  {lessonForm.pdfFile
-                                    ? lessonForm.pdfFile.name
-                                    : "Tài liệu PDF (không bắt buộc)"}
-                                </span>
-                                <input
-                                  type="file"
-                                  accept=".pdf"
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      pdfFile: e.target.files[0],
-                                    })
-                                  }
-                                  className="hidden"
-                                />
-                              </label>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleSaveLesson(section.id)}
-                                disabled={loading || !lessonForm.title.trim()}
-                                size="sm"
-                                className="bg-purple-600"
-                              >
-                                <Check className="w-4 h-4 mr-1" />
-                                Thêm bài học
-                              </Button>
-                              <Button
-                                onClick={() => setAddingItemToSection(null)}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Hủy
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Add Quiz Form */}
-                    {addingItemToSection?.sectionId === section.id &&
-                      addingItemToSection.type === "quiz" && (
-                        <div className="p-3 bg-orange-50 border-2 border-orange-200 rounded">
-                          <div className="space-y-2">
-                            <input
-                              type="text"
-                              value={quizForm.title}
-                              onChange={(e) =>
-                                setQuizForm({
-                                  ...quizForm,
-                                  title: e.target.value,
-                                })
-                              }
-                              placeholder="Tên quiz"
-                              className="w-full px-3 py-2 border rounded-lg text-sm"
-                              autoFocus
-                            />
-                            <textarea
-                              value={quizForm.description}
-                              onChange={(e) =>
-                                setQuizForm({
-                                  ...quizForm,
-                                  description: e.target.value,
-                                })
-                              }
-                              placeholder="Mô tả quiz"
-                              rows="2"
-                              className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-                            />
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-xs text-gray-600">
-                                  Điểm đạt (%)
-                                </label>
-                                <input
-                                  type="number"
-                                  value={quizForm.passPercent}
-                                  onChange={(e) => {
-                                    const value =
-                                      e.target.value === ""
-                                        ? 0
-                                        : parseInt(e.target.value);
-                                    setQuizForm({
-                                      ...quizForm,
-                                      passPercent: value,
-                                    });
-                                  }}
-                                  min="0"
-                                  max="100"
-                                  step="1"
-                                  className="w-full px-3 py-2 border rounded-lg text-sm"
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs text-gray-600">
-                                  Thời gian (phút)
-                                </label>
-                                <input
-                                  type="number"
-                                  value={quizForm.timer}
-                                  onChange={(e) => {
-                                    const value =
-                                      e.target.value === ""
-                                        ? 0
-                                        : parseInt(e.target.value);
-                                    setQuizForm({ ...quizForm, timer: value });
-                                  }}
-                                  min="1"
-                                  step="1"
-                                  className="w-full px-3 py-2 border rounded-lg text-sm"
-                                />
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleSaveQuiz(section.id)}
-                                disabled={loading || !quizForm.title.trim()}
-                                size="sm"
-                                className="bg-orange-600 hover:bg-orange-700"
-                              >
-                                <Check className="w-4 h-4 mr-1" />
-                                Tạo quiz
-                              </Button>
-                              <Button
-                                onClick={() => setAddingItemToSection(null)}
-                                variant="outline"
-                                size="sm"
-                              >
-                                <X className="w-4 h-4 mr-1" />
-                                Hủy
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                  </div>
-
-                  {/* Add Content Button */}
-                  {!addingItemToSection && (
-                    <button
-                      onClick={() => handleAddContentClick(section.id)}
-                      className="w-full p-3 border-2 border-dashed rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-sm font-medium text-gray-600 hover:text-purple-600 flex items-center justify-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Thêm nội dung
-                    </button>
-                  )}
-                </CardContent>
-              )}
-            </Card>
+            <SectionCard
+              key={section.id}
+              section={section}
+              index={index}
+              isExpanded={expandedSections[section.id]}
+              onToggle={() => toggleSection(section.id)}
+              onEdit={handleEditSectionClick}
+              onDelete={handleDeleteSection}
+              onAddContent={handleAddContentClick}
+              onSaveLesson={handleSaveLesson}
+              onSaveQuiz={handleSaveQuiz}
+              onEditLesson={handleEditLessonClick}
+              onUpdateLesson={handleUpdateLesson}
+              onDeleteLesson={handleDeleteLesson}
+              onEditQuiz={handleEditQuizClick}
+              onUpdateQuiz={handleUpdateQuiz}
+              onDeleteQuiz={handleDeleteQuiz}
+              loading={loading}
+              editingSectionId={editingSectionId}
+              sectionForm={sectionForm}
+              setSectionForm={setSectionForm}
+              onUpdateSection={handleUpdateSection}
+              onCancelEditSection={() => setEditingSectionId(null)}
+              addingItemToSection={addingItemToSection}
+              onSelectContentType={handleSelectContentType}
+              onCancelAddContent={() => setAddingItemToSection(null)}
+              lessonForm={lessonForm}
+              setLessonForm={setLessonForm}
+              quizForm={quizForm}
+              setQuizForm={setQuizForm}
+              editingLessonId={editingLessonId}
+              setEditingLessonId={setEditingLessonId}
+              editingQuizId={editingQuizId}
+              setEditingQuizId={setEditingQuizId}
+            />
           ))
         ) : (
           <Card className="border-2 border-dashed">
@@ -1495,7 +935,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
               </p>
               <Button
                 onClick={handleAddSectionClick}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Tạo chương
