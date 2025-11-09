@@ -26,14 +26,14 @@ namespace SkillUp.Controllers
 				return NotFound(new APIReturn
 				{
 					code = 404,
-					message = "No vouchers found for this course.",
+					message = "Không tìm thấy mã giảm giá nào cho khoá học này!",
 					data = new List<object>()
 				});
 			}
 			return Ok(new APIReturn
 			{
 				code = 200,
-				message = "Vouchers retrieved successfully.",
+				message = "Lấy mã giảm giá thành công!",
 				data = new List<object> { vouchers }
 			});
 		}
@@ -47,14 +47,14 @@ namespace SkillUp.Controllers
 				return NotFound(new APIReturn
 				{
 					code = 404,
-					message = "Voucher not found.",
+					message = "Không tìm thấy mã giảm giá.",
 					data = new List<object>()
 				});
 			}
 			return Ok(new APIReturn
 			{
 				code = 200,
-				message = "Voucher retrieved successfully.",
+				message = "Lấy mã giảm giá thành công!",
 				data = new List<object> { voucher }
 			});
 		}
@@ -69,7 +69,7 @@ namespace SkillUp.Controllers
 					return BadRequest(new APIReturn
 					{
 						code = 400,
-						message = "Invalid voucher data.",
+						message = "Thông tin không hợp lệ.",
 						data = new List<object>()
 					});
 				}
@@ -79,7 +79,7 @@ namespace SkillUp.Controllers
 					return BadRequest(new APIReturn
 					{
 						code = 400,
-						message = "End time must be after start time.",
+						message = "Thời gian bắt đầu phải trước thời gian kết thúc!",
 						data = new List<object>()
 					});
 				}
@@ -89,7 +89,7 @@ namespace SkillUp.Controllers
 					return BadRequest(new APIReturn
 					{
 						code = 400,
-						message = "Start time must be in the future.",
+						message = "Thời gian bắt đầu phải lớn hơn thời gian hiện tại!",
 						data = new List<object>()
 					});
 				}
@@ -98,7 +98,7 @@ namespace SkillUp.Controllers
 				return Ok(new APIReturn
 				{
 					code = 200,
-					message = "Voucher added successfully.",
+					message = "Thêm mã giảm giá thành công!",
 					data = new List<object> { addedVoucher }
 				});
 			}
@@ -107,7 +107,7 @@ namespace SkillUp.Controllers
 				return StatusCode(500, new APIReturn
 				{
 					code = 500,
-					message = "An error occurred: " + ex.Message,
+					message = "Có lỗi xảy ra: " + ex.Message,
 					data = new List<object>()
 				});
 			}
@@ -123,7 +123,7 @@ namespace SkillUp.Controllers
 					return BadRequest(new APIReturn
 					{
 						code = 400,
-						message = "Invalid voucher ID.",
+						message = "Mã giảm giá không hợp lệ.",
 						data = new List<object>()
 					});
 				}
@@ -131,7 +131,7 @@ namespace SkillUp.Controllers
 				return Ok(new APIReturn
 				{
 					code = 200,
-					message = "Voucher deleted successfully.",
+					message = "Xoá mã giảm giá thành công!",
 					data = new List<object>()
 				});
 			}
@@ -140,7 +140,7 @@ namespace SkillUp.Controllers
 				return StatusCode(500, new APIReturn
 				{
 					code = 500,
-					message = "An error occurred: " + ex.Message,
+					message = "Có lỗi xảy ra: " + ex.Message,
 					data = new List<object>()
 				});
 			}
@@ -156,7 +156,7 @@ namespace SkillUp.Controllers
 					return BadRequest(new APIReturn
 					{
 						code = 400,
-						message = "Invalid voucher data.",
+						message = "Thông tin không hợp lệ.",
 						data = new List<object>()
 					});
 				}
@@ -166,7 +166,7 @@ namespace SkillUp.Controllers
 					return BadRequest(new APIReturn
 					{
 						code = 400,
-						message = "End time must be after start time.",
+						message = "Thời gian bắt đầu phải trước thời gian kết thúc!",
 						data = new List<object>()
 					});
 				}
@@ -176,7 +176,7 @@ namespace SkillUp.Controllers
 					return BadRequest(new APIReturn
 					{
 						code = 400,
-						message = "Start time must be in the future.",
+						message = "Thời gian bắt đầu phải lớn hơn thời gian hiện tại!",
 						data = new List<object>()
 					});
 				}
@@ -187,7 +187,7 @@ namespace SkillUp.Controllers
 					return NotFound(new APIReturn
 					{
 						code = 404,
-						message = "Voucher not found.",
+						message = "Không tìm thấy mã giảm giá.",
 						data = new List<object>()
 					});
 				}
@@ -195,7 +195,7 @@ namespace SkillUp.Controllers
 				return Ok(new APIReturn
 				{
 					code = 200,
-					message = "Voucher updated successfully.",
+					message = "Cập nhật mã giảm giá thành công!",
 					data = new List<object> { updatedVoucher }
 				});
 			}
@@ -204,7 +204,7 @@ namespace SkillUp.Controllers
 				return StatusCode(500, new APIReturn
 				{
 					code = 500,
-					message = "An error occurred: " + ex.Message,
+					message = "Có lỗi xảy ra: " + ex.Message,
 					data = new List<object>()
 				});
 			}

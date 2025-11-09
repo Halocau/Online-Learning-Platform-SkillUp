@@ -18,6 +18,27 @@ namespace SkillUp.Repositories.Implementations
             await _context.AddAsync(question);
         }
 
+		public async Task<QuestionBank?> GetByIdAsync(Guid id)
+		{
+			return await _context.QuestionBanks
+                .Include(q => q.AnswerBanks)
+				.FirstOrDefaultAsync(q => q.Id == id);
+		}
+
+		public async Task<List<QuestionBank>> GetBySectionId(Guid sectionId)
+		{
+			return await _context.QuestionBanks
+                .Include(q => q.AnswerBanks)
+				.Where(q => q.SectionId == sectionId)
+				.Where(q => q.IsActive)
+				.ToListAsync();
+		}
+
+		public void Update(QuestionBank question)
+		{
+			_context.QuestionBanks.Update(question);
+		}
+	
         public async Task<QuestionBank?> GetQuestionWithAnswersAsync(Guid questionId)
         {
             return await _context.QuestionBanks
@@ -28,11 +49,6 @@ namespace SkillUp.Repositories.Implementations
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;
-        }
-
-        public void Update(QuestionBank question)
-        {
-            _context.QuestionBanks.Update(question);
         }
     }
 }
