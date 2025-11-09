@@ -395,7 +395,8 @@ namespace SkillUp.Services.Implementations
                     Price = course.Price,
                     Rating = course.Rating,
                     EnrollmentCount = course.EnrollmentCount,
-                    LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
+                    LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty,
+                    SubCategoryId = course.SubCategoryId
                 }).ToList()
             };
 

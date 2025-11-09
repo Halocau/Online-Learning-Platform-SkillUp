@@ -13,12 +13,12 @@ export default function CategoryBar({ categories }) {
             <div
               key={cat.id}
               className="relative"
-              onMouseEnter={() => setHoveredCategory(cat.id)}
-              onMouseLeave={() => setHoveredCategory(null)}
             >
               <Link
-                to={`/category/${cat.id}`}
-                className="whitespace-nowrap px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-[#FFD54F] hover:bg-[#FFF3C4] rounded-full transition-all duration-200"
+                to={`/courses/${cat.id}`}
+                onMouseEnter={() => setHoveredCategory(cat.id)}
+                onMouseLeave={() => setHoveredCategory(null)}
+                className="inline-block whitespace-nowrap px-5 py-2.5 text-sm font-medium text-gray-700 hover:text-[#FFD54F] hover:bg-[#FFF3C4] rounded-full transition-all duration-200"
               >
                 {cat.name}
               </Link>
@@ -46,7 +46,7 @@ export default function CategoryBar({ categories }) {
                   ?.subCategories.map((sub) => (
                     <Link
                       key={sub.id}
-                      to={`/category/${hoveredCategory}/sub/${sub.id}`}
+                      to={`/courses/${hoveredCategory}?subcategory=${sub.id}`}
                       className="text-gray-800 text-sm font-medium hover:text-[#FFD54F] transition-colors whitespace-nowrap"
                     >
                       {sub.name}
