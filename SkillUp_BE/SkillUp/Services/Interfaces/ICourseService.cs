@@ -1,4 +1,5 @@
 ﻿using SkillUp.BussinessObjects.DTOs.Course;
+using SkillUp.BussinessObjects.DTOs.CourseByCategoryPage;
 using SkillUp.BussinessObjects.Models;
 using System.Threading.Tasks;
 
@@ -15,5 +16,6 @@ namespace SkillUp.Services.Interfaces
         Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId);
         Task<List<CourseLecturerResponseDto>> GetCoursesOfLecturerByAccountId(Guid accountId);
         Task<CourseDetailDto> GetCourseDetailsAsync(Guid courseId);
+        Task<CategoryPageDto> GetCategoryPageAsync(int categoryId);
     }
 }

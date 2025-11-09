@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Identity.Client;
 using SkillUp.BussinessObjects.DTOs.Asset;
 using SkillUp.BussinessObjects.DTOs.Course;
+using SkillUp.BussinessObjects.DTOs.CourseByCategoryPage;
 using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.Lesson;
 using SkillUp.BussinessObjects.DTOs.Quiz;
@@ -371,7 +372,35 @@ namespace SkillUp.Services.Implementations
 
             return detail;
         }
+        public async Task<CategoryPageDto> GetCategoryPageAsync(int categoryId)
+        {
+     
+            var navData = await _categoryRepository.GetByIdWithSubCategoriesAsync(categoryId);
 
+            if (navData == null)
+                throw new Exception("Không tìm thấy danh mục");
+
+            var courses = await _courseRepository.GetCoursesByCategoryId(categoryId);
+            var pageDto = new CategoryPageDto
+            {
+                MainCategory = new CategorySimpleDto { Id = navData.Id, Name = navData.Name },
+                SubCategories = navData.SubCategories.Select(s => new CategorySimpleDto
+                { Id = s.Id, Name = s.Name }).ToList(),
+
+                Courses = courses.Select(course => new CourseSummaryDTO
+                {
+                    Id = course.Id,
+                    Title = course.Title,
+                    Image = course.Image,
+                    Price = course.Price,
+                    Rating = course.Rating,
+                    EnrollmentCount = course.EnrollmentCount,
+                    LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
+                }).ToList()
+            };
+
+            return pageDto;
+        }
 
 
     }
