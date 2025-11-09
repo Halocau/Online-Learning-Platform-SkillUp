@@ -30,6 +30,7 @@ namespace SkillUp.Repositories.Implementations
             await _context.SaveChangesAsync();
 
             await _context.Entry(comment).Reference(c => c.Account).LoadAsync();
+
             return comment;
         }
 

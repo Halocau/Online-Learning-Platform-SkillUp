@@ -72,7 +72,11 @@ namespace SkillUp.Services.Implementations
                 LessonId = savedComment.LessonId,
                 Contents = savedComment.Contents,
                 CreatedAt = savedComment.CreatedAt,
-               
+                
+
+                // --- THÊM DÒNG NÀY ---
+                ParentCommentId = savedComment.ParentCommentId,
+
                 IsActive = true,
                 LikeCount = 0
             };
