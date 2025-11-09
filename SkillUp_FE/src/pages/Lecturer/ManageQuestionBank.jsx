@@ -6,6 +6,7 @@ import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
 import QuestionBankViewModal from '@/components/QuestionBank/QuestionBankViewModal';
 import QuestionBankEditModal from '@/components/QuestionBank/QuestionBankEditModal';
+import QuestionBankCreateModal from '@/components/QuestionBank/QuestionBanKCreateModal';
 
 const PAGE_SIZE = 10;
 
@@ -22,7 +23,6 @@ export default function ManageQuestionBank() {
     const [courses, setCourses] = useState([]);
     const [courseId, setCourseId] = useState(null);
     const navigate = useNavigate();
-    const [dataset, setDataset] = useState('all'); // all | unsolved | solved
     const [loading, setLoading] = useState(true);
     const [selectedSectionId, setSelectedSectionId] = useState(null);
     const [sections, setSections] = useState([]);
@@ -35,6 +35,7 @@ export default function ManageQuestionBank() {
 
     const [detailOpen, setDetailOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
+    const [createOpen, setCreateOpen] = useState(false);
 
     const [detailCode, setDetailCode] = useState(null);
     const [questionBankObj, setQuestionBankObj] = useState(null);
@@ -149,6 +150,56 @@ export default function ManageQuestionBank() {
         }
     };
 
+    const handleDelete = async (questionId) => {
+        const confirmDelete = window.confirm("Bạn có chắc chắn muốn xoá câu hỏi này?");
+        if (!confirmDelete) return;  // User cancelled
+
+        try {
+            const url = API_ENDPOINTS.QUESTION_BANK_DELETE.replace('{questionBankId}', questionId);
+            const response = await axiosInstance.delete(url, {
+                params: {
+                    courseId: courseId
+                }
+            });
+            if (response?.data?.code === 200) {
+                toast.success('Xóa câu hỏi thành công.');
+                fetchQuestionBank();
+                return;
+            } else {
+                toast.error('Không thể xóa câu hỏi.');
+                fetchQuestionBank();
+                return;
+            }
+        } catch (err) {
+            console.error('Delete question failed:', err);
+            toast.error('Không thể xóa câu hỏi.');
+        }
+    };
+
+    const handleCreate = async (newQuestion) => {
+        try {
+            console.log(newQuestion);
+            const url = API_ENDPOINTS.QUESTION_BANK_CREATE.replace('{sectionId}', selectedSectionId);
+            const response = await axiosInstance.post(url, newQuestion, {
+                params: {
+                    courseId: courseId
+                }
+            });
+            if (response?.data?.code === 200) {
+                toast.success('Tạo câu hỏi thành cong.');
+                fetchQuestionBank();
+                return;
+            } else {
+                toast.error('Không thể tạo câu hỏi.');
+                fetchQuestionBank();
+                return;
+            }
+        } catch (err) {
+            console.error('Create question failed:', err);
+            toast.error('Không thể tạo câu hỏi.');
+        }
+    }
+
     const clearFilters = () => setFilteredInfo({});
     const clearAll = () => { setFilteredInfo({}); setSortedInfo({}); setSearch(''); };
     const refresh = () => setRefreshKey((k) => k + 1);
@@ -208,7 +259,7 @@ export default function ManageQuestionBank() {
                             size="small"
                             danger
                             icon={<DeleteOutlined />}
-                            onClick={() => { setDeleteCode(record.id); setDeleteOpen(true); }}
+                            onClick={() => { handleDelete(record.id); }}
                         />
                     </Tooltip>
                 </Space>
@@ -270,6 +321,10 @@ export default function ManageQuestionBank() {
                         />
                     </div>
 
+                    <Button type="primary" onClick={() => setCreateOpen(true)}>
+                        Tạo câu hỏi mới
+                    </Button> 
+
                     <Space wrap>
                         <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>
                             Sắp xếp mới nhất
@@ -310,6 +365,13 @@ export default function ManageQuestionBank() {
                     onClose={() => setEditOpen(false)}
                     questionBankObj={questionBankObj}
                     onSave={handleSave}
+                />
+
+                <QuestionBankCreateModal
+                    open={createOpen}
+                    onClose={() => setCreateOpen(false)}
+                    onCreate={handleCreate}
+                    sectionId={selectedSectionId}
                 />
             </div>
         </div >

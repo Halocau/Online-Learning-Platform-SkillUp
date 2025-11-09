@@ -68,7 +68,7 @@ namespace SkillUp.Services.Implementations
 				CreatedAt = questionBank.CreatedAt,
 				UpdatedAt = questionBank.UpdatedAt,
 				IsActive = questionBank.IsActive,
-				Answers = questionBank.AnswerBanks.Select(a => new AnswerDetailDTO
+				Answers = questionBank.AnswerBanks.Select(a => new AnswerBankDetailDTO
 				{
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
@@ -119,11 +119,12 @@ namespace SkillUp.Services.Implementations
 				CreatedAt = questionBank.CreatedAt,
 				UpdatedAt = questionBank.UpdatedAt,
 				IsActive = questionBank.IsActive,
-				Answers = questionBank.AnswerBanks.Select(a => new AnswerDetailDTO
+				Answers = questionBank.AnswerBanks.Select(a => new AnswerBankDetailDTO
 				{
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
+					IsActive = a.IsActive
 				}).ToList()
 			};
 		}
@@ -147,11 +148,12 @@ namespace SkillUp.Services.Implementations
 				CreatedAt = q.CreatedAt,
 				UpdatedAt = q.UpdatedAt,
 				IsActive = q.IsActive,
-				Answers = q.AnswerBanks.Select(a => new AnswerDetailDTO
+				Answers = q.AnswerBanks.Select(a => new AnswerBankDetailDTO
 				{
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
+					IsActive = a.IsActive,
 				}).ToList()
 			}).ToList();
 			return questionBankDTOs;
@@ -176,10 +178,22 @@ namespace SkillUp.Services.Implementations
 			foreach(var answerDTO in updateQuestionBankDTO.Answers)
 			{
 				var answer = existingQuestion.AnswerBanks.FirstOrDefault(existingQuestion => existingQuestion.Id == answerDTO.AnswerId);
+				if (answer == null)
+				{
+					var newAnswer = new AnswerBank
+					{
+						Id = Guid.NewGuid(),
+						AnswerName = answerDTO.AnswerName,
+						IsCorrect = answerDTO.IsCorrect,
+						IsActive = answerDTO.IsActive
+					};
+					existingQuestion.AnswerBanks.Add(newAnswer);
+				}
 				if (answer != null)
 				{
 					answer.AnswerName = answerDTO.AnswerName;
 					answer.IsCorrect = answerDTO.IsCorrect;
+					answer.IsActive = answerDTO.IsActive;
 				}
 			}
 
@@ -190,11 +204,12 @@ namespace SkillUp.Services.Implementations
 			{
 				SectionId = existingQuestion.SectionId,
 				Title = existingQuestion.Title,
-				Answers = existingQuestion.AnswerBanks.Select(a => new UpdateAnswerDTO
+				Answers = existingQuestion.AnswerBanks.Select(a => new UpdateAnswerBankDTO
 				{
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
+					IsActive = a.IsActive
 				}).ToList()
 			};
 		}

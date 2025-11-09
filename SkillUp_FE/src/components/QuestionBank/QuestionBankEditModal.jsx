@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Descriptions, Checkbox, Input, Button, Space } from "antd";
+import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import { toast } from "react-toastify";
 
 const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   const [questionData, setQuestionData] = useState(null);
@@ -40,9 +42,41 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   };
 
   const handleSave = () => {
-    if (onSave) onSave(questionData);
+    const currentData = { ...questionData };
+    if (onSave) onSave(currentData);
     onClose();
   };
+
+  // Delete an answer
+  const handleDeleteAnswer = async (answerId) => {
+    const updatedData = {
+      ...questionData,
+      answers: questionData.answers.map((ans) =>
+        ans.answerId === answerId ? { ...ans, isActive: false } : ans
+      ),
+
+    };
+
+    // Update local state
+    setQuestionData(updatedData);
+  };
+
+  const handleAddAnswer = () => {
+    const newAnswer = {
+      answerId: crypto.randomUUID(),
+      answerName: "Cau tra loi moi",
+      isCorrect: false,
+      isActive: true
+    };
+
+    const updatedData = {
+      ...questionData,
+      answers: [...questionData.answers, newAnswer],
+    };
+
+    setQuestionData(updatedData);
+  }
+
 
   return (
     <Modal
@@ -57,8 +91,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
         bordered
         column={1}
         size="middle"
-        labelStyle={{ fontWeight: 600, width: "160px" }} // 👈 fixed label width
-        contentStyle={{ wordBreak: "break-word", padding: "12px 16px" }}
+        styles={{ lable: { fontWeight: 600, width: "160px" }, content: { wordBreak: "break-word", padding: "12px 16px" } }} // 👈 fixed label width
       >
         {/* Question Title */}
         <Descriptions.Item label="Câu hỏi">
@@ -71,38 +104,68 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
         </Descriptions.Item>
 
         {/* Answers */}
+
         <Descriptions.Item label="Đáp án">
           {questionData.answers && questionData.answers.length > 0 ? (
-            <ul style={{ paddingLeft: "0", margin: 0, listStyle: "none" }}>
-              {questionData.answers.map((answer) => (
-                <li
-                  key={answer.answerId}
-                  style={{
-                    marginBottom: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                  }}
-                >
-                  <Checkbox
-                    checked={answer.isCorrect}
-                    onChange={() => handleCheckboxChange(answer.answerId)}
-                  />
-                  <Input
-                    value={answer.answerName}
-                    onChange={(e) =>
-                      handleAnswerNameChange(answer.answerId, e.target.value)
-                    }
-                    placeholder="Enter answer text"
-                    style={{ flex: 1, minWidth: "0" }} // makes it responsive
-                  />
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul style={{ paddingLeft: "0", margin: 0, listStyle: "none" }}>
+                {questionData.answers.filter(ans => ans.isActive !== false).map((answer) => (
+                  <li
+                    key={answer.answerId}
+                    style={{
+                      marginBottom: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <Checkbox
+                      checked={answer.isCorrect}
+                      onChange={() => handleCheckboxChange(answer.answerId)}
+                    />
+                    <Input
+                      value={answer.answerName}
+                      onChange={(e) =>
+                        handleAnswerNameChange(answer.answerId, e.target.value)
+                      }
+                      placeholder="Enter answer text"
+                      style={{ flex: 1, minWidth: "0" }}
+                    />
+                    <Button
+                      type="text"
+                      danger
+                      icon={<MinusCircleOutlined />}
+                      onClick={() => handleDeleteAnswer(answer.answerId)}
+                    />
+                  </li>
+                ))}
+              </ul>
+
+              {/* ➕ Add Answer Button */}
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={handleAddAnswer}
+                style={{ marginTop: "8px", width: "100%" }}
+              >
+                Thêm đáp án
+              </Button>
+            </>
           ) : (
-            <span>Không có đáp án nào</span>
+            <>
+              <span>Không có đáp án nào</span>
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={handleAddAnswer}
+                style={{ marginTop: "8px", width: "100%" }}
+              >
+                Thêm đáp án
+              </Button>
+            </>
           )}
         </Descriptions.Item>
+
       </Descriptions>
 
       {/* Footer Buttons */}
