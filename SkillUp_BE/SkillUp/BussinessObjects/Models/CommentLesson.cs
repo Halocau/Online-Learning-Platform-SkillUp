@@ -15,7 +15,7 @@ public partial class CommentLesson
 
     public DateTime CreatedAt { get; set; }
 
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     public string? Contents { get; set; }
 
