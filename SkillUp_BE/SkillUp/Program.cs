@@ -176,6 +176,11 @@ builder.Services.AddScoped<ILikeCommentLessonService, LikeCommentLessonService>(
 // --- Thêm vào khu vực Register Services ---
 builder.Services.AddScoped<ICommentLessonService, CommentLessonService>();
 
+//comment lesson report
+builder.Services.AddScoped<ICommentReportLessonRepository, CommentReportLessonRepository>();
+builder.Services.AddScoped<ICommentReportLessonService, CommentReportLessonService>();
+
+
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
