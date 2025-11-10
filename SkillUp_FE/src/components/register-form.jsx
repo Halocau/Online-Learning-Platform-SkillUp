@@ -15,7 +15,7 @@ export function RegisterForm({
 }) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('student') // 'student' or 'lecturer'
+  const [activeTab, setActiveTab] = useState('student') // 'student' hoặc 'lecturer'
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -24,12 +24,12 @@ export function RegisterForm({
   })
   const [errorMsg, setErrorMsg] = useState('')
 
-  // Handle Google Register
+  // Đăng ký bằng Google
   const handleGoogleRegister = async (credentialResponse) => {
     try {
       setLoading(true)
 
-      // Xác định roleId: Student = 5, Lecturer = 4
+      // Xác định roleId: Sinh viên = 5, Giảng viên = 4
       const defaultRoleId = activeTab === 'student' ? 5 : 4
 
       const response = await axiosInstance.post(API_ENDPOINTS.GOOGLE_LOGIN, {
@@ -40,7 +40,7 @@ export function RegisterForm({
       if (response.data.code === 200) {
         const userData = response.data.data[0]
 
-        // Lưu token và user info
+        // Lưu token và thông tin người dùng
         saveUserFromToken(
           userData.token.accessToken,
           userData.token.refreshToken
@@ -49,13 +49,13 @@ export function RegisterForm({
         // Thông báo thành công
         toast.success('Đăng ký thành công! Chào mừng bạn đến với SkillUp!')
 
-        // Navigate về trang chủ hoặc dashboard
+        // Điều hướng về trang chủ
         setTimeout(() => {
           navigate('/home', { replace: true })
         }, 1000)
       }
     } catch (error) {
-      console.error('Register failed:', error)       
+      console.error('Register failed:', error)
       if (error.response?.data?.message) {
         setErrorMsg('Đăng ký thất bại: ' + error.response.data.message)
       } else {
@@ -66,19 +66,19 @@ export function RegisterForm({
     }
   }
 
-  // Handle normal register
+  // Đăng ký thông thường
   const handleNormalRegister = async (e) => {
     e.preventDefault()
     setErrorMsg('')
 
-    // Validate
+    // Kiểm tra hợp lệ
     if (!formData.email || !formData.password || !formData.rePassword || !formData.fullname) {
       setErrorMsg('Vui lòng điền đầy đủ thông tin')
       return
     }
 
     if (formData.password !== formData.rePassword) {
-      setErrorMsg('Mật khẩu không khớp')
+      setErrorMsg('Mật khẩu nhập lại không khớp')
       return
     }
 
@@ -90,7 +90,7 @@ export function RegisterForm({
     setLoading(true)
 
     try {
-      // Xác định roleId: Student = 5, Lecturer = 4
+      // Xác định roleId: Sinh viên = 5, Giảng viên = 4
       const roleId = activeTab === 'student' ? 5 : 4
 
       const requestData = {
@@ -101,14 +101,12 @@ export function RegisterForm({
         roleId: roleId
       }
 
-      console.log('📤 Request data:', requestData)
+      console.log('📤 Dữ liệu gửi lên:', requestData)
 
       const response = await axiosInstance.post(API_ENDPOINTS.REGISTER, requestData)
 
       if (response.data.code === 200) {
         toast.success('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.')
-        
-        // Navigate về login sau 2 giây
         setTimeout(() => {
           navigate('/login')
         }, 2000)
@@ -117,11 +115,9 @@ export function RegisterForm({
       }
     } catch (error) {
       console.error('Register failed:', error)
-      
       if (error.response?.data?.message) {
         setErrorMsg(error.response.data.message)
       } else if (error.response?.data?.errors) {
-        // Nếu backend trả về validation errors
         const errors = error.response.data.errors
         const firstError = Object.values(errors)[0]
         setErrorMsg(firstError)
@@ -140,38 +136,38 @@ export function RegisterForm({
         <h1 className="text-3xl font-bold text-yellow-500">SkillUp</h1>
       </div>
 
-      {/* Register Title */}
-      <h2 className="text-3xl font-bold mb-6">Register</h2>
+      {/* Tiêu đề */}
+      <h2 className="text-3xl font-bold mb-6">Đăng ký</h2>
 
-      {/* Tab Switcher: Student / Lecturer */}
+      {/* Chuyển tab: Sinh viên / Giảng viên */}
       <div className="flex mb-6 bg-gray-100 rounded-full p-1">
         <button
           type="button"
           onClick={() => setActiveTab('student')}
           className={cn(
             "flex-1 py-2 px-4 rounded-full font-medium transition-colors text-sm",
-            activeTab === 'student' 
-              ? "bg-yellow-400 text-white shadow-md" 
+            activeTab === 'student'
+              ? "bg-yellow-400 text-white shadow-md"
               : "bg-transparent text-gray-600 hover:text-gray-900"
           )}
         >
-          Student
+          Sinh viên
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('lecturer')}
           className={cn(
             "flex-1 py-2 px-4 rounded-full font-medium transition-colors text-sm",
-            activeTab === 'lecturer' 
-              ? "bg-yellow-400 text-white shadow-md" 
+            activeTab === 'lecturer'
+              ? "bg-yellow-400 text-white shadow-md"
               : "bg-transparent text-gray-600 hover:text-gray-900"
           )}
         >
-          Lecturer
+          Giảng viên
         </button>
       </div>
 
-      {/* Error Message */}
+      {/* Thông báo lỗi */}
       {errorMsg && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
           {errorMsg}
@@ -179,22 +175,22 @@ export function RegisterForm({
       )}
 
       <form onSubmit={handleNormalRegister} className="space-y-4">
-        {/* Email Input */}
+        {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="email" className="text-sm font-medium">Email</Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="20" height="16" x="2" y="4" rx="2"/>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
               </svg>
             </span>
             <Input
               id="email"
               type="email"
-              placeholder="Enter email address"
+              placeholder="Nhập địa chỉ email"
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="pl-10 h-12"
               disabled={loading}
               required
@@ -202,22 +198,22 @@ export function RegisterForm({
           </div>
         </div>
 
-        {/* Password Input */}
+        {/* Mật khẩu */}
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+          <Label htmlFor="password" className="text-sm font-medium">Mật khẩu</Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </span>
             <Input
               id="password"
               type="password"
-              placeholder="Enter Password"
+              placeholder="Nhập mật khẩu"
               value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="pl-10 h-12"
               disabled={loading}
               required
@@ -225,22 +221,22 @@ export function RegisterForm({
           </div>
         </div>
 
-        {/* Re-Password Input */}
+        {/* Nhập lại mật khẩu */}
         <div className="space-y-2">
-          <Label htmlFor="rePassword" className="text-sm font-medium">Repassword</Label>
+          <Label htmlFor="rePassword" className="text-sm font-medium">Nhập lại mật khẩu</Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </span>
             <Input
               id="rePassword"
               type="password"
-              placeholder="Enter RePassword"
+              placeholder="Nhập lại mật khẩu"
               value={formData.rePassword}
-              onChange={(e) => setFormData({...formData, rePassword: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, rePassword: e.target.value })}
               className="pl-10 h-12"
               disabled={loading}
               required
@@ -248,22 +244,22 @@ export function RegisterForm({
           </div>
         </div>
 
-        {/* Full Name Input */}
+        {/* Họ và tên */}
         <div className="space-y-2">
-          <Label htmlFor="fullname" className="text-sm font-medium">Full name</Label>
+          <Label htmlFor="fullname" className="text-sm font-medium">Họ và tên</Label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
               </svg>
             </span>
             <Input
               id="fullname"
               type="text"
-              placeholder="Full name"
+              placeholder="Nhập họ và tên"
               value={formData.fullname}
-              onChange={(e) => setFormData({...formData, fullname: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
               className="pl-10 h-12"
               disabled={loading}
               required
@@ -271,22 +267,22 @@ export function RegisterForm({
           </div>
         </div>
 
-        {/* Register Button */}
-        <Button 
-          type="submit" 
+        {/* Nút đăng ký */}
+        <Button
+          type="submit"
           className="w-full bg-yellow-400 hover:bg-yellow-500 text-white h-12 text-base font-semibold"
           disabled={loading}
         >
-          {loading ? 'Đang đăng ký...' : 'Register'}
+          {loading ? 'Đang đăng ký...' : 'Đăng ký'}
         </Button>
 
-        {/* Divider */}
+        {/* Phân cách */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">or continue with</span>
+            <span className="px-2 bg-white text-gray-500">hoặc tiếp tục với</span>
           </div>
         </div>
 
@@ -300,18 +296,18 @@ export function RegisterForm({
             type="standard"
             theme="outline"
             size="large"
-            text="signup_with"
+            text="signup_with"  // Google mặc định chuỗi này; UI của Google có thể tự nội địa hoá theo locale trình duyệt
             shape="circle"
             width="100%"
           />
         </div>
 
-        {/* Login Link */}
+        {/* Link đăng nhập */}
         <div className="text-center mt-6">
           <span className="text-sm text-gray-600">
-            Already have an account?{' '}
+            Đã có tài khoản?{' '}
             <Link to="/login" className="text-yellow-500 hover:text-yellow-600 font-medium">
-              Login
+              Đăng nhập
             </Link>
           </span>
         </div>
