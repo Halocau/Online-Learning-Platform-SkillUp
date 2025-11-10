@@ -100,18 +100,18 @@ function CourseDetailManagement() {
 
     switch (tabId) {
       case "landing":
-        // Landing page is for viewing/editing existing course info
-        // If we're on the detail page, the course exists, so landing is complete
-        // This tab is not an "actionable" step, it just displays existing data
         return true;
       case "curriculum":
-        // Check if course has sections/lectures
-        return !!(course.sections && course.sections.length > 0);
+        return !!(
+          course.sections &&
+          course.sections.length > 0 &&
+          course.sections.some(
+            (section) => section.items && section.items.length > 0
+          )
+        );
       case "pricing":
-        // Check if price is set (can be 0 for free courses)
         return course.price !== null && course.price !== undefined;
       case "voucher":
-        // Voucher is optional, always marked as complete
         return true;
       default:
         return false;
@@ -134,12 +134,7 @@ function CourseDetailManagement() {
       );
       return;
     }
-
-    // TODO: Implement submit for preview logic
     toast.info("Tính năng gửi xem trước đang được phát triển");
-
-    // Example: navigate to preview page or open modal
-    // navigate(`/lecturer/courses/${courseId}/preview`);
   };
 
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
@@ -284,35 +279,6 @@ function CourseDetailManagement() {
               <div className="pt-2">
                 <div className="border-t border-gray-200"></div>
               </div>
-
-              {/* Submit for Preview Button */}
-              <button
-                onClick={handleSubmitForPreview}
-                disabled={progress < 100}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 mt-2 ${
-                  progress === 100
-                    ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 text-green-800 cursor-pointer"
-                    : "bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-                }`}
-              >
-                <div
-                  className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 ${
-                    progress === 100
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-300 text-gray-500"
-                  }`}
-                >
-                  <Eye className="w-4 h-4" />
-                </div>
-                <div className="flex-1">
-                  <span className="text-sm font-semibold">Gửi xem trước</span>
-                  {progress < 100 && (
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Hoàn thành {100 - progress}% để kích hoạt
-                    </p>
-                  )}
-                </div>
-              </button>
             </nav>
 
             {/* Progress Summary */}
@@ -330,11 +296,40 @@ function CourseDetailManagement() {
                 </div>
                 {progress === 100 && (
                   <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded text-xs text-green-700 font-medium text-center">
-                    🎉 Khóa học đã hoàn thiện!
+                    Tất cả các bước đã hoàn thành! Bạn có thể gửi xem
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Submit for Preview Button */}
+            <button
+              onClick={handleSubmitForPreview}
+              disabled={progress < 100}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 mt-2 ${
+                progress === 100
+                  ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 text-green-800 cursor-pointer"
+                  : "bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+              }`}
+            >
+              <div
+                className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 ${
+                  progress === 100
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-300 text-gray-500"
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-semibold">Đề xuất khóa học</span>
+                {progress < 100 && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Hoàn thành {100 - progress}% để đề xuất khóa học
+                  </p>
+                )}
+              </div>
+            </button>
           </div>
         </div>
 

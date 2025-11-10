@@ -448,11 +448,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
             <strong className="text-gray-900">{sortedCourses.length}</strong>{" "}
             khóa học
           </span>
-          {(searchTerm || startDate || endDate || filterStatus !== "all") && (
-            <span className="text-xs text-yellow-600 font-medium">
-              🔍 Đang áp dụng bộ lọc
-            </span>
-          )}
         </div>
       </div>
 

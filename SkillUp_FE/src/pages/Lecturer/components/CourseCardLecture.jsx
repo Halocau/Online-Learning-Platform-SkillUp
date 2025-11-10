@@ -79,7 +79,7 @@ function CourseCardLecture({
   // };
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 border-l-blue-500">
+    <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 border-l-blue-500 border-r-4 border-r-blue-500">
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
           {/* Image Section */}
