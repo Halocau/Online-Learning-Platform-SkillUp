@@ -91,7 +91,7 @@ namespace SkillUp.Services.Implementations
             }
 
             var account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(emailClaim);
-            if (account == null || account.Status != "Active")
+            if (account == null || account.Status != "Active" || account.Status != "Pending")
             {
                 return null;
             }
@@ -350,8 +350,9 @@ namespace SkillUp.Services.Implementations
 
                     if (string.Equals(account.Status, "InActive", StringComparison.OrdinalIgnoreCase))
                     {
-                        account.Status = "Active";
-                        needUpdate = true;
+                        //account.Status = "Active";
+                        //needUpdate = true;
+                        return null;
                     }
 
                     // Cập nhật Avatar nếu account chưa có & Google có avatar
