@@ -92,7 +92,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
             onCancel={onClose}
             footer={null}
             centered
-            width={600} // optional: control overall modal width
+            width={1000} // optional: control overall modal width
         >
             <Descriptions
                 bordered
@@ -102,52 +102,56 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
             >
                 {/* Question Title */}
                 <Descriptions.Item label="Câu hỏi">
-                    <Input
+                    <Input.TextArea
                         onChange={handleTitleChange}
-                        placeholder="Nhap cau hoi"
+                        placeholder="Nhập câu hỏi"
+                        maxLength={255}
                         style={{ width: "100%" }}
+                        autoSize={{ minRows: 1, maxRows: 6 }} // 👈 auto expand up to 6 lines
                     />
                 </Descriptions.Item>
 
                 {/* Answers */}
-
                 <Descriptions.Item label="Đáp án">
                     {questionData.answers && questionData.answers.length > 0 ? (
                         <>
                             <ul style={{ paddingLeft: "0", margin: 0, listStyle: "none" }}>
-                                {questionData.answers.filter(ans => ans.isActive !== false).map((answer) => (
-                                    <li
-                                        key={answer.answerId}
-                                        style={{
-                                            marginBottom: "10px",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: "10px",
-                                        }}
-                                    >
-                                        <Checkbox
-                                            checked={answer.isCorrect}
-                                            onChange={() => handleCheckboxChange(answer.answerId)}
-                                        />
-                                        <Input
-                                            value={answer.answerName}
-                                            onChange={(e) =>
-                                                handleAnswerNameChange(answer.answerId, e.target.value)
-                                            }
-                                            placeholder="Enter answer text"
-                                            style={{ flex: 1, minWidth: "0" }}
-                                        />
-                                        <Button
-                                            type="text"
-                                            danger
-                                            icon={<MinusCircleOutlined />}
-                                            onClick={() => handleDeleteAnswer(answer.answerId)}
-                                        />
-                                    </li>
-                                ))}
+                                {questionData.answers
+                                    .filter((ans) => ans.isActive !== false)
+                                    .map((answer) => (
+                                        <li
+                                            key={answer.answerId}
+                                            style={{
+                                                marginBottom: "10px",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "10px",
+                                            }}
+                                        >
+                                            <Checkbox
+                                                checked={answer.isCorrect}
+                                                onChange={() => handleCheckboxChange(answer.answerId)}
+                                            />
+                                            <Input.TextArea
+                                                value={answer.answerName}
+                                                onChange={(e) =>
+                                                    handleAnswerNameChange(answer.answerId, e.target.value)
+                                                }
+                                                placeholder="Nhập nội dung đáp án"
+                                                maxLength={255}
+                                                autoSize={{ minRows: 1, maxRows: 4 }} // 👈 auto expand as text grows
+                                                style={{ flex: 1, minWidth: 0 }}
+                                            />
+                                            <Button
+                                                type="text"
+                                                danger
+                                                icon={<MinusCircleOutlined />}
+                                                onClick={() => handleDeleteAnswer(answer.answerId)}
+                                            />
+                                        </li>
+                                    ))}
                             </ul>
 
-                            {/* Add Answer Button */}
                             <Button
                                 type="dashed"
                                 icon={<PlusOutlined />}
