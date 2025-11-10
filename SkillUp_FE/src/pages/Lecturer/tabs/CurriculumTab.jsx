@@ -389,9 +389,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         console.warn(
           "⚠️ Could not extract real ID from backend - keeping temp ID"
         );
-        toast.warning(
-          "⚠️ Bài học đã được tạo nhưng chưa có ID. Vui lòng làm mới trang để xóa hoặc chỉnh sửa."
-        );
       }
     } catch (error) {
       console.error("❌ Error saving lesson:", error);
