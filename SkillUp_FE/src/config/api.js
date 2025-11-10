@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     CART: `/Cart/{accountId}`,
     ADD_TO_CART: '/Cart/AddToCart/{accountId}',
     REMOVE_FROM_CART: '/Cart/RemoveFromCart/{cartItemId}',
+    BULK_ADD_TO_CART: '/Cart/bulk-add/{accountId}',
 
     // Course endpoints
     CATEGORY_PAGE: '/CategoryPage/{id}/page',

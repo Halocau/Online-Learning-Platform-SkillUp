@@ -157,17 +157,10 @@ function Header() {
               className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm"
             ></Link>
 
-            
+
             {/* Cart */}
             <Link
-              to={isAuthenticated && user ? `/cart/${user.id}` : "/login"}
-              onClick={(e) => {
-                if (!isAuthenticated || !user) {
-                  e.preventDefault();
-                  toast.info("Vui lòng đăng nhập để xem giỏ hàng");
-                  navigate("/login");
-                }
-              }}
+              to={isAuthenticated && user ? `/cart/${user.id}` : "/cart"}
               className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2 relative"
             >
               <svg

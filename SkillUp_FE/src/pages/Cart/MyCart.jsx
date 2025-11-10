@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { getApiUrl } from '../../config/api.js'; // Import config
-import { axiosInstance } from '../../config/api.js'; // Import config
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getGuestCart, removeFromGuestCart } from '@/utils/guestCart';
+import { useCart } from '@/context/CartContext';
+import { courseAPI } from '@/api/courseAPI';
+import { cartAPI } from '@/api/cartAPI';
 import {
     List,
     Button,
@@ -10,14 +12,14 @@ import {
     Typography,
     Row,
     Col,
-    Card,
     message,
     Image,
     Space,
-    Tag, // Thêm Tag
-    Rate, // Thêm Rate
-    Divider, // Thêm Divider
-    Input, // Thêm Input
+    Tag,
+    Rate,
+    Divider,
+    Input,
+    Alert,
 } from 'antd';
 
 // Định dạng tiền tệ
@@ -32,35 +34,128 @@ const formatNumber = (num) => {
 
 function MyCart() {
     const { id: accountId } = useParams();
+    const navigate = useNavigate();
+    const { fetchCartCount } = useCart();
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Hàm gọi API để lấy giỏ hàng (ĐÃ SỬA)
-    const fetchCart = async () => {
+    // Hàm lấy user hiện tại
+    const getCurrentUser = () => {
+        try {
+            const userStr = localStorage.getItem('user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('Error parsing user:', error);
+            return null;
+        }
+    };
+
+    // Hàm lấy giỏ hàng guest từ localStorage
+    const fetchGuestCart = async () => {
         setLoading(true);
         try {
-            // Giả sử key trong config của bạn là 'CART'
-            const apiUrlTemplate = getApiUrl('CART');
-            const apiUrl = apiUrlTemplate.replace('{accountId}', accountId);
-            const response = await axiosInstance.get(apiUrl);
+            const guestCartItems = getGuestCart();
+
+            if (guestCartItems.length === 0) {
+                setCart({ cartItems: [] });
+                setError(null);
+                setLoading(false);
+                return;
+            }
+
+            // Fetch thông tin chi tiết các courses từ API
+            const cartItemsPromises = guestCartItems.map(async (item) => {
+                try {
+                    const response = await courseAPI.getCourseDetail(item.courseId);
+
+                    // Kiểm tra nhiều structure có thể
+                    let courseData = null;
+                    if (response?.data?.data?.[0]) {
+                        courseData = response.data.data[0]; // Structure: {data: {data: [course]}}
+                    } else if (response?.data?.data) {
+                        courseData = response.data.data; // Structure: {data: {data: course}}
+                    } else if (response?.data) {
+                        courseData = response.data; // Structure: {data: course}
+                    }
+
+                    if (courseData) {
+                        return {
+                            id: item.courseId,
+                            courseId: item.courseId,
+                            price: item.price,
+                            course: {
+                                title: courseData.title || 'N/A',
+                                image: courseData.image || '',
+                                rating: courseData.rating || 0,
+                                enrollmentCount: courseData.enrollmentCount || 0,
+                                lecturerName: courseData.lecturerName || courseData.lecturer?.fullName || 'N/A',
+                            }
+                        };
+                    } else {
+                        // Fallback nếu không fetch được
+                        return {
+                            id: item.courseId,
+                            courseId: item.courseId,
+                            price: item.price,
+                            course: {
+                                title: 'Không thể tải thông tin khóa học',
+                                image: '',
+                                rating: 0,
+                                enrollmentCount: 0,
+                                lecturerName: 'N/A',
+                            }
+                        };
+                    }
+                } catch (error) {
+                    console.error(`Lỗi khi fetch course ${item.courseId}:`, error);
+                    // Fallback nếu có lỗi
+                    return {
+                        id: item.courseId,
+                        courseId: item.courseId,
+                        price: item.price,
+                        course: {
+                            title: 'Không thể tải thông tin khóa học',
+                            image: '',
+                            rating: 0,
+                            enrollmentCount: 0,
+                            lecturerName: 'N/A',
+                        }
+                    };
+                }
+            });
+
+            const cartItemsWithDetails = await Promise.all(cartItemsPromises);
+
+            setCart({
+                cartItems: cartItemsWithDetails
+            });
+            setError(null);
+        } catch (err) {
+            console.error('Lỗi khi tải guest cart:', err);
+            setError('Lỗi khi tải giỏ hàng.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Hàm gọi API để lấy giỏ hàng từ server
+    const fetchServerCart = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await cartAPI.getCart(accountId);
 
             if (response.data && response.data.code === 200) {
-                // --- BỎ MOCK DATA ---
-                // Lấy dữ liệu giỏ hàng gốc trực tiếp
                 const originalCart = response.data.data[0];
                 setCart(originalCart);
-                // --- KẾT THÚC SỬA ĐỔI ---
-
+                setError(null);
             } else {
                 throw new Error(response.data.message || "Không thể tải giỏ hàng");
             }
-            setError(null);
         } catch (err) {
             console.error("Lỗi khi tải giỏ hàng:", err);
-            // Xử lý 404 (Không tìm thấy giỏ hàng) bằng cách hiển thị giỏ hàng trống
             if (err.response?.status === 404) {
-                setCart({ cartItems: [] }); // Set giỏ hàng rỗng
+                setCart({ cartItems: [] });
                 setError(null);
             } else {
                 setError("Lỗi khi tải giỏ hàng. Vui lòng thử lại.");
@@ -69,35 +164,69 @@ function MyCart() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [accountId]);
 
     useEffect(() => {
-        if (accountId) {
-            fetchCart();
+        const user = getCurrentUser();
+
+        if (!user) {
+            // Nếu chưa đăng nhập, hiển thị guest cart
+            fetchGuestCart();
+        } else if (accountId) {
+            // Nếu đã đăng nhập và có accountId, fetch từ server
+            fetchServerCart();
         } else {
             setError("Không tìm thấy thông tin tài khoản.");
             setLoading(false);
         }
-    }, [accountId]);
-
-    // Hàm xử lý xóa một item khỏi giỏ hàng (Không thay đổi)
-    const handleRemoveItem = async (cartItemId) => {
+    }, [accountId, fetchServerCart]);    // Hàm xử lý xóa một item khỏi giỏ hàng
+    const handleRemoveItem = async (cartItemId, courseId) => {
         try {
-            const apiUrlTemplate = getApiUrl('REMOVE_FROM_CART');
-            const apiUrl = apiUrlTemplate.replace('{cartItemId}', cartItemId);
-            await axiosInstance.delete(apiUrl);
+            const user = getCurrentUser();
 
-            setCart(prevCart => ({
-                ...prevCart,
-                cartItems: prevCart.cartItems.filter(item => item.id !== cartItemId),
-            }));
+            if (!user) {
+                // Guest cart: xóa từ localStorage
+                removeFromGuestCart(courseId || cartItemId);
+                setCart(prevCart => ({
+                    ...prevCart,
+                    cartItems: prevCart.cartItems.filter(item =>
+                        item.courseId !== (courseId || cartItemId)
+                    ),
+                }));
+                message.success("Đã xóa khóa học khỏi giỏ hàng");
+                fetchCartCount(); // Cập nhật số lượng cart
+            } else {
+                // Logged in cart: xóa từ server
+                await cartAPI.removeFromCart(cartItemId);
 
-            message.success("Đã xóa khóa học khỏi giỏ hàng");
+                setCart(prevCart => ({
+                    ...prevCart,
+                    cartItems: prevCart.cartItems.filter(item => item.id !== cartItemId),
+                }));
 
+                message.success("Đã xóa khóa học khỏi giỏ hàng");
+                fetchCartCount(); // Cập nhật số lượng cart
+            }
         } catch (err) {
             console.error("Lỗi khi xóa item:", err);
             message.error("Lỗi khi xóa khóa học. Vui lòng thử lại.");
         }
+    };
+
+    // Hàm xử lý thanh toán
+    const handleCheckout = () => {
+        const user = getCurrentUser();
+
+        if (!user) {
+            // Lưu current path để redirect về sau khi login
+            localStorage.setItem('redirectAfterLogin', window.location.pathname);
+            message.warning('Vui lòng đăng nhập để thanh toán');
+            navigate('/login');
+            return;
+        }
+
+        // Navigate to checkout page
+        navigate('/checkout');
     };
 
     // Tính tổng tiền (Không thay đổi)
@@ -118,12 +247,37 @@ function MyCart() {
 
     // --- GIAO DIỆN ĐÃ THIẾT KẾ LẠI ---
     const primaryColor = '#FCCD04'; // Màu tím chủ đạo
+    const user = getCurrentUser();
 
     return (
         <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', background: '#fff' }}>
             <Typography.Title level={2} style={{ marginBottom: '20px' }}>
                 Giỏ hàng
             </Typography.Title>
+
+            {/* Thông báo cho guest users */}
+            {!user && (
+                <Alert
+                    message="Bạn chưa đăng nhập"
+                    description="Giỏ hàng của bạn đang được lưu tạm thời. Vui lòng đăng nhập để thanh toán và đồng bộ giỏ hàng của bạn."
+                    type="info"
+                    showIcon
+                    closable
+                    style={{ marginBottom: '20px' }}
+                    action={
+                        <Button
+                            size="small"
+                            type="primary"
+                            onClick={() => {
+                                localStorage.setItem('redirectAfterLogin', window.location.pathname);
+                                navigate('/login');
+                            }}
+                        >
+                            Đăng nhập
+                        </Button>
+                    }
+                />
+            )}
 
             <Row gutter={[48, 24]}>
 
@@ -193,7 +347,7 @@ function MyCart() {
                                             <Button
                                                 type="link"
                                                 danger
-                                                onClick={() => handleRemoveItem(item.id)}
+                                                onClick={() => handleRemoveItem(item.id, item.courseId)}
                                                 style={{ padding: '4px 0', height: 'auto' }}
                                             >
                                                 Xóa
@@ -228,6 +382,7 @@ function MyCart() {
                                 type="primary"
                                 size="large"
                                 block
+                                onClick={handleCheckout}
                                 style={{
                                     backgroundColor: primaryColor,
                                     borderColor: primaryColor,
