@@ -5,6 +5,10 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  BookOpen,
+  FileText,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +24,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
   const [sortBy, setSortBy] = useState("newest");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -28,6 +31,34 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  // Status tabs configuration
+  const statusTabs = [
+    {
+      id: "all",
+      label: "Tất cả",
+      icon: BookOpen,
+      color: "blue",
+    },
+    {
+      id: "Draft",
+      label: "Nháp",
+      icon: FileText,
+      color: "gray",
+    },
+    {
+      id: "Published",
+      label: "Đã xuất bản",
+      icon: Eye,
+      color: "green",
+    },
+    {
+      id: "Unpublish",
+      label: "Đã ẩn",
+      icon: EyeOff,
+      color: "orange",
+    },
+  ];
 
   const filteredCourses = courses.filter((course) => {
     const matchesSearch =
@@ -79,7 +110,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
   const handleStatusChange = (status) => {
     setFilterStatus(status);
     setCurrentPage(1);
-    setShowFilterMenu(false);
   };
 
   const handleSortChange = (sort) => {
@@ -110,8 +140,8 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     setStartDate("");
     setEndDate("");
     setShowSortMenu(false);
-    setShowFilterMenu(false);
     setShowDateFilter(false);
+    setCurrentPage(1);
   };
 
   const handleView = (courseId) => {
@@ -164,6 +194,29 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     }
   };
 
+  const getTabColorClasses = (color, isActive) => {
+    const colors = {
+      blue: isActive
+        ? "bg-blue-100 text-blue-700 border-blue-300 shadow-sm"
+        : "text-gray-600 hover:bg-blue-50 hover:text-blue-600 border-transparent",
+      gray: isActive
+        ? "bg-gray-100 text-gray-700 border-gray-300 shadow-sm"
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-600 border-transparent",
+      green: isActive
+        ? "bg-green-100 text-green-700 border-green-300 shadow-sm"
+        : "text-gray-600 hover:bg-green-50 hover:text-green-600 border-transparent",
+      orange: isActive
+        ? "bg-orange-100 text-orange-700 border-orange-300 shadow-sm"
+        : "text-gray-600 hover:bg-orange-50 hover:text-orange-600 border-transparent",
+    };
+    return colors[color] || colors.blue;
+  };
+
+  const getStatusCount = (status) => {
+    if (status === "all") return courses.length;
+    return courses.filter((c) => c.status === status).length;
+  };
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -201,7 +254,40 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Status Filter Tabs */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="flex flex-wrap gap-2">
+          {statusTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = filterStatus === tab.id;
+            const count = getStatusCount(tab.id);
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleStatusChange(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 border ${getTabColorClasses(
+                  tab.color,
+                  isActive
+                )} ${isActive ? "transform scale-105" : ""}`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+                <span
+                  className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${
+                    isActive
+                      ? "bg-white bg-opacity-80"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Search and Filter Bar */}
       <div className="space-y-4">
         {/* Search */}
@@ -214,17 +300,17 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           />
         </div>
 
-        {/* Sort, Filter, and Date Controls */}
+        {/* Sort, Date Controls, and Items per page */}
         <div className="flex gap-3 flex-wrap items-center">
           {/* Sort Dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowSortMenu(!showSortMenu)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <span className="text-sm font-medium">
                 Sắp xếp:{" "}
@@ -252,7 +338,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
                   <button
                     key={option.value}
                     onClick={() => handleSortChange(option.value)}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg transition-colors ${
                       sortBy === option.value
                         ? "bg-yellow-50 text-yellow-700 font-semibold"
                         : ""
@@ -265,56 +351,11 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
             )}
           </div>
 
-          {/* Filter Status Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilterMenu(!showFilterMenu)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              <span className="text-sm font-medium">
-                Trạng thái:{" "}
-                {filterStatus === "all"
-                  ? "Tất cả"
-                  : filterStatus === "Draft"
-                  ? "Nháp"
-                  : filterStatus === "Public"
-                  ? "Công khai"
-                  : filterStatus === "Unpublish"
-                  ? "Không công khai"
-                  : ""}
-              </span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-
-            {showFilterMenu && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 w-48">
-                {[
-                  { value: "all", label: "Tất cả" },
-                  { value: "Draft", label: "Nháp" },
-                  { value: "Public", label: "Công khai" },
-                  { value: "Unpublish", label: "Không công khai" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleStatusChange(option.value)}
-                    className={`w-full text-left px-4 py-2 hover:bg-gray-100 ${
-                      filterStatus === option.value
-                        ? "bg-yellow-50 text-yellow-700 font-semibold"
-                        : ""
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* NEW: Date Filter Button */}
+          {/* Date Filter */}
           <div className="relative">
             <button
               onClick={() => setShowDateFilter(!showDateFilter)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
                 startDate || endDate
                   ? "bg-yellow-50 border-yellow-300 text-yellow-700 font-semibold"
                   : "bg-white border-gray-300 hover:bg-gray-50"
@@ -364,6 +405,8 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
               </div>
             )}
           </div>
+
+          {/* Reset All Filters Button */}
           <button
             onClick={resetAllFilters}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
@@ -374,7 +417,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
           </button>
 
           {/* Items per page selector */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm text-gray-600">Hiển thị:</span>
             <select
               value={itemsPerPage}
@@ -382,7 +425,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
                 setItemsPerPage(parseInt(e.target.value));
                 setCurrentPage(1);
               }}
-              className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white"
             >
               <option value="5">5</option>
               <option value="10">10</option>
@@ -391,25 +434,44 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
             </select>
             <span className="text-sm text-gray-600">/trang</span>
           </div>
+        </div>
 
-          {/* Result count */}
-          <div className="ml-auto flex items-center px-4 py-2 text-sm text-gray-600">
-            Hiển thị {paginatedCourses.length > 0 ? startIndex + 1 : 0}-
-            {Math.min(endIndex, sortedCourses.length)} / {sortedCourses.length}{" "}
+        {/* Result count */}
+        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+          <span className="text-sm text-gray-600">
+            Hiển thị{" "}
+            <strong className="text-gray-900">
+              {paginatedCourses.length > 0 ? startIndex + 1 : 0}-
+              {Math.min(endIndex, sortedCourses.length)}
+            </strong>{" "}
+            trong tổng số{" "}
+            <strong className="text-gray-900">{sortedCourses.length}</strong>{" "}
             khóa học
-          </div>
+          </span>
         </div>
       </div>
 
       {/* Courses List */}
       {sortedCourses.length === 0 ? (
         <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-gray-600">
+          <CardContent className="text-center py-12">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Không tìm thấy khóa học
+            </h3>
+            <p className="text-gray-600 mb-4">
               {searchTerm
-                ? `Không tìm thấy khóa học phù hợp với "${searchTerm}"`
-                : "Không có khóa học nào"}
+                ? `Không có khóa học nào phù hợp với từ khóa "${searchTerm}"`
+                : "Không có khóa học nào với bộ lọc hiện tại"}
             </p>
+            <Button
+              onClick={resetAllFilters}
+              variant="outline"
+              className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Đặt lại bộ lọc
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -427,41 +489,52 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
             ))}
           </div>
 
-          {/* NEW: Pagination Controls */}
+          {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg mt-6">
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
               <div className="text-sm text-gray-600">
-                Trang <strong>{currentPage}</strong> /{" "}
-                <strong>{totalPages}</strong>
+                Trang <strong className="text-gray-900">{currentPage}</strong> /{" "}
+                <strong className="text-gray-900">{totalPages}</strong>
               </div>
 
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-1 px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1 px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Trang trước
+                  <span className="hidden sm:inline">Trước</span>
                 </button>
 
-                {/* Page numbers */}
+                {/* Page numbers - Show max 7 pages */}
                 <div className="flex gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
+                  {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 7) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 4) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 3) {
+                      pageNum = totalPages - 6 + i;
+                    } else {
+                      pageNum = currentPage - 3 + i;
+                    }
+
+                    return (
                       <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-2 rounded-lg font-semibold transition-colors ${
-                          currentPage === page
-                            ? "bg-yellow-500 text-white"
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                          currentPage === pageNum
+                            ? "bg-yellow-500 text-white shadow-md transform scale-110"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                         }`}
                       >
-                        {page}
+                        {pageNum}
                       </button>
-                    )
-                  )}
+                    );
+                  })}
                 </div>
 
                 <button
@@ -469,15 +542,19 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
                     setCurrentPage(Math.min(totalPages, currentPage + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1 px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
-                  Trang sau
+                  <span className="hidden sm:inline">Sau</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="text-sm text-gray-600">
-                Tổng: <strong>{sortedCourses.length}</strong> khóa học
+                Tổng:{" "}
+                <strong className="text-gray-900">
+                  {sortedCourses.length}
+                </strong>{" "}
+                khóa học
               </div>
             </div>
           )}
