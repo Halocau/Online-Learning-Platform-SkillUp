@@ -15,5 +15,7 @@ namespace SkillUp.Repositories.Interfaces
         void Save();
 
         Task<List<Category>> GetCategoriesWithSubCategoriesAsync();
+        Task<Category?> GetByIdWithSubCategoriesAsync(int id);
+
     }
 }

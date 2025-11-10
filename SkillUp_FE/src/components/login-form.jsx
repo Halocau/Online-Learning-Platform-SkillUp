@@ -6,7 +6,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
-import { saveUserFromToken, getRedirectPath } from "@/lib/auth-utils";
+import { saveUserFromToken, getRedirectPath, getLecturerRedirectPath } from "@/lib/auth-utils";
 import { toast } from "react-toastify";
 
 export function LoginForm({ className, ...props }) {
@@ -43,11 +43,19 @@ export function LoginForm({ className, ...props }) {
         }
 
         const user = JSON.parse(localStorage.getItem("user"));
-        const redirectPath = getRedirectPath(user.role);
-
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 1000);
+        
+        // Check if Lecturer → Need async status check
+        if (user.role === 'Lecturer') {
+          const lecturerPath = await getLecturerRedirectPath(axiosInstance);
+          setTimeout(() => {
+            navigate(lecturerPath, { replace: true });
+          }, 1000);
+        } else {
+          const redirectPath = getRedirectPath(user.role);
+          setTimeout(() => {
+            navigate(redirectPath, { replace: true });
+          }, 1000);
+        }
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -79,11 +87,19 @@ export function LoginForm({ className, ...props }) {
         toast.success("Đăng nhập thành công!");
 
         const user = JSON.parse(localStorage.getItem("user"));
-        const redirectPath = getRedirectPath(user.role);
-
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 1000);
+        
+        // Check if Lecturer → Need async status check
+        if (user.role === 'Lecturer') {
+          const lecturerPath = await getLecturerRedirectPath(axiosInstance);
+          setTimeout(() => {
+            navigate(lecturerPath, { replace: true });
+          }, 1000);
+        } else {
+          const redirectPath = getRedirectPath(user.role);
+          setTimeout(() => {
+            navigate(redirectPath, { replace: true });
+          }, 1000);
+        }
       } else {
         setErrorMsg(response.data.message || "Đăng nhập thất bại");
       }

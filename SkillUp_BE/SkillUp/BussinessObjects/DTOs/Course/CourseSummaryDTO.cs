@@ -9,5 +9,6 @@
         public double? Rating { get; set; }
         public int EnrollmentCount { get; set; }
         public string LecturerName { get; set; }
+        public int SubCategoryId { get; set; }
     }
 }

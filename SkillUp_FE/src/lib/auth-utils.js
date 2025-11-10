@@ -51,10 +51,31 @@ export const getRedirectPath = (role) => {
     case "System Morderator":
       return "/sysmod/";
     case "Lecturer":
-      return "/lecturer/";
+      return null; // Handle separately with async status check
     case "Student":
       return "/";
     default:
       return "/";
+  }
+}
+
+export const getLecturerRedirectPath = async (axiosInstance) => {
+  try {
+    const response = await axiosInstance.get('/User/View-Profile');
+    
+    if (response.data.code === 200) {
+      const userProfile = response.data.data[0];
+      const accountStatus = userProfile.status;
+      
+      if (accountStatus === 'Active') {
+        return '/lecturer/dashboard';
+      }
+      
+      return '/lecturer/apply-cv';
+    }
+    return '/lecturer/apply-cv';
+  } catch (error) {
+    console.error('Check lecturer status error:', error);
+    return '/lecturer/apply-cv';
   }
 }

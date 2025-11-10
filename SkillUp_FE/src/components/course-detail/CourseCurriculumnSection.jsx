@@ -92,14 +92,16 @@ export default function CourseCurriculumSection({ sections }) {
           </div>
 
           <div className="space-y-3">
-            {sections.map((section, idx) => (
-              <SectionAccordion
-                key={section.id}
-                section={section}
-                index={idx}
-                onPreview={handlePreview}
-              />
-            ))}
+            {[...sections]
+              .sort((a, b) => (a.orders || 0) - (b.orders || 0))
+              .map((section, idx) => (
+                <SectionAccordion
+                  key={section.id}
+                  section={section}
+                  index={idx}
+                  onPreview={handlePreview}
+                />
+              ))}
           </div>
         </CardContent>
       </Card>
@@ -125,7 +127,9 @@ function SectionAccordion({ section, index, onPreview }) {
       >
         <div className="flex items-center gap-4 text-left flex-1">
           <div className="w-8 h-8 bg-[#FFD54F]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="font-bold text-sm text-gray-900">{index + 1}</span>
+            <span className="font-bold text-sm text-gray-900">
+              {section.orders || index + 1}
+            </span>
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-gray-900">

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Identity.Client;
 using SkillUp.BussinessObjects.DTOs.Asset;
 using SkillUp.BussinessObjects.DTOs.Course;
+using SkillUp.BussinessObjects.DTOs.CourseByCategoryPage;
 using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.Lesson;
 using SkillUp.BussinessObjects.DTOs.Quiz;
@@ -199,7 +200,24 @@ namespace SkillUp.Services.Implementations
                 LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
             }).ToList();
         }
-
+        public async Task<List<CourseSummaryDTO>> GetListCourseByCateId(int id)
+        {
+            var courses = await _courseRepository.GetCoursesByCategoryId(id);
+            if (courses == null || !courses.Any())
+            {
+                throw new Exception("Không tìm thấy khóa học nào");
+            }
+            return courses.Select(course => new CourseSummaryDTO
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Image = course.Image,
+                Price = course.Price,
+                Rating = course.Rating,
+                EnrollmentCount = course.EnrollmentCount,
+                LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
+            }).ToList();
+        }
         // Check Authorization for Roles
         private async Task<bool> IsAuthorizedAsync(Guid accountId, int requiredRoleId)
         {
@@ -288,40 +306,49 @@ namespace SkillUp.Services.Implementations
                 } : null
             };
 
-            detail.Sections = course.Sections.Select(section =>
+            detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
             {
                 // Map Lesson -> SectionItemDto (CÓ Assets)
-                var lessonItems = section.Lessons.Select(l => new SectionItemDto
-                {
-                    Kind = "Lesson",
-                    Id = l.Id,
-                    Orders = (double)l.Orders,
-                    Title = l.Title,
-                    Description = l.Description,
-                    LessonType = l.Type,                 // "Video" | "Text"
-                    IsFree = l.IsFree ?? false,
-                    Assets = l.Assets.Select(a => new AssetCourseDetailDto
+                // Only include active lessons and their active assets
+                var lessonItems = section.Lessons
+                    .Where(l => l.IsActive)
+                    .Select(l => new SectionItemDto
                     {
-                        Url = a.Url ?? "default-url",
-                        Content = a.Contents ?? "No content"
-                    }).ToList(),
-                    CreatedAt = l.CreatedAt,
-                    UpdatedAt = l.UpdatedAt
-                });
+                        Kind = "Lesson",
+                        Id = l.Id,
+                        Orders = (double)l.Orders,
+                        Title = l.Title,
+                        Description = l.Description,
+                        LessonType = l.Type,                 // "Video" | "Text"
+                        IsFree = l.IsFree ?? false,
+                        Assets = l.Assets?
+                            .Where(a => a.IsActive)
+                            .Select(a => new AssetCourseDetailDto
+                            {
+                                Url = a.Url ?? "default-url",
+                                Content = a.Contents ?? "No content"
+                            })
+                            .ToList() ?? new List<AssetCourseDetailDto>(),
+                        CreatedAt = l.CreatedAt,
+                        UpdatedAt = l.UpdatedAt
+                    });
 
                 // Map Quiz -> SectionItemDto (KHÔNG có Assets)
-                var quizItems = section.Quizzes.Select(q => new SectionItemDto
-                {
-                    Kind = "Quiz",
-                    Id = q.Id,
-                    Orders = (double)q.Orders,
-                    Title = q.Title,
-                    Description = q.Description,
-                    PassPercent = q.PassPercent,
-                    Timer = q.Timer,
-                    CreatedAt = q.CreatedAt,
-                    UpdatedAt = q.UpdatedAt
-                });
+                // Only include active quizzes
+                var quizItems = section.Quizzes
+                    .Where(q => q.IsActive)
+                    .Select(q => new SectionItemDto
+                    {
+                        Kind = "Quiz",
+                        Id = q.Id,
+                        Orders = (double)q.Orders,
+                        Title = q.Title,
+                        Description = q.Description,
+                        PassPercent = q.PassPercent,
+                        Timer = q.Timer,
+                        CreatedAt = q.CreatedAt,
+                        UpdatedAt = q.UpdatedAt
+                    });
 
                 // Gộp & sort tăng dần theo Orders
                 var items = lessonItems
@@ -345,7 +372,36 @@ namespace SkillUp.Services.Implementations
 
             return detail;
         }
+        public async Task<CategoryPageDto> GetCategoryPageAsync(int categoryId)
+        {
+     
+            var navData = await _categoryRepository.GetByIdWithSubCategoriesAsync(categoryId);
 
+            if (navData == null)
+                throw new Exception("Không tìm thấy danh mục");
+
+            var courses = await _courseRepository.GetCoursesByCategoryId(categoryId);
+            var pageDto = new CategoryPageDto
+            {
+                MainCategory = new CategorySimpleDto { Id = navData.Id, Name = navData.Name },
+                SubCategories = navData.SubCategories.Select(s => new CategorySimpleDto
+                { Id = s.Id, Name = s.Name }).ToList(),
+
+                Courses = courses.Select(course => new CourseSummaryDTO
+                {
+                    Id = course.Id,
+                    Title = course.Title,
+                    Image = course.Image,
+                    Price = course.Price,
+                    Rating = course.Rating,
+                    EnrollmentCount = course.EnrollmentCount,
+                    LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty,
+                    SubCategoryId = course.SubCategoryId
+                }).ToList()
+            };
+
+            return pageDto;
+        }
 
 
     }

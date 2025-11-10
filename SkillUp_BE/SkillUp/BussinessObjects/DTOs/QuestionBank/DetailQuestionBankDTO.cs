@@ -19,6 +19,6 @@ namespace SkillUp.BussinessObjects.DTOs.QuestionBank
 		public DateTime UpdatedAt { get; set; }
 
 		public bool IsActive { get; set; }
-		public List<AnswerDetailDTO> Answers { get; set; } = new();
+		public List<AnswerBankDetailDTO> Answers { get; set; } = new();
 	}
 }
