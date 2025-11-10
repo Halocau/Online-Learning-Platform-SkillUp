@@ -18,8 +18,7 @@ const statusColor = (s) => {
 // Map hiển thị tiếng Việt
 const statusLabelMap = {
     Active: 'Hoạt động',
-    Inactive: 'Không hoạt động',
-    Banned: 'Đã cấm',
+    Inactive: 'Ngừng hoạt động',
 };
 
 const formatDateTime = (iso) => {
@@ -193,7 +192,6 @@ const ModManagePost = () => {
             filters: [
                 { text: 'Hoạt động', value: 'Active' },
                 { text: 'Không hoạt động', value: 'Inactive' },
-                { text: 'Đã cấm', value: 'Banned' },
             ],
             filteredValue: filteredInfo.statusRaw || null,
             onFilter: (value, record) => (record.statusRaw || '') === value,
@@ -230,7 +228,7 @@ const ModManagePost = () => {
                     <Space>
                         <Button
                             danger
-                            disabled={isBanned}
+                            disabled={isInactive}
                             onClick={() => openActionModal(record, 'ban')}
                         >
                             Cấm
