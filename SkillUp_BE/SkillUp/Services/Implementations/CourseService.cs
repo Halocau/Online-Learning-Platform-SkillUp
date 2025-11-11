@@ -428,6 +428,64 @@ namespace SkillUp.Services.Implementations
             _courseRepository.UpdateCourse(course);
             return await _courseRepository.SaveChangesAsync();
         }
+        public async Task<bool> PublishCourseForReviewAsync(Guid courseId, Guid accountId)
+        {
+            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+            if (lecturer == null)
+            {
+                throw new Exception("Không tìm thấy giảng viên cho tài khoản này!");
+            }
+
+            var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+            if (course == null)
+            {
+                throw new Exception("Không tìm thấy khoá học!");
+            }
+
+
+            if (course.LecturerId != lecturer.Id)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền xuất bản khoá học này!");
+            }
+            if (course.Status == "Pending")
+            {
+                throw new Exception("Khóa học này đang chờ được duyệt.");
+            }
+            if (course.Status == "Public")
+            {
+                throw new Exception("Khóa học này đã được xuất bản.");
+            }
+
+            if (string.IsNullOrWhiteSpace(course.Title) ||
+                string.IsNullOrWhiteSpace(course.Description) ||
+                course.SubCategoryId <= 0)
+            {
+                throw new Exception("Vui lòng hoàn thành thông tin cơ bản (tiêu đề, mô tả, danh mục) trước khi xuất bản.");
+            }
+
+            if (course.OriginalPrice == null)
+            {
+                throw new Exception("Vui lòng đặt giá cho khóa học trước khi xuất bản.");
+            }
+
+            if (!course.Sections.Any(s => s.IsActive))
+            {
+                throw new Exception("Khóa học phải có ít nhất một chương (section) đang hoạt động.");
+            }
+            bool hasContent = course.Sections
+                .Where(s => s.IsActive)
+                .Any(s => s.Lessons.Any(l => l.IsActive) || s.Quizzes.Any(q => q.IsActive));
+
+            if (!hasContent)
+            {
+                throw new Exception("Khóa học phải có ít nhất một bài học (lesson) hoặc bài kiểm tra (quiz) đang hoạt động.");
+            }
+            course.Status = "Pending";
+            course.UpdatedAt = DateTime.Now;
+
+            _courseRepository.UpdateCourse(course);
+            return await _courseRepository.SaveChangesAsync();
+        }
 
     }
 }

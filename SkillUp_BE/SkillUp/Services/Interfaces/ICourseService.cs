@@ -18,5 +18,6 @@ namespace SkillUp.Services.Interfaces
         Task<CourseDetailDto> GetCourseDetailsAsync(Guid courseId);
         Task<CategoryPageDto> GetCategoryPageAsync(int categoryId);
         Task<bool> SetCoursePriceAsync(Guid courseId, CoursePriceDto request, Guid accountId);
+        Task<bool> PublishCourseForReviewAsync(Guid courseId, Guid accountId);
     }
 }

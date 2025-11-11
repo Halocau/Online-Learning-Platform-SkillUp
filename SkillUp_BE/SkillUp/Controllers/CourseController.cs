@@ -499,5 +499,74 @@ namespace SkillUp.Controllers
                 });
             }
         }
-    }
+        [HttpPut("Publish-Course/{courseId}")]
+        [Authorize]
+        public async Task<IActionResult> PublishCourse(Guid courseId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var result = await _courseService.PublishCourseForReviewAsync(courseId, accountId.Value);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể xuất bản khoá học do lỗi không xác định.",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Xuất bản khoá học thành công!",
+                    data = new List<object>()
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Vui lòng") || ex.Message.Contains("Khóa học phải có") || ex.Message.Contains("đã được xuất bản"))
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+    } 
 }
