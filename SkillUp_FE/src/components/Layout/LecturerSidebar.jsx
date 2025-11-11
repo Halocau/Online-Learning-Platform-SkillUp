@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-function LecturerSidebar({ isOpen, onToggle }) {
+function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -22,29 +22,50 @@ function LecturerSidebar({ isOpen, onToggle }) {
     return location.pathname.startsWith(path);
   };
 
-  const NavItem = ({ icon: Icon, label, path, badge }) => (
-    <Link
-      to={path}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-        isActive(path)
-          ? "bg-yellow-100 text-yellow-700 font-semibold"
-          : "text-gray-700 hover:bg-gray-100"
-      } ${isCollapsed ? "justify-center" : ""}`}
-      title={isCollapsed ? label : ""}
-    >
-      <Icon className="w-5 h-5 flex-shrink-0" />
-      {!isCollapsed && (
-        <>
-          <span className="flex-1">{label}</span>
-          {badge && (
-            <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-              {badge}
-            </span>
-          )}
-        </>
-      )}
-    </Link>
-  );
+  const NavItem = ({ icon: Icon, label, path, badge, disabled = false }) => {
+    const content = (
+      <>
+        <Icon className="w-5 h-5 flex-shrink-0" />
+        {!isCollapsed && (
+          <>
+            <span className="flex-1">{label}</span>
+            {badge && (
+              <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
+                {badge}
+              </span>
+            )}
+          </>
+        )}
+      </>
+    );
+
+    if (disabled) {
+      return (
+        <div
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-not-allowed opacity-50 ${
+            isCollapsed ? "justify-center" : ""
+          }`}
+          title={isCollapsed ? label : "Chỉ khả dụng sau khi CV được duyệt"}
+        >
+          {content}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        to={path}
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+          isActive(path)
+            ? "bg-yellow-100 text-yellow-700 font-semibold"
+            : "text-gray-700 hover:bg-gray-100"
+        } ${isCollapsed ? "justify-center" : ""}`}
+        title={isCollapsed ? label : ""}
+      >
+        {content}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -95,38 +116,45 @@ function LecturerSidebar({ isOpen, onToggle }) {
             </p>
           </div>
 
-          {/* Dashboard */}
           <NavItem
             icon={Home}
             label="Bảng điều khiển"
             path="/lecturer/dashboard"
+            disabled={isPending}
           />
 
-          {/* Teaching Section */}
           <div className={`px-2 mt-6 ${isCollapsed ? "text-center" : ""}`}>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               {!isCollapsed && "Giảng dạy"}
             </p>
           </div>
 
-          {/* Courses */}
-          <NavItem icon={BookOpen} label="Khóa học" path="/lecturer/courses" />
+          <NavItem 
+            icon={BookOpen} 
+            label="Khóa học" 
+            path="/lecturer/courses"
+            disabled={isPending}
+          />
 
-          {/* Students */}
-          <NavItem icon={Users} label="Học viên" path="/lecturer/students" />
+          <NavItem 
+            icon={Users} 
+            label="Học viên" 
+            path="/lecturer/students"
+            disabled={isPending}
+          />
 
-          {/* Analytics */}
           <NavItem
             icon={BarChart3}
             label="Ngân hàng đề"
             path="/lecturer/question-bank"
+            disabled={isPending}
           />
 
-          {/* Messages */}
           <NavItem
             icon={MessageSquare}
             label="Tin nhắn"
             path="/lecturer/messages"
+            disabled={isPending}
             badge="2"
           />
 
