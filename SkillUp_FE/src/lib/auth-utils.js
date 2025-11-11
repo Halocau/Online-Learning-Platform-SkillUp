@@ -29,7 +29,8 @@ export const saveUserFromToken = (accessToken, refreshToken) => {
     email: decoded.email,
     fullname: decoded.fullname,
     roleId: decoded.roleId,
-    role: decoded.roleName  
+    role: decoded.roleName,
+    status: decoded.status || decoded.Status || 'Active'
   }
 
   localStorage.setItem('user', JSON.stringify(user))
@@ -51,31 +52,10 @@ export const getRedirectPath = (role) => {
     case "System Morderator":
       return "/sysmod/";
     case "Lecturer":
-      return null; // Handle separately with async status check
+      return "/lecturer/";
     case "Student":
       return "/";
     default:
       return "/";
-  }
-}
-
-export const getLecturerRedirectPath = async (axiosInstance) => {
-  try {
-    const response = await axiosInstance.get('/User/View-Profile');
-    
-    if (response.data.code === 200) {
-      const userProfile = response.data.data[0];
-      const accountStatus = userProfile.status;
-      
-      if (accountStatus === 'Active') {
-        return '/lecturer/dashboard';
-      }
-      
-      return '/lecturer/apply-cv';
-    }
-    return '/lecturer/apply-cv';
-  } catch (error) {
-    console.error('Check lecturer status error:', error);
-    return '/lecturer/apply-cv';
   }
 }
