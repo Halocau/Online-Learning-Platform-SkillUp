@@ -402,7 +402,32 @@ namespace SkillUp.Services.Implementations
 
             return pageDto;
         }
+        public async Task<bool> SetCoursePriceAsync(Guid courseId, CoursePriceDto request, Guid accountId)
+        {
+      
+            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+            if (lecturer == null)
+            {
+                throw new Exception("Không tìm thấy giảng viên cho tài khoản này!");
+            }
 
+            var course = await _courseRepository.GetCourseByIdAsync(courseId);
+            if (course == null)
+            {
+                throw new Exception("Không tìm thấy khoá học!");
+            }
+
+            if (course.LecturerId != lecturer.Id)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền đặt giá cho khoá học này!");
+            }
+
+            course.Price = request.Price;
+            course.OriginalPrice = request.Price; 
+            course.UpdatedAt = DateTime.Now;
+            _courseRepository.UpdateCourse(course);
+            return await _courseRepository.SaveChangesAsync();
+        }
 
     }
 }
