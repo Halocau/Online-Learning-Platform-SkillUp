@@ -77,46 +77,71 @@ namespace SkillUp.Services.Implementations
 
         public async Task<CommentPostDto> CreateCommentAsync(CreateCommentDto dto, Guid accountId)
         {
-            // 1. Tạo Comment (Logic cũ)
+            // 1. Tạo Comment (Logic cũ của bạn)
             var newComment = new CommentPost
             {
                 Id = Guid.NewGuid(),
                 PostId = dto.PostId,
                 AccountId = accountId,
                 Contents = dto.Contents,
-                ParentCommentId = dto.ParentCommentId,
+                ParentCommentId = dto.ParentCommentId, // Đây là ID của comment cha
                 CreatedAt = DateTime.Now,
                 IsActive = true
             };
 
             var savedComment = await _repo.CreateAsync(newComment);
 
-            // Lấy tên người comment (thay vì dùng savedComment.Account)
             var commenter = await _accountRepo.GetByIdAsync(accountId);
             var accountName = commenter?.Fullname ?? "Một người dùng";
 
-            // 2. LOGIC MỚI: GỬI THÔNG BÁO
+            // 2. LOGIC THÔNG BÁO (Đã cập nhật)
             try
             {
+                // Lấy post (để thông báo cho chủ post)
                 var post = await _postRepo.GetByIdAsync(dto.PostId);
 
-                // Chỉ gửi nếu: 1. Tìm thấy post, 2. Người comment KHÔNG PHẢI là chủ post
+                // --- PHẦN BẠN HỎI (THÔNG BÁO REPLY) ---
+                CommentPost? parentComment = null;
+                if (dto.ParentCommentId.HasValue)
+                {
+                    // Lấy comment cha để biết ai là người nhận
+                    parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
+                }
+                // ----------------------------------------
+
+                // 2.1. Thông báo cho Chủ Post (Logic cũ)
+                // Chỉ báo nếu (tìm thấy post) VÀ (người comment KHÔNG PHẢI chủ post)
                 if (post != null && post.AccountId != accountId)
                 {
                     await _notifyService.CreateNotificationAsync(
-                        post.AccountId, // Gửi đến chủ post
+                        post.AccountId,
                         "Bình luận mới",
                         $"{accountName} đã bình luận bài viết của bạn."
+                    );
+                }
+
+                // 2.2. Thông báo cho Chủ Comment Bị Trả Lời (Logic mới)
+                // Kiểm tra:
+                // 1. Có comment cha
+                // 2. Người trả lời KHÔNG PHẢI là chủ comment cha (tự trả lời mình)
+                // 3. Chủ comment cha KHÔNG PHẢI là chủ post (tránh 2 thông báo trùng lặp)
+                if (parentComment != null &&
+                    parentComment.AccountId != accountId &&
+                    (post == null || parentComment.AccountId != post.AccountId))
+                {
+                    await _notifyService.CreateNotificationAsync(
+                        parentComment.AccountId, // Gửi cho chủ comment cha
+                        "Trả lời bình luận",
+                        $"{accountName} đã trả lời bình luận của bạn."
                     );
                 }
             }
             catch (Exception ex)
             {
-                // Bỏ qua lỗi thông báo để không làm hỏng chức năng comment
                 Console.WriteLine($"Lỗi gửi thông báo: {ex.Message}");
             }
 
-            // 3. Trả về DTO (Logic cũ)
+            // 3. Trả về DTO (Logic cũ của bạn)
             return new CommentPostDto
             {
                 Id = savedComment.Id,
@@ -124,7 +149,7 @@ namespace SkillUp.Services.Implementations
                 Contents = savedComment.Contents,
                 CreatedAt = savedComment.CreatedAt,
                 AccountId = savedComment.AccountId,
-                AccountName = accountName, // Dùng tên vừa lấy
+                AccountName = accountName,
                 ParentCommentId = savedComment.ParentCommentId,
                 IsActive = true,
                 LikeCount = 0

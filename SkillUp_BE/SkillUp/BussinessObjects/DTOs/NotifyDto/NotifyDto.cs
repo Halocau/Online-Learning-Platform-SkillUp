@@ -2,7 +2,7 @@
 
 namespace SkillUp.BussinessObjects.DTOs.NotifyDto
 {
-    public class NotifyDto : Controller
+    public class NotifyDto
     {
         public Guid Id { get; set; }
         public Guid AccountId { get; set; }

@@ -5,6 +5,7 @@ using SkillUp.BussinessObjects.Models;
 using SkillUp.Hubs;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
+using System.Security.Authentication;
 
 namespace SkillUp.Services.Implementations
 {
@@ -12,13 +13,16 @@ namespace SkillUp.Services.Implementations
     {
         private readonly INotifyRepository _notifyRepo;
         private readonly IHubContext<NotificationHub> _notifyHubContext;
+        private readonly ICurrentUserService _currentUserService;
 
         public NotifyService(
             INotifyRepository notifyRepo,
-            IHubContext<NotificationHub> notifyHubContext)
+            IHubContext<NotificationHub> notifyHubContext,
+            ICurrentUserService currentUserService)
         {
             _notifyRepo = notifyRepo;
             _notifyHubContext = notifyHubContext;
+            _currentUserService = currentUserService;
         }
 
         public async Task CreateNotificationAsync(Guid recipientAccountId, string title, string contents)
@@ -51,6 +55,45 @@ namespace SkillUp.Services.Implementations
             await _notifyHubContext.Clients
                 .Group(recipientAccountId.ToString())
                 .SendAsync("ReceiveNotification", notifyDto);
+        }
+
+        public async Task<IEnumerable<NotifyDto>> GetMyNotificationsAsync()
+        {
+            var accountId = _currentUserService.UserId;
+            if (accountId == null)
+            {
+                throw new AuthenticationException("Người dùng chưa đăng nhập.");
+            }
+            var notifications = await _notifyRepo.GetByAccountIdAsync(accountId.Value);
+            return MapToDto(notifications);
+        }
+
+        // --- HÀM MỚI 1 (Cho Admin) ---
+        public async Task<IEnumerable<NotifyDto>> GetNotificationsByAccountIdAsync(Guid accountId)
+        {
+            var notifications = await _notifyRepo.GetByAccountIdAsync(accountId);
+            return MapToDto(notifications);
+        }
+
+        // --- HÀM MỚI 2 (Cho Admin) ---
+        public async Task<IEnumerable<NotifyDto>> GetAllNotificationsAsync()
+        {
+            var notifications = await _notifyRepo.GetAllAsync();
+            return MapToDto(notifications);
+        }
+
+        // --- HÀM HELPER (Tái sử dụng code map) ---
+        private IEnumerable<NotifyDto> MapToDto(IEnumerable<Notify> notifications)
+        {
+            return notifications.Select(n => new NotifyDto
+            {
+                Id = n.Id,
+                AccountId = n.AccountId,
+                Title = n.Title,
+                Contents = n.Contents,
+                Status = n.Status,
+                CreatedAt = n.CreatedAt
+            });
         }
     }
 }
