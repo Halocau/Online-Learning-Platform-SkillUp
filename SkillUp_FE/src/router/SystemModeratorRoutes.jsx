@@ -5,10 +5,10 @@ import ProtectedRoute from "./ProtectedRoute";
 
 // Import moderator pages
 import ModDashboard from "../pages/contentmoderator/ModDashboard";
-import CategoryManage from "@/pages/systemModerator/CategoryManage";
 import TicketManage from "@/pages/systemModerator/TicketManage";
 import LecturerApplicationManage from "@/pages/systemModerator/LecturerApplicationManage";
 import SystemModeratorDashboard from "@/pages/systemModerator/ModDashboard";
+import UserManage from "@/pages/systemModerator/UserManage";
 
 const SystemModeratorRoutes = () => {
   return (
@@ -23,9 +23,9 @@ const SystemModeratorRoutes = () => {
       >
         <Route index element={<SystemModeratorDashboard />} />
 
-        <Route path="category" element={<CategoryManage />} />
         <Route path="ticket" element={<TicketManage />} />
         <Route path="lecturer-application" element={<LecturerApplicationManage />} />
+        <Route path="manage-user" element={<UserManage />} />
       </Route>
     </Routes>
   );
