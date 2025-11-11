@@ -11,7 +11,7 @@ import CreateNews from "@/pages/contentmoderator/NewsFeature/CreateNews";
 import EditNews from "@/pages/contentmoderator/NewsFeature/EditNews";
 import NewsDetailMod from "@/pages/contentmoderator/NewsFeature/DetailNewsMod";
 import CourseManage from "@/pages/contentmoderator/CourseManage";
-import CategoryManage from "@/pages/systemModerator/CategoryManage";
+import CategoryManage from "@/pages/contentmoderator/CategoryManage";
 
 const ContentModeratorRoutes = () => {
   return (
