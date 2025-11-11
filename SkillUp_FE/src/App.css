@@ -127,12 +127,7 @@
   border-radius: 12px;
   padding: 12px 14px;
   backdrop-filter: blur(12px);
-  background: rgba(
-    255,
-    255,
-    255,
-    0.1
-  );
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   color: #fff;
@@ -147,12 +142,8 @@
 /* Success (teal gradient) */
 .Toastify__toast--success {
   --toast-accent-color: #1abc9c;
-  background-image: linear-gradient(
-    135deg,
-    #1abc9c,
-    #16a085
-  );
-  color: #fff; 
+  background-image: linear-gradient(135deg, #1abc9c, #16a085);
+  color: #fff;
   border: 1px solid rgba(26, 188, 156, 0.3);
 }
 
@@ -220,4 +211,16 @@
 .Toastify__progress-bar--info,
 .Toastify__progress-bar--warning {
   background: rgba(255, 255, 255, 0.85);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+.animate-shimmer {
+  animation: shimmer 2s infinite;
 }

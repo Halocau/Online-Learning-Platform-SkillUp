@@ -112,6 +112,20 @@ export default function ManageQuestionBank() {
         }
     }, [fetchQuestionBank, selectedSectionId]);
 
+    useEffect(() => {
+        // Auto-select the first course if not already selected
+        if (!courseId && courses.length > 0) {
+            setCourseId(courses[0].id);
+        }
+    }, [courses, courseId]);
+
+    // 👇 Add this hook after your component definition
+    useEffect(() => {
+        if (sections.length > 0) {
+            setSelectedSectionId(sections[0].id);
+        }
+    }, [sections, courseId]);
+
     // Tìm kiếm phía client
     const displayed = useMemo(() => {
         if (!search.trim()) return questionBanks;
@@ -320,10 +334,15 @@ export default function ManageQuestionBank() {
                             style={{ width: 320 }}
                         />
                     </div>
-
-                    <Button type="primary" onClick={() => setCreateOpen(true)}>
+                    {selectedSectionId ? (
+                        <Button type="primary" onClick={() => setCreateOpen(true)}>
                         Tạo câu hỏi mới
-                    </Button> 
+                    </Button>
+                    ) : (
+                        <div></div>
+                    )
+                    }
+                    
 
                     <Space wrap>
                         <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>

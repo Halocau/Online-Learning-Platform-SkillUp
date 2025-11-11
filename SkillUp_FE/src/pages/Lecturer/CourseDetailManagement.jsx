@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BookOpen, List, DollarSign, Tag } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  List,
+  DollarSign,
+  Tag,
+  CheckCircle2,
+  Circle,
+  Lightbulb,
+  Send,
+  Eye,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
@@ -83,7 +94,51 @@ function CourseDetailManagement() {
     navigate("/lecturer/courses");
   };
 
+  // Check if each step is completed
+  const isStepCompleted = (tabId) => {
+    if (!course) return false;
+
+    switch (tabId) {
+      case "landing":
+        return true;
+      case "curriculum":
+        return !!(
+          course.sections &&
+          course.sections.length > 0 &&
+          course.sections.some(
+            (section) => section.items && section.items.length > 0
+          )
+        );
+      case "pricing":
+        return course.price !== null && course.price !== undefined;
+      case "voucher":
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  // Calculate overall progress
+  const calculateProgress = () => {
+    const completedSteps = tabs.filter((tab) => isStepCompleted(tab.id)).length;
+    return Math.round((completedSteps / tabs.length) * 100);
+  };
+
+  const handleSubmitForPreview = () => {
+    // Check if all required steps are completed
+    const allCompleted = tabs.every((tab) => isStepCompleted(tab.id));
+
+    if (!allCompleted) {
+      toast.warning(
+        "Vui lòng hoàn thành tất cả các bước trước khi gửi xem trước"
+      );
+      return;
+    }
+    toast.info("Tính năng gửi xem trước đang được phát triển");
+  };
+
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
+  const progress = calculateProgress();
 
   if (loading) {
     return (
@@ -121,6 +176,37 @@ function CourseDetailManagement() {
                 </p>
               </div>
             </div>
+
+            {/* Progress Badge */}
+            <div className="hidden md:flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-xs text-gray-500 font-medium">
+                  Tiến độ hoàn thành
+                </p>
+                <p className="text-lg font-bold text-blue-600">{progress}%</p>
+              </div>
+              <div className="w-32 bg-gray-200 rounded-full h-2.5">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar for Mobile */}
+        <div className="md:hidden px-6 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <span className="text-xs font-semibold text-blue-600 min-w-[40px] text-right">
+              {progress}%
+            </span>
           </div>
         </div>
       </div>
@@ -128,35 +214,122 @@ function CourseDetailManagement() {
       {/* Main Layout */}
       <div className="flex">
         {/* Left Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)] sticky top-[73px] hidden lg:block">
+        <div className="w-72 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)] sticky top-[73px] hidden lg:block shadow-sm">
           <div className="p-4">
             <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4 px-3">
               Quản lý nội dung khóa học
             </h2>
-            <nav className="space-y-1">
-              {tabs.map((tab) => {
+            <nav className="space-y-2">
+              {tabs.map((tab, index) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
+                const isCompleted = isStepCompleted(tab.id);
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 ${
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 group ${
                       isActive
-                        ? "bg-blue-50 text-blue-600 font-semibold"
-                        : "text-gray-700 hover:bg-gray-50"
+                        ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 font-semibold shadow-sm border border-blue-200"
+                        : "text-gray-700 hover:bg-gray-50 border border-transparent"
                     }`}
                   >
-                    <Icon
-                      className={`w-5 h-5 flex-shrink-0 ${
-                        isActive ? "text-blue-600" : "text-gray-400"
+                    {/* Step Number or Check */}
+                    <div
+                      className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 transition-all ${
+                        isCompleted
+                          ? "bg-green-500 text-white"
+                          : isActive
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-600 group-hover:bg-gray-300"
                       }`}
-                    />
-                    <span className="text-sm">{tab.label}</span>
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : (
+                        <span className="text-xs font-bold">{index + 1}</span>
+                      )}
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Icon
+                          className={`w-4 h-4 flex-shrink-0 ${
+                            isActive
+                              ? "text-blue-600"
+                              : isCompleted
+                              ? "text-green-500"
+                              : "text-gray-400"
+                          }`}
+                        />
+                        <span className="text-sm">{tab.label}</span>
+                      </div>
+                      {isCompleted && !isActive && (
+                        <p className="text-xs text-green-600 mt-0.5 ml-6">
+                          Đã hoàn thành
+                        </p>
+                      )}
+                    </div>
                   </button>
                 );
               })}
+
+              {/* Divider */}
+              <div className="pt-2">
+                <div className="border-t border-gray-200"></div>
+              </div>
             </nav>
+
+            {/* Progress Summary */}
+            <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Tổng quan tiến độ
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600">Đã hoàn thành:</span>
+                  <span className="font-bold text-blue-600">
+                    {tabs.filter((tab) => isStepCompleted(tab.id)).length}/
+                    {tabs.length} bước
+                  </span>
+                </div>
+                {progress === 100 && (
+                  <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded text-xs text-green-700 font-medium text-center">
+                    Tất cả các bước đã hoàn thành! Bạn có thể gửi xem
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Submit for Preview Button */}
+            <button
+              onClick={handleSubmitForPreview}
+              disabled={progress < 100}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 mt-2 ${
+                progress === 100
+                  ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 text-green-800 cursor-pointer"
+                  : "bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+              }`}
+            >
+              <div
+                className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 ${
+                  progress === 100
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-300 text-gray-500"
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-semibold">Đề xuất khóa học</span>
+                {progress < 100 && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Hoàn thành {100 - progress}% để đề xuất khóa học
+                  </p>
+                )}
+              </div>
+            </button>
           </div>
         </div>
 

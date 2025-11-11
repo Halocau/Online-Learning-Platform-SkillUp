@@ -151,7 +151,6 @@ public partial class SkillUpContext : DbContext
             entity.ToTable("AnswerBank");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.Property(e => e.AnswerName).HasMaxLength(255);
 
             entity.HasOne(d => d.QuestionBank).WithMany(p => p.AnswerBanks)
                 .HasForeignKey(d => d.QuestionBankId)
@@ -618,7 +617,6 @@ public partial class SkillUpContext : DbContext
 
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
-            entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Lecturer).WithMany(p => p.QuestionBanks)
