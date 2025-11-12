@@ -8,9 +8,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { saveUserFromToken, getRedirectPath } from "@/lib/auth-utils";
 import { toast } from "react-toastify";
+import { useCart } from "@/context/CartContext";
 
 export function LoginForm({ className, ...props }) {
   const navigate = useNavigate();
+  const { mergeGuestCartWithServer } = useCart();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -36,18 +38,49 @@ export function LoginForm({ className, ...props }) {
           userData.token.refreshToken
         );
 
+        // Merge guest cart với server cart
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (user?.userId) {
+          const mergeResult = await mergeGuestCartWithServer(user.userId);
+          if (mergeResult?.success) {
+            toast.success(mergeResult.message);
+          }
+        }
+
         if (userData.isNewUser) {
           toast.success("Đăng ký thành công! Chào mừng bạn đến với SkillUp!");
         } else {
           toast.success("Đăng nhập Google thành công!");
         }
 
-        const user = JSON.parse(localStorage.getItem("user"));
-        const redirectPath = getRedirectPath(user.role);
-        
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 1000);
+        // Check if user came from cart page
+        const previousPath = localStorage.getItem('redirectAfterLogin');
+
+        if (previousPath && previousPath.includes('/cart')) {
+          localStorage.removeItem('redirectAfterLogin');
+
+          if (!user?.userId) {
+            toast.error('Lỗi: Không tìm thấy thông tin người dùng');
+            return;
+          }
+
+          setTimeout(() => {
+            navigate(`/cart/${user.userId}`, { replace: true });
+          }, 1500); // Tăng thời gian chờ
+          return;
+        }        // Check if Lecturer → Need async status check
+        if (user.role === 'Lecturer') {
+          const lecturerPath = await getLecturerRedirectPath(axiosInstance);
+          setTimeout(() => {
+            navigate(lecturerPath, { replace: true });
+          }, 1000);
+        } else {
+          const redirectPath = getRedirectPath(user.role);
+          setTimeout(() => {
+            navigate(redirectPath, { replace: true });
+          }, 1000);
+        }
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -76,14 +109,46 @@ export function LoginForm({ className, ...props }) {
       if (response.data.code === 200) {
         const { accessToken, refreshToken } = response.data.data[0];
         saveUserFromToken(accessToken, refreshToken);
+
+        // Merge guest cart với server cart
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (user?.userId) {
+          const mergeResult = await mergeGuestCartWithServer(user.userId);
+          if (mergeResult?.success) {
+            toast.success(mergeResult.message);
+          }
+        }
+
         toast.success("Đăng nhập thành công!");
 
-        const user = JSON.parse(localStorage.getItem("user"));
-        const redirectPath = getRedirectPath(user.role);
-        
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 1000);
+        // Check if user came from cart page
+        const previousPath = localStorage.getItem('redirectAfterLogin');
+
+        if (previousPath && previousPath.includes('/cart')) {
+          localStorage.removeItem('redirectAfterLogin');
+
+          if (!user?.userId) {
+            toast.error('Lỗi: Không tìm thấy thông tin người dùng');
+            return;
+          }
+
+          setTimeout(() => {
+            navigate(`/cart/${user.userId}`, { replace: true });
+          }, 1500); // Tăng thời gian chờ để đảm bảo user đã lưu vào localStorage
+          return;
+        }        // Check if Lecturer → Need async status check
+        if (user.role === 'Lecturer') {
+          const lecturerPath = await getLecturerRedirectPath(axiosInstance);
+          setTimeout(() => {
+            navigate(lecturerPath, { replace: true });
+          }, 1000);
+        } else {
+          const redirectPath = getRedirectPath(user.role);
+          setTimeout(() => {
+            navigate(redirectPath, { replace: true });
+          }, 1000);
+        }
       } else {
         setErrorMsg(response.data.message || "Đăng nhập thất bại");
       }

@@ -14,16 +14,17 @@ export const decodeToken = (token) => {
 
 export const saveUserFromToken = (accessToken, refreshToken) => {
   const decoded = decodeToken(accessToken)
-  
+
   if (!decoded) {
     return false
   }
 
-  
+
   localStorage.setItem('accessToken', accessToken)
   localStorage.setItem('refreshToken', refreshToken)
 
-  
+
+
   const user = {
     userId: decoded.userId,
     email: decoded.email,
@@ -34,7 +35,7 @@ export const saveUserFromToken = (accessToken, refreshToken) => {
   }
 
   localStorage.setItem('user', JSON.stringify(user))
-  
+
   return true
 }
 
@@ -57,5 +58,26 @@ export const getRedirectPath = (role) => {
       return "/";
     default:
       return "/";
+  }
+}
+
+export const getLecturerRedirectPath = async (axiosInstance) => {
+  try {
+    const response = await axiosInstance.get('/User/View-Profile');
+
+    if (response.data.code === 200) {
+      const userProfile = response.data.data[0];
+      const accountStatus = userProfile.status;
+
+      if (accountStatus === 'Active') {
+        return '/lecturer/dashboard';
+      }
+
+      return '/lecturer/apply-cv';
+    }
+    return '/lecturer/apply-cv';
+  } catch (error) {
+    console.error('Check lecturer status error:', error);
+    return '/lecturer/apply-cv';
   }
 }

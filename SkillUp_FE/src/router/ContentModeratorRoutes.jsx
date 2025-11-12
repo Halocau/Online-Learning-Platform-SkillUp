@@ -11,6 +11,7 @@ import CreateNews from "@/pages/contentmoderator/NewsFeature/CreateNews";
 import EditNews from "@/pages/contentmoderator/NewsFeature/EditNews";
 import NewsDetailMod from "@/pages/contentmoderator/NewsFeature/DetailNewsMod";
 import CourseManage from "@/pages/contentmoderator/CourseManage";
+import ModManagePost from "@/pages/contentmoderator/ModManagePost";
 import CategoryManage from "@/pages/contentmoderator/CategoryManage";
 
 const ContentModeratorRoutes = () => {
@@ -32,6 +33,7 @@ const ContentModeratorRoutes = () => {
         <Route path="editnews/:id" element={<EditNews />} />
         <Route path="course" element={<CourseManage />} />
         <Route path="rpcmt" element={<CommentReport />} />
+        <Route path="post" element={<ModManagePost />} />
         <Route path="category" element={<CategoryManage />} />
       </Route>
     </Routes>

@@ -47,6 +47,7 @@ function AppRouter() {
 
           <Route path="/news" element={<NewsList />} />
           <Route path="/news/:id" element={<NewsDetail />} />
+          <Route path="/cart" element={<MyCart />} />
           <Route path="/Cart/:id" element={<MyCart />} />
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/courses/:categoryId" element={<CoursesByCategory />} />
@@ -56,7 +57,7 @@ function AppRouter() {
         <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
         <Route path="/student/*" element={<StudentRoutes />} />
-        <Route path="lecturer/*"  element={<LecturerRoutes />}/>
+        <Route path="lecturer/*" element={<LecturerRoutes />} />
         <Route path="/ticket" element={<TicketList />} />
         <Route path="/ticket/:ticketCode" element={<TicketDetail />} />
 
