@@ -99,5 +99,37 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpPost("add-from-bank")]
+        public async Task<IActionResult> AddQuestionFromBankToQuiz([FromBody]List<CreateQuestionQuizDTO> createQuestionQuizDTO)
+        {
+			try
+			{
+				var accId = _currentUserService.UserId;
+				if (!accId.HasValue)
+				{
+					return Unauthorized(new APIReturn
+					{
+						code = 401,
+						message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+						data = new List<object>()
+					});
+				}
+				var success = await _questionService.AddBulkQuestionFromBankToQuizAsync(createQuestionQuizDTO, accId.Value);
+
+				if (!success)
+					return BadRequest(new APIReturn { code = 400, message = "Thêm câu hỏi thất bại" });
+
+				return Ok(new APIReturn
+				{
+					code = 200,
+					message = "Thêm câu hỏi thành công"
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new APIReturn { code = 500, message = ex.Message });
+			}
+		}
     }
 }
