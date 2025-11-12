@@ -235,5 +235,46 @@ namespace SkillUp.Controllers
 				});
 			}
 		}
+
+		[HttpPost("add-by-excel")]
+		public async Task<IActionResult> AddByExcel(IFormFile file, Guid sectionId, Guid accountId)
+		{
+			try
+			{
+				// Validate file
+				if (file == null || file.Length == 0)
+					return BadRequest("Vui lòng tải lên file Excel hợp lệ (.xlsx).");
+
+				if (!file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+					return BadRequest("Chỉ hỗ trợ file Excel (.xlsx).");
+
+				// Read Excel and import data
+				using var stream = file.OpenReadStream();
+				var importedQuestions = await _questionBankService.ReadQuestionsWithMultipleAnswersAsync(stream, sectionId, accountId);
+
+				// Handle result
+				if (importedQuestions == null || importedQuestions.Count == 0)
+					return BadRequest("Không có câu hỏi hợp lệ trong file Excel.");
+
+				// Return success response
+				return Ok(new
+				{
+					success = true,
+					importedCount = importedQuestions.Count,
+					message = $"Đã nhập thành công {importedQuestions.Count} câu hỏi từ file Excel.",
+					data = importedQuestions
+				});
+			}
+			catch (Exception ex)
+			{
+				// Catch unexpected errors
+				return StatusCode(500, new
+				{
+					success = false,
+					message = "Đã xảy ra lỗi khi xử lý file Excel.",
+					error = ex.Message
+				});
+			}
+		}
 	}
 }

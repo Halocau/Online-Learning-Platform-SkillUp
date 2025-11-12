@@ -10,6 +10,7 @@ namespace SkillUp.Services.Interfaces
 		Task<DetailQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId);
 		Task<UpdateQuestionBankDTO> UpdateQuestionBank(UpdateQuestionBankDTO updateQuestionBankDTO, Guid questionBankId, Guid accountId, Guid courseId);
 		Task DeleteQuestionBank(Guid id, Guid accountId, Guid courseId);
+		Task<List<CreateQuestionBankDTO>> ReadQuestionsWithMultipleAnswersAsync(Stream excelStream, Guid sectionId, Guid accountId);
 
 	}
 }
