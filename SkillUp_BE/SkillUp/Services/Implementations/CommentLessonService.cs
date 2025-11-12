@@ -12,13 +12,22 @@ namespace SkillUp.Services.Implementations
     {
         private readonly ICommentLessonRepository _repo;
         private readonly ILikeCommentLessonRepository _likeRepo;
+        private readonly ILessonRepository _lessonRepo;
+        private readonly IAccountRepository _accountRepo;
+        private readonly INotifyService _notifyService;
 
         public CommentLessonService(
-            ICommentLessonRepository repo,
-            ILikeCommentLessonRepository likeRepo)
+             ICommentLessonRepository repo,
+             ILikeCommentLessonRepository likeRepo,
+             ILessonRepository lessonRepo,
+             IAccountRepository accountRepo,
+             INotifyService notifyService)
         {
             _repo = repo;
             _likeRepo = likeRepo;
+            _lessonRepo = lessonRepo;
+            _accountRepo = accountRepo;
+            _notifyService = notifyService;
         }
 
         public async Task<IEnumerable<CommentLessonDto>> GetCommentsByLessonIdAsync(Guid lessonId)
@@ -51,32 +60,90 @@ namespace SkillUp.Services.Implementations
 
         public async Task<CommentLessonDto> CreateCommentAsync(CreateCommentLessonDto dto, Guid accountId)
         {
+            // 1. Tạo Comment (Logic cũ)
             var newComment = new CommentLesson
             {
+                // ... (Id, LessonId, AccountId, ...)
                 Id = Guid.NewGuid(),
                 LessonId = dto.LessonId,
                 AccountId = accountId,
                 Contents = dto.Contents,
                 ParentCommentId = dto.ParentCommentId,
                 CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now, 
+                UpdatedAt = DateTime.Now,
                 IsActive = true
             };
 
             var savedComment = await _repo.CreateAsync(newComment);
 
-          
+            var commenter = await _accountRepo.GetByIdAsync(accountId);
+            var accountName = commenter?.Fullname ?? "Một người dùng";
+
+            // 2. LOGIC THÔNG BÁO (CẬP NHẬT CATCH BLOCK)
+            try
+            {
+                var lesson = await _lessonRepo.GetByIdAsync(dto.LessonId);
+
+                CommentLesson? parentComment = null;
+                if (dto.ParentCommentId.HasValue)
+                {
+                    parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
+                }
+
+                // 2.1. Thông báo cho Chủ Bài Giảng (Giảng viên)
+                if (lesson == null)
+                    throw new Exception("Không tìm thấy Lesson.");
+                if (lesson.Section == null)
+                    throw new Exception("Lesson không có Section.");
+                if (lesson.Section.Course == null)
+                    throw new Exception("Section không có Course.");
+                if (lesson.Section.Course.Lecturer == null)
+                    throw new Exception("Course không có Lecturer.");
+                if (lesson.Section.Course.Lecturer.AccountId == null) // Giả định AccountId có trong Lecturer
+                    throw new Exception("Lecturer không có AccountId.");
+
+                // Nếu tất cả đều qua, mới gửi thông báo
+                var lecturerAccountId = lesson.Section.Course.Lecturer.AccountId;
+                if (lecturerAccountId != accountId)
+                {
+                    await _notifyService.CreateNotificationAsync(
+                        lecturerAccountId,
+                        "Bình luận bài giảng mới",
+                        $"{accountName} đã bình luận bài giảng của bạn."
+                    );
+                }
+
+                // 2.2. Thông báo cho Chủ Comment Bị Trả Lời
+                if (parentComment != null && parentComment.AccountId != accountId)
+                {
+                    await _notifyService.CreateNotificationAsync(
+                        parentComment.AccountId,
+                        "Trả lời bình luận",
+                        $"{accountName} đã trả lời bình luận của bạn."
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                // --- ĐÂY LÀ PHẦN SỬA QUAN TRỌNG ---
+                // Chúng ta in ra lỗi chi tiết hơn
+                Console.WriteLine("--- LỖI GỬI THÔNG BÁO (LESSON) ---");
+                Console.WriteLine(ex.Message); // In ra "Không tìm thấy Lesson", "Lesson không có Section", v.v...
+                Console.WriteLine(ex.StackTrace);
+                // --- HẾT PHẦN SỬA ---
+            }
+
+            // 3. Trả về DTO (Logic cũ)
             return new CommentLessonDto
             {
+                // ... (Id, LessonId, Contents, ...)
                 Id = savedComment.Id,
                 LessonId = savedComment.LessonId,
                 Contents = savedComment.Contents,
                 CreatedAt = savedComment.CreatedAt,
-                
-
-                // --- THÊM DÒNG NÀY ---
+                AccountId = savedComment.AccountId,
+                AccountName = accountName,
                 ParentCommentId = savedComment.ParentCommentId,
-
                 IsActive = true,
                 LikeCount = 0
             };
