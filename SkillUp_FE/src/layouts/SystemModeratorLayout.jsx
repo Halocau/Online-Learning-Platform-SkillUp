@@ -30,12 +30,7 @@ export default function SystemModeratorLayout() {
     {
       label: "Quản lý tài khoản",
       icon: <FileText size={18} />,
-      path: "/sysmod/account",
-    },
-    {
-      label: "Quản lý danh mục",
-      icon: <TableOfContents size={18} />,
-      path: "/sysmod/category",
+      path: "/sysmod/manage-user",
     },
     {
       label: "Quản lý phiếu hỗ trợ",

@@ -10,6 +10,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "react-toastify";
 import {
   FileText,
@@ -18,13 +24,15 @@ import {
   Phone,
   Award,
   Briefcase,
-  ExternalLink,
+  Eye,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
 
 function MyApplications() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState([]);
+  const [viewDialog, setViewDialog] = useState({ open: false, url: null, type: null });
 
   useEffect(() => {
     fetchApplications();
@@ -32,19 +40,38 @@ function MyApplications() {
 
   const fetchApplications = async () => {
     try {
-      setLoading(true);
       const response = await axiosInstance.get(
         "/LecturerApplication/my-applications"
       );
 
       if (response.data.code === 200) {
-        setApplications(response.data.data[0] || []);
+        // API trả về data là array lồng 2 lần [[{...}]]
+        const rawData = response.data.data[0] || [];
+        
+        // Map API fields sang component fields
+        const mappedApplications = rawData.map(app => ({
+          id: app.id,
+          cvUrl: app.cv,
+          degree: app.degree ? app.degree.split(',')[0] : null, // Lấy ảnh đầu tiên
+          degreeImages: app.degree ? app.degree.split(',') : [], // Tất cả ảnh bằng cấp
+          fullName: app.title || 'N/A',
+          major: app.profession || 'N/A',
+          experience: app.description || 'Không có thông tin',
+          introduction: null, // API không có field này
+          email: null, // API không có field này
+          phone: null, // API không có field này
+          status: app.status,
+          rejectionReason: app.rejectReason,
+          submittedDate: app.createdAt,
+          reviewDate: app.updatedAt,
+          appliedDate: app.createdAt
+        }));
+        
+        setApplications(mappedApplications);
       }
     } catch (error) {
       console.error("Fetch applications error:", error);
       toast.error("Không thể tải danh sách đơn ứng tuyển");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -52,17 +79,25 @@ function MyApplications() {
     switch (status) {
       case "Pending":
         return (
-          <Badge className="bg-yellow-100 text-yellow-800">
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
             Đang chờ duyệt
           </Badge>
         );
       case "Approved":
-        return <Badge className="bg-green-100 text-green-800">Đã duyệt</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Đã duyệt</Badge>;
       case "Rejected":
-        return <Badge className="bg-red-100 text-red-800">Từ chối</Badge>;
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Từ chối</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
+  };
+
+  const handleViewFile = (url, type) => {
+    setViewDialog({ open: true, url, type });
+  };
+
+  const closeViewDialog = () => {
+    setViewDialog({ open: false, url: null, type: null });
   };
 
   return (
@@ -109,88 +144,87 @@ function MyApplications() {
               {applications.map((app) => (
                 <Card
                   key={app.id}
-                  className="shadow-lg hover:shadow-xl transition-shadow"
+                  className="overflow-hidden hover:shadow-xl transition-all duration-300 border-l-4 border-yellow-400"
                 >
-                  <CardHeader>
+                  <CardHeader className="bg-gradient-to-r from-yellow-50 to-white">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-2">
-                          {app.fullName}
-                        </CardTitle>
-                        <CardDescription className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4" />
-                            <span>{app.email}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            <span>{app.phone}</span>
-                          </div>
-                        </CardDescription>
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="bg-yellow-100 p-3 rounded-full">
+                          <FileText className="w-6 h-6 text-yellow-600" />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-xl mb-3 text-gray-900">
+                            {app.fullName}
+                          </CardTitle>
+                          <CardDescription className="space-y-2">
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Briefcase className="w-4 h-4" />
+                              <span>Chuyên môn: {app.major}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Calendar className="w-4 h-4" />
+                              <span>Nộp ngày: {new Date(app.submittedDate).toLocaleDateString("vi-VN")}</span>
+                            </div>
+                          </CardDescription>
+                        </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         {getStatusBadge(app.status)}
-                        <div className="flex items-center gap-1 text-sm text-gray-500">
-                          <Calendar className="w-4 h-4" />
-                          {new Date(app.appliedDate).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </div>
                       </div>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {app.degree && (
-                        <div className="flex items-start gap-2">
-                          <Award className="w-5 h-5 text-yellow-500 mt-0.5" />
-                          <div>
-                            <p className="text-sm text-gray-500">Bằng cấp</p>
-                            <p className="font-medium">{app.degree}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {app.major && (
-                        <div className="flex items-start gap-2">
-                          <Briefcase className="w-5 h-5 text-yellow-500 mt-0.5" />
-                          <div>
-                            <p className="text-sm text-gray-500">
-                              Chuyên ngành
-                            </p>
-                            <p className="font-medium">{app.major}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
+                  <CardContent className="space-y-6 pt-6">
                     {app.experience && (
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">
-                          Kinh nghiệm
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          Mô tả / Kinh nghiệm
                         </p>
                         <p className="text-gray-900">{app.experience}</p>
                       </div>
                     )}
 
-                    {app.introduction && (
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Giới thiệu</p>
-                        <p className="text-gray-900 line-clamp-3">
-                          {app.introduction}
+                    {app.degreeImages && app.degreeImages.length > 0 && (
+                      <div className="p-4 bg-yellow-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 mb-3">
+                          Ảnh bằng cấp ({app.degreeImages.length})
+                        </p>
+                        <div className="flex gap-2 flex-wrap">
+                          {app.degreeImages.map((img, idx) => (
+                            <Button
+                              key={idx}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewFile(img, 'image')}
+                              className="gap-2 hover:bg-yellow-100"
+                            >
+                              <ImageIcon className="w-4 h-4" />
+                              Ảnh {idx + 1}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {app.rejectionReason && (
+                      <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                        <p className="text-sm font-semibold text-red-900 mb-2">
+                          Lý do từ chối:
+                        </p>
+                        <p className="text-sm text-red-800">
+                          {app.rejectionReason}
                         </p>
                       </div>
                     )}
 
-                    <div className="flex gap-3 pt-4 border-t">
+                    <div className="flex gap-3 pt-6 border-t">
                       {app.cvUrl && (
                         <Button
                           variant="outline"
-                          onClick={() => window.open(app.cvUrl, "_blank")}
-                          className="flex-1"
+                          onClick={() => handleViewFile(app.cvUrl, 'pdf')}
+                          className="flex-1 gap-2 hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-600 transition-colors"
                         >
-                          <ExternalLink className="w-4 h-4 mr-2" />
+                          <Eye className="w-4 h-4" />
                           Xem CV
                         </Button>
                       )}
@@ -200,23 +234,12 @@ function MyApplications() {
                           onClick={() =>
                             navigate(`/lecturer/application/${app.id}/edit`)
                           }
-                          className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900"
+                          className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold"
                         >
                           Chỉnh sửa
                         </Button>
                       )}
                     </div>
-
-                    {app.rejectionReason && (
-                      <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm font-semibold text-red-900 mb-1">
-                          Lý do từ chối:
-                        </p>
-                        <p className="text-sm text-red-800">
-                          {app.rejectionReason}
-                        </p>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -224,6 +247,46 @@ function MyApplications() {
           )}
         </div>
       </div>
+
+      {/* File Viewer Dialog */}
+      <Dialog open={viewDialog.open} onOpenChange={closeViewDialog}>
+        <DialogContent className="max-w-6xl max-h-[95vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+              {viewDialog.type === 'pdf' ? (
+                <>
+                  <FileText className="w-5 h-5 text-red-600" />
+                  <span>Xem CV</span>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="w-5 h-5 text-blue-600" />
+                  <span>Xem bằng cấp</span>
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="w-full h-[calc(95vh-80px)] overflow-auto">
+            {viewDialog.type === 'pdf' ? (
+              <iframe
+                src={viewDialog.url}
+                className="w-full h-full border-0"
+                title="CV Preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center min-h-full p-4 bg-gray-100">
+                <img
+                  src={viewDialog.url}
+                  alt="Bằng cấp"
+                  className="max-w-full h-auto object-contain shadow-2xl rounded-lg"
+                  style={{ maxHeight: 'calc(95vh - 120px)' }}
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
