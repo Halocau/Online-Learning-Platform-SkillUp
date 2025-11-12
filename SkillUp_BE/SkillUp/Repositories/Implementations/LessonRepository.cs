@@ -83,5 +83,15 @@ namespace SkillUp.Repositories.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<Lesson?> GetByIdAsync(Guid id)
+        {
+            // Cập nhật: Include lồng nhau để lấy AccountId của Giảng viên
+            return await _context.Lessons
+                .Include(l => l.Section)       // Tải Section
+                    .ThenInclude(s => s.Course) // Từ Section, tải Course
+                        .ThenInclude(c => c.Lecturer) // Từ Course, tải Lecturer
+                .FirstOrDefaultAsync(l => l.Id == id);
+        }
     }
 }
