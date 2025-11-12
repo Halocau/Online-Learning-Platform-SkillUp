@@ -27,10 +27,11 @@ import LecturerRoutes from "./LecturerRoute";
 import MyCart from "@/pages/Cart/MyCart";
 import CourseDetail from "@/pages/Course/CourseDetail";
 import CoursesByCategory from "@/pages/Course/CoursesByCategory";
+import LecturerPendingGuard from "./LecturerPendingGuard";
 
 function AppRouter() {
   return (
-    <>
+    <LecturerPendingGuard>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -64,7 +65,7 @@ function AppRouter() {
           <Route index element={<Home />} />
         </Route>
       </Routes>
-    </>
+    </LecturerPendingGuard>
   );
 }
 

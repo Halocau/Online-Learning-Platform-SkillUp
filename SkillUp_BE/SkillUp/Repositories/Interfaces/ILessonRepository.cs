@@ -7,6 +7,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<IEnumerable<Lesson>> GetAllLessonsAsync();
         Task<IEnumerable<Lesson>> GetActiveLessonsAsync();
         Task<Lesson?> GetLessonByIdAsync(Guid id);
+        Task<Lesson?> GetByIdAsync(Guid id);
         Task<Lesson?> GetLessonWithDetailsAsync(Guid id);
         Task<IEnumerable<Lesson>> GetLessonsBySectionIdAsync(Guid sectionId);
         Task AddLessonAsync(Lesson lesson);

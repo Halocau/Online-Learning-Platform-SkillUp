@@ -176,6 +176,10 @@ builder.Services.AddScoped<ILikeCommentLessonService, LikeCommentLessonService>(
 // --- Thêm vào khu vực Register Services ---
 builder.Services.AddScoped<ICommentLessonService, CommentLessonService>();
 
+//builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<INotifyRepository, NotifyRepository>();
+builder.Services.AddScoped<INotifyService, NotifyService>();
+
 //comment lesson report
 builder.Services.AddScoped<ICommentReportLessonRepository, CommentReportLessonRepository>();
 builder.Services.AddScoped<ICommentReportLessonService, CommentReportLessonService>();
@@ -255,6 +259,7 @@ app.MapControllers();
 app.MapHub<SkillUp.Hubs.CommentHub>("/commentHub");
 app.MapHub<LikeCommentHub>("/hubs/likeCommentHub");
 app.MapHub<CommentLessonHub>("/commentLessonHub");
+app.MapHub<NotificationHub>("/hubs/notification");
 
 
 app.Run();

@@ -6,7 +6,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
-import { saveUserFromToken, getRedirectPath, getLecturerRedirectPath } from "@/lib/auth-utils";
+import { saveUserFromToken, getRedirectPath } from "@/lib/auth-utils";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
 

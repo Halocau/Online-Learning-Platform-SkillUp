@@ -30,7 +30,8 @@ export const saveUserFromToken = (accessToken, refreshToken) => {
     email: decoded.email,
     fullname: decoded.fullname,
     roleId: decoded.roleId,
-    role: decoded.roleName
+    role: decoded.roleName,
+    status: decoded.status || decoded.Status || 'Active'
   }
 
   localStorage.setItem('user', JSON.stringify(user))
@@ -52,7 +53,7 @@ export const getRedirectPath = (role) => {
     case "System Morderator":
       return "/sysmod/";
     case "Lecturer":
-      return null; // Handle separately with async status check
+      return "/lecturer/";
     case "Student":
       return "/";
     default:

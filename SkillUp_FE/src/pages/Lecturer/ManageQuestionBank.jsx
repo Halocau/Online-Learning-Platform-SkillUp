@@ -119,7 +119,7 @@ export default function ManageQuestionBank() {
         }
     }, [courses, courseId]);
 
-    // 👇 Add this hook after your component definition
+    // Add this hook after your component definition
     useEffect(() => {
         if (sections.length > 0) {
             setSelectedSectionId(sections[0].id);
@@ -291,7 +291,6 @@ export default function ManageQuestionBank() {
                     value={courseId || undefined}
                     onChange={(value) => setCourseId(value)}
                     style={{ width: 220 }}
-                    allowClear
                 >
                     {courses.map((course) => (
                         <Option key={course.id} value={course.id}>

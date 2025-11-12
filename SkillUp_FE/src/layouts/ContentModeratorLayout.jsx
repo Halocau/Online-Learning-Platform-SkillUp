@@ -27,6 +27,7 @@ export default function ModeratorLayout() {
     { label: "Quản lý khóa học", icon: <BookOpen size={18} />, path: "/contentmod/course" },
     { label: "Quản lý bài đăng", icon: <FileText size={18} />, path: "/contentmod/post" },
     { label: "Báo cáo bình luận", icon: <MessageSquare size={18} />, path: "/contentmod/rpcmt" },
+    { label: "Quản lý danh mục", icon: <MessageSquare size={18} />, path: "/contentmod/category"},
   ];
 
   return (
