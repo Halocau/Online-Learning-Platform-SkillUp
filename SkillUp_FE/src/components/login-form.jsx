@@ -40,10 +40,8 @@ export function LoginForm({ className, ...props }) {
 
         // Merge guest cart với server cart
         const user = JSON.parse(localStorage.getItem("user"));
-        console.log('User after Google login:', user); // Debug log
 
         if (user?.userId) {
-          console.log('Merging cart for user:', user.userId); // Debug log
           const mergeResult = await mergeGuestCartWithServer(user.userId);
           if (mergeResult?.success) {
             toast.success(mergeResult.message);
@@ -58,14 +56,11 @@ export function LoginForm({ className, ...props }) {
 
         // Check if user came from cart page
         const previousPath = localStorage.getItem('redirectAfterLogin');
-        console.log('Previous path (Google):', previousPath); // Debug log
 
         if (previousPath && previousPath.includes('/cart')) {
           localStorage.removeItem('redirectAfterLogin');
-          console.log('Redirecting to cart with userId:', user?.userId); // Debug log
 
           if (!user?.userId) {
-            console.error('User ID is undefined after Google login!'); // Debug log
             toast.error('Lỗi: Không tìm thấy thông tin người dùng');
             return;
           }
@@ -117,10 +112,8 @@ export function LoginForm({ className, ...props }) {
 
         // Merge guest cart với server cart
         const user = JSON.parse(localStorage.getItem("user"));
-        console.log('User after login:', user); // Debug log
 
         if (user?.userId) {
-          console.log('Merging cart for user:', user.userId); // Debug log
           const mergeResult = await mergeGuestCartWithServer(user.userId);
           if (mergeResult?.success) {
             toast.success(mergeResult.message);
@@ -131,14 +124,11 @@ export function LoginForm({ className, ...props }) {
 
         // Check if user came from cart page
         const previousPath = localStorage.getItem('redirectAfterLogin');
-        console.log('Previous path:', previousPath); // Debug log
 
         if (previousPath && previousPath.includes('/cart')) {
           localStorage.removeItem('redirectAfterLogin');
-          console.log('Redirecting to cart with userId:', user?.userId); // Debug log
 
           if (!user?.userId) {
-            console.error('User ID is undefined!'); // Debug log
             toast.error('Lỗi: Không tìm thấy thông tin người dùng');
             return;
           }

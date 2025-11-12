@@ -28,7 +28,7 @@ export default function MobileStickyBar({ course }) {
 
     const result = await addToCart(course.id, course.price);
     if (result.success) {
-      navigate(`/cart/${user.id}`);
+      navigate(`/cart/${user.userId}`);
     } else {
       toast.error(result.message);
     }

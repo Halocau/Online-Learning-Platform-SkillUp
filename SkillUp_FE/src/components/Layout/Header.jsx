@@ -4,6 +4,8 @@ import logo from "../../assets/logo_skillup.png";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
+import { clearGuestCart } from "@/utils/guestCart";
+
 function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -23,16 +25,19 @@ function Header() {
 
         const cachedUser = localStorage.getItem("user");
         if (cachedUser) {
-          setUser(JSON.parse(cachedUser));
+          const parsed = JSON.parse(cachedUser);
+          setUser(parsed);
         }
 
         const res = await axiosInstance.get("/User/View-Profile");
         const userData = res.data.data[0];
 
         const updatedUser = {
-          ...userData,
-          role:
-            userData.role || JSON.parse(cachedUser || "{}").role || "Student",
+          userId: userData.id || userData.userId,
+          email: userData.email,
+          fullname: userData.fullName || userData.fullname,
+          roleId: userData.roleId,
+          role: userData.role || JSON.parse(cachedUser || "{}").role || "Student",
         };
 
         setUser(updatedUser);
@@ -58,6 +63,10 @@ function Header() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      
+      // Clear guest cart khi logout
+      clearGuestCart();
+      
       setUser(null);
       setShowDropdown(false);
       toast.success("Đăng xuất thành công!");
@@ -160,7 +169,7 @@ function Header() {
 
             {/* Cart */}
             <Link
-              to={isAuthenticated && user ? `/cart/${user.id}` : "/cart"}
+              to={isAuthenticated && user?.userId ? `/cart/${user.userId}` : "/cart"}
               className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2 relative"
             >
               <svg

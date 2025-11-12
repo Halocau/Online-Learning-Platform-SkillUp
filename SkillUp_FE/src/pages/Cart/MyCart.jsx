@@ -33,7 +33,7 @@ const formatNumber = (num) => {
 };
 
 function MyCart() {
-    const { id: accountId } = useParams();
+    const { id: accountIdFromParams } = useParams();
     const navigate = useNavigate();
     const { fetchCartCount } = useCart();
     const [cart, setCart] = useState(null);
@@ -50,6 +50,17 @@ function MyCart() {
             return null;
         }
     };
+
+    // Lấy accountId: ưu tiên từ URL, fallback sang localStorage
+    const getAccountId = () => {
+        if (accountIdFromParams && accountIdFromParams !== 'undefined') {
+            return accountIdFromParams;
+        }
+        const user = getCurrentUser();
+        return user?.userId;
+    };
+
+    const accountId = getAccountId();
 
     // Hàm lấy giỏ hàng guest từ localStorage
     const fetchGuestCart = async () => {
@@ -169,6 +180,12 @@ function MyCart() {
     useEffect(() => {
         const user = getCurrentUser();
 
+        // Redirect nếu user đã login nhưng URL không có userId hoặc có undefined
+        if (user?.userId && (!accountIdFromParams || accountIdFromParams === 'undefined')) {
+            navigate(`/cart/${user.userId}`, { replace: true });
+            return;
+        }
+
         if (!user) {
             // Nếu chưa đăng nhập, hiển thị guest cart
             fetchGuestCart();
@@ -179,7 +196,7 @@ function MyCart() {
             setError("Không tìm thấy thông tin tài khoản.");
             setLoading(false);
         }
-    }, [accountId, fetchServerCart]);    // Hàm xử lý xóa một item khỏi giỏ hàng
+    }, [accountId, accountIdFromParams, fetchServerCart, navigate]);    // Hàm xử lý xóa một item khỏi giỏ hàng
     const handleRemoveItem = async (cartItemId, courseId) => {
         try {
             const user = getCurrentUser();

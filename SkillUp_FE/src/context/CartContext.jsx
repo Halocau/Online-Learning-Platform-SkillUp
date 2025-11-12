@@ -76,7 +76,7 @@ export const CartProvider = ({ children }) => {
       const response = await cartAPI.bulkAddToCart(userId, guestCart);
 
       if (response.data.code === 200) {
-        console.log("Guest cart merged successfully:", response.data.data);
+        // console.log("Guest cart merged successfully:", response.data.data);
         // Xóa guest cart sau khi merge thành công
         clearGuestCart();
         // Cập nhật cart count

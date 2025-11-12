@@ -37,7 +37,7 @@ export const saveGuestCart = (cart) => {
  */
 export const addToGuestCart = (courseId, price) => {
     try {
-        console.log('addToGuestCart called with:', { courseId, price }); // Debug log
+        // console.log('addToGuestCart called with:', { courseId, price }); // Debug log
         const cart = getGuestCart();
 
         // Kiểm tra xem khóa học đã tồn tại chưa
@@ -53,11 +53,11 @@ export const addToGuestCart = (courseId, price) => {
             price: price || 0,
             addedAt: new Date().toISOString()
         };
-        console.log('Adding new item to guest cart:', newItem); // Debug log
+        // console.log('Adding new item to guest cart:', newItem); // Debug log
         cart.push(newItem);
 
         saveGuestCart(cart);
-        console.log('Guest cart after add:', cart); // Debug log
+        // console.log('Guest cart after add:', cart); // Debug log
         return true;
     } catch (error) {
         console.error('Error adding to guest cart:', error);
