@@ -4,6 +4,7 @@ import logo from "../../assets/logo_skillup.png";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
+import { clearGuestCart } from "@/utils/guestCart";
 function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -27,24 +28,39 @@ function Header() {
         }
 
         const res = await axiosInstance.get("/User/View-Profile");
-        const userData = res.data.data[0];
 
-        const updatedUser = {
-          ...userData,
-          role:
-            userData.role || JSON.parse(cachedUser || "{}").role || "Student",
-        };
-
-        setUser(updatedUser);
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-      } catch (err) {
-        console.error("Không thể lấy thông tin người dùng:", err);
+        if (res.data.code === 200) {
+          const userData = res.data.data[0];
+          const updatedUser = {
+            ...user,
+            fullname: userData.fullName,
+          };
+          setUser(updatedUser);
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
       }
     };
 
     fetchProfile();
+
+    // Listen to storage event (khi login thành công)
+    const handleStorageChange = () => {
+      const cachedUser = localStorage.getItem("user");
+      if (cachedUser && cachedUser !== 'null') {
+        setUser(JSON.parse(cachedUser));
+      } else {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [accessToken]);
-  null;
 
   const handleLogout = async () => {
     try {
@@ -58,6 +74,10 @@ function Header() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      
+      // Clear guest cart khi logout
+      clearGuestCart();
+      
       setUser(null);
       setShowDropdown(false);
       toast.success("Đăng xuất thành công!");
@@ -158,16 +178,9 @@ function Header() {
             ></Link>
 
             
-            {/* Cart */}
+            {/* Cart - Cho phép guest truy cập */}
             <Link
-              to={isAuthenticated && user ? `/cart/${user.id}` : "/login"}
-              onClick={(e) => {
-                if (!isAuthenticated || !user) {
-                  e.preventDefault();
-                  toast.info("Vui lòng đăng nhập để xem giỏ hàng");
-                  navigate("/login");
-                }
-              }}
+              to="/cart"
               className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2 relative"
             >
               <svg

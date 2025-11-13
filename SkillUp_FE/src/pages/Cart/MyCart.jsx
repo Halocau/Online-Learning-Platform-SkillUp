@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { getApiUrl } from '../../config/api.js'; // Import config
-import { axiosInstance } from '../../config/api.js'; // Import config
+import { getApiUrl } from '../../config/api.js';
+import { axiosInstance } from '../../config/api.js';
+import { GuestCartView } from '@/components/Cart/GuestCartView';
 import {
     List,
     Button,
@@ -14,10 +14,10 @@ import {
     message,
     Image,
     Space,
-    Tag, // Thêm Tag
-    Rate, // Thêm Rate
-    Divider, // Thêm Divider
-    Input, // Thêm Input
+    Tag,
+    Rate,
+    Divider,
+    Input,
 } from 'antd';
 
 // Định dạng tiền tệ
@@ -31,25 +31,42 @@ const formatNumber = (num) => {
 };
 
 function MyCart() {
-    const { id: accountId } = useParams();
+    // Get user from localStorage (decoded from JWT)
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const accountId = user?.userId;
+    
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Hàm gọi API để lấy giỏ hàng (ĐÃ SỬA)
+    // Hàm gọi API để lấy giỏ hàng
     const fetchCart = async () => {
         setLoading(true);
         try {
+            console.log('🛒 Fetching cart for accountId:', accountId); // DEBUG
+            
             // Giả sử key trong config của bạn là 'CART'
             const apiUrlTemplate = getApiUrl('CART');
             const apiUrl = apiUrlTemplate.replace('{accountId}', accountId);
+            
+            console.log('📡 API URL:', apiUrl); // DEBUG
+            
             const response = await axiosInstance.get(apiUrl);
+            
+            console.log('📦 Cart API Response:', response.data); // DEBUG
 
             if (response.data && response.data.code === 200) {
                 // --- BỎ MOCK DATA ---
                 // Lấy dữ liệu giỏ hàng gốc trực tiếp
                 const originalCart = response.data.data[0];
-                setCart(originalCart);
+                console.log('✅ Cart loaded:', originalCart); // DEBUG
+                
+                // Nếu cart null hoặc undefined → set cart rỗng
+                if (!originalCart) {
+                    setCart({ cartItems: [] });
+                } else {
+                    setCart(originalCart);
+                }
                 // --- KẾT THÚC SỬA ĐỔI ---
 
             } else {
@@ -58,6 +75,8 @@ function MyCart() {
             setError(null);
         } catch (err) {
             console.error("Lỗi khi tải giỏ hàng:", err);
+            console.error("Error response:", err.response); // DEBUG
+            
             // Xử lý 404 (Không tìm thấy giỏ hàng) bằng cách hiển thị giỏ hàng trống
             if (err.response?.status === 404) {
                 setCart({ cartItems: [] }); // Set giỏ hàng rỗng
@@ -72,12 +91,14 @@ function MyCart() {
     };
 
     useEffect(() => {
+        // Chỉ fetch nếu có accountId (logged-in user)
         if (accountId) {
             fetchCart();
         } else {
-            setError("Không tìm thấy thông tin tài khoản.");
+            // Guest user - không cần fetch
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountId]);
 
     // Hàm xử lý xóa một item khỏi giỏ hàng (Không thay đổi)
@@ -104,6 +125,12 @@ function MyCart() {
     const totalPrice = cart?.cartItems?.reduce((acc, item) => acc + item.price, 0) || 0;
 
     // --- RENDER LOGIC ---
+    
+    // Kiểm tra nếu không có accountId => Guest user
+    if (!accountId) {
+        return <GuestCartView />;
+    }
+    
     if (loading) {
         return <Spin tip="Đang tải giỏ hàng..." fullscreen />;
     }
@@ -244,28 +271,10 @@ function MyCart() {
 
                             <Divider />
 
-                            <Typography.Title level={5} style={{ fontWeight: 700 }}>Khuyến mại</Typography.Title>
-
-                            <Input.Search
-                                placeholder="Nhập coupon"
-                                enterButton={
-                                    <Button type="primary" style={{ backgroundColor: primaryColor, borderColor: primaryColor, fontWeight: 700 }}>
-                                        Áp dụng
-                                    </Button>
-                                }
-                                size="large"
-                                onSearch={(value) => {
-                                    if (value) {
-                                        message.success(`Đã áp dụng coupon: ${value}`);
-                                    } else {
-                                        message.warning('Vui lòng nhập mã coupon');
-                                    }
-                                }}
-                            />
-
                         </Space>
                     </div>
                 </Col>
+
             </Row>
         </div>
     );
