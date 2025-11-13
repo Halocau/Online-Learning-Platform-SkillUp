@@ -25,6 +25,8 @@ public partial class QuestionBank
 
     public bool? IsHidden { get; set; }
 
+    public string? Type { get; set; }
+
     public virtual ICollection<AnswerBank> AnswerBanks { get; set; } = new List<AnswerBank>();
 
     public virtual Lecturer Lecturer { get; set; } = null!;
