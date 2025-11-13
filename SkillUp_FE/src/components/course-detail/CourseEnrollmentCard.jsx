@@ -11,14 +11,8 @@ export default function CourseEnrollmentCard({ course }) {
   const navigate = useNavigate();
 
   const handleAddToCart = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-      toast.info("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      navigate("/login");
-      return;
-    }
-
-    const result = await addToCart(course.id);
+    // Guest users có thể add to cart
+    const result = await addToCart(course.id, course.price);
     if (result.success) {
       toast.success(result.message);
     } else {
@@ -35,9 +29,9 @@ export default function CourseEnrollmentCard({ course }) {
     }
 
     // Add to cart first, then navigate to cart
-    const result = await addToCart(course.id);
+    const result = await addToCart(course.id, course.price);
     if (result.success) {
-      navigate(`/cart/${user.id}`);
+      navigate('/cart');
     } else {
       toast.error(result.message);
     }
