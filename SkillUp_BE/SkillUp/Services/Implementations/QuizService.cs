@@ -19,18 +19,30 @@ namespace SkillUp.Services.Implementations
             _sectionRepository = sectionRepository;
         }
 
-        public async Task<bool> CreateQuizAsync(CreateQuizDTO dto, Guid accId)
+        public async Task<Guid> CreateQuizAsync(CreateQuizDTO dto, Guid accId)
         {
             var lecturer = await _lecturerRepository.GetByAccountIdAsync(accId);
             if (lecturer == null)
+            {
+ 
                 throw new Exception("Không tìm thấy giảng viên tương ứng với tài khoản này.");
+            }
 
             var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId);
             if (section == null)
+            {
                 throw new Exception("Không tìm thấy section.");
+            }
+
+            if (section.Course == null)
+            {
+                throw new Exception("Lỗi hệ thống: Không thể tải thông tin Khóa học của Section này.");
+            }
 
             if (section.Course.LecturerId != lecturer.Id)
+            {
                 throw new UnauthorizedAccessException("Bạn không có quyền thêm quiz vào section này.");
+            }
 
             var quiz = new Quiz
             {
@@ -49,7 +61,11 @@ namespace SkillUp.Services.Implementations
             await _quizRepository.CreateQuizAsync(quiz);
             var success = await _quizRepository.SaveChangesAsync();
 
-            return success;
+            if (!success)
+            {
+                throw new Exception("Lỗi: Không thể lưu bài quiz vào cơ sở dữ liệu.");
+            }
+            return quiz.Id;
         }
 
         public async Task<bool> DeleteQuizAsync(Guid quizId, Guid accountId)
