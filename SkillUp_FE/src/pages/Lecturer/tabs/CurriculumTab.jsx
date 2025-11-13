@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { createSection, updateSection, deleteSection } from "@/api/sectionAPI";
 import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
-import SectionCard from "../components/Sectioncard";
+import SectionCard from "../components/SectionCard";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
   const [expandedSections, setExpandedSections] = useState({});
@@ -56,7 +56,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }));
   };
 
-  // ========== SECTION HANDLERS ==========
   const handleAddSectionClick = () => {
     setShowAddSection(true);
     setSectionForm({ title: "", description: "" });
@@ -918,6 +917,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
               setEditingLessonId={setEditingLessonId}
               editingQuizId={editingQuizId}
               setEditingQuizId={setEditingQuizId}
+              courseId={courseId}
             />
           ))
         ) : (

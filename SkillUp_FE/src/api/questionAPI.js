@@ -31,6 +31,9 @@ export const addQuestionToQuiz = async (questionData) => {
       `${API_URL}/AddQuestionToQuiz`,
       questionData
     );
+
+    console.log("Manual question added - Response:", res.data);
+    console.log(" Question data sent:", questionData);
     return handleAPIResponse(res, "Thêm câu hỏi thành công!");
   } catch (err) {
     return handleAPIError(err, "Không thể thêm câu hỏi!");
@@ -48,5 +51,17 @@ export const updateQuestion = async (questionId, questionData) => {
     return res.data;
   } catch (err) {
     return handleAPIError(err, "Không thể cập nhật câu hỏi!");
+  }
+};
+
+// Add questions from bank
+export const addQuestionsFromBank = async (questions) => {
+  try {
+    const res = await axiosInstance.post(`${API_URL}/add-from-bank`, questions);
+    console.log("Questions from bank added - Response:", res.data);
+    console.log("Questions sent:", questions);
+    return handleAPIResponse(res, "Thêm câu hỏi từ ngân hàng thành công!");
+  } catch (err) {
+    return handleAPIError(err, "Không thể thêm câu hỏi từ ngân hàng!");
   }
 };

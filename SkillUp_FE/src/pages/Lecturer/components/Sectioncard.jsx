@@ -51,6 +51,8 @@ function SectionCard({
   setEditingLessonId,
   editingQuizId,
   setEditingQuizId,
+  // Added for quiz question management
+  courseId,
 }) {
   return (
     <Card className="overflow-hidden">
@@ -174,6 +176,8 @@ function SectionCard({
                       ? setEditingLessonId(null)
                       : setEditingQuizId(null)
                   }
+                  courseId={courseId}
+                  sectionId={section.id}
                 />
               ))
             ) : (
