@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using SkillUp.BussinessObjects.DTOs.Question;
@@ -21,11 +22,12 @@ namespace SkillUp.Controllers
         }
 
         [HttpPost("AddQuestionToQuiz")]
-        public async Task<IActionResult> AddQuestionToQuiz([FromBody] CreateQuestionDTO dto)
+        [Authorize]
+        public async Task<IActionResult> AddQuestionToQuiz([FromForm] CreateQuestionDTO dto)
         {
             try
             {
-                var accId =  _currentUserService.UserId;
+                var accId = _currentUserService.UserId;
                 if (!accId.HasValue)
                 {
                     return Unauthorized(new APIReturn
@@ -35,20 +37,38 @@ namespace SkillUp.Controllers
                         data = new List<object>()
                     });
                 }
-                var success = await _questionService.AddQuestionWithAnswersToQuizAsync(dto, accId.Value);
+                var newQuestion = await _questionService.AddQuestionWithAnswersToQuizAsync(dto, accId.Value);
 
-                if (!success)
-                    return BadRequest(new APIReturn { code = 400, message = "Thêm câu hỏi thất bại" });
 
                 return Ok(new APIReturn
                 {
                     code = 200,
-                    message = "Thêm câu hỏi thành công"
+                    message = "Thêm câu hỏi thành công",
+                    data = new List<object> { newQuestion }
                 });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+
+                return Forbid();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new APIReturn { code = 500, message = ex.Message });
+                if (ex.Message.Contains("Không tìm thấy giảng viên") ||
+                    ex.Message.Contains("Quiz không tồn tại"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+                if (ex.Message.Contains("Lỗi: Không thể lưu"))
+                {
+                    return BadRequest(new APIReturn { code = 400, message = ex.Message, data = new List<object>() });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
             }
         }
         [HttpPut("UpdateQuestion/{questionId}")]

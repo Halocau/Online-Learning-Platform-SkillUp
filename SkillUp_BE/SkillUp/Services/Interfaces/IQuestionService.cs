@@ -4,7 +4,7 @@ namespace SkillUp.Services.Interfaces
 {
     public interface IQuestionService
     {
-        Task<bool> AddQuestionWithAnswersToQuizAsync(CreateQuestionDTO createQuestionDTO , Guid accId);
+        Task<QuestionResponseDto> AddQuestionWithAnswersToQuizAsync(CreateQuestionDTO createQuestionDTO , Guid accId);
 
         Task<bool> UpdateQuestionWithAnswersAsync(Guid questionId, UpdateQuestionDTO dto, Guid accId);
 
