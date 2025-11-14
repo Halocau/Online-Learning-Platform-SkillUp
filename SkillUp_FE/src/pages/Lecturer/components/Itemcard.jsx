@@ -1,4 +1,3 @@
-// src/pages/Lecturer/tabs/components/ItemCard.jsx
 import { useState } from "react";
 import {
   Video,
@@ -8,6 +7,8 @@ import {
   Trash2,
   Check,
   X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,9 +27,13 @@ function ItemCard({
   onCancelEdit,
   courseId,
   sectionId,
+  onRefreshCourse,
 }) {
   const isLesson = item.kind === "Lesson";
   const isQuiz = item.kind === "Quiz";
+
+  // State to control quiz questions visibility
+  const [showQuestions, setShowQuestions] = useState(false);
 
   // Lesson Display
   if (isLesson && !isEditing) {
@@ -110,54 +115,66 @@ function ItemCard({
     return (
       <Card className="border-l-4 border-l-orange-500">
         <CardContent className="p-3">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-start gap-3 flex-1">
-              <div className="p-2 bg-orange-100 rounded">
-                <HelpCircle className="w-4 h-4 text-orange-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-gray-900">{item.title}</h4>
-                {item.description && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    {item.description}
-                  </p>
-                )}
-                <div className="flex gap-2 mt-2">
-                  <span className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">
-                    Điểm đạt: {item.passPercent}%
-                  </span>
-                  <span className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">
-                    {item.timer} phút
-                  </span>
-                </div>
+          {/* Quiz Header - Clickable like SectionCard */}
+          <div
+            className="flex items-start gap-3 mb-3 cursor-pointer hover:bg-orange-50/50 -mx-3 -mt-3 px-3 pt-3 pb-3 rounded-t transition-colors"
+            onClick={() => setShowQuestions(!showQuestions)}
+          >
+            <div className="p-2 bg-orange-100 rounded flex-shrink-0">
+              <HelpCircle className="w-4 h-4 text-orange-600" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-gray-900">{item.title}</h4>
+              {item.description && (
+                <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+              )}
+              <div className="flex gap-2 mt-2">
+                <span className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">
+                  Điểm đạt: {item.passPercent}%
+                </span>
+                <span className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded">
+                  {item.timer} phút
+                </span>
               </div>
             </div>
-            <div className="flex gap-1">
-              <Button
-                onClick={() => onEdit(item)}
-                variant="ghost"
-                size="sm"
-                className="text-orange-600 hover:bg-orange-50"
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(item);
+                }}
+                className="p-2 hover:bg-orange-200 rounded text-orange-600 transition-colors"
               >
                 <Edit2 className="w-4 h-4" />
-              </Button>
-              <Button
-                onClick={() => onDelete(item.id)}
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:bg-red-50"
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item.id);
+                }}
+                className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
-              </Button>
+              </button>
+              {showQuestions ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
             </div>
           </div>
 
-          {/* Quiz Question Manager */}
-          <QuizQuestionManager
-            quiz={item}
-            courseId={courseId}
-            sectionId={sectionId}
-          />
+          {/* Collapsible Quiz Question Manager */}
+          {showQuestions && (
+            <QuizQuestionManager
+              quiz={item}
+              courseId={courseId}
+              sectionId={sectionId}
+              onUpdate={onRefreshCourse}
+            />
+          )}
         </CardContent>
       </Card>
     );
