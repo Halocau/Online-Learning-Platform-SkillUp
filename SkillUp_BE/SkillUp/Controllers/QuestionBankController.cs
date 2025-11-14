@@ -19,7 +19,7 @@ namespace SkillUp.Controllers
 		}
 
 		[HttpPost("create")]
-		public async Task<IActionResult> CreateQuestionBank([FromBody] CreateQuestionBankDTO createQuestionBankDTO, Guid courseId)
+		public async Task<IActionResult> CreateQuestionBank([FromBody] CreateQuestionBankDTO createQuestionBankDTO, Guid courseId, string? imageUrl)
 		{
 			try
 			{
@@ -45,7 +45,7 @@ namespace SkillUp.Controllers
 					});
 				}
 
-				var result = await _questionBankService.CreateQuestionBankAsync(createQuestionBankDTO, accountId.Value, courseId);
+				var result = await _questionBankService.CreateQuestionBankAsync(createQuestionBankDTO, accountId.Value, courseId, imageUrl);
 				return Ok(new APIReturn
 				{
 					code = 200,

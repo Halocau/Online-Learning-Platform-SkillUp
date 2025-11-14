@@ -2,10 +2,8 @@
 
 namespace SkillUp.BussinessObjects.DTOs.QuestionBank
 {
-	public class DetailQuestionBankDTO
+	public class CreateQuestionBankResponseDTO
 	{
-		public Guid Id { get; set; }
-
 		public Guid SectionId { get; set; }
 
 		public Guid LecturerId { get; set; }
@@ -14,16 +12,8 @@ namespace SkillUp.BussinessObjects.DTOs.QuestionBank
 
 		public string Description { get; set; } = null!;
 
-		public DateTime CreatedAt { get; set; }
-
-		public DateTime UpdatedAt { get; set; }
-
-		public bool IsActive { get; set; }
-
-		public string? Image {  get; set; }
-
 		public string? Type { get; set; }
 
-		public List<AnswerBankDetailDTO> Answers { get; set; } = new();
+		public List<CreateAnswerDTO> Answers { get; set; } = new();
 	}
 }

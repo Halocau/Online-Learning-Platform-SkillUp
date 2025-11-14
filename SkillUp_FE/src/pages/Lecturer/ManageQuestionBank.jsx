@@ -196,11 +196,12 @@ export default function ManageQuestionBank() {
             const url = API_ENDPOINTS.QUESTION_BANK_CREATE.replace('{sectionId}', selectedSectionId);
             const response = await axiosInstance.post(url, newQuestion, {
                 params: {
-                    courseId: courseId
+                    courseId: courseId,
+                    imageUrl: newQuestion.questionImage ? newQuestion.questionImage : null
                 }
             });
             if (response?.data?.code === 200) {
-                toast.success('Tạo câu hỏi thành cong.');
+                toast.success('Tạo câu hỏi thành công.');
                 fetchQuestionBank();
                 return;
             } else {

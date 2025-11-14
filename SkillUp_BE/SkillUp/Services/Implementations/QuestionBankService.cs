@@ -1,5 +1,6 @@
 ﻿using CloudinaryDotNet;
 using Microsoft.Identity.Client;
+using Newtonsoft.Json;
 using OfficeOpenXml;
 using OfficeOpenXml.Configuration;
 using SkillUp.BussinessObjects.DTOs.Question;
@@ -7,6 +8,7 @@ using SkillUp.BussinessObjects.DTOs.QuestionBank;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
 using System.ComponentModel;
 using System.Text;
@@ -19,14 +21,16 @@ namespace SkillUp.Services.Implementations
 		private readonly ICurrentUserService _currentUserService;
 		private readonly ILecturerRepository _lecturerRepository;
 		private readonly ICourseRepository _courseRepository;
-		public QuestionBankService(IQuestionBankRepository questionBankRepository, ICurrentUserService currentUserService, ILecturerRepository lecturerRepository, ICourseRepository courseRepository)
+		private readonly CloudinaryService _cloudinaryService;
+		public QuestionBankService(IQuestionBankRepository questionBankRepository, ICurrentUserService currentUserService, ILecturerRepository lecturerRepository, ICourseRepository courseRepository, CloudinaryService cloudinaryService)
 		{
 			_questionBankRepository = questionBankRepository;
 			_currentUserService = currentUserService;
 			_lecturerRepository = lecturerRepository;
 			_courseRepository = courseRepository;
+			_cloudinaryService = cloudinaryService;
 		}
-		public async Task<DetailQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId)
+		public async Task<DetailQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId, string? imageUrl)
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
@@ -35,6 +39,9 @@ namespace SkillUp.Services.Implementations
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
+
+			var answerList = createQuestionBankDTO.Answers;
+
 			QuestionBank questionBank = new QuestionBank
 			{
 				Id = Guid.NewGuid(),
@@ -44,9 +51,12 @@ namespace SkillUp.Services.Implementations
 				Description = createQuestionBankDTO.Description,
 				CreatedAt = DateTime.Now,
 				UpdatedAt = DateTime.Now,
+				Image = imageUrl,
+				Type = createQuestionBankDTO.Type,
+				IsHidden = false,
 				IsActive = true
 			};
-			foreach (var answerDto in createQuestionBankDTO.Answers)
+			foreach (var answerDto in answerList)
 			{
 				var answer = new AnswerBank
 				{
@@ -72,6 +82,8 @@ namespace SkillUp.Services.Implementations
 				CreatedAt = questionBank.CreatedAt,
 				UpdatedAt = questionBank.UpdatedAt,
 				IsActive = questionBank.IsActive,
+				Image = questionBank.Image,
+				Type = questionBank.Type,
 				Answers = questionBank.AnswerBanks.Select(a => new AnswerBankDetailDTO
 				{
 					AnswerId = (Guid)a.Id,
@@ -123,6 +135,8 @@ namespace SkillUp.Services.Implementations
 				CreatedAt = questionBank.CreatedAt,
 				UpdatedAt = questionBank.UpdatedAt,
 				IsActive = questionBank.IsActive,
+				Image = questionBank.Image,
+				Type = questionBank.Type,
 				Answers = questionBank.AnswerBanks.Select(a => new AnswerBankDetailDTO
 				{
 					AnswerId = (Guid)a.Id,
@@ -152,6 +166,8 @@ namespace SkillUp.Services.Implementations
 				CreatedAt = q.CreatedAt,
 				UpdatedAt = q.UpdatedAt,
 				IsActive = q.IsActive,
+				Image = q.Image,
+				Type = q.Type,
 				Answers = q.AnswerBanks.Select(a => new AnswerBankDetailDTO
 				{
 					AnswerId = (Guid)a.Id,
@@ -218,7 +234,7 @@ namespace SkillUp.Services.Implementations
 			};
 		}
 
-		public async Task<List<CreateQuestionBankDTO>> ReadQuestionsWithMultipleAnswersAsync(
+		public async Task<List<CreateQuestionBankResponseDTO>> ReadQuestionsWithMultipleAnswersAsync(
 	Stream excelStream,
 	Guid sectionId,
 	Guid accountId)
@@ -230,7 +246,7 @@ namespace SkillUp.Services.Implementations
 			// EPPlus license context
 			ExcelPackage.License.SetNonCommercialPersonal("Your Name");
 
-			var result = new List<CreateQuestionBankDTO>();
+			var result = new List<CreateQuestionBankResponseDTO>();
 			var questionBanks = new List<QuestionBank>();
 
 			using var package = new ExcelPackage(excelStream);
@@ -240,13 +256,17 @@ namespace SkillUp.Services.Implementations
 			for (int row = 3; row <= rowCount; row++)
 			{
 				string questionText = worksheet.Cells[row, 1].Text?.Trim();
-				string optionA = worksheet.Cells[row, 2].Text?.Trim();
-				string optionB = worksheet.Cells[row, 3].Text?.Trim();
-				string optionC = worksheet.Cells[row, 4].Text?.Trim();
-				string optionD = worksheet.Cells[row, 5].Text?.Trim();
-				string optionE = worksheet.Cells[row, 6].Text?.Trim();
-				string optionF = worksheet.Cells[row, 7].Text?.Trim();
-				string optionG = worksheet.Cells[row, 8].Text?.Trim();
+				// Get answer options
+				var answerCols = new Dictionary<string, string>
+				{
+					{ "A", worksheet.Cells[row, 2].Text?.Trim() },
+					{ "B", worksheet.Cells[row, 3].Text?.Trim() },
+					{ "C", worksheet.Cells[row, 4].Text?.Trim() },
+					{ "D", worksheet.Cells[row, 5].Text?.Trim() },
+					{ "E", worksheet.Cells[row, 6].Text?.Trim() },
+					{ "F", worksheet.Cells[row, 7].Text?.Trim() },
+					{ "G", worksheet.Cells[row, 8].Text?.Trim() }
+				};
 				string correctOptionsText = worksheet.Cells[row, 9].Text?.Trim(); // e.g., "A,C"
 
 				if (string.IsNullOrEmpty(questionText) || string.IsNullOrEmpty(correctOptionsText))
@@ -257,6 +277,13 @@ namespace SkillUp.Services.Implementations
 					.Select(s => s.Trim().ToUpper())
 					.ToHashSet();
 
+				// Validate correct options
+				foreach (var opt in correctOptions)
+				{
+					if (!answerCols.ContainsKey(opt))
+						throw new Exception($"Row {row}: Đáp án đúng '{opt}' không hợp lệ (chỉ A-G).");
+				}
+
 				var questionBank = new QuestionBank
 				{
 					Id = Guid.NewGuid(),
@@ -264,51 +291,43 @@ namespace SkillUp.Services.Implementations
 					LecturerId = lecturer.Id,
 					Title = questionText,
 					Description = "description",
-					CreatedAt = DateTime.UtcNow,
-					UpdatedAt = DateTime.UtcNow,
+					CreatedAt = DateTime.Now,
+					UpdatedAt = DateTime.Now,
 					IsActive = true,
 					Image = null,
+					Type = (correctOptions.Count > 1 ? "MultiChoice" : "SingleChoice"),
 					AnswerBanks = new List<AnswerBank>()
 				};
 
-				// Build answers
-				var answers = new List<(string Text, string Label)>
-		{
-			(optionA, "A"),
-			(optionB, "B"),
-			(optionC, "C"),
-			(optionD, "D"),
-			(optionE, "E"),
-			(optionF, "F"),
-			(optionG, "G")
-		};
-
-				foreach (var (answerText, label) in answers)
+				// Build answer list
+				foreach (var kv in answerCols)
 				{
-					if (string.IsNullOrEmpty(answerText))
+					string key = kv.Key;
+					string text = kv.Value;
+
+					if (string.IsNullOrWhiteSpace(text))
 						continue;
 
-					var answer = new AnswerBank
+					questionBank.AnswerBanks.Add(new AnswerBank
 					{
 						Id = Guid.NewGuid(),
 						QuestionBankId = questionBank.Id,
-						AnswerName = answerText,
-						IsCorrect = correctOptions.Contains(label),
-						IsActive = true,
-					};
-
-					questionBank.AnswerBanks.Add(answer);
+						AnswerName = text.Trim(),
+						IsCorrect = correctOptions.Contains(key),
+						IsActive = true
+					});
 				}
 
 				questionBanks.Add(questionBank);
 
 				// Map DTO for response
-				result.Add(new CreateQuestionBankDTO
+				result.Add(new CreateQuestionBankResponseDTO
 				{
 					SectionId = sectionId,
 					LecturerId = lecturer.Id,
 					Title = questionBank.Title,
 					Description = questionBank.Description,
+					Type = questionBank.Type,
 					Answers = questionBank.AnswerBanks.Select(a => new CreateAnswerDTO
 					{
 						AnswerName = a.AnswerName,

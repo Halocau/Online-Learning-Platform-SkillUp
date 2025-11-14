@@ -12,6 +12,10 @@ namespace SkillUp.BussinessObjects.DTOs.QuestionBank
 
 		public string Description { get; set; } = null!;
 
+		public string? Image { get; set; }
+
+		public string? Type { get; set; }
+
 		public List<CreateAnswerDTO> Answers { get; set; } = new List<CreateAnswerDTO>();
 	}
 }

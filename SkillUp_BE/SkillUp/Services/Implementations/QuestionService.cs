@@ -140,40 +140,75 @@ namespace SkillUp.Services.Implementations
             return responseDto;
         }
 
-        public async Task<bool> AddBulkQuestionFromBankToQuizAsync(List<CreateQuestionQuizDTO> createQuestionQuizDTOs, Guid accId)
-        {
-            var lecturer = await _lecturerRepository.GetByAccountIdAsync(accId);
-            if (lecturer == null)
-                throw new Exception("Không tìm thấy giảng viên tương ứng với tài khoản này.");
-            var quiz = await _quizRepository.GetQuizByIdAsync(createQuestionQuizDTOs[0].QuizId);
-            if (quiz == null)
-                throw new Exception("Quiz không tồn tại");
+		public async Task<List<CreateQuestionQuizResponseDTO>> AddBulkQuestionFromBankToQuizAsync(
+	List<CreateQuestionQuizDTO> createQuestionQuizDTOs, Guid accId)
+		{
+			var lecturer = await _lecturerRepository.GetByAccountIdAsync(accId);
+			if (lecturer == null)
+				throw new Exception("Không tìm thấy giảng viên tương ứng với tài khoản này.");
 
-            foreach (var dto in createQuestionQuizDTOs)
-            {
-                var questionBank = await _questionBankRepository.GetByIdAsync(dto.QuestionBankId);
-                if (questionBank == null)
-                    throw new Exception($"Không tìm thấy câu hỏi ID: {dto.QuestionBankId}");
-            }
+			var quiz = await _quizRepository.GetQuizByIdAsync(createQuestionQuizDTOs[0].QuizId);
+			if (quiz == null)
+				throw new Exception("Quiz không tồn tại");
 
-            var sectionId = quiz.SectionId;
-            foreach (var questionQuizDTO in createQuestionQuizDTOs)
-            {
-                var question = new QuestionQuiz
-                {
-                    Id = Guid.NewGuid(),
-                    QuizId = quiz.Id,
-                    QuestionBankId = questionQuizDTO.QuestionBankId,
-                    Orders = questionQuizDTO.Orders
-                };
-                quiz.QuestionQuizzes.Add(question);
-            }
-            var result = await _quizRepository.SaveChangesAsync();
+			var result = new List<CreateQuestionQuizResponseDTO>();
 
-            return result;
-        }
+			foreach (var dto in createQuestionQuizDTOs)
+			{
+				var questionBank = await _questionBankRepository.GetByIdAsync(dto.QuestionBankId);
+				if (questionBank == null)
+					throw new Exception($"Không tìm thấy câu hỏi ID: {dto.QuestionBankId}");
 
-        public async Task<bool> UpdateQuestionWithAnswersAsync(Guid questionId, UpdateQuestionDTO dto, Guid accId)
+				// Kiểm tra loại câu hỏi
+				if (string.IsNullOrWhiteSpace(dto.Type))
+					throw new Exception($"ID:{questionBank.Id}: Loại câu hỏi (Type) không được để trống.");
+
+				int correctAnswersCount = questionBank.AnswerBanks.Count(a => a.IsCorrect == true);
+
+				if (dto.Type == "SingleChoice")
+				{
+					if (correctAnswersCount == 0)
+						throw new Exception($"ID:{questionBank.Id}: Câu hỏi chọn 1 (SingleChoice) phải có 1 đáp án đúng.");
+					if (correctAnswersCount > 1)
+						throw new Exception($"ID:{questionBank.Id}: Câu hỏi chọn 1 (SingleChoice) chỉ được có 1 đáp án đúng.");
+				}
+				else if (dto.Type == "MultiChoice")
+				{
+					if (correctAnswersCount == 0)
+						throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
+				}
+				else
+				{
+					throw new Exception($"Loại câu hỏi '{dto.Type}' không hợp lệ.");
+				}
+
+				// Tạo và thêm câu hỏi
+				var question = new QuestionQuiz
+				{
+					Id = Guid.NewGuid(),
+					QuizId = quiz.Id,
+					QuestionBankId = dto.QuestionBankId,
+					Orders = dto.Orders
+				};
+
+				quiz.QuestionQuizzes.Add(question);
+
+				result.Add(new CreateQuestionQuizResponseDTO
+				{
+					Id = question.Id,
+					QuestionBankId = question.QuestionBankId,
+					QuizId = question.QuizId,
+					Title = questionBank.Title,
+					Orders = question.Orders,
+					Type = dto.Type
+				});
+			}
+
+			await _quizRepository.SaveChangesAsync();
+			return result;
+		}
+
+		public async Task<bool> UpdateQuestionWithAnswersAsync(Guid questionId, UpdateQuestionDTO dto, Guid accId)
         {
             var lecturer = await _lecturerRepository.GetByAccountIdAsync(accId);
             if (lecturer == null)
