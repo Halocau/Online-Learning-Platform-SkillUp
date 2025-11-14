@@ -10,5 +10,7 @@ namespace SkillUp.Services.Interfaces
 
         Task<bool> AddBulkQuestionFromBankToQuizAsync(List<CreateQuestionQuizDTO> createQuestionQuizDTOs, Guid accId);
 
-	}
+        Task<QuestionResponseDto> UpdateQuestionInQuizAsync(Guid oldQuestionId, UpdateQuestionDTO dto, Guid accId);
+
+    }
 }

@@ -129,6 +129,67 @@ namespace SkillUp.Controllers
             }
         }
 
+        [HttpPut("UpdateQuestionInQuiz/{questionId}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateQuestionInQuiz(Guid questionId, [FromBody] UpdateQuestionDTO dto)
+        {
+            try
+            {
+                var accId = _currentUserService.UserId;
+                if (!accId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn { code = 400, message = "Dữ liệu không hợp lệ" });
+                }
+
+                var updatedQuestion = await _questionService.UpdateQuestionInQuizAsync(questionId, dto, accId.Value);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Cập nhật câu hỏi thành công (đã tạo bản sao mới)",
+                    data = new List<object> { updatedQuestion }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+
+                if (ex.Message.Contains("Không tìm thấy giảng viên") ||
+                    ex.Message.Contains("Không tìm thấy câu hỏi gốc") ||
+                    ex.Message.Contains("Không tìm thấy câu hỏi này trong quiz"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+
+                if (ex.Message.Contains("Câu hỏi chọn 1") ||
+                    ex.Message.Contains("Câu hỏi chọn nhiều") ||
+                    ex.Message.Contains("Lỗi: Không thể cập nhật câu hỏi"))
+                {
+                    return BadRequest(new APIReturn { code = 400, message = ex.Message, data = new List<object>() });
+                }
+
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
         [HttpPost("add-from-bank")]
         public async Task<IActionResult> AddQuestionFromBankToQuiz([FromBody]List<CreateQuestionQuizDTO> createQuestionQuizDTO)
         {
