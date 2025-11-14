@@ -23,7 +23,7 @@ namespace SkillUp.Controllers
 
         [HttpPost("AddQuestionToQuiz")]
         [Authorize]
-        public async Task<IActionResult> AddQuestionToQuiz([FromForm] CreateQuestionDTO dto)
+        public async Task<IActionResult> AddQuestionToQuiz([FromBody] CreateQuestionDTO dto)
         {
             try
             {
@@ -37,8 +37,13 @@ namespace SkillUp.Controllers
                         data = new List<object>()
                     });
                 }
-                var newQuestion = await _questionService.AddQuestionWithAnswersToQuizAsync(dto, accId.Value);
 
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn { code = 400, message = "Dữ liệu không hợp lệ", data = new List<object> { ModelState } });
+                }
+
+                var newQuestion = await _questionService.AddQuestionWithAnswersToQuizAsync(dto, accId.Value);
 
                 return Ok(new APIReturn
                 {
@@ -49,7 +54,6 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-
                 return Forbid();
             }
             catch (Exception ex)
@@ -59,7 +63,12 @@ namespace SkillUp.Controllers
                 {
                     return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
                 }
-                if (ex.Message.Contains("Lỗi: Không thể lưu"))
+                if (ex.Message.Contains("Lỗi: Không thể lưu") ||
+                    ex.Message.Contains("Loại câu hỏi (Type) không được để trống") ||
+                    ex.Message.Contains("phải có 1 đáp án đúng") ||
+                    ex.Message.Contains("chỉ được có 1 đáp án đúng") ||
+                    ex.Message.Contains("phải có ít nhất 1 đáp án đúng") ||
+                    ex.Message.Contains("không hợp lệ"))
                 {
                     return BadRequest(new APIReturn { code = 400, message = ex.Message, data = new List<object>() });
                 }
