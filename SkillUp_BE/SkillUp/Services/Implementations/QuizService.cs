@@ -96,28 +96,45 @@ namespace SkillUp.Services.Implementations
         {
             var lecturer = await _lecturerRepository.GetByAccountIdAsync(accountId);
             if (lecturer == null)
-                throw new UnauthorizedAccessException("Không tìm thấy giảng viên tương ứng với tài khoản này.");
+            {
+                throw new Exception("Không tìm thấy giảng viên tương ứng với tài khoản này.");
+            }
 
             var quiz = await _quizRepository.GetQuizWithQuestionsAsync(quizId);
             if (quiz == null)
+            {
                 throw new Exception("Không tìm thấy quiz.");
+            }
 
-     
+            if (!quiz.IsActive)
+            {
+                throw new Exception("Bài quiz này đang bị ẩn (inactive).");
+            }
+
             if (quiz.Section.Course.LecturerId != lecturer.Id)
+            {
                 throw new UnauthorizedAccessException("Bạn không có quyền xem quiz này.");
+            }
 
             return new QuizDetailDTO
             {
                 QuizId = quiz.Id,
                 Title = quiz.Title ?? string.Empty,
-                Description = quiz.Description,
+                Description = quiz.Description,       
+                Orders = quiz.Orders,
+
                 Questions = quiz.QuestionQuizzes
                     .Where(qq => qq.QuestionBank != null && qq.QuestionBank.IsActive)
+                    .OrderBy(qq => qq.Orders)
                     .Select(qq => new QuestionDetailDTO
                     {
                         QuestionId = qq.QuestionBank.Id,
                         Title = qq.QuestionBank.Title,
                         Description = qq.QuestionBank.Description,
+                        Image = qq.QuestionBank.Image,
+                        Type = qq.QuestionBank.Type,
+                        Orders = qq.Orders,
+
                         Answers = qq.QuestionBank.AnswerBanks
                             .Where(a => a.IsActive)
                             .Select(a => new AnswerDetailDTO
