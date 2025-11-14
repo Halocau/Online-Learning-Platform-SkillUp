@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.DTOs.Common;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using System;
@@ -21,27 +22,39 @@ namespace SkillUp.Repositories.Implementations
                 .FirstOrDefaultAsync(x => x.AccountId == accountId && x.CommentPostId == commentPostId);
         }
 
-        public async Task<LikeCommentPost> AddOrToggleLikeAsync(Guid accountId, Guid commentPostId)
+        public async Task<LikeInteractionResult> AddOrToggleLikeAsync(Guid accountId, Guid commentPostId)
         {
+            bool isFirstLike = false; // Cờ (flag) mới
             var like = await GetByAccountAndCommentAsync(accountId, commentPostId);
+
             if (like == null)
             {
+                // Đây là lần đầu tiên, tạo mới
+                isFirstLike = true;
                 like = new LikeCommentPost
                 {
                     AccountId = accountId,
                     CommentPostId = commentPostId,
-                    Status = true
+                    Status = true // Lần đầu luôn là "Like"
                 };
                 _context.LikeCommentPosts.Add(like);
             }
             else
             {
+                // Đã có, chỉ toggle
+                // isFirstLike vẫn là false
                 like.Status = !like.Status;
                 _context.LikeCommentPosts.Update(like);
             }
 
             await _context.SaveChangesAsync();
-            return like;
+
+            // Trả về đối tượng kết quả
+            return new LikeInteractionResult
+            {
+                Like = like,
+                IsFirstLike = isFirstLike
+            };
         }
 
         public async Task<int> CountLikesAsync(Guid commentPostId)

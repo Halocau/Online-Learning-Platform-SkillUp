@@ -6,6 +6,7 @@ namespace SkillUp.Repositories.Interfaces
     {
         Task AddAsync(Student student); 
         Task<Student> GetByAccountIdAsync(Guid accountId); 
-        Task<bool> SaveChangesAsync(); 
+        Task<bool> SaveChangesAsync();
+        Task<Student?> GetStudentByAccountIdAsync(Guid accountId);
     }
 }

@@ -28,5 +28,11 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<Student?> GetStudentByAccountIdAsync(Guid accountId)
+        {
+            return await _context.Students
+                .FirstOrDefaultAsync(s => s.AccountId == accountId);
+        }
     }
 }

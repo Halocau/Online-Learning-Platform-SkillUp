@@ -11,43 +11,83 @@ namespace SkillUp.Services.Implementations
     {
         private readonly ILikeCommentLessonRepository _likeRepo;
         private readonly ICommentLessonRepository _commentRepo;
+        private readonly INotifyService _notifyService;
+        private readonly IAccountRepository _accountRepo;
 
-        public LikeCommentLessonService(ILikeCommentLessonRepository likeRepo , ICommentLessonRepository commentRepo)
+        public LikeCommentLessonService(
+             ILikeCommentLessonRepository likeRepo,
+             ICommentLessonRepository commentRepo,
+             INotifyService notifyService,      // Tham số mới
+             IAccountRepository accountRepo)         // Tham số mới
         {
             _likeRepo = likeRepo;
             _commentRepo = commentRepo;
+            _notifyService = notifyService;
+            _accountRepo = accountRepo;
         }
 
         public async Task<LikeCommentLessonResponseDto> ToggleLikeAsync(Guid commentLessonId, Guid accountId)
         {
-            // 1. Kiểm tra xem user đã like comment này chưa
             var existingLike = await _likeRepo.GetLikeStatusAsync(commentLessonId, accountId);
 
             bool newStatus = true;
+            bool isFirstLike = false; // Cờ (flag) để kiểm tra
 
             if (existingLike == null)
             {
-                // 1A. Nếu CHƯA có -> Tạo mới (Status = true)
+                // 1A. CHƯA CÓ -> Tạo mới
                 await _likeRepo.CreateLikeAsync(new LikeCommentLesson
                 {
                     CommentLessonId = commentLessonId,
                     AccountId = accountId,
-                    Status = true
+                    Status = true // Lần đầu luôn là true
                 });
                 newStatus = true;
+                isFirstLike = true; // <-- Đặt cờ là true
             }
             else
             {
-                // 1B. Nếu ĐÃ có -> Đảo ngược status (true -> false, false -> true)
+                // 1B. ĐÃ CÓ -> Đảo ngược status
                 existingLike.Status = !existingLike.Status;
                 newStatus = existingLike.Status;
                 await _likeRepo.UpdateLikeAsync(existingLike);
+                // isFirstLike vẫn là false
             }
 
-            // 2. Đếm lại tổng số like (chỉ đếm những record có Status = true)
+            // 2. LOGIC THÔNG BÁO (MỚI)
+            // Chỉ gửi thông báo nếu:
+            // (1) Trạng thái MỚI là "Like" (true)
+            // (2) VÀ đây là LẦN ĐẦU TIÊN (isFirstLike == true)
+            if (newStatus == true && isFirstLike == true)
+            {
+                try
+                {
+                    // Lấy comment để biết ai là chủ
+                    var comment = await _commentRepo.GetByIdAsync(commentLessonId);
+
+                    // Chỉ gửi nếu: (1) tìm thấy, (2) không phải tự like
+                    if (comment != null && comment.AccountId != accountId)
+                    {
+                        var liker = await _accountRepo.GetByIdAsync(accountId);
+                        var likerName = liker?.Fullname ?? "Một người dùng";
+
+                        await _notifyService.CreateNotificationAsync(
+                            comment.AccountId, // Gửi đến chủ comment
+                            "Lượt thích mới",
+                            $"{likerName} đã thích bình luận của bạn."
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Lỗi gửi thông báo (Like Lesson): {ex.Message}");
+                }
+            }
+
+            // 3. Đếm lại tổng số like
             var totalLikes = await _likeRepo.CountLikesAsync(commentLessonId);
 
-            // 3. Trả về kết quả
+            // 4. Trả về kết quả
             return new LikeCommentLessonResponseDto
             {
                 CommentLessonId = commentLessonId,

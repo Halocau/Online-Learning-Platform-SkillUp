@@ -13,6 +13,8 @@ public partial class QuestionQuiz
 
     public double? Orders { get; set; }
 
+    public bool? IsActive { get; set; }
+
     public virtual QuestionBank QuestionBank { get; set; } = null!;
 
     public virtual Quiz Quiz { get; set; } = null!;

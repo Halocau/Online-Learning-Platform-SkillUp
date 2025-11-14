@@ -209,15 +209,6 @@ namespace SkillUp.Controllers
                 }
 
                 var quizDetail = await _quizService.GetQuizDetailAsync(quizId, accountId.Value);
-                if (quizDetail == null)
-                {
-                    return NotFound(new APIReturn
-                    {
-                        code = 404,
-                        message = "Không tìm thấy quiz.",
-                        data = new List<object>()
-                    });
-                }
 
                 return Ok(new APIReturn
                 {
@@ -232,6 +223,13 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
+                if (ex.Message.Contains("Không tìm thấy quiz") ||
+                    ex.Message.Contains("Không tìm thấy giảng viên") ||
+                    ex.Message.Contains("Bài quiz này đang bị ẩn"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+
                 return StatusCode(500, new APIReturn
                 {
                     code = 500,

@@ -90,6 +90,7 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 builder.Services.AddScoped<ILessonRepository, LessonRepository>();
+builder.Services.AddScoped<IQuestionQuizRepository, QuestionQuizRepository>();
 
 
 
@@ -185,6 +186,9 @@ builder.Services.AddScoped<ICommentReportLessonRepository, CommentReportLessonRe
 builder.Services.AddScoped<ICommentReportLessonService, CommentReportLessonService>();
 
 
+//rating
+builder.Services.AddScoped<IRatingRepository, RatingRepository>();
+builder.Services.AddScoped<IRatingService, RatingService>();
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
@@ -260,6 +264,7 @@ app.MapHub<SkillUp.Hubs.CommentHub>("/commentHub");
 app.MapHub<LikeCommentHub>("/hubs/likeCommentHub");
 app.MapHub<CommentLessonHub>("/commentLessonHub");
 app.MapHub<NotificationHub>("/hubs/notification");
+app.MapHub<LikeCommentHub>("/hubs/likeComment");
 
 
 app.Run();

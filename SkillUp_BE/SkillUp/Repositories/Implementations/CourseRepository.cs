@@ -131,5 +131,17 @@ namespace SkillUp.Repositories.Implementations
               .OrderByDescending(c => c.CreatedAt)
               .ToListAsync();
         }
+
+        //rating
+        public async Task<Course?> GetByIdAsync(Guid id)
+        {
+            return await _context.Courses.FirstOrDefaultAsync(c => c.Id == id);
+        }
+
+        public async Task UpdateAsync(Course course)
+        {
+            _context.Courses.Update(course);
+            await _context.SaveChangesAsync();
+        }
     }
 }

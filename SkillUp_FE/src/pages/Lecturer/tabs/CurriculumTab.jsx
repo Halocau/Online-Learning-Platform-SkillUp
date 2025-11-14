@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { createSection, updateSection, deleteSection } from "@/api/sectionAPI";
 import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
-import SectionCard from "../components/Sectioncard";
+import SectionCard from "../components/SectionCard";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
   const [expandedSections, setExpandedSections] = useState({});
@@ -56,7 +56,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }));
   };
 
-  // ========== SECTION HANDLERS ==========
+  // section handlers
+
   const handleAddSectionClick = () => {
     setShowAddSection(true);
     setSectionForm({ title: "", description: "" });
@@ -196,7 +197,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  // ========== CONTENT TYPE SELECTION ==========
+  // content type handlers
   const handleAddContentClick = (sectionId) => {
     setAddingItemToSection({ sectionId, type: "choose" });
   };
@@ -224,7 +225,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  // ========== LESSON HANDLERS ==========
+  // lesson handlers
+
   const handleSaveLesson = async (sectionId) => {
     if (!lessonForm.title.trim()) {
       toast.error("Vui lòng nhập tên bài học");
@@ -327,45 +329,19 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         fileUrl: savedLessonForm.pdfFile || null,
       });
 
-      console.log("📥 Backend response:", result);
-      console.log(
-        "📊 Type:",
-        typeof result,
-        "| Is array:",
-        Array.isArray(result),
-        "| Length:",
-        Array.isArray(result) ? result.length : "N/A"
-      );
-
-      // ✅ Extract real ID from backend response
       let realId = null;
 
-      // Check if result is an array with items
       if (Array.isArray(result)) {
         if (result.length > 0 && result[0]?.id) {
           realId = result[0].id;
-          console.log("✅ Extracted ID from array[0]:", realId);
-        } else if (result.length === 0) {
-          console.warn(
-            "⚠️ Backend returned empty array - lesson may be created but ID unavailable"
-          );
         }
-      }
-      // Check if result is an object with id
-      else if (result && typeof result === "object" && result.id) {
+      } else if (result && typeof result === "object" && result.id) {
         realId = result.id;
-        console.log("✅ Extracted ID from object:", realId);
-      }
-      // Check if result is direct ID (string or number)
-      else if (typeof result === "string" || typeof result === "number") {
+      } else if (typeof result === "string" || typeof result === "number") {
         realId = result;
-        console.log("✅ Using direct ID:", realId);
       }
 
-      // If we got a real ID, replace the temp ID
       if (realId) {
-        console.log("🔄 Replacing temp ID:", tempId, "with real ID:", realId);
-
         setLocalCourse((prevCourse) => {
           if (!prevCourse) return prevCourse;
           const newCourse = { ...prevCourse };
@@ -385,7 +361,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
         toast.success(`✅ Bài học đã được tạo (Thứ tự: ${nextOrder})`);
       } else {
-        // Keep temp ID but warn user
         console.warn(
           "⚠️ Could not extract real ID from backend - keeping temp ID"
         );
@@ -476,7 +451,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const handleDeleteLesson = async (lessonId) => {
-    // Convert to string and check if this is a temp ID
     const idString = String(lessonId);
     if (idString.startsWith("temp-")) {
       toast.error("Bài học đang được tải lên. Vui lòng đợi...");
@@ -508,7 +482,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
     }
   };
 
-  // ========== QUIZ HANDLERS ==========
+  // quiz handlers
+
   const handleSaveQuiz = async (sectionId) => {
     if (!quizForm.title || quizForm.title.trim() === "") {
       toast.error("Vui lòng nhập tên quiz");
@@ -552,8 +527,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         orders: nextOrder,
       };
 
-      console.log("📤 Creating quiz:", quizData);
-
       // Add optimistically
       const optimisticQuiz = {
         kind: "Quiz",
@@ -596,50 +569,35 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       // Create in backend
       const result = await createQuiz(quizData);
 
-      console.log("📥 Backend quiz response:", result);
-      console.log(
-        "📊 Type:",
-        typeof result,
-        "| Is array:",
-        Array.isArray(result),
-        "| Length:",
-        Array.isArray(result) ? result.length : "N/A"
-      );
-
-      // ✅ Extract real ID from backend response
       let realId = null;
 
-      // Check if result is an array with items
-      if (Array.isArray(result)) {
-        if (result.length > 0 && result[0]?.id) {
-          realId = result[0].id;
-          console.log("✅ Extracted quiz ID from array[0]:", realId);
-        } else if (result.length === 0) {
-          console.warn(
-            "⚠️ Backend returned empty array - quiz may be created but ID unavailable"
-          );
+      if (Array.isArray(result) && result.length > 0) {
+        const firstItem = result[0];
+
+        if (firstItem && typeof firstItem === "object" && firstItem.quizId) {
+          realId = firstItem.quizId;
+        } else if (firstItem && typeof firstItem === "object" && firstItem.id) {
+          realId = firstItem.id;
         }
-      }
-      // Check if result is an object with id
-      else if (result && typeof result === "object" && result.id) {
-        realId = result.id;
-        console.log("✅ Extracted quiz ID from object:", realId);
-      }
-      // Check if result is direct ID (string or number)
-      else if (typeof result === "string" || typeof result === "number") {
+      } else if (
+        result &&
+        typeof result === "object" &&
+        !Array.isArray(result)
+      ) {
+        if (result.quizId) {
+          realId = result.quizId;
+        } else if (result.id) {
+          realId = result.id;
+        }
+      } else if (typeof result === "string" && result.length > 0) {
         realId = result;
-        console.log("✅ Using direct quiz ID:", realId);
       }
 
-      // If we got a real ID, replace the temp ID
-      if (realId) {
-        console.log(
-          "🔄 Replacing temp quiz ID:",
-          tempId,
-          "with real ID:",
-          realId
-        );
+      if (!realId) {
+        console.error("❌ Could not extract quiz ID from any location");
+      }
 
+      if (realId) {
         setLocalCourse((prevCourse) => {
           if (!prevCourse) return prevCourse;
           const newCourse = { ...prevCourse };
@@ -656,22 +614,15 @@ function CurriculumTab({ course, courseId, onUpdate }) {
           });
           return newCourse;
         });
-
-        toast.success(`✅ Quiz đã được tạo (Thứ tự: ${nextOrder})`);
       } else {
-        // Keep temp ID but warn user
-        console.warn(
-          "⚠️ Could not extract real quiz ID from backend - keeping temp ID"
-        );
         toast.warning(
-          "⚠️ Quiz đã được tạo nhưng chưa có ID. Vui lòng làm mới trang để xóa hoặc chỉnh sửa."
+          "⚠️ Quiz đã được tạo nhưng chưa có ID. Vui lòng làm mới trang."
         );
       }
     } catch (error) {
       console.error("❌ Quiz creation error:", error);
       toast.error("Lỗi khi tạo quiz");
 
-      // On error, remove the optimistic item
       setLocalCourse((prevCourse) => {
         if (!prevCourse) return prevCourse;
         const newCourse = { ...prevCourse };
@@ -766,7 +717,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const handleDeleteQuiz = async (quizId) => {
-    // Convert to string and check if this is a temp ID
     const idString = String(quizId);
     if (idString.startsWith("temp-")) {
       toast.error("Quiz đang được tạo. Vui lòng đợi...");
@@ -806,142 +756,254 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Nội dung khóa học
-          </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            {sortedSections.length || 0} chương
-          </p>
+      <CurriculumHeader
+        sectionCount={sortedSections.length}
+        loading={loading}
+        showAddSection={showAddSection}
+        onAddSectionClick={handleAddSectionClick}
+      />
+
+      {showAddSection && (
+        <AddSectionForm
+          loading={loading}
+          sectionForm={sectionForm}
+          setSectionForm={setSectionForm}
+          onSaveSection={handleSaveSection}
+          onCancel={() => {
+            setShowAddSection(false);
+            setSectionForm({ title: "", description: "" });
+          }}
+        />
+      )}
+
+      <SectionsList
+        sections={sortedSections}
+        loading={loading}
+        expandedSections={expandedSections}
+        onToggleSection={toggleSection}
+        // section handlers
+        onEditSection={handleEditSectionClick}
+        onDeleteSection={handleDeleteSection}
+        editingSectionId={editingSectionId}
+        sectionForm={sectionForm}
+        setSectionForm={setSectionForm}
+        onUpdateSection={handleUpdateSection}
+        onCancelEditSection={() => setEditingSectionId(null)}
+        // content selection
+        addingItemToSection={addingItemToSection}
+        onAddContent={handleAddContentClick}
+        onSelectContentType={handleSelectContentType}
+        onCancelAddContent={() => setAddingItemToSection(null)}
+        // lesson handlers
+        lessonForm={lessonForm}
+        setLessonForm={setLessonForm}
+        onSaveLesson={handleSaveLesson}
+        onEditLesson={handleEditLessonClick}
+        onUpdateLesson={handleUpdateLesson}
+        onDeleteLesson={handleDeleteLesson}
+        editingLessonId={editingLessonId}
+        setEditingLessonId={setEditingLessonId}
+        // quiz handlers
+        quizForm={quizForm}
+        setQuizForm={setQuizForm}
+        onSaveQuiz={handleSaveQuiz}
+        onEditQuiz={handleEditQuizClick}
+        onUpdateQuiz={handleUpdateQuiz}
+        onDeleteQuiz={handleDeleteQuiz}
+        editingQuizId={editingQuizId}
+        setEditingQuizId={setEditingQuizId}
+        courseId={courseId}
+        onAddSectionClick={handleAddSectionClick}
+      />
+    </div>
+  );
+}
+
+// Sub-components
+
+function CurriculumHeader({
+  sectionCount,
+  loading,
+  showAddSection,
+  onAddSectionClick,
+}) {
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Nội dung khóa học</h2>
+        <p className="text-sm text-gray-600 mt-1">{sectionCount || 0} chương</p>
+      </div>
+      <Button
+        onClick={onAddSectionClick}
+        disabled={loading || showAddSection}
+        className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Chương mới
+      </Button>
+    </div>
+  );
+}
+
+function AddSectionForm({
+  loading,
+  sectionForm,
+  setSectionForm,
+  onSaveSection,
+  onCancel,
+}) {
+  return (
+    <Card className="mb-4 border-2 border-[#FFD54F]/30">
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="Tên chương (VD: Chương 1: Giới thiệu)"
+            value={sectionForm.title}
+            onChange={(e) =>
+              setSectionForm({ ...sectionForm, title: e.target.value })
+            }
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F]"
+            autoFocus
+          />
+          <textarea
+            placeholder="Mô tả chương (không bắt buộc)"
+            value={sectionForm.description}
+            onChange={(e) =>
+              setSectionForm({
+                ...sectionForm,
+                description: e.target.value,
+              })
+            }
+            rows="2"
+            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F] resize-none"
+          />
+          <div className="flex gap-2">
+            <Button
+              onClick={onSaveSection}
+              disabled={loading || !sectionForm.title.trim()}
+              size="sm"
+              className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
+            >
+              <Check className="w-4 h-4 mr-1" />
+              Lưu
+            </Button>
+            <Button onClick={onCancel} variant="outline" size="sm">
+              <X className="w-4 h-4 mr-1" />
+              Hủy
+            </Button>
+          </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SectionsList(props) {
+  const {
+    sections,
+    loading,
+    expandedSections,
+    onToggleSection,
+    onEditSection,
+    onDeleteSection,
+    onAddContent,
+    onSaveLesson,
+    onSaveQuiz,
+    onEditLesson,
+    onUpdateLesson,
+    onDeleteLesson,
+    onEditQuiz,
+    onUpdateQuiz,
+    onDeleteQuiz,
+    editingSectionId,
+    sectionForm,
+    setSectionForm,
+    onUpdateSection,
+    onCancelEditSection,
+    addingItemToSection,
+    onSelectContentType,
+    onCancelAddContent,
+    lessonForm,
+    setLessonForm,
+    quizForm,
+    setQuizForm,
+    editingLessonId,
+    setEditingLessonId,
+    editingQuizId,
+    setEditingQuizId,
+    courseId,
+    onAddSectionClick,
+  } = props;
+
+  if (!sections.length) {
+    return <EmptySectionsState onAddSectionClick={onAddSectionClick} />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {sections.map((section, index) => (
+        <SectionCard
+          key={section.id}
+          section={section}
+          index={index}
+          isExpanded={expandedSections[section.id]}
+          onToggle={() => onToggleSection(section.id)}
+          onEdit={onEditSection}
+          onDelete={onDeleteSection}
+          onAddContent={onAddContent}
+          onSaveLesson={onSaveLesson}
+          onSaveQuiz={onSaveQuiz}
+          onEditLesson={onEditLesson}
+          onUpdateLesson={onUpdateLesson}
+          onDeleteLesson={onDeleteLesson}
+          onEditQuiz={onEditQuiz}
+          onUpdateQuiz={onUpdateQuiz}
+          onDeleteQuiz={onDeleteQuiz}
+          loading={loading}
+          editingSectionId={editingSectionId}
+          sectionForm={sectionForm}
+          setSectionForm={setSectionForm}
+          onUpdateSection={onUpdateSection}
+          onCancelEditSection={onCancelEditSection}
+          addingItemToSection={addingItemToSection}
+          onSelectContentType={onSelectContentType}
+          onCancelAddContent={onCancelAddContent}
+          lessonForm={lessonForm}
+          setLessonForm={setLessonForm}
+          quizForm={quizForm}
+          setQuizForm={setQuizForm}
+          editingLessonId={editingLessonId}
+          setEditingLessonId={setEditingLessonId}
+          editingQuizId={editingQuizId}
+          setEditingQuizId={setEditingQuizId}
+          courseId={courseId}
+        />
+      ))}
+    </div>
+  );
+}
+
+function EmptySectionsState({ onAddSectionClick }) {
+  return (
+    <Card className="border-2 border-dashed">
+      <CardContent className="text-center py-12">
+        <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          Chưa có chương nào
+        </h3>
+        <p className="text-gray-500 mb-4 text-sm">
+          Bắt đầu tạo chương đầu tiên
+        </p>
         <Button
-          onClick={handleAddSectionClick}
-          disabled={loading || showAddSection}
+          onClick={onAddSectionClick}
           className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Chương mới
+          Tạo chương
         </Button>
-      </div>
-
-      {/* Add Section Form */}
-      {showAddSection && (
-        <Card className="mb-4 border-2 border-[#FFD54F]/30">
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Tên chương (VD: Chương 1: Giới thiệu)"
-                value={sectionForm.title}
-                onChange={(e) =>
-                  setSectionForm({ ...sectionForm, title: e.target.value })
-                }
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F]"
-                autoFocus
-              />
-              <textarea
-                placeholder="Mô tả chương (không bắt buộc)"
-                value={sectionForm.description}
-                onChange={(e) =>
-                  setSectionForm({
-                    ...sectionForm,
-                    description: e.target.value,
-                  })
-                }
-                rows="2"
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F] resize-none"
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSaveSection}
-                  disabled={loading || !sectionForm.title.trim()}
-                  size="sm"
-                  className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
-                >
-                  <Check className="w-4 h-4 mr-1" />
-                  Lưu
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowAddSection(false);
-                    setSectionForm({ title: "", description: "" });
-                  }}
-                  variant="outline"
-                  size="sm"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Hủy
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Sections List */}
-      <div className="space-y-3">
-        {sortedSections.length > 0 ? (
-          sortedSections.map((section, index) => (
-            <SectionCard
-              key={section.id}
-              section={section}
-              index={index}
-              isExpanded={expandedSections[section.id]}
-              onToggle={() => toggleSection(section.id)}
-              onEdit={handleEditSectionClick}
-              onDelete={handleDeleteSection}
-              onAddContent={handleAddContentClick}
-              onSaveLesson={handleSaveLesson}
-              onSaveQuiz={handleSaveQuiz}
-              onEditLesson={handleEditLessonClick}
-              onUpdateLesson={handleUpdateLesson}
-              onDeleteLesson={handleDeleteLesson}
-              onEditQuiz={handleEditQuizClick}
-              onUpdateQuiz={handleUpdateQuiz}
-              onDeleteQuiz={handleDeleteQuiz}
-              loading={loading}
-              editingSectionId={editingSectionId}
-              sectionForm={sectionForm}
-              setSectionForm={setSectionForm}
-              onUpdateSection={handleUpdateSection}
-              onCancelEditSection={() => setEditingSectionId(null)}
-              addingItemToSection={addingItemToSection}
-              onSelectContentType={handleSelectContentType}
-              onCancelAddContent={() => setAddingItemToSection(null)}
-              lessonForm={lessonForm}
-              setLessonForm={setLessonForm}
-              quizForm={quizForm}
-              setQuizForm={setQuizForm}
-              editingLessonId={editingLessonId}
-              setEditingLessonId={setEditingLessonId}
-              editingQuizId={editingQuizId}
-              setEditingQuizId={setEditingQuizId}
-            />
-          ))
-        ) : (
-          <Card className="border-2 border-dashed">
-            <CardContent className="text-center py-12">
-              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Chưa có chương nào
-              </h3>
-              <p className="text-gray-500 mb-4 text-sm">
-                Bắt đầu tạo chương đầu tiên
-              </p>
-              <Button
-                onClick={handleAddSectionClick}
-                className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Tạo chương
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
