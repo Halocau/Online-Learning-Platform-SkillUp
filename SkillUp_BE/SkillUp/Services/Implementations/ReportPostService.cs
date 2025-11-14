@@ -11,7 +11,7 @@ namespace SkillUp.Services.Implementations
     {
         private readonly IReportPostRepository _reportPostRepo;
         private readonly IPostRepository _postRepo; // Giả sử bạn đã có
-        // private readonly IAccountRepository _accountRepo; // Không cần, vì Repo đã Include
+        
 
         public ReportPostService(
             IReportPostRepository reportPostRepo,
@@ -89,42 +89,63 @@ namespace SkillUp.Services.Implementations
                 throw new KeyNotFoundException("Không tìm thấy báo cáo.");
             }
 
-            // 2. Kiểm tra nếu đã xử lý rồi
+            // 2. TÌM BÀI POST LIÊN QUAN (Bước mới)
+            var post = await _postRepo.GetByIdAsync(report.PostId);
+            if (post == null)
+            {
+                // Nếu post không còn, tự động Reject báo cáo này
+                if (report.Status == "Pending")
+                {
+                    report.Status = "Rejected";
+                    await _reportPostRepo.UpdateAsync(report);
+                }
+                throw new InvalidOperationException("Bài đăng liên quan đến báo cáo này không còn tồn tại.");
+            }
+
+            // 3. KIỂM TRA TRẠNG THÁI BÀI POST (Bước mới quan trọng)
+            // Nếu post đã "Inactive", nghĩa là nó ĐÃ BỊ XỬ LÝ bởi một báo cáo khác.
+            if (post.Status == "Inactive")
+            {
+                // Tự động cập nhật báo cáo này thành "Accepted" nếu nó còn "Pending"
+                if (report.Status == "Pending")
+                {
+                    report.Status = "Accepted";
+                    await _reportPostRepo.UpdateAsync(report);
+                }
+
+                // Ném ra lỗi báo cho admin biết
+                throw new InvalidOperationException("Bài đăng này đã bị xử lý (tắt) bởi một báo cáo trước đó.");
+            }
+
+            // 4. Kiểm tra nếu CHÍNH BÁO CÁO NÀY đã xử lý rồi
             if (report.Status != "Pending")
             {
                 throw new InvalidOperationException("Báo cáo này đã được xử lý trước đó.");
             }
 
-            // 3. Xử lý logic
+            // 5. Xử lý logic (Giữ nguyên)
             switch (dto.Action.ToLower())
             {
                 case "accepted":
                     report.Status = "Accepted";
 
-                    // Tìm bài đăng liên quan
-                    var post = await _postRepo.GetByIdAsync(report.PostId);
-                    if (post != null)
-                    {
-                      
+                    // Bài post chắc chắn đang "Active" (vì đã qua kiểm tra ở bước 3)
+                    post.Status = "Inactive";
+                    await _postRepo.UpdateAsync(post);
 
-                        // Cập nhật trạng thái của Post thành "Inactive":
-                        post.Status = "Inactive"; // (Hoặc "Disabled", tùy bạn quy định)
-
-                        // Lưu thay đổi của Post lại
-                        await _postRepo.UpdateAsync(post);
-                    }
+                    // (Nâng cao) Bạn cũng có thể cập nhật tất cả 
+                    // report "Pending" khác của post này thành "Accepted" ở đây.
                     break;
 
                 case "rejected":
                     report.Status = "Rejected";
-                    // Không làm gì bài đăng
                     break;
 
                 default:
                     throw new ArgumentException("Hành động không hợp lệ. Chỉ chấp nhận 'accepted' hoặc 'rejected'.");
             }
 
-            // 4. Cập nhật trạng thái báo cáo
+            // 6. Cập nhật trạng thái báo cáo
             await _reportPostRepo.UpdateAsync(report);
 
             return MapToDto(report);
