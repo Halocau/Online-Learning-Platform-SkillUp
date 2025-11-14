@@ -617,6 +617,7 @@ public partial class SkillUpContext : DbContext
 
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Type).HasMaxLength(50);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Lecturer).WithMany(p => p.QuestionBanks)

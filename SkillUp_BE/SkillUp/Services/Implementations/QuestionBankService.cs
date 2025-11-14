@@ -1,10 +1,14 @@
-﻿using Microsoft.Identity.Client;
+﻿using CloudinaryDotNet;
+using Microsoft.Identity.Client;
+using OfficeOpenXml;
+using OfficeOpenXml.Configuration;
 using SkillUp.BussinessObjects.DTOs.Question;
 using SkillUp.BussinessObjects.DTOs.QuestionBank;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
+using System.ComponentModel;
 using System.Text;
 
 namespace SkillUp.Services.Implementations
@@ -25,7 +29,7 @@ namespace SkillUp.Services.Implementations
 		public async Task<DetailQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId)
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
-			var course =  await _courseRepository.GetCourseByIdAsync(courseId);
+			var course = await _courseRepository.GetCourseByIdAsync(courseId);
 
 			if (lecturer == null || course!.LecturerId != lecturer.Id)
 			{
@@ -175,7 +179,7 @@ namespace SkillUp.Services.Implementations
 			existingQuestion.SectionId = updateQuestionBankDTO.SectionId;
 			existingQuestion.Title = updateQuestionBankDTO.Title;
 			existingQuestion.UpdatedAt = DateTime.Now;
-			foreach(var answerDTO in updateQuestionBankDTO.Answers)
+			foreach (var answerDTO in updateQuestionBankDTO.Answers)
 			{
 				var answer = existingQuestion.AnswerBanks.FirstOrDefault(existingQuestion => existingQuestion.Id == answerDTO.AnswerId);
 				if (answer == null)
@@ -214,33 +218,111 @@ namespace SkillUp.Services.Implementations
 			};
 		}
 
-		//public async Task<List<QuestionBank>> BulkAddQuestionsWithAnswersAsync(List<CreateQuestionBankDTO> questionDTOs, Guid accountId, Guid courseId)
-		//{
-		//	var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
-		//	var course = await _courseRepository.GetCourseByIdAsync(courseId);
-		//	if (lecturer == null || course!.LecturerId != lecturer.Id)
-		//	{
-		//		throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
-		//	}
-		//	List<QuestionBank> createdQuestions = new List<QuestionBank>();
-		//	foreach (var dto in questionDTOs)
-		//	{
-		//		QuestionBank questionBank = new QuestionBank
-		//		{
-		//			Id = Guid.NewGuid(),
-		//			SectionId = dto.SectionId,
-		//			LecturerId = lecturer.Id,
-		//			Title = dto.Title,
-		//			Description = dto.Description,
-		//			CreatedAt = DateTime.Now,
-		//			UpdatedAt = DateTime.Now,
-		//			IsActive = true
-		//		};
-		//		await _questionBankRepository.CreateAsync(questionBank);
-		//		createdQuestions.Add(questionBank);
-		//	}
-		//	await _questionBankRepository.SaveChangesAsync();
-		//	return createdQuestions;
-		//}
+		public async Task<List<CreateQuestionBankDTO>> ReadQuestionsWithMultipleAnswersAsync(
+	Stream excelStream,
+	Guid sectionId,
+	Guid accountId)
+		{
+			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+			if (lecturer == null)
+				throw new Exception("Không tìm thấy giảng viên.");
+
+			// EPPlus license context
+			ExcelPackage.License.SetNonCommercialPersonal("Your Name");
+
+			var result = new List<CreateQuestionBankDTO>();
+			var questionBanks = new List<QuestionBank>();
+
+			using var package = new ExcelPackage(excelStream);
+			var worksheet = package.Workbook.Worksheets[0];
+			int rowCount = worksheet.Dimension.Rows;
+
+			for (int row = 3; row <= rowCount; row++)
+			{
+				string questionText = worksheet.Cells[row, 1].Text?.Trim();
+				string optionA = worksheet.Cells[row, 2].Text?.Trim();
+				string optionB = worksheet.Cells[row, 3].Text?.Trim();
+				string optionC = worksheet.Cells[row, 4].Text?.Trim();
+				string optionD = worksheet.Cells[row, 5].Text?.Trim();
+				string optionE = worksheet.Cells[row, 6].Text?.Trim();
+				string optionF = worksheet.Cells[row, 7].Text?.Trim();
+				string optionG = worksheet.Cells[row, 8].Text?.Trim();
+				string correctOptionsText = worksheet.Cells[row, 9].Text?.Trim(); // e.g., "A,C"
+
+				if (string.IsNullOrEmpty(questionText) || string.IsNullOrEmpty(correctOptionsText))
+					continue;
+
+				var correctOptions = correctOptionsText
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(s => s.Trim().ToUpper())
+					.ToHashSet();
+
+				var questionBank = new QuestionBank
+				{
+					Id = Guid.NewGuid(),
+					SectionId = sectionId,
+					LecturerId = lecturer.Id,
+					Title = questionText,
+					Description = "description",
+					CreatedAt = DateTime.UtcNow,
+					UpdatedAt = DateTime.UtcNow,
+					IsActive = true,
+					Image = null,
+					AnswerBanks = new List<AnswerBank>()
+				};
+
+				// Build answers
+				var answers = new List<(string Text, string Label)>
+		{
+			(optionA, "A"),
+			(optionB, "B"),
+			(optionC, "C"),
+			(optionD, "D"),
+			(optionE, "E"),
+			(optionF, "F"),
+			(optionG, "G")
+		};
+
+				foreach (var (answerText, label) in answers)
+				{
+					if (string.IsNullOrEmpty(answerText))
+						continue;
+
+					var answer = new AnswerBank
+					{
+						Id = Guid.NewGuid(),
+						QuestionBankId = questionBank.Id,
+						AnswerName = answerText,
+						IsCorrect = correctOptions.Contains(label),
+						IsActive = true,
+					};
+
+					questionBank.AnswerBanks.Add(answer);
+				}
+
+				questionBanks.Add(questionBank);
+
+				// Map DTO for response
+				result.Add(new CreateQuestionBankDTO
+				{
+					SectionId = sectionId,
+					LecturerId = lecturer.Id,
+					Title = questionBank.Title,
+					Description = questionBank.Description,
+					Answers = questionBank.AnswerBanks.Select(a => new CreateAnswerDTO
+					{
+						AnswerName = a.AnswerName,
+						IsCorrect = a.IsCorrect
+					}).ToList()
+				});
+			}
+
+			// Bulk save once
+			await _questionBankRepository.AddRangeAsync(questionBanks);
+			await _questionBankRepository.SaveChangesAsync();
+
+			return result;
+		}
+
 	}
 }

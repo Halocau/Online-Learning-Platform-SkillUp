@@ -18,6 +18,11 @@ namespace SkillUp.Repositories.Implementations
             await _context.AddAsync(question);
         }
 
+        public async Task AddRangeAsync(List<QuestionBank> questions)
+        {
+            await _context.AddRangeAsync(questions);
+        }
+
 		public async Task<QuestionBank?> GetByIdAsync(Guid id)
 		{
 			return await _context.QuestionBanks
