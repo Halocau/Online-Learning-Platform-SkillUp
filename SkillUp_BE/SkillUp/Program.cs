@@ -189,6 +189,10 @@ builder.Services.AddScoped<ICommentReportLessonService, CommentReportLessonServi
 //rating
 builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 builder.Services.AddScoped<IRatingService, RatingService>();
+
+//report post
+builder.Services.AddScoped<IReportPostRepository, ReportPostRepository>();
+builder.Services.AddScoped<IReportPostService, ReportPostService>();
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
