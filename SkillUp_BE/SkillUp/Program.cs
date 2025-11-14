@@ -260,6 +260,7 @@ app.MapHub<SkillUp.Hubs.CommentHub>("/commentHub");
 app.MapHub<LikeCommentHub>("/hubs/likeCommentHub");
 app.MapHub<CommentLessonHub>("/commentLessonHub");
 app.MapHub<NotificationHub>("/hubs/notification");
+app.MapHub<LikeCommentHub>("/hubs/likeComment");
 
 
 app.Run();

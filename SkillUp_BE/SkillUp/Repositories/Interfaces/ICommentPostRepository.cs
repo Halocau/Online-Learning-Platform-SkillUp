@@ -8,5 +8,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<CommentPost> CreateAsync(CommentPost comment);
         Task<CommentPost?> GetByIdAsync(Guid commentId); // thêm dòng này
         Task UpdateAsync(CommentPost comment);           // thêm dòng này
+
+
     }
 }
