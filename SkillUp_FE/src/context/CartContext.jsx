@@ -1,6 +1,6 @@
 // src/contexts/CartContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
-import { axiosInstance } from "@/config/api";
+import { addToCartUnified, getCartCountUnified, mergeGuestCartToServer } from "@/utils/cartHelpers";
 
 const CartContext = createContext();
 
@@ -19,36 +19,31 @@ export const CartProvider = ({ children }) => {
   const fetchCartCount = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
-      if (!user?.id) return;
-
-      const response = await axiosInstance.get(`/Cart/${user.id}`);
-      if (response.data.code === 200) {
-        const items = response.data.data[0]?.cartItems || [];
-        setCartCount(items.length);
-      }
+      
+      // Sử dụng helper để lấy count (tự động phân biệt guest/logged-in)
+      const count = await getCartCountUnified(user);
+      setCartCount(count);
     } catch (error) {
       console.error("Error fetching cart count:", error);
     }
   };
 
-  const addToCart = async (courseId) => {
+  const addToCart = async (courseId, price) => {
     try {
       setLoading(true);
-      const user = JSON.parse(localStorage.getItem("user"));
-      if (!user?.id) {
-        throw new Error("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      }
-
-      const response = await axiosInstance.post(
-        `/Cart/AddToCart/${user.id}`,
-        { courseId }
-      );
-
-      if (response.data.code === 200) {
+      const userStr = localStorage.getItem("user");
+      const user = userStr && userStr !== 'null' ? JSON.parse(userStr) : null;
+      
+      console.log('🛒 Adding to cart - User:', user); // DEBUG
+      
+      // Sử dụng helper để add (tự động phân biệt guest/logged-in)
+      const result = await addToCartUnified(courseId, price, user);
+      
+      if (result.success) {
         await fetchCartCount();
-        return { success: true, message: "Đã thêm vào giỏ hàng" };
       }
-      throw new Error(response.data.message);
+      
+      return result;
     } catch (error) {
       console.error("Error adding to cart:", error);
       return { success: false, message: error.message };
@@ -62,8 +57,10 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   return (
-    <CartContext.Provider value={{ cartCount, addToCart, fetchCartCount, loading }}>
+    <CartContext.Provider value={{ cartCount, addToCart, fetchCartCount, loading, mergeGuestCartToServer }}>
       {children}
     </CartContext.Provider>
   );
 };
+
+export default CartContext;

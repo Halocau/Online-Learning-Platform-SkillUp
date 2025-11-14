@@ -19,6 +19,7 @@ export const saveUserFromToken = (accessToken, refreshToken) => {
     return false
   }
 
+  console.log('🔍 JWT Decoded:', decoded); // DEBUG: Check JWT structure
   
   localStorage.setItem('accessToken', accessToken)
   localStorage.setItem('refreshToken', refreshToken)

@@ -24,6 +24,7 @@ export default function ModeratorLayout() {
     { label: "Bảng điều khiển", icon: <LayoutDashboard size={18} />, path: "/contentmod" },
     { label: "Quản lý tin tức", icon: <FileText size={18} />, path: "/contentmod/news" },
     { label: "Quản lý khóa học", icon: <MessageSquare size={18} />, path: "/contentmod/course" },
+    { label: "Quản lý bài đăng", icon: <MessageSquare size={18} />, path: "/contentmod/forum" },
     { label: "Báo cáo bình luận", icon: <MessageSquare size={18} />, path: "/contentmod/rpcmt" },
     { label: "Quản lý danh mục", icon: <MessageSquare size={18} />, path: "/contentmod/category"},
   ];

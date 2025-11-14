@@ -38,11 +38,37 @@ namespace SkillUp.Services.Implementations
             {
                 throw new Exception("Quiz không tồn tại");
             }
-            string? imageUrl = null;
-            if (createQuestionDTO.Image != null)
-            {             
-                imageUrl = await _cloudinaryService.UploadImageAsync(createQuestionDTO.Image, "skillup/questions");
+
+            if (string.IsNullOrWhiteSpace(createQuestionDTO.Type))
+            {
+                throw new Exception("Loại câu hỏi (Type) không được để trống.");
             }
+
+            int correctAnswersCount = createQuestionDTO.Answers.Count(a => a.IsCorrect == true);
+
+            if (createQuestionDTO.Type == "SingleChoice")
+            {
+                if (correctAnswersCount == 0)
+                {
+                    throw new Exception("Câu hỏi chọn 1 (SingleChoice) phải có 1 đáp án đúng.");
+                }
+                if (correctAnswersCount > 1)
+                {
+                    throw new Exception("Câu hỏi chọn 1 (SingleChoice) chỉ được có 1 đáp án đúng.");
+                }
+            }
+            else if (createQuestionDTO.Type == "MultiChoice")
+            {
+                if (correctAnswersCount == 0)
+                {
+                    throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
+                }
+            }
+            else
+            {
+                throw new Exception($"Loại câu hỏi '{createQuestionDTO.Type}' không hợp lệ.");
+            }
+
             var sectionId = quiz.SectionId;
             var question = new QuestionBank
             {
@@ -54,8 +80,9 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 IsActive = true,
-                Image = imageUrl, 
-                IsHidden = false
+                Image = createQuestionDTO.ImageUrl,
+                IsHidden = false,
+                Type = createQuestionDTO.Type
             };
 
             var newAnswersForDto = new List<AnswerBank>();
@@ -97,6 +124,8 @@ namespace SkillUp.Services.Implementations
                 Id = question.Id,
                 Title = question.Title,
                 Description = question.Description,
+                Image = question.Image,
+                Type = question.Type,
                 Orders = (float?)questionQuiz.Orders,
                 Answers = newAnswersForDto.Select(a => new AnswerResponseDto
                 {

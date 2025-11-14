@@ -50,9 +50,6 @@ export const API_ENDPOINTS = {
     ADD_TO_CART: '/Cart/AddToCart/{accountId}',
     REMOVE_FROM_CART: '/Cart/RemoveFromCart/{cartItemId}',
 
-    // Course endpoints
-    CATEGORY_PAGE: '/CategoryPage/{id}/page',
-
     //Question Bank endpoints
     GET_BY_ID: '/QuestionBank/getById/{questionBankId}',
     GET_BY_SECTION: '/QuestionBank/getBySection/{sectionId}',

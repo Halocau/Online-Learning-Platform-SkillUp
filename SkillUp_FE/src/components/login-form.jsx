@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { saveUserFromToken, getRedirectPath } from "@/lib/auth-utils";
 import { toast } from "react-toastify";
+import { handlePostLogin } from "@/utils/loginHelpers";
 
 export function LoginForm({ className, ...props }) {
   const navigate = useNavigate();
@@ -43,6 +44,13 @@ export function LoginForm({ className, ...props }) {
         }
 
         const user = JSON.parse(localStorage.getItem("user"));
+        
+        // Merge guest cart vào server cart
+        await handlePostLogin(user.userId);
+        
+        // Dispatch event để các component khác biết user đã thay đổi
+        window.dispatchEvent(new Event('storage'));
+        
         const redirectPath = getRedirectPath(user.role);
         
         setTimeout(() => {
@@ -79,6 +87,13 @@ export function LoginForm({ className, ...props }) {
         toast.success("Đăng nhập thành công!");
 
         const user = JSON.parse(localStorage.getItem("user"));
+        
+        // Merge guest cart vào server cart
+        await handlePostLogin(user.userId);
+        
+        // Dispatch event để các component khác biết user đã thay đổi
+        window.dispatchEvent(new Event('storage'));
+        
         const redirectPath = getRedirectPath(user.role);
         
         setTimeout(() => {
