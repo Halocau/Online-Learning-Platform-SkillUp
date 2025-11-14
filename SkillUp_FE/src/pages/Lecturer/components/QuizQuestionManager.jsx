@@ -1,0 +1,381 @@
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Edit2, Image as ImageIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  addQuestionToQuiz,
+  addQuestionsFromBank,
+  updateQuestion,
+} from "@/api/questionAPI";
+import { getQuizById } from "@/api/quizAPI";
+import { toast } from "react-toastify";
+import QuestionForm from "./QuestionForm";
+import QuestionBankSelector from "./QuestionBankSelector";
+
+const getQuestionId = (question) =>
+  question?.id ?? question?.questionId ?? question?.questionID ?? null;
+
+const pickQuestionFromCreateResult = (result) => {
+  if (!result) return null;
+
+  if (Array.isArray(result)) {
+    return result[0] ?? null;
+  }
+
+  if (typeof result === "object") {
+    if (Array.isArray(result.data)) {
+      return result.data[0] ?? null;
+    }
+    if (result.data && typeof result.data === "object") {
+      return result.data;
+    }
+  }
+
+  return result;
+};
+
+const pickQuestionFromUpdateResult = (result) => {
+  if (!result) return null;
+
+  const data = result.data ?? result.question ?? null;
+
+  if (Array.isArray(data)) return data[0] ?? null;
+  if (data && typeof data === "object") return data;
+
+  return null;
+};
+
+function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
+  const [loading, setLoading] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [questions, setQuestions] = useState([]);
+  const [addingMode, setAddingMode] = useState(null);
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
+
+  useEffect(() => {
+    loadQuestions();
+  }, [quiz.id]);
+
+  const loadQuestions = async () => {
+    try {
+      setLoadingQuestions(true);
+
+      const quizData = await getQuizById(quiz.id);
+
+      let questionsList = [];
+
+      if (Array.isArray(quizData)) {
+        if (quizData.length > 0) {
+          questionsList = quizData[0]?.questions || [];
+        }
+      } else if (quizData?.questions) {
+        questionsList = quizData.questions;
+      } else if (Array.isArray(quizData?.data)) {
+        if (quizData.data.length > 0) {
+          questionsList = quizData.data[0]?.questions || [];
+        }
+      }
+
+      setQuestions(questionsList);
+    } catch (error) {
+      console.error("❌ Error loading questions:", error);
+      setQuestions([]);
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
+  const handleAddManualQuestion = async (questionData) => {
+    setLoading(true);
+    try {
+      const maxOrder =
+        questions.length > 0
+          ? Math.max(...questions.map((q) => q.orders || 0))
+          : 0;
+
+      const payload = {
+        quizId: quiz.id,
+        title: questionData.title,
+        description: questionData.description,
+        orders: maxOrder + 1,
+        imageUrl: questionData.imageUrl || "",
+        type: questionData.type || "SingleChoice",
+        answers: questionData.answers,
+      };
+
+      const result = await addQuestionToQuiz(payload);
+
+      if (result !== null) {
+        const apiQuestion = pickQuestionFromCreateResult(result);
+        const newQuestion = {
+          ...(apiQuestion || {}),
+          ...payload,
+        };
+
+        newQuestion.orders = newQuestion.orders ?? maxOrder + 1;
+
+        setQuestions((prev) => [...prev, newQuestion]);
+        setAddingMode(null);
+      }
+    } catch (error) {
+      console.error("❌ Error adding question:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddFromBank = async (selectedQuestionIds) => {
+    setLoading(true);
+    try {
+      const maxOrder =
+        questions.length > 0
+          ? Math.max(...questions.map((q) => q.orders || 0))
+          : 0;
+
+      const questionsToAdd = selectedQuestionIds.map(
+        (questionBankId, index) => ({
+          questionBankId,
+          quizId: quiz.id,
+          orders: maxOrder + index + 1,
+        })
+      );
+
+      const result = await addQuestionsFromBank(questionsToAdd);
+
+      if (result !== null) {
+        await loadQuestions();
+        setAddingMode(null);
+      }
+    } catch (error) {
+      console.error("❌ Error adding questions from bank:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditQuestion = (question) => {
+    const id = getQuestionId(question);
+    if (!id) {
+      console.warn("Question has no id:", question);
+    }
+    setEditingQuestionId(id);
+  };
+
+  const handleUpdateQuestion = async (questionData) => {
+    if (!editingQuestionId) {
+      toast.error("Không tìm thấy ID câu hỏi để cập nhật!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        quizId: quiz.id,
+        title: questionData.title,
+        description: questionData.description,
+        orders: questionData.orders,
+        imageUrl: questionData.imageUrl || "",
+        type: questionData.type || "SingleChoice",
+        answers: questionData.answers,
+      };
+
+      const result = await updateQuestion(editingQuestionId, payload);
+
+      if (result !== null) {
+        const apiQuestion = pickQuestionFromUpdateResult(result);
+
+        setQuestions((prev) =>
+          prev.map((q) => {
+            if (getQuestionId(q) !== editingQuestionId) return q;
+
+            return {
+              ...q,
+              ...(apiQuestion || {}),
+              ...payload,
+            };
+          })
+        );
+
+        setEditingQuestionId(null);
+      }
+    } catch (error) {
+      console.error("❌ Error updating question:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQuestionId(null);
+  };
+  const handleDeleteQuestion = async (questionId) => {
+    if (!questionId) return;
+    try {
+      setLoading(true);
+
+      setQuestions((prev) =>
+        prev.filter((q) => getQuestionId(q) !== questionId)
+      );
+    } catch (err) {
+      console.error("❌ Error deleting question:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-3 space-y-3">
+      {/* Add Question Button */}
+      {!addingMode && (
+        <Button
+          onClick={() => setAddingMode("bank")}
+          size="sm"
+          variant="outline"
+          className="border-orange-300 text-orange-700 hover:bg-orange-50"
+          disabled={loading || loadingQuestions}
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Thêm câu hỏi
+        </Button>
+      )}
+
+      {/* Question Bank Selector */}
+      {addingMode === "bank" && (
+        <QuestionBankSelector
+          courseId={courseId}
+          sectionId={sectionId}
+          onAddFromBank={handleAddFromBank}
+          onSwitchToManual={() => setAddingMode("manual")}
+          onCancel={() => setAddingMode(null)}
+          loading={loading}
+        />
+      )}
+
+      {/* Manual Question Form */}
+      {addingMode === "manual" && (
+        <QuestionForm
+          onSave={handleAddManualQuestion}
+          onCancel={() => setAddingMode(null)}
+          loading={loading}
+        />
+      )}
+
+      {/* Loading State */}
+      {loadingQuestions && (
+        <div className="text-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="text-sm text-gray-600 mt-2">Đang tải câu hỏi...</p>
+        </div>
+      )}
+
+      {/* Questions List - Simple Udemy Style */}
+      {!loadingQuestions && questions.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-gray-700">
+            Câu hỏi ({questions.length})
+          </h4>
+          {questions
+            .sort((a, b) => (a.orders || 0) - (b.orders || 0))
+            .map((question, index) => {
+              const qId = getQuestionId(question) ?? index;
+              const isEditing = editingQuestionId === qId;
+
+              return (
+                <Card key={qId} className="overflow-hidden">
+                  {/* Simple Question Display - Collapsed by default */}
+                  {!isEditing && (
+                    <div className="flex items-center gap-3 p-3 bg-orange-50">
+                      {/* Order Number */}
+                      <span className="flex items-center justify-center w-8 h-8 bg-orange-200 text-orange-900 rounded-full font-semibold text-xs flex-shrink-0">
+                        #{question.orders || index + 1}
+                      </span>
+
+                      {/* Question Info */}
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-medium text-gray-900 truncate">
+                          {question.title}
+                        </h5>
+                        <div className="flex gap-2 mt-1">
+                          {question.type && (
+                            <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded">
+                              {question.type === "SingleChoice"
+                                ? "Một đáp án"
+                                : "Nhiều đáp án"}
+                            </span>
+                          )}
+                          {question.imageUrl && (
+                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
+                              <ImageIcon className="w-3 h-3" />
+                              Có ảnh
+                            </span>
+                          )}
+                          {question.answers && (
+                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                              {question.answers.length} đáp án
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleEditQuestion(question)}
+                          className="p-2 hover:bg-orange-200 rounded text-orange-600 transition-colors"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteQuestion(qId)}
+                          className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edit Form - Only shows when editing */}
+                  {isEditing && (
+                    <CardContent className="p-3 bg-white">
+                      <QuestionForm
+                        onSave={handleUpdateQuestion}
+                        onCancel={handleCancelEdit}
+                        loading={loading}
+                        initialData={{
+                          title: question.title,
+                          description: question.description || "",
+                          type: question.type || "SingleChoice",
+                          imageUrl: question.imageUrl || "",
+                          answers: question.answers || [
+                            { answerName: "", isCorrect: false },
+                            { answerName: "", isCorrect: false },
+                          ],
+                          orders: question.orders,
+                        }}
+                        isEditMode={true}
+                      />
+                    </CardContent>
+                  )}
+                </Card>
+              );
+            })}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loadingQuestions && questions.length === 0 && !addingMode && (
+        <div className="p-4 bg-gray-50 rounded-lg text-center border-2 border-dashed border-gray-300">
+          <p className="text-sm text-gray-600">Chưa có câu hỏi nào</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Nhấn "Thêm câu hỏi" để bắt đầu
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default QuizQuestionManager;
