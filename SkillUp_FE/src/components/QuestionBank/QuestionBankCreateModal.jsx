@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Descriptions, Checkbox, Input, Button, Space } from "antd";
-import { PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import { Modal, Descriptions, Checkbox, Input, Button, Space, Upload } from "antd";
+import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
+import axiosInstance from "@/lib/axios";
 
 const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
     const [questionData, setQuestionData] = useState({
@@ -48,10 +49,57 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
         setQuestionData((prev) => ({ ...prev, title: e.target.value }));
     };
 
-    const handleSave = () => {
-        const currentData = { ...questionData };
-        if (onCreate) onCreate(currentData);
-        onClose();
+    const handleSave = async () => {
+    const currentData = { ...questionData };
+
+    if (!questionData.title?.trim()) {
+        toast.error("Vui lòng nhập câu hỏi!");
+        return;
+    }
+
+    if (
+        !questionData.answers.length ||
+        questionData.answers.some(a => !a.answerName?.trim())
+    ) {
+        toast.error("Vui lòng nhập đầy đủ đáp án!");
+        return;
+    }
+
+    // Upload image only if it's a File
+    let imageUrl = null;
+    if (questionData.questionImage instanceof File) {
+        imageUrl = await uploadImage(questionData.questionImage);
+    }
+
+    currentData.questionImage = imageUrl;
+
+    if (onCreate) onCreate(currentData);
+
+    // Reset
+    setQuestionData({
+        title: "",
+        questionImage: null,
+        answers: [],
+    });
+
+    onClose();
+};
+
+
+    const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await axiosInstance.post(
+        "http://localhost:5120/api/Upload/image",
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        }
+    );
+    return response.data.data[0].url; // Assuming the API returns the image URL in data field
     };
 
     // Delete an answer
@@ -84,6 +132,13 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
         setQuestionData(updatedData);
     }
 
+    const handleQuestionImageChange = (file) => {
+        setQuestionData((prev) => ({
+            ...prev,
+            questionImage: file,
+        }));
+    };
+
 
     return (
         <Modal
@@ -102,13 +157,34 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
             >
                 {/* Question Title */}
                 <Descriptions.Item label="Câu hỏi">
-                    <Input.TextArea
-                        onChange={handleTitleChange}
-                        placeholder="Nhập câu hỏi"
-                        maxLength={255}
-                        style={{ width: "100%" }}
-                        autoSize={{ minRows: 1, maxRows: 6 }} // 👈 auto expand up to 6 lines
-                    />
+                    <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+
+                        {/* Title Textarea (Left) */}
+                        <Input.TextArea
+                            onChange={handleTitleChange}
+                            placeholder="Nhập câu hỏi"
+                            maxLength={255}
+                            autoSize={{ minRows: 4, maxRows: 4 }}
+                            style={{ width: "100%" }}
+                            required
+                        />
+
+                        {/* Image Upload (Right) */}
+                        <Upload
+                            listType="picture-card"
+                            maxCount={1}
+                            accept="image/*"
+                            beforeUpload={() => false}
+                            onChange={(info) => handleQuestionImageChange(info.file)}
+                        >
+                            {questionData?.questionImage ? null : (
+                                <div>
+                                    <UploadOutlined />
+                                    <div style={{ marginTop: 8 }}>Ảnh</div>
+                                </div>
+                            )}
+                        </Upload>
+                    </div>
                 </Descriptions.Item>
 
                 {/* Answers */}
@@ -139,7 +215,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                                                 }
                                                 placeholder="Nhập nội dung đáp án"
                                                 maxLength={255}
-                                                autoSize={{ minRows: 1, maxRows: 4 }} // 👈 auto expand as text grows
+                                                autoSize={{ minRows: 1, maxRows: 4 }} //auto expand as text grows
                                                 style={{ flex: 1, minWidth: 0 }}
                                             />
                                             <Button

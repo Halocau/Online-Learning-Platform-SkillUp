@@ -487,5 +487,26 @@ namespace SkillUp.Services.Implementations
             return await _courseRepository.SaveChangesAsync();
         }
 
-    }
+		public async Task<bool> PublishCourseForModerator(Guid courseId, Guid accountId, bool decision)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+			if (account.RoleId != 3)
+                throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng này!");
+            var course = await _courseRepository.GetCourseByIdAsync(courseId);
+            if (course == null)
+            {
+                throw new Exception("Không tìm thấy khoá học!");
+			}
+            if (course.Status != "Pending")
+            {
+                throw new Exception("Chỉ có thể duyệt các khoá học đang ở trạng thái chờ duyệt.");
+            }
+            course.Status = decision ? "Public" : "Draft";
+            course.UpdatedAt = DateTime.Now;
+            _courseRepository.UpdateCourse(course);
+            return await _courseRepository.SaveChangesAsync();
+		}
+
+
+	}
 }

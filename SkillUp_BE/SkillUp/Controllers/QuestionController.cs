@@ -144,15 +144,16 @@ namespace SkillUp.Controllers
 						data = new List<object>()
 					});
 				}
-				var success = await _questionService.AddBulkQuestionFromBankToQuizAsync(createQuestionQuizDTO, accId.Value);
+				var result = await _questionService.AddBulkQuestionFromBankToQuizAsync(createQuestionQuizDTO, accId.Value);
 
-				if (!success)
+				if (result == null)
 					return BadRequest(new APIReturn { code = 400, message = "Thêm câu hỏi thất bại" });
 
 				return Ok(new APIReturn
 				{
 					code = 200,
-					message = "Thêm câu hỏi thành công"
+					message = "Thêm câu hỏi thành công",
+                    data = new List<object> { result }
 				});
 			}
 			catch (Exception ex)
