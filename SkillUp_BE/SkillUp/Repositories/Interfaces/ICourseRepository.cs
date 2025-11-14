@@ -19,5 +19,9 @@ namespace SkillUp.Repositories.Interfaces
         Task<List<Course>> GetCoursesOfLecturerByAccountIdAsync(Guid accountId);
 
         Task<bool> ExistsAsync(Guid courseId);
+        
+        // rating
+        Task<Course?> GetByIdAsync(Guid id);
+        Task UpdateAsync(Course course);
     }
 }
