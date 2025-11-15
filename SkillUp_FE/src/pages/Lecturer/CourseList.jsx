@@ -9,6 +9,7 @@ import {
   FileText,
   Eye,
   EyeOff,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,6 +59,12 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
       icon: EyeOff,
       color: "orange",
     },
+    {
+      id: "Pending",
+      label: "Chờ duyệt",
+      icon: Check,
+      color: "green",
+    }
   ];
 
   const filteredCourses = courses.filter((course) => {

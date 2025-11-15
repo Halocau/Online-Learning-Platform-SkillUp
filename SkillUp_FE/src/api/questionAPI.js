@@ -122,7 +122,7 @@ export const addQuestionToQuiz = async (questionData) => {
 export const updateQuestion = async (questionId, questionData) => {
   try {
     const res = await axiosInstance.put(
-      `${API_URL}/UpdateQuestion/${questionId}`,
+      `${API_URL}/UpdateQuestionInQuiz/${questionId}`,
       questionData
     );
     handleAPIResponse(res, "Cập nhật câu hỏi thành công!");

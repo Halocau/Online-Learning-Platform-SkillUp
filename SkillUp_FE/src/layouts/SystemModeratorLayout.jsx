@@ -8,6 +8,9 @@ import {
   X,
   LayoutDashboard,
   TableOfContents,
+  Users2,
+  Tickets,
+  FileUser,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,17 +32,17 @@ export default function SystemModeratorLayout() {
     },
     {
       label: "Quản lý tài khoản",
-      icon: <FileText size={18} />,
+      icon: <Users2 size={18} />,
       path: "/sysmod/manage-user",
     },
     {
       label: "Quản lý phiếu hỗ trợ",
-      icon: <MessageSquare size={18} />,
+      icon: <Tickets size={18} />,
       path: "/sysmod/ticket",
     },
     {
       label: "Quản lý ứng tuyển",
-      icon: <TableOfContents size={18} />,
+      icon: <FileUser size={18} />,
       path: "/sysmod/lecturer-application",
     },
   ];

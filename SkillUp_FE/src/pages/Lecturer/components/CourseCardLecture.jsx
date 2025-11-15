@@ -37,6 +37,8 @@ function CourseCardLecture({
         return "Xuất bản";
       case "Unpublish":
         return "Chưa xuất bản";
+      case "Pending":
+        return "Đang chờ duyệt";
       default:
         return status;
     }
@@ -136,11 +138,12 @@ function CourseCardLecture({
                       className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors flex-shrink-0 ${
                         course.status === "Draft"
                           ? "bg-blue-100 text-blue-800 border border-blue-200"
-                          : course.status === "Public" ||
-                            course.status === "Published"
+                          : course.status === "Public"
                           ? "bg-green-100 text-green-800 border border-green-200"
                           : course.status === "Unpublish"
                           ? "bg-orange-100 text-orange-800 border border-orange-200"
+                          : course.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800 border border-purple-200"
                           : "bg-gray-100 text-gray-800 border border-gray-200"
                       }`}
                     >

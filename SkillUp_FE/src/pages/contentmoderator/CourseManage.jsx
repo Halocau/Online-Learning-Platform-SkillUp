@@ -20,17 +20,17 @@ import {
 import { toast } from "react-toastify";
 import { courseAPI } from "@/api/courseAPI";
 
-
 export default function CourseManagement() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [publishFilter, setPublishFilter] = useState("all");
+  const [publishTab, setPublishTab] = useState("public");
   const [sortColumn, setSortColumn] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [currentPage, setCurrentPage] = useState(1);
 
+  // Initial page
+  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   // Fetch all courses
@@ -53,7 +53,6 @@ export default function CourseManagement() {
 
   // Handle ban/unban
   const handleBanUnban = async (courseId, isCurrentlyActive) => {
-    // 1. Update UI immediately (optimistic update)
     setCourses((prevCourses) =>
       prevCourses.map((course) =>
         course.id === courseId
@@ -63,13 +62,11 @@ export default function CourseManagement() {
     );
 
     try {
-      // 2. Make API call
       await courseAPI.banUnbanCourse(courseId);
       toast.success(
         `${isCurrentlyActive ? "Cấm" : "Bỏ cấm"} khóa học thành công!`
       );
     } catch (error) {
-      // 3. If API fails, revert the change
       setCourses((prevCourses) =>
         prevCourses.map((course) =>
           course.id === courseId
@@ -77,6 +74,25 @@ export default function CourseManagement() {
             : course
         )
       );
+      toast.error("Đã xảy ra lỗi. Vui lòng thử lại.");
+      console.error(error);
+    }
+  };
+
+  // Handle approve/reject course
+  const handleApproveCourse = async (courseId, decision) => {
+    try {
+      await courseAPI.approveCourse(courseId, decision);
+
+      if (decision) {
+        toast.success("Duyệt khóa học thành công!");
+      } else {
+        toast.success("Từ chối khóa học thành công!");
+      }
+
+      // Refresh courses list
+      await fetchCourses();
+    } catch (error) {
       toast.error("Đã xảy ra lỗi. Vui lòng thử lại.");
       console.error(error);
     }
@@ -94,12 +110,12 @@ export default function CourseManagement() {
       (statusFilter === "active" && course.isActive) ||
       (statusFilter === "banned" && !course.isActive);
 
-    const matchesPublish =
-      publishFilter === "all" ||
-      (publishFilter === "public" && course.status === "Public") ||
-      (publishFilter === "unpublish" && course.status === "Unpublish");
+    const matchesPublishTab =
+      (publishTab === "public" && course.status === "Public") ||
+      (publishTab === "pending" && course.status === "Pending") ||
+      (publishTab === "unpublish" && course.status === "Unpublish");
 
-    return matchesSearch && matchesStatus && matchesPublish;
+    return matchesSearch && matchesStatus && matchesPublishTab;
   });
 
   // Sorting logic
@@ -148,130 +164,214 @@ export default function CourseManagement() {
     }
   };
 
+  // Get count for each tab
+  const publicCount = courses.filter((c) => c.status === "Public").length;
+  const pendingCount = courses.filter((c) => c.status === "Pending").length;
+  const unpublishCount = courses.filter((c) => c.status === "Unpublish").length;
+
   // Table columns with sort functionality
-  const columns = [
-    {
-      key: "title",
-      title: (
-        <div className="flex items-center gap-2">
-          Tiêu đề khóa học
-          <button
-            onClick={() => handleSort("title")}
-            className="hover:text-blue-600"
-          >
-            <ArrowsUpDownIcon className="h-4 w-4" />
-          </button>
-        </div>
-      ),
-      render: (value, item) => (
-        <div className="max-w-xs">
-          <p className="font-medium text-gray-900 truncate">{value}</p>
-          {item.description && (
-            <p className="text-xs text-gray-500 truncate mt-1">
-              {item.description}
-            </p>
-          )}
-        </div>
-      ),
-    },
-    {
-      key: "lecturerName",
-      title: (
-        <div className="flex items-center gap-2">
-          Giảng viên
-          <button
-            onClick={() => handleSort("lecturerName")}
-            className="hover:text-blue-600"
-          >
-            <ArrowsUpDownIcon className="h-4 w-4" />
-          </button>
-        </div>
-      ),
-    },
-    {
-      key: "subCategoryName",
-      title: (
-        <div className="flex items-center gap-2">
-          Danh mục
-          <button
-            onClick={() => handleSort("subCategoryName")}
-            className="hover:text-blue-600"
-          >
-            <ArrowsUpDownIcon className="h-4 w-4" />
-          </button>
-        </div>
-      ),
-    },
-    {
-      key: "enrollmentCount",
-      title: "Học viên",
-      render: (value) => (
-        <span className="font-semibold text-gray-700">{value || 0}</span>
-      ),
-    },
-    {
-      key: "rating",
-      title: "Đánh giá",
-      render: (value) => (
-        <div className="flex items-center gap-1">
-          <span className="text-yellow-500">★</span>
-          <span className="font-semibold">{value?.toFixed(1) || "0.0"}</span>
-        </div>
-      ),
-    },
-    {
-      key: "price",
-      title: "Giá",
-      render: (value) => (
-        <span className="font-semibold text-green-600">
-          {value === 0 ? "Miễn phí" : `$${value}`}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      title: "Trạng thái xuất bản",
-      render: (value) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-semibold ${value === "Public"
-            ? "bg-blue-100 text-blue-700"
-            : "bg-gray-100 text-gray-700"
-            }`}
-        >
-          {getPublishStatusText(value)}
-        </span>
-      ),
-    },
-    {
-      key: "isActive",
-      title: "Trạng thái",
-      render: (value) => (
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${value ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
-        >
-          {value ? "Hoạt động" : "Bị cấm"}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      title: "Hành động",
-      render: (_, course) => (
-        <Button
-          variant={course.isActive ? "destructive" : "default"}
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleBanUnban(course.id, course.isActive);
-          }}
-          className="min-w-[80px]"
-        >
-          {course.isActive ? "Cấm" : "Bỏ Cấm"}
-        </Button>
-      ),
-    },
-  ];
+  const getColumns = () => {
+    const baseColumns = [
+      {
+        key: "title",
+        title: (
+          <div className="flex items-center gap-2">
+            Tiêu đề khóa học
+            <button
+              onClick={() => handleSort("title")}
+              className="hover:text-blue-600"
+            >
+              <ArrowsUpDownIcon className="h-4 w-4" />
+            </button>
+          </div>
+        ),
+        render: (value, item) => (
+          <div className="max-w-xs">
+            <p className="font-medium text-gray-900 truncate">{value}</p>
+            {item.description && (
+              <p className="text-xs text-gray-500 truncate mt-1">
+                {item.description}
+              </p>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "lecturerName",
+        title: (
+          <div className="flex items-center gap-2">
+            Giảng viên
+            <button
+              onClick={() => handleSort("lecturerName")}
+              className="hover:text-blue-600"
+            >
+              <ArrowsUpDownIcon className="h-4 w-4" />
+            </button>
+          </div>
+        ),
+      },
+      {
+        key: "subCategoryName",
+        title: (
+          <div className="flex items-center gap-2">
+            Danh mục
+            <button
+              onClick={() => handleSort("subCategoryName")}
+              className="hover:text-blue-600"
+            >
+              <ArrowsUpDownIcon className="h-4 w-4" />
+            </button>
+          </div>
+        ),
+      },
+      {
+        key: "enrollmentCount",
+        title: "Học viên",
+        render: (value) => (
+          <span className="font-semibold text-gray-700">{value || 0}</span>
+        ),
+      },
+      {
+        key: "price",
+        title: "Giá",
+        render: (value) => (
+          <span className="font-semibold text-green-600">
+            {value === 0 ? "Miễn phí" : `${value} VND`}
+          </span>
+        ),
+      },
+    ];
+
+    if (publishTab === "public") {
+      return [
+        ...baseColumns,
+        {
+          key: "status",
+          title: "Trạng thái xuất bản",
+          render: (value) => (
+            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+              {getPublishStatusText(value)}
+            </span>
+          ),
+        },
+        {
+          key: "isActive",
+          title: "Trạng thái",
+          render: (value) => (
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                value
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {value ? "Hoạt động" : "Bị cấm"}
+            </span>
+          ),
+        },
+        {
+          key: "actions",
+          title: "Hành động",
+          render: (_, course) => (
+            <Button
+              variant={course.isActive ? "outline" : "default"}
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleBanUnban(course.id, course.isActive);
+              }}
+              className={`min-w-[80px] ${
+                course.isActive
+                  ? "border-red-300 text-red-600 hover:bg-red-50"
+                  : "border border-green-500 text-green-600 bg-white hover:bg-green-50"
+              }`}
+            >
+              {course.isActive ? "Cấm" : "Bỏ Cấm"}
+            </Button>
+          ),
+        },
+      ];
+    } else if (publishTab === "pending") {
+      // Pending tab columns
+      return [
+        ...baseColumns,
+        {
+          key: "status",
+          title: "Trạng thái",
+          render: (value) => (
+            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+              {getPublishStatusText(value)}
+            </span>
+          ),
+        },
+        {
+          key: "actions",
+          title: "Hành động",
+          render: (_, course) => (
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleApproveCourse(course.id, true);
+                }}
+                className="min-w-[70px] bg-green-600 hover:bg-green-700"
+              >
+                Duyệt
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleApproveCourse(course.id, false);
+                }}
+                className="min-w-[70px] border-red-300 text-red-600 hover:bg-red-50"
+              >
+                Từ chối
+              </Button>
+            </div>
+          ),
+        },
+      ];
+    } else {
+      // Unpublish tab columns (view-only, no actions)
+      // Possible actions to add later:
+      // - Delete button to permanently remove unpublished courses
+      // - Ban/Unban to prevent courses from being published
+      // - Force Publish to directly publish without approval
+      return [
+        ...baseColumns,
+        {
+          key: "status",
+          title: "Trạng thái",
+          render: (value) => (
+            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+              {getPublishStatusText(value)}
+            </span>
+          ),
+        },
+        {
+          key: "isActive",
+          title: "Trạng thái",
+          render: (value) => (
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                value
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {value ? "Hoạt động" : "Bị cấm"}
+            </span>
+          ),
+        },
+      ];
+    }
+  };
+
+  const columns = getColumns();
 
   if (loading) {
     return (
@@ -289,8 +389,80 @@ export default function CourseManagement() {
           <h1 className="text-3xl font-bold text-gray-900">Quản lý khóa học</h1>
         </div>
 
+        {/* Tabs */}
+        <div className="bg-white rounded-t-xl shadow-sm border-b">
+          <div className="flex gap-1 p-1">
+            <button
+              onClick={() => {
+                setPublishTab("public");
+                setCurrentPage(1);
+              }}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                publishTab === "public"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Đã công khai
+              <span
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  publishTab === "public"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {publicCount}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setPublishTab("pending");
+                setCurrentPage(1);
+              }}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                publishTab === "pending"
+                  ? "bg-amber-600 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Đang chờ duyệt
+              <span
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  publishTab === "pending"
+                    ? "bg-amber-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {pendingCount}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setPublishTab("unpublish");
+                setCurrentPage(1);
+              }}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                publishTab === "unpublish"
+                  ? "bg-gray-600 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Chưa xuất bản
+              <span
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  publishTab === "unpublish"
+                    ? "bg-gray-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {unpublishCount}
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Filters and Search */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
+        <div className="bg-white p-4 shadow-sm">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
@@ -307,52 +479,37 @@ export default function CourseManagement() {
               />
             </div>
 
-            {/* Ban Status Filter */}
-            <div className="w-full lg:w-48">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <FunnelIcon className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Lọc theo trạng thái" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả khóa học</SelectItem>
-                  <SelectItem value="active">Đang hoạt động</SelectItem>
-                  <SelectItem value="banned">Đã bị cấm</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Publish Status Filter */}
-            <div className="w-full lg:w-48">
-              <Select value={publishFilter} onValueChange={setPublishFilter}>
-                <SelectTrigger>
-                  <FunnelIcon className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Lọc xuất bản" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                  <SelectItem value="public">Công khai</SelectItem>
-                  <SelectItem value="unpublish">Chưa xuất bản</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Ban Status Filter - Only show for Public tab */}
+            {publishTab === "public" && (
+              <div className="w-full lg:w-48">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <FunnelIcon className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Lọc theo trạng thái" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả khóa học</SelectItem>
+                    <SelectItem value="active">Đang hoạt động</SelectItem>
+                    <SelectItem value="banned">Đã bị cấm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Clear Filters */}
             {(searchTerm ||
-              statusFilter !== "all" ||
-              publishFilter !== "all") && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm("");
-                    setStatusFilter("all");
-                    setPublishFilter("all");
-                    setCurrentPage(1);
-                  }}
-                >
-                  Xóa bộ lọc
-                </Button>
-              )}
+              (publishTab === "public" && statusFilter !== "all")) && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("all");
+                  setCurrentPage(1);
+                }}
+              >
+                Xóa bộ lọc
+              </Button>
+            )}
           </div>
 
           {/* Results count */}
@@ -363,7 +520,7 @@ export default function CourseManagement() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-b-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left border-collapse">
               <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
@@ -383,7 +540,11 @@ export default function CourseManagement() {
                       colSpan={columns.length}
                       className="text-center text-gray-400 py-8"
                     >
-                      Không tìm thấy khóa học
+                      {publishTab === "pending"
+                        ? "Không có khóa học nào đang chờ duyệt"
+                        : publishTab === "unpublish"
+                        ? "Không có khóa học nào chưa xuất bản"
+                        : "Không tìm thấy khóa học"}
                     </td>
                   </tr>
                 ) : (
