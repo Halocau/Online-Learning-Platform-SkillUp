@@ -94,4 +94,34 @@ export const courseAPI = {
       throw error;
     }
   },
+
+  // Publish course
+  publishCourse: async (courseId) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_BASE_URL}/Publish-Course/${courseId}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error publishing course:", error);
+      throw error;
+    }
+  },
+
+  // Approve or reject course
+  approveCourse: async (courseId, decision) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_BASE_URL}/Approve-Course/${courseId}`,
+        null,
+        {
+          params: { decision },
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error("Error approving course:", error);
+      throw error;
+    }
+  },
 };

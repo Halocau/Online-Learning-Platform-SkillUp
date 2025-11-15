@@ -56,7 +56,7 @@ function AppRouter() {
         <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />
         <Route path="/student/*" element={<StudentRoutes />} />
-        <Route path="lecturer/*"  element={<LecturerRoutes />}/>
+        <Route path="lecturer/*" element={<LecturerRoutes />} />
         <Route path="/ticket" element={<TicketList />} />
         <Route path="/ticket/:ticketCode" element={<TicketDetail />} />
 

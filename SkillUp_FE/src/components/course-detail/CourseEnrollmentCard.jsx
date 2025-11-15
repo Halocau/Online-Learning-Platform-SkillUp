@@ -31,7 +31,7 @@ export default function CourseEnrollmentCard({ course }) {
     // Add to cart first, then navigate to cart
     const result = await addToCart(course.id, course.price);
     if (result.success) {
-      navigate('/cart');
+      navigate("/cart");
     } else {
       toast.error(result.message);
     }

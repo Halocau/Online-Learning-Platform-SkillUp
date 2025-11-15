@@ -26,6 +26,8 @@ function CourseDetailManagement() {
   const [activeTab, setActiveTab] = useState("landing");
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pricingCompleted, setPricingCompleted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const tabs = [
     {
@@ -58,13 +60,18 @@ function CourseDetailManagement() {
     loadCourseDetail();
   }, [courseId]);
 
-  const loadCourseDetail = async () => {
+  const loadCourseDetail = async (options = {}) => {
     try {
       setLoading(true);
       const response = await courseAPI.getCourseDetail(courseId);
 
       if (response.data.code === 200 && response.data.data.length > 0) {
         setCourse(response.data.data[0]);
+
+        // If pricing was just completed, mark it
+        if (options.pricingCompleted) {
+          setPricingCompleted(true);
+        }
       } else {
         toast.error("Không tìm thấy khóa học");
         navigate("/lecturer/courses");
@@ -94,13 +101,13 @@ function CourseDetailManagement() {
     navigate("/lecturer/courses");
   };
 
-  // Check if each step is completed
+  // Check if each step is completed (excluding voucher for submission requirement)
   const isStepCompleted = (tabId) => {
     if (!course) return false;
 
     switch (tabId) {
       case "landing":
-        return true;
+        return true; // Landing page is always considered complete once course is created
       case "curriculum":
         return !!(
           course.sections &&
@@ -110,31 +117,62 @@ function CourseDetailManagement() {
           )
         );
       case "pricing":
-        return course.price !== null && course.price !== undefined;
+        // Only mark as complete if price has been manually saved
+        return pricingCompleted;
       case "voucher":
-        return true;
+        return true; // Voucher is optional
       default:
         return false;
     }
   };
 
-  // Calculate overall progress
+  // Calculate overall progress (excluding voucher)
   const calculateProgress = () => {
-    const completedSteps = tabs.filter((tab) => isStepCompleted(tab.id)).length;
-    return Math.round((completedSteps / tabs.length) * 100);
+    const requiredTabs = tabs.filter((tab) => tab.id !== "voucher");
+    const completedSteps = requiredTabs.filter((tab) =>
+      isStepCompleted(tab.id)
+    ).length;
+    return Math.round((completedSteps / requiredTabs.length) * 100);
   };
 
-  const handleSubmitForPreview = () => {
-    // Check if all required steps are completed
-    const allCompleted = tabs.every((tab) => isStepCompleted(tab.id));
+  const handleSubmitForPreview = async () => {
+    // Check if all required steps are completed (excluding voucher)
+    const requiredTabs = tabs.filter((tab) => tab.id !== "voucher");
+    const allCompleted = requiredTabs.every((tab) => isStepCompleted(tab.id));
 
     if (!allCompleted) {
       toast.warning(
-        "Vui lòng hoàn thành tất cả các bước trước khi gửi xem trước"
+        "Vui lòng hoàn thành tất cả các bước trước khi đề xuất khóa học"
       );
       return;
     }
-    toast.info("Tính năng gửi xem trước đang được phát triển");
+
+    try {
+      setSubmitting(true);
+      const response = await courseAPI.publishCourse(courseId);
+
+      if (response.data.code === 200) {
+        toast.success(
+          "Đề xuất khóa học thành công! Đang chuyển về danh sách khóa học...",
+          {
+            autoClose: 2000,
+          }
+        );
+
+        // Navigate back after 2 seconds
+        setTimeout(() => {
+          navigate("/lecturer/courses");
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error publishing course:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Không thể đề xuất khóa học. Vui lòng thử lại."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component;
@@ -224,6 +262,8 @@ function CourseDetailManagement() {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 const isCompleted = isStepCompleted(tab.id);
+                const isRequired = tab.id !== "voucher";
+
                 return (
                   <button
                     key={tab.id}
@@ -264,6 +304,11 @@ function CourseDetailManagement() {
                           }`}
                         />
                         <span className="text-sm">{tab.label}</span>
+                        {!isRequired && (
+                          <span className="text-xs text-gray-400">
+                            (Tùy chọn)
+                          </span>
+                        )}
                       </div>
                       {isCompleted && !isActive && (
                         <p className="text-xs text-green-600 mt-0.5 ml-6">
@@ -290,13 +335,17 @@ function CourseDetailManagement() {
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-600">Đã hoàn thành:</span>
                   <span className="font-bold text-blue-600">
-                    {tabs.filter((tab) => isStepCompleted(tab.id)).length}/
-                    {tabs.length} bước
+                    {
+                      tabs.filter(
+                        (tab) => tab.id !== "voucher" && isStepCompleted(tab.id)
+                      ).length
+                    }
+                    /{tabs.filter((tab) => tab.id !== "voucher").length} bước
                   </span>
                 </div>
                 {progress === 100 && (
                   <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded text-xs text-green-700 font-medium text-center">
-                    Tất cả các bước đã hoàn thành! Bạn có thể gửi xem
+                    Tất cả các bước đã hoàn thành! Bạn có thể đề xuất khóa học
                   </div>
                 )}
               </div>
@@ -305,7 +354,7 @@ function CourseDetailManagement() {
             {/* Submit for Preview Button */}
             <button
               onClick={handleSubmitForPreview}
-              disabled={progress < 100}
+              disabled={progress < 100 || submitting}
               className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 mt-2 ${
                 progress === 100
                   ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 text-green-800 cursor-pointer"
@@ -319,10 +368,16 @@ function CourseDetailManagement() {
                     : "bg-gray-300 text-gray-500"
                 }`}
               >
-                <Eye className="w-4 h-4" />
+                {submitting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </div>
               <div className="flex-1">
-                <span className="text-sm font-semibold">Đề xuất khóa học</span>
+                <span className="text-sm font-semibold">
+                  {submitting ? "Đang gửi..." : "Đề xuất khóa học"}
+                </span>
                 {progress < 100 && (
                   <p className="text-xs text-gray-500 mt-0.5">
                     Hoàn thành {100 - progress}% để đề xuất khóa học

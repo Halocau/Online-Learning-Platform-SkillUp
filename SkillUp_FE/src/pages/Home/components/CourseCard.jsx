@@ -32,7 +32,9 @@ export default function CourseCard({ course }) {
             {course.price === 0 ? (
               <span className="font-bold text-green-600">Miễn phí</span>
             ) : (
-              <span className="font-bold">₫{course.price.toLocaleString()}</span>
+              <span className="font-bold">
+                ₫{course.price.toLocaleString()}
+              </span>
             )}
           </div>
         </CardContent>
