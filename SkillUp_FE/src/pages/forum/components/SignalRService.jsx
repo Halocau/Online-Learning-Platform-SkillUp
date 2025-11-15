@@ -1,64 +1,75 @@
+// Đường dẫn: src/pages/forum/components/SignalRService.jsx
+// (Hãy copy và dán toàn bộ code này để thay thế file cũ)
+
 import * as signalR from "@microsoft/signalr";
 
 class SignalRService {
   constructor() {
     this.connection = null;
     this.isConnected = false;
+    this.connectionPromise = null; // Để tránh gọi .start() nhiều lần
   }
 
-  async startConnection() {
-    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
-    
+  startConnection() {
+    // Nếu đã kết nối, trả về promise đã hoàn thành
+    if (this.connection && this.isConnected) {
+      return Promise.resolve(this.connection);
+    }
+
+    // Nếu đang kết nối, trả về promise đang chờ
+    if (this.connectionPromise) {
+      return this.connectionPromise;
+    }
+
+    const token = localStorage.getItem("accessToken");
+
     if (!token) {
-      console.warn("No authentication token found for SignalR connection");
-      return;
+      console.warn("Chưa đăng nhập, không thể kết nối SignalR.");
+      return Promise.reject("Không có token");
     }
 
-    try {
-      // Build the connection with proper CORS configuration
-      this.connection = new signalR.HubConnectionBuilder()
-        .withUrl("http://localhost:5120/commentHub", {
-          accessTokenFactory: () => token,
-          // Try different transport methods if WebSockets fail
-          transport: signalR.HttpTransportType.WebSockets | 
-                    signalR.HttpTransportType.ServerSentEvents | 
-                    signalR.HttpTransportType.LongPolling,
-          // Include credentials for CORS
-          withCredentials: true,
-          // Headers for CORS
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          }
-        })
-        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000]) // Retry intervals
-        .configureLogging(signalR.LogLevel.Warning) // Reduce log verbosity
-        .build();
+    this.connection = new signalR.HubConnectionBuilder()
+      // SỬA URL NÀY NẾU CẦN (port 5120 là port backend của bạn)
+      .withUrl("http://localhost:5120/commentHub", { 
+        accessTokenFactory: () => token,
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000]) // Tự động kết nối lại
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
 
-      // Connection event handlers
-      this.connection.onreconnecting(() => {
-        console.log("🔄 SignalR reconnecting...");
-        this.isConnected = false;
-      });
-
-      this.connection.onreconnected(() => {
-        console.log("✅ SignalR reconnected");
-        this.isConnected = true;
-      });
-
-      this.connection.onclose(() => {
-        console.log("❌ SignalR connection closed");
-        this.isConnected = false;
-      });
-
-      // Start connection
-      await this.connection.start();
-      this.isConnected = true;
-      console.log("✅ SignalR connected successfully");
-    } catch (error) {
-      console.error("❌ SignalR connection failed:", error);
+    // Các hàm lắng nghe trạng thái kết nối
+    this.connection.onreconnecting(() => {
+      console.log("🔄 SignalR đang kết nối lại...");
       this.isConnected = false;
-      throw error;
-    }
+    });
+
+    this.connection.onreconnected(() => {
+      console.log("✅ SignalR đã kết nối lại");
+      this.isConnected = true;
+    });
+
+    this.connection.onclose(() => {
+      console.log("❌ SignalR đã đóng kết nối");
+      this.isConnected = false;
+    });
+
+    // Bắt đầu kết nối
+    this.connectionPromise = this.connection
+      .start()
+      .then(() => {
+        this.isConnected = true;
+        console.log("✅ SignalR đã kết nối thành công");
+        this.connectionPromise = null; // Reset promise khi thành công
+        return this.connection;
+      })
+      .catch((error) => {
+        console.error("❌ Lỗi kết nối SignalR:", error);
+        this.isConnected = false;
+        this.connectionPromise = null; // Reset promise khi thất bại
+        throw error;
+      });
+    
+    return this.connectionPromise;
   }
 
   async stopConnection() {
@@ -66,90 +77,82 @@ class SignalRService {
       try {
         await this.connection.stop();
         this.isConnected = false;
-        console.log("SignalR connection stopped");
+        console.log("SignalR đã dừng kết nối");
       } catch (error) {
-        console.error("Error stopping SignalR connection:", error);
+        console.error("Lỗi khi dừng SignalR:", error);
       }
     }
   }
 
-  // Join a post's comment room
-  async joinPostRoom(postId) {
+  // === CÁC HÀM TƯƠNG TÁC VỚI HUB ===
+
+  // Tên hàm phải khớp với CommentHub.cs
+  async joinPostGroup(postId) {
     if (!this.isConnected) {
-      await this.startConnection();
+      // Sẽ đợi startConnection() hoàn thành nếu nó đang chạy
+      await this.startConnection(); 
     }
-    
     try {
-      await this.connection.invoke("JoinPostRoom", postId);
-      console.log(`Joined room for post ${postId}`);
+      await this.connection.invoke("JoinPostGroup", postId);
+      console.log(`Đã tham gia group ${postId}`);
     } catch (error) {
-      console.error("Error joining post room:", error);
+      console.error("Lỗi khi tham gia group:", error);
     }
   }
 
-  // Leave a post's comment room
-  async leavePostRoom(postId) {
+  // Tên hàm phải khớp với CommentHub.cs
+  async leavePostGroup(postId) {
     if (this.isConnected) {
       try {
-        await this.connection.invoke("LeavePostRoom", postId);
-        console.log(`Left room for post ${postId}`);
+        await this.connection.invoke("LeavePostGroup", postId);
+        console.log(`Đã rời group ${postId}`);
       } catch (error) {
-        console.error("Error leaving post room:", error);
+        console.error("Lỗi khi rời group:", error);
       }
     }
   }
 
-  // Register event handlers for real-time updates
-  onCommentCreated(callback) {
+  // --- CÁC HÀM LẮNG NGHE (Tên khớp với Controller) ---
+
+  onCommentReceived(callback) {
     if (this.connection) {
-      this.connection.on("CommentCreated", callback);
+      this.connection.on("ReceiveComment", callback);
     }
   }
 
   onCommentUpdated(callback) {
     if (this.connection) {
-      this.connection.on("CommentUpdated", callback);
+      this.connection.on("UpdateComment", callback);
     }
   }
 
   onCommentDeleted(callback) {
     if (this.connection) {
-      this.connection.on("CommentDeleted", callback);
+      this.connection.on("DeleteComment", callback);
     }
   }
 
-  onCommentLiked(callback) {
-    if (this.connection) {
-      this.connection.on("CommentLiked", callback);
-    }
-  }
+  // --- CÁC HÀM GỠ LẮNG NGHE ---
 
-  // Remove event handlers
-  offCommentCreated() {
+  offCommentReceived() {
     if (this.connection) {
-      this.connection.off("CommentCreated");
+      this.connection.off("ReceiveComment");
     }
   }
 
   offCommentUpdated() {
     if (this.connection) {
-      this.connection.off("CommentUpdated");
+      this.connection.off("UpdateComment");
     }
   }
 
   offCommentDeleted() {
     if (this.connection) {
-      this.connection.off("CommentDeleted");
-    }
-  }
-
-  offCommentLiked() {
-    if (this.connection) {
-      this.connection.off("CommentLiked");
+      this.connection.off("DeleteComment");
     }
   }
 }
 
-// Create singleton instance
+// Xuất đi một đối tượng duy nhất (singleton)
 const signalRService = new SignalRService();
 export default signalRService;
