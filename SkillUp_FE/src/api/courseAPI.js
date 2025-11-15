@@ -94,4 +94,17 @@ export const courseAPI = {
       throw error;
     }
   },
+
+  // Get student enrolled courses
+  getStudentEnrolledCourses: async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_BASE_URL}/student-enrolled-courses`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching enrolled courses:", error);
+      throw error;
+    }
+  },
 };

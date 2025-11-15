@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.DTOs.Course;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 
@@ -19,7 +20,7 @@ namespace SkillUp.Repositories.Implementations
         public async Task<List<Course>> GetAllCourseAsync()
         {
             return await _context.Courses
-                .Where(c=> c.Status !="Draft")
+                .Where(c => c.Status != "Draft")
                                  .Include(c => c.Lecturer)
                                  .ThenInclude(l => l.Account)
                                  .Include(c => c.SubCategory)
@@ -103,7 +104,7 @@ namespace SkillUp.Repositories.Implementations
                 .Where(c => c.Lecturer != null && c.Lecturer.AccountId == accountId)
                 .Include(c => c.SubCategory)
                     .ThenInclude(sc => sc.Category)
-                .Where(c => c.IsActive) 
+                .Where(c => c.IsActive)
                 .ToListAsync();
         }
         public async Task<bool> SaveChangesAsync()
@@ -124,7 +125,7 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.Courses
                   .Where(c => c.IsActive == true
-                         && c.Status == "Public"                 
+                         && c.Status == "Public"
                          && c.SubCategory.CategoryId == id)
                   .Include(c => c.Lecturer)
               .ThenInclude(l => l.Account)
@@ -142,6 +143,37 @@ namespace SkillUp.Repositories.Implementations
         {
             _context.Courses.Update(course);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<CourseStudentEnrollDTO>> GetEnrolledCoursesByAccountIdAsync(Guid accountId)
+        {
+            var enrolledCourses = await _context.Enrollments
+                .Where(e => e.Student.AccountId == accountId && e.Course.Status != "Draft")
+                .Include(e => e.Course)
+                    .ThenInclude(c => c.Lecturer)
+                    .ThenInclude(l => l.Account)
+                .Include(e => e.Course)
+                    .ThenInclude(c => c.SubCategory)
+                .Select(e => new CourseStudentEnrollDTO
+                {
+                    Id = e.Course.Id,
+                    Title = e.Course.Title,
+                    Description = e.Course.Description,
+                    Price = e.Course.Price,
+                    Image = e.Course.Image,
+                    Rating = e.Course.Rating,
+                    EnrollmentCount = e.Course.EnrollmentCount,
+                    CreatedAt = e.Course.CreatedAt,
+                    UpdatedAt = e.Course.UpdatedAt,
+                    LecturerName = e.Course.Lecturer.Account.Fullname,
+                    SubCategoryName = e.Course.SubCategory.Name,
+                    SubCategoryId = e.Course.SubCategoryId,
+                    EnrolledAt = e.EnrolledAt
+                })
+                .OrderByDescending(c => c.EnrolledAt)
+                .ToListAsync();
+
+            return enrolledCourses;
         }
     }
 }

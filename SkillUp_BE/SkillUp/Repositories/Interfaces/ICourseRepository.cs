@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.Models;
+﻿using SkillUp.BussinessObjects.DTOs.Course;
+using SkillUp.BussinessObjects.Models;
 
 namespace SkillUp.Repositories.Interfaces
 {
@@ -19,9 +20,12 @@ namespace SkillUp.Repositories.Interfaces
         Task<List<Course>> GetCoursesOfLecturerByAccountIdAsync(Guid accountId);
 
         Task<bool> ExistsAsync(Guid courseId);
-        
+
         // rating
         Task<Course?> GetByIdAsync(Guid id);
         Task UpdateAsync(Course course);
+
+        // enrolled courses
+        Task<List<CourseStudentEnrollDTO>> GetEnrolledCoursesByAccountIdAsync(Guid accountId);
     }
 }
