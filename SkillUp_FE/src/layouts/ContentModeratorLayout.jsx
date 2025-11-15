@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   FileText,
-  MessageSquare,
   LogOut,
   Menu,
   X,
   LayoutDashboard,
+  Signpost,
+  BookOpen,
+  MessageCircle,
+  ChartBarStacked,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -21,18 +24,46 @@ export default function ModeratorLayout() {
   };
 
   const menuItems = [
-    { label: "Bảng điều khiển", icon: <LayoutDashboard size={18} />, path: "/contentmod" },
-    { label: "Quản lý tin tức", icon: <FileText size={18} />, path: "/contentmod/news" },
-    { label: "Quản lý khóa học", icon: <MessageSquare size={18} />, path: "/contentmod/course" },
-    { label: "Quản lý bài đăng", icon: <MessageSquare size={18} />, path: "/contentmod/forum" },
-    { label: "Báo cáo bình luận", icon: <MessageSquare size={18} />, path: "/contentmod/rpcmt" },
-    { label: "Quản lý danh mục", icon: <MessageSquare size={18} />, path: "/contentmod/category"},
+    {
+      label: "Bảng điều khiển",
+      icon: <LayoutDashboard size={18} />,
+      path: "/contentmod",
+    },
+    {
+      label: "Quản lý tin tức",
+      icon: <FileText size={18} />,
+      path: "/contentmod/news",
+    },
+    {
+      label: "Quản lý khóa học",
+      icon: <BookOpen size={18} />,
+      path: "/contentmod/course",
+    },
+    {
+      label: "Quản lý bài đăng",
+      icon: <Signpost size={18} />,
+      path: "/contentmod/forum",
+    },
+    {
+      label: "Báo cáo bình luận",
+      icon: <MessageCircle size={18} />,
+      path: "/contentmod/rpcmt",
+    },
+    {
+      label: "Quản lý danh mục",
+      icon: <ChartBarStacked size={18} />,
+      path: "/contentmod/category",
+    },
   ];
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className={`${collapsed ? "w-16" : "w-60"} bg-white border-r flex flex-col transition-all duration-300`}>
+      <aside
+        className={`${
+          collapsed ? "w-16" : "w-60"
+        } bg-white border-r flex flex-col transition-all duration-300`}
+      >
         <div className="flex items-center justify-between px-4 h-16 border-b">
           <span className="text-xl font-bold text-indigo-600">
             {collapsed ? "SU" : "SkillUp ContentMod"}
