@@ -48,7 +48,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
       color: "gray",
     },
     {
-      id: "Published",
+      id: "Public",
       label: "Đã xuất bản",
       icon: Eye,
       color: "green",
