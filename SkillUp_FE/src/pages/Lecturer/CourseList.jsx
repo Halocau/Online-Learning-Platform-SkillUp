@@ -64,7 +64,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
       label: "Chờ duyệt",
       icon: Check,
       color: "green",
-    }
+    },
   ];
 
   const filteredCourses = courses.filter((course) => {
