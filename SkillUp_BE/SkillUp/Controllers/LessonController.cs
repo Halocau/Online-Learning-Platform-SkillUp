@@ -102,7 +102,7 @@ namespace SkillUp.Controllers
 
                 var accountId = _currentUserService.UserId ?? Guid.Empty;
                 var lesson = await _lessonService.CreateLessonAsync(dto, accountId);
-                return Ok(new APIReturn(200, "Tạo bài học thành công", new List<object>()));
+                return Ok(new APIReturn(200, "Tạo bài học thành công", new List<object> { lesson }));
             }
             catch (ArgumentException ex)
             {
