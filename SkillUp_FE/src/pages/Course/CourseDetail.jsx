@@ -9,10 +9,11 @@ import MobileStickyBar from "@/components/course-detail/StickyBar";
 import CourseCurriculumSection from "@/components/course-detail/CourseCurriculumnSection";
 import CourseDescriptionSection from "@/components/course-detail/CourseDescription";
 import ReviewsSection from "@/components/course-detail/ReviewSection";
-import RelatedTopicsSection from "@/components/course-detail/RelatedTopic";
+
 import MoreCoursesByLecturerSection from "@/components/course-detail/MoreCourseBy";
 import CourseEnrollmentCard from "@/components/course-detail/CourseEnrollmentCard";
 import LecturerSection from "@/components/course-detail/LecturerSection";
+import RelatedTopicsSection from "@/components/course-detail/RelatedTopic";
 
 export default function CourseDetail() {
   const { courseId } = useParams();
@@ -97,10 +98,14 @@ export default function CourseDetail() {
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
           <div className="lg:col-span-2 space-y-8">
             <CourseDescriptionSection description={course.description} />
+            
             <RelatedTopicsSection
+              categoryId={course.categoryId}
               categoryName={course.categoryName}
+              subCategoryId={course.subCategoryId}
               subCategoryName={course.subCategoryName}
             />
+            
             <CourseCurriculumSection sections={course.sections} />
 
             <LecturerSection

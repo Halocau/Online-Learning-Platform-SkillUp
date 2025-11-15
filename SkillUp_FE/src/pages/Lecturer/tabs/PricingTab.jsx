@@ -38,9 +38,9 @@ function PricingTab({ course, onUpdate }) {
 
       if (response.data.code === 200) {
         toast.success("Cập nhật giá khóa học thành công!");
-        // Gọi callback để update course data
+        // Gọi callback để update course data và đánh dấu pricing step là completed
         if (onUpdate) {
-          onUpdate();
+          onUpdate({ pricingCompleted: true });
         }
       }
     } catch (error) {
@@ -143,9 +143,6 @@ function PricingTab({ course, onUpdate }) {
                 min="0"
                 step="1000"
               />
-              <p className="mt-1 text-xs text-gray-500">
-                💡 Khuyến nghị: 100,000đ - 5,000,000đ
-              </p>
             </div>
           )}
 
@@ -156,12 +153,6 @@ function PricingTab({ course, onUpdate }) {
           >
             {loading ? "Đang lưu..." : "Lưu thay đổi"}
           </Button>
-
-          <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-            <p className="text-sm text-blue-800">
-              💡 Giá khóa học có thể thay đổi bất cứ lúc nào
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

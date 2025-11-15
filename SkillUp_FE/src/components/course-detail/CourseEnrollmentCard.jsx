@@ -57,6 +57,12 @@ export default function CourseEnrollmentCard({ course }) {
       toast.error(error.message || "Có lỗi xảy ra khi thanh toán");
     } finally {
       setPaymentLoading(false);
+    // Add to cart first, then navigate to cart
+    const result = await addToCart(course.id, course.price);
+    if (result.success) {
+      navigate("/cart");
+    } else {
+      toast.error(result.message);
     }
   };
 

@@ -13,7 +13,6 @@ export default function MobileStickyBar({ course }) {
   const navigate = useNavigate();
 
   const handleAddToCart = async () => {
-    // Guest users có thể add to cart
     const result = await addToCart(course.id, course.price);
     if (result.success) {
       toast.success(result.message);

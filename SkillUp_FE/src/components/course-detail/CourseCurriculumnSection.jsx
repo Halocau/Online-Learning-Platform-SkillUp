@@ -8,9 +8,9 @@ import {
   Lock,
   Unlock,
   Eye,
-  ClipboardList,
   Clock,
   Target,
+  BadgeQuestionMark,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -106,11 +106,12 @@ export default function CourseCurriculumSection({ sections }) {
         </CardContent>
       </Card>
 
-      {/* Video Preview Modal */}
+      {/* Video Preview Modal - Now passing sections data */}
       <VideoPreviewModal
         isOpen={isPreviewOpen}
         onClose={handleClosePreview}
         lesson={previewLesson}
+        sections={sections}
       />
     </>
   );
@@ -256,15 +257,13 @@ function QuizItem({ quiz, index }) {
     <div className="flex items-center gap-3 py-3 px-4 bg-white rounded-lg border border-gray-200 hover:border-blue-200 transition-all group">
       {/* Quiz Icon */}
       <div className="flex-shrink-0">
-        <ClipboardList className="w-5 h-5 text-blue-500" />
+        <BadgeQuestionMark className="w-5 h-5 text-orange-500" />
       </div>
 
-      {/* Quiz Order */}
       <span className="text-xs font-bold text-gray-400 w-8 flex-shrink-0">
         {quiz.orders}
       </span>
 
-      {/* Quiz Title */}
       <div className="flex-1 min-w-0">
         <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium line-clamp-1">
           {quiz.title}
@@ -300,7 +299,6 @@ function QuizItem({ quiz, index }) {
         </span>
       </div>
 
-      {/* Locked Icon for Quizzes (assuming quizzes are not free) */}
       <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
         <Lock className="w-4 h-4" />
       </div>
