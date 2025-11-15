@@ -101,6 +101,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<FtpVideoUploadService>();
+builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationService>();

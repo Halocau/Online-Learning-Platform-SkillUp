@@ -28,7 +28,7 @@ export default function CommentSection({ postId }) {
 
   // User info
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const userId = currentUser.id ?? currentUser.Id;
+  const userId = currentUser.userId ?? currentUser.Id;
   const userName = currentUser.name ?? currentUser.userName ?? "Anonymous";
   const userAvatar =
     currentUser.avatarUrl ||

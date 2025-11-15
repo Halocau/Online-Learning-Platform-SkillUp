@@ -4,9 +4,12 @@ import { ShoppingCart, Zap } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { paymentAPI } from "@/api/paymentAPI";
+import { useState } from "react";
 
 export default function MobileStickyBar({ course }) {
   const { addToCart, loading } = useCart();
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleAddToCart = async () => {
@@ -27,11 +30,21 @@ export default function MobileStickyBar({ course }) {
       return;
     }
 
-    const result = await addToCart(course.id, course.price);
-    if (result.success) {
-      navigate('/cart');
-    } else {
-      toast.error(result.message);
+    try {
+      setPaymentLoading(true);
+      const result = await paymentAPI.createCoursePayment(course.id);
+      
+      if (result.success && result.checkoutUrl) {
+        // Chuyển sang trang PayOS
+        window.location.href = result.checkoutUrl;
+      } else {
+        toast.error(result.message || "Không thể tạo thanh toán");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(error.message || "Có lỗi xảy ra khi thanh toán");
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -54,7 +67,7 @@ export default function MobileStickyBar({ course }) {
         </div>
         <Button
           onClick={handleAddToCart}
-          disabled={loading}
+          disabled={loading || paymentLoading}
           variant="outline"
           className="border-2 border-[#FFD54F] text-gray-900 hover:bg-[#FFD54F]/10 px-4"
         >
@@ -62,11 +75,11 @@ export default function MobileStickyBar({ course }) {
         </Button>
         <Button
           onClick={handleBuyNow}
-          disabled={loading}
+          disabled={loading || paymentLoading}
           className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-bold px-6"
         >
           <Zap className="w-4 h-4 mr-1" />
-          Mua ngay
+          {paymentLoading ? "..." : "Mua ngay"}
         </Button>
       </div>
     </div>

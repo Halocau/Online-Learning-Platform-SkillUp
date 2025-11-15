@@ -27,6 +27,7 @@ import LecturerRoutes from "./LecturerRoute";
 import MyCart from "@/pages/Cart/MyCart";
 import CourseDetail from "@/pages/Course/CourseDetail";
 import CoursesByCategory from "@/pages/Course/CoursesByCategory";
+import PaymentResult from "@/pages/Payment/PaymentResult";
 import LecturerPendingGuard from "./LecturerPendingGuard";
 
 function AppRouter() {
@@ -39,6 +40,7 @@ function AppRouter() {
         <Route path="/resend-verification" element={<ResendVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/payment/result" element={<PaymentResult />} />
         <Route path="/profile" element={<MyProfile />} />
 
         <Route path="/" element={<MainLayout />}>

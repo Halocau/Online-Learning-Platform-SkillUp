@@ -5,9 +5,12 @@ import { ShoppingCart, Zap, CheckCircle } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { paymentAPI } from "@/api/paymentAPI";
+import { useState } from "react";
 
 export default function CourseEnrollmentCard({ course }) {
   const { addToCart, loading } = useCart();
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleAddToCart = async () => {
@@ -28,12 +31,21 @@ export default function CourseEnrollmentCard({ course }) {
       return;
     }
 
-    // Add to cart first, then navigate to cart
-    const result = await addToCart(course.id, course.price);
-    if (result.success) {
-      navigate('/cart');
-    } else {
-      toast.error(result.message);
+    try {
+      setPaymentLoading(true);
+      const result = await paymentAPI.createCoursePayment(course.id);
+      
+      if (result.success && result.checkoutUrl) {
+        // Chuyển sang trang PayOS
+        window.location.href = result.checkoutUrl;
+      } else {
+        toast.error(result.message || "Không thể tạo thanh toán");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(error.message || "Có lỗi xảy ra khi thanh toán");
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -75,16 +87,16 @@ export default function CourseEnrollmentCard({ course }) {
         <div className="space-y-3">
           <Button
             onClick={handleBuyNow}
-            disabled={loading}
+            disabled={loading || paymentLoading}
             className="w-full bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-bold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
           >
             <Zap className="w-5 h-5 mr-2" />
-            Mua ngay
+            {paymentLoading ? "Đang xử lý..." : "Mua ngay"}
           </Button>
 
           <Button
             onClick={handleAddToCart}
-            disabled={loading}
+            disabled={loading || paymentLoading}
             variant="outline"
             className="w-full border-2 border-[#FFD54F] text-gray-900 hover:bg-[#FFD54F]/10 font-semibold py-6 text-lg"
           >
