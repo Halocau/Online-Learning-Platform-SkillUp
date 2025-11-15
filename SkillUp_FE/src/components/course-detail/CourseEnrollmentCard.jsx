@@ -34,10 +34,21 @@ export default function CourseEnrollmentCard({ course }) {
     try {
       setPaymentLoading(true);
       const result = await paymentAPI.createCoursePayment(course.id);
-      
-      if (result.success && result.checkoutUrl) {
-        // Chuyển sang trang PayOS
-        window.location.href = result.checkoutUrl;
+
+      if (result.success) {
+        // Nếu là khóa học miễn phí, enrollment trực tiếp
+        if (result.isFreeCourse) {
+          toast.success(result.message || "Đăng ký khóa học miễn phí thành công!");
+          // Có thể reload trang hoặc redirect đến trang học
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else if (result.checkoutUrl) {
+          // Chuyển sang trang PayOS cho khóa học có phí
+          window.location.href = result.checkoutUrl;
+        } else {
+          toast.error(result.message || "Không thể tạo thanh toán");
+        }
       } else {
         toast.error(result.message || "Không thể tạo thanh toán");
       }

@@ -6,5 +6,6 @@
         public string? OrderCode { get; set; }
         public string? Message { get; set; }
         public bool Success { get; set; }
+        public bool IsFreeCourse { get; set; } = false;
     }
 }

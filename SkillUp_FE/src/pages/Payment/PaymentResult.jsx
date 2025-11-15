@@ -29,25 +29,30 @@ export default function PaymentResult() {
       if (statusParam === "cancel" || statusParam === "CANCELLED" || cancelParam === "true") {
         setStatus("failed");
         setMessage("Bạn đã hủy thanh toán");
-        
+
         // Gọi API để update transaction status thành Failed
         try {
           await paymentAPI.cancelCoursePayment(orderCode);
         } catch (error) {
           console.error("Error cancelling payment:", error);
         }
-        
+
         return;
       }
 
       try {
         // Gọi API verify payment và tự động enrollment
         const success = await paymentAPI.verifyCoursePayment(orderCode);
-        
+
         if (success) {
           setStatus("success");
           setMessage("Thanh toán thành công! Bạn đã được đăng ký khóa học.");
           toast.success("Đăng ký khóa học thành công!");
+
+          // Tự động redirect đến dashboard sau 2 giây
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 2000);
         } else {
           setStatus("failed");
           setMessage("Thanh toán thất bại hoặc đã xử lý trước đó");
@@ -61,10 +66,10 @@ export default function PaymentResult() {
     };
 
     verifyPayment();
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
-  const handleGoToCourses = () => {
-    navigate("/my-courses");
+  const handleGoToDashboard = () => {
+    navigate("/dashboard");
   };
 
   const handleGoToHome = () => {
@@ -104,10 +109,10 @@ export default function PaymentResult() {
               <div className="space-y-3 pt-4">
                 {status === "success" && (
                   <Button
-                    onClick={handleGoToCourses}
+                    onClick={handleGoToDashboard}
                     className="w-full bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-bold py-6"
                   >
-                    Xem khóa học của tôi
+                    Đến Dashboard
                   </Button>
                 )}
                 <Button
