@@ -34,7 +34,7 @@ export const courseAPI = {
     }
   },
 
-  updateCourse: async (courseId, formData) => {
+updateCourse: async (courseId, formData) => {
     try {
       const response = await axiosInstance.put(
         `${API_BASE_URL}/Update-Course/${courseId}`,
@@ -47,17 +47,21 @@ export const courseAPI = {
       );
       return response;
     } catch (error) {
+      // Thêm log lỗi ở đây
+      console.error("Error updating course:", error);
       throw error;
     }
   },
 
-  deleteCourse: async (courseId) => {
+ deleteCourse: async (courseId) => {
     try {
       const response = await axiosInstance.delete(
         `${API_BASE_URL}/Delete-Course/${courseId}`
       );
       return response;
     } catch (error) {
+      // Thêm log lỗi ở đây
+      console.error("Error deleting course:", error);
       throw error;
     }
   },
