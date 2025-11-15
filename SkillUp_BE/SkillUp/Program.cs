@@ -101,6 +101,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<FtpVideoUploadService>();
+builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ILecturerApplicationService, LecturerApplicationService>();
@@ -228,15 +229,27 @@ builder.Services.Configure<CloudinarySettings>(
 
 builder.Services.AddAuthorization();
 
-// Configure CORS
+////Configure CORS
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAll", policy =>
+//    {
+//        policy.WithOrigins("http://localhost:5173")
+//              .AllowAnyOrigin()
+//              .AllowAnyMethod()
+//              .AllowAnyHeader();
+//    });
+//});
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
 });
 
 var app = builder.Build();
@@ -253,6 +266,7 @@ app.UseStaticFiles();
 
 // Use CORS
 app.UseCors("AllowAll");
+//app.UseCors("AllowSpecificOrigin"); // Sử dụng policy đã đặt tên ở trên
 
 // Use Authentication & Authorization
 app.UseAuthentication();

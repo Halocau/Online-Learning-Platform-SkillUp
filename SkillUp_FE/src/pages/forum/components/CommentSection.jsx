@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from "react";
+// Đường dẫn: src/pages/forum/components/CommentSection.jsx
+// (Hãy copy và dán toàn bộ code này để thay thế file cũ)
+
+import React, { useState, useEffect, useCallback } from "react";
 import { Spin, Empty, Divider, Button } from "antd";
 import { MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
@@ -7,6 +10,31 @@ import CommentForm from "./CommentForm";
 import CommentModals from "./CommentModal";
 import commentApi from "@/api/commentAPI";
 import ReplyForm from "./ReplyForm";
+import signalRService from "./SignalRService"; // <-- THÊM DÒNG NÀY
+
+// --- Chuyển hàm helper ra ngoài để dùng chung ---
+const findCommentById = (list, id) => {
+  if (!list || !Array.isArray(list)) return null;
+  for (const c of list) {
+    if (c.id === id) return c;
+    if (c.replies?.length > 0) {
+      const found = findCommentById(c.replies, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+// Hàm chuẩn hóa comment (từ API hoặc SignalR)
+const normalizeComment = (comment) => ({
+  ...comment,
+  commentPostId: comment.id,
+  accountAvatarUrl:
+    comment.accountAvatarUrl ||
+    `https://api.dicebear.com/8.x/avataaars/svg?seed=${comment.accountName}`,
+  likeCount: comment.likeCount ?? 0,
+  replies: comment.replies || [],
+});
 
 export default function CommentSection({ postId }) {
   const [comments, setComments] = useState([]);
@@ -28,18 +56,14 @@ export default function CommentSection({ postId }) {
 
   // User info
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const userId = currentUser.id ?? currentUser.Id;
+  const userId = currentUser.userId ?? currentUser.Id;
   const userName = currentUser.name ?? currentUser.userName ?? "Anonymous";
   const userAvatar =
     currentUser.avatarUrl ||
     `https://api.dicebear.com/8.x/avataaars/svg?seed=${userId}`;
 
-  // Fetch comments
-  useEffect(() => {
-    if (postId) fetchComments();
-  }, [postId]);
-
-  const fetchComments = async () => {
+  // --- 1. useEffect để fetch comment LẦN ĐẦU ---
+  const fetchComments = useCallback(async () => {
     setLoading(true);
     try {
       const res = await commentApi.getByPost(postId);
@@ -48,49 +72,34 @@ export default function CommentSection({ postId }) {
       const commentMap = {};
       const rootComments = [];
       const seenIds = new Set();
+      const newExpanded = {};
 
-      // 1. First pass: Create a map of all comments and initialize replies
       allComments.forEach((comment) => {
-        if (!comment.id || seenIds.has(comment.id)) {
-          console.warn("Duplicate or invalid comment ID:", comment.id);
-          return;
-        }
+        if (!comment.id || seenIds.has(comment.id)) return;
         seenIds.add(comment.id);
-
-        commentMap[comment.id] = {
-          ...comment,
-          commentPostId: comment.id,
-          accountAvatarUrl:
-            comment.accountAvatarUrl ||
-            `https://api.dicebear.com/8.x/avataaars/svg?seed=${comment.accountName}`,
-          likeCount: comment.likeCount ?? 0,
-          replies: [],
-        };
+        commentMap[comment.id] = normalizeComment(comment);
       });
 
-      // 2. Second pass: Build the tree structure
       Object.values(commentMap).forEach((comment) => {
         if (comment.parentCommentId && commentMap[comment.parentCommentId]) {
-          // This is a reply, add it to its parent
           commentMap[comment.parentCommentId].replies.push(comment);
         } else {
-          // This is a root comment (or an orphan reply)
           rootComments.push(comment);
         }
       });
 
-      // Sort root comments (newest first)
       rootComments.sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       );
 
-      // Sort all replies (oldest first, for chronological order)
       const sortReplies = (comments) => {
         comments.forEach((c) => {
           if (c.replies?.length) {
             c.replies.sort(
               (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
             );
+            // Tự động mở rộng
+            newExpanded[c.id] = true;
             sortReplies(c.replies);
           }
         });
@@ -98,94 +107,209 @@ export default function CommentSection({ postId }) {
       sortReplies(rootComments);
 
       setComments(rootComments);
+      setExpandedReplies(newExpanded);
 
-      // Auto-expand parents with replies
-      setExpandedReplies((prev) => {
-        const expanded = { ...prev };
-        const mark = (comments) => {
-          comments.forEach((c) => {
-            if (c.replies?.length > 0) {
-              expanded[c.id] = true;
-              mark(c.replies);
-            }
-          });
-        };
-        mark(rootComments);
-        return expanded;
-      });
     } catch (err) {
       console.error("Error fetching comments:", err);
       toast.error("Không thể tải bình luận");
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
 
-  const handleSubmitComment = async () => {
-    if (!commentText.trim()) {
-      toast.warning("Vui lòng nhập bình luận");
-      return;
-    }
-    if (!userId) {
-      toast.warning("Vui lòng đăng nhập");
-      return;
-    }
+  // Chạy hàm fetchComments khi postId thay đổi
+  useEffect(() => {
+    if (postId) fetchComments();
+  }, [postId, fetchComments]);
 
-    setSubmitting(true);
-    try {
-      if (editingId) {
-        await commentApi.update({
-          commentId: editingId,
-          contents: commentText,
-        });
 
-        const updateCommentInTree = (commentsList) => {
+  // --- 2. useEffect MỚI cho SIGNALR ---
+  useEffect(() => {
+    // Chỉ chạy khi có postId VÀ user đã đăng nhập (để có token)
+    if (!postId || !userId) return; 
+
+    // === Các hàm xử lý state khi nhận tín hiệu ===
+    
+    // Khi nhận comment mới
+    const handleReceiveComment = (newComment) => {
+      console.log("signalR: Nhận comment mới", newComment);
+      setComments((prevComments) => {
+        // Kiểm tra trùng lặp
+        if (findCommentById(prevComments, newComment.id)) return prevComments;
+        
+        const normalized = normalizeComment(newComment);
+
+        if (normalized.parentCommentId) {
+          // Đây là một reply
+          const addReply = (comments) => {
+            return comments.map((c) => {
+              if (c.id === normalized.parentCommentId) {
+                // Thêm reply mới vào cuối danh sách
+                return { ...c, replies: [...c.replies, normalized] };
+              }
+              if (c.replies?.length > 0) {
+                return { ...c, replies: addReply(c.replies) };
+              }
+              return c;
+            });
+          };
+          // Tự động mở rộng comment cha
+          setExpandedReplies((prev) => ({ ...prev, [normalized.parentCommentId]: true }));
+          return addReply(prevComments);
+        } else {
+          // Đây là một root comment mới (thêm vào đầu danh sách)
+          return [normalized, ...prevComments];
+        }
+      });
+    };
+
+    // Khi nhận cập nhật
+    const handleUpdateComment = (updatedComment) => {
+      console.log("signalR: Nhận cập nhật", updatedComment);
+      setComments((prevComments) => {
+        const update = (commentsList) => {
           return commentsList.map((c) => {
-            if (c.id === editingId) {
-              return { ...c, contents: commentText };
+            if (c.id === updatedComment.id) {
+              // Cập nhật nội dung/like, giữ nguyên replies
+              return { ...c, ...updatedComment, replies: c.replies }; 
             }
             if (c.replies?.length > 0) {
-              return { ...c, replies: updateCommentInTree(c.replies) };
+              return { ...c, replies: update(c.replies) };
             }
             return c;
           });
         };
+        return update(prevComments);
+      });
+    };
 
-        setComments((prev) => updateCommentInTree(prev));
+    // Khi nhận xóa (nhận về commentId)
+    const handleDeleteComment = (commentId) => {
+      console.log("signalR: Nhận xóa", commentId);
+      setComments((prevComments) => {
+         const remove = (comments, idToRemove) => {
+           return comments.reduce((acc, c) => {
+             if (c.id === idToRemove) return acc; // Lọc bỏ
+             if (c.replies?.length > 0) {
+               return [
+                 ...acc,
+                 { ...c, replies: remove(c.replies, idToRemove) },
+               ];
+             }
+             return [...acc, c];
+           }, []);
+         };
+         return remove(prevComments, commentId);
+      });
+    };
 
+    // === Kết nối và lắng nghe ===
+    
+    signalRService.startConnection()
+      .then(() => {
+        signalRService.joinPostGroup(postId);
+        
+        // Đăng ký các hàm lắng nghe
+        signalRService.onCommentReceived(handleReceiveComment);
+        signalRService.onCommentUpdated(handleUpdateComment);
+        signalRService.onCommentDeleted(handleDeleteComment);
+      })
+      .catch(err => console.log("SignalR connection failed (có thể do chưa đăng nhập): ", err));
+
+    // Dọn dẹp (rất quan trọng)
+    return () => {
+      console.log(`Dọn dẹp SignalR cho post ${postId}`);
+      signalRService.leavePostGroup(postId);
+      
+      // Gỡ lắng nghe
+      signalRService.offCommentReceived();
+      signalRService.offCommentUpdated();
+      signalRService.offCommentDeleted();
+      // Không gọi stopConnection() ở đây, để giữ kết nối cho trang khác
+    };
+
+  }, [postId, userId]); // Chạy lại khi đổi PostId hoặc user (đăng nhập)
+
+
+  // --- 3. CÁC HÀM SUBMIT VÀ HANDLER (Giữ nguyên logic của bạn) ---
+  // Các hàm này (handleSubmit, handleDelete...) vẫn cập nhật state
+  // ngay lập tức (Optimistic Update) để UI mượt mà.
+  // SignalR sẽ lo việc cập nhật cho *các user khác*.
+  
+ // Thay thế TOÀN BỘ hàm handleSubmitComment bằng code này
+
+  const handleSubmitComment = async () => {
+    if (!commentText.trim()) return toast.warning("Vui lòng nhập bình luận");
+    if (!userId) return toast.warning("Vui lòng đăng nhập");
+
+    setSubmitting(true);
+    try {
+      if (editingId) {
+        // --- LOGIC UPDATE (CẬP NHẬT) ---
+        // Block này gọi commentApi.update
+        
+        const res = await commentApi.update({
+          commentId: editingId,
+          contents: commentText,
+        });
+        const updatedComment = res?.data?.data;
+
+        // Cập nhật state (để UI mượt)
+        if (updatedComment) {
+            setComments((prev) => {
+              const update = (commentsList) => {
+                return commentsList.map((c) => {
+                  if (c.id === editingId) {
+                    // Giữ nguyên replies, cập nhật phần còn lại
+                    return { ...c, ...updatedComment, replies: c.replies };
+                  }
+                  if (c.replies?.length > 0) {
+                    return { ...c, replies: update(c.replies) };
+                  }
+                  return c;
+                });
+              };
+              return update(prev);
+            });
+        }
+        
         toast.success("Cập nhật bình luận thành công");
         setEditingId(null);
+        
       } else {
+        
+        // --- LOGIC CREATE (TẠO MỚI) ---
+        // Block này gọi commentApi.create
+        
         const res = await commentApi.create({
           postId,
           contents: commentText,
           parentCommentId: null,
         });
 
-        const newComment = res?.data?.data ?? {
-          id: Date.now().toString(),
-          postId,
-          contents: commentText,
-          accountId: userId,
-          accountName: userName,
-          accountAvatarUrl: userAvatar,
-          likeCount: 0,
-          parentCommentId: null,
-          createdAt: new Date().toISOString(),
-          isActive: true,
-        };
+        const newComment = res?.data?.data;
+        if (!newComment) throw new Error("Không nhận được dữ liệu comment mới");
 
-        newComment.commentPostId = newComment.id;
-        newComment.accountAvatarUrl =
-          newComment.accountAvatarUrl ||
-          `https://api.dicebear.com/8.x/avataaars/svg?seed=${newComment.accountName}`;
-        newComment.likeCount = 0;
-        newComment.replies = [];
+        // Cập nhật state (để UI mượt)
+        const normalized = normalizeComment(newComment);
 
-        setComments((prev) => [newComment, ...prev]);
+        // --- ĐÂY LÀ PHẦN SỬA LỖI DOUBLE ---
+        // Chỉ thêm vào state NẾU nó chưa tồn tại
+        // (Phòng trường hợp SignalR chạy về trước)
+        setComments((prev) => {
+          if (findCommentById(prev, normalized.id)) {
+            return prev; // Đã tồn tại (do SignalR), không làm gì cả
+          }
+          return [normalized, ...prev]; // Thêm mới
+        });
+        // --- KẾT THÚC PHẦN SỬA ---
+        
         toast.success("Bình luận thành công");
       }
+      
+      // Xóa nội dung ô nhập liệu (cho cả 2 trường hợp)
       setCommentText("");
+      
     } catch (err) {
       toast.error(err?.response?.data?.message || "Lỗi khi gửi bình luận");
     } finally {
@@ -204,18 +328,10 @@ export default function CommentSection({ postId }) {
       });
 
       const newReply = res?.data?.data;
-      if (!newReply) throw new Error("No reply data");
+      if (!newReply) throw new Error("Không nhận được dữ liệu trả lời");
 
-      const normalizedReply = {
-        ...newReply,
-        commentPostId: newReply.id,
-        accountAvatarUrl:
-          newReply.accountAvatarUrl ||
-          `https://api.dicebear.com/8.x/avataaars/svg?seed=${newReply.accountName}`,
-        likeCount: newReply.likeCount ?? 0,
-        replies: [],
-      };
-
+      // Cập nhật state (để UI mượt)
+      const normalizedReply = normalizeComment(newReply);
       setComments((prevComments) => {
         const addReply = (comments) => {
           return comments.map((c) => {
@@ -254,96 +370,79 @@ export default function CommentSection({ postId }) {
 
   const handleDeleteComment = async () => {
     try {
-      const deletedComment = findCommentById(comments, deleteCommentId);
-      const deletedBy = deletedComment?.accountName || "Bạn";
-
       await commentApi.delete(deleteCommentId);
 
-      const removeCommentById = (comments, idToRemove) => {
-        return comments.reduce((acc, c) => {
-          if (c.id === idToRemove) return acc;
-          if (c.replies?.length > 0) {
-            return [
-              ...acc,
-              { ...c, replies: removeCommentById(c.replies, idToRemove) },
-            ];
-          }
-          return [...acc, c];
-        }, []);
-      };
+      // Cập nhật state (để UI mượt)
+      setComments((prev) => {
+         const remove = (comments, idToRemove) => {
+           return comments.reduce((acc, c) => {
+             if (c.id === idToRemove) return acc;
+             if (c.replies?.length > 0) {
+               return [
+                 ...acc,
+                 { ...c, replies: remove(c.replies, idToRemove) },
+               ];
+             }
+             return [...acc, c];
+           }, []);
+         };
+         return remove(prev, deleteCommentId);
+      });
 
-      setComments((prev) => removeCommentById(prev, deleteCommentId));
-
-      setDeletedCommentNotification(`${deletedBy} đã xóa bình luận thành công`);
       toast.success("Xóa bình luận thành công");
-      setTimeout(() => setDeletedCommentNotification(""), 5000);
 
-      setDeleteModalVisible(false);
-      setDeleteCommentId(null);
     } catch (err) {
       toast.error(err?.response?.data?.message || "Lỗi khi xóa bình luận");
+    } finally {
+      setDeleteModalVisible(false);
+      setDeleteCommentId(null);
     }
-  };
-
-  const findCommentById = (list, id) => {
-    for (const c of list) {
-      if (c.id === id) return c;
-      if (c.replies?.length > 0) {
-        const found = findCommentById(c.replies, id);
-        if (found) return found;
-      }
-    }
-    return null;
   };
 
   const handleToggleLike = async (commentId) => {
-    if (!userId) {
-      toast.warning("Vui lòng đăng nhập");
-      return;
-    }
+    if (!userId) return toast.warning("Vui lòng đăng nhập");
+
+    const updateLike = (comments, id, fn) => {
+      return comments.map((c) => {
+        if (c.id === id) return { ...c, likeCount: fn(c.likeCount ?? 0) };
+        if (c.replies?.length > 0)
+          return { ...c, replies: updateLike(c.replies, id, fn) };
+        return c;
+      });
+    };
+    
+    // Optimistic Update: Cập nhật UI trước
+    setComments((prev) => updateLike(prev, commentId, (c) => c + 1)); 
 
     try {
-      setComments((prev) => updateLike(prev, commentId, (c) => c + 1));
+      // Gọi API
       const res = await commentApi.toggleLike(commentId);
-      const actual = res?.data?.data?.totalLikes ?? 0;
-      setComments((prev) => updateLike(prev, commentId, () => actual));
-
-      const countRes = await commentApi.getLikeCount(commentId);
-      const fresh = countRes?.data?.data?.likeCount ?? actual;
-      setComments((prev) => updateLike(prev, commentId, () => fresh));
+      const actualLikes = res?.data?.data?.totalLikes ?? 0;
+      
+      // Cập nhật lại state với số like CHUẨN từ server
+      setComments((prev) => updateLike(prev, commentId, () => actualLikes));
     } catch (err) {
-      setComments((prev) =>
-        updateLike(prev, commentId, (c) => Math.max(0, c - 1))
-      );
+      // Rollback nếu lỗi
+      setComments((prev) => updateLike(prev, commentId, (c) => Math.max(0, c - 1)));
+      toast.error("Lỗi khi thích bình luận");
     }
-  };
-
-  const updateLike = (comments, id, fn) => {
-    return comments.map((c) => {
-      if (c.id === id) return { ...c, likeCount: fn(c.likeCount ?? 0) };
-      if (c.replies?.length > 0)
-        return { ...c, replies: updateLike(c.replies, id, fn) };
-      return c;
-    });
   };
 
   const handleReportComment = async () => {
-    if (!reportReason.trim()) {
-      toast.warning("Vui lòng nhập lý do");
-      return;
-    }
-    try {
-      await commentApi.report({
-        commentPostId: reportCommentId,
-        reason: reportReason,
-      });
-      toast.success("Báo cáo thành công");
-      setReportModalVisible(false);
-      setReportCommentId(null);
-      setReportReason("");
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Lỗi khi báo cáo");
-    }
+     if (!reportReason.trim()) return toast.warning("Vui lòng nhập lý do");
+     try {
+       await commentApi.report({
+         commentPostId: reportCommentId,
+         reason: reportReason,
+       });
+       toast.success("Báo cáo thành công");
+     } catch (err) {
+       toast.error(err?.response?.data?.message || "Lỗi khi báo cáo");
+     } finally {
+        setReportModalVisible(false);
+        setReportCommentId(null);
+        setReportReason("");
+     }
   };
 
   const toggleReplies = (commentId) => {
@@ -358,6 +457,7 @@ export default function CommentSection({ postId }) {
     setEditingId(null);
   };
 
+  // --- HÀM RENDER ĐỆ QUY (Giữ nguyên) ---
   const renderComment = (
     comment,
     isReply = false,
@@ -368,7 +468,6 @@ export default function CommentSection({ postId }) {
     const showReplies = expandedReplies[comment.id];
     const maxDepth = 20;
     const canReply = depth < maxDepth;
-
     const uniqueKey = `${comment.id}-${parentId || "root"}-${depth}`;
 
     return (
@@ -377,7 +476,7 @@ export default function CommentSection({ postId }) {
           comment={comment}
           isReply={isReply}
           isOwner={isOwner}
-          showReplies={false}
+          showReplies={showReplies}
           replyingToId={replyingToId}
           onEdit={handleEditComment}
           onDelete={(id) => {
@@ -417,6 +516,7 @@ export default function CommentSection({ postId }) {
     );
   };
 
+  // --- 4. JSX (Giữ nguyên) ---
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
       <div className="flex items-center justify-between mb-6">
@@ -431,6 +531,7 @@ export default function CommentSection({ postId }) {
           onClick={fetchComments}
           icon={<RefreshCw size={14} />}
           className="rounded"
+          loading={loading}
         >
           Tải lại
         </Button>
