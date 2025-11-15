@@ -295,6 +295,8 @@ namespace SkillUp.Services.Implementations
                 IsActive = course.IsActive,
                 CreatedAt = course.CreatedAt,
                 UpdatedAt = course.UpdatedAt,
+                categoryId = course.SubCategory?.CategoryId ?? 0,
+                subCategoryId = course.SubCategoryId,
                 CategoryName = course.SubCategory?.Category?.Name ?? "",
                 SubCategoryName = course.SubCategory?.Name ?? "",
                 Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto

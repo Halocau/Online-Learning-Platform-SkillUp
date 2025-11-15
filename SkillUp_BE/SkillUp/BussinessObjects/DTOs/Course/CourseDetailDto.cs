@@ -14,6 +14,8 @@ namespace SkillUp.BussinessObjects.DTOs.Course
         public double Rating { get; set; }
         public string Status { get; set; }
         public bool IsActive { get; set; }
+        public int categoryId { get; set; }
+        public int subCategoryId { get; set; }
         public string CategoryName { get; set; }
         public string SubCategoryName { get; set; }
         public DateTime CreatedAt { get; set; }
