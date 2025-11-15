@@ -11,9 +11,9 @@ import CourseDescriptionSection from "@/components/course-detail/CourseDescripti
 import ReviewsSection from "@/components/course-detail/ReviewSection";
 
 import MoreCoursesByLecturerSection from "@/components/course-detail/MoreCourseBy";
-import CourseEnrollmentCard from "@/components/course-detail/CourseEnrollmentCard";
 import LecturerSection from "@/components/course-detail/LecturerSection";
 import RelatedTopicsSection from "@/components/course-detail/RelatedTopic";
+import CourseEnrollmentCard from "@/components/course-detail/CourseEnrollmentCard";
 
 export default function CourseDetail() {
   const { courseId } = useParams();

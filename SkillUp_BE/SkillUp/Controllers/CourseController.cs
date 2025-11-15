@@ -626,5 +626,42 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpGet("student-enrolled-courses")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetEnrolledCourses()
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Ok(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var enrolledCourses = await _courseService.GetEnrolledCoursesByAccountIdAsync(accountId.Value);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy danh sách khóa học đã đăng ký thành công",
+                    data = new List<object> { enrolledCourses }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Ok(new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }
