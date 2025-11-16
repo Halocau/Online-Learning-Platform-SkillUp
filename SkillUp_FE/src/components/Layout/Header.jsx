@@ -143,14 +143,7 @@ function Header() {
             >
               Diễn đàn
             </Link>
-            {isAuthenticated && user?.role === "Student" && (
-              <Link
-                to="/student/dashboard"
-                className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
-              >
-                Dashboard
-              </Link>
-            )}
+           
             {isAuthenticated && (
               <Link
                 to="/ticket"
@@ -172,7 +165,7 @@ function Header() {
             </Link>
             {isAuthenticated && user?.role === "Student" && (
               <Link
-                to="/dashboard"
+               to="/student/dashboard"
                 className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
               >
                 Trang điều khiển
