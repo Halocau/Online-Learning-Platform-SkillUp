@@ -6,6 +6,7 @@ using SkillUp.Services.Interfaces;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using SkillUp.Repositories.Interfaces;
 
 namespace SkillUp.API.Controllers
 {
@@ -15,12 +16,19 @@ namespace SkillUp.API.Controllers
     public class LikeCommentPostController : ControllerBase
     {
         private readonly ILikeCommentPostService _likeService;
-        private readonly IHubContext<LikeCommentHub> _hubContext;
+        //private readonly IHubContext<LikeCommentHub> _hubContext;
+        private readonly IHubContext<CommentHub> _hubContext;
+        private readonly ICommentPostRepository _commentPostRepo;
+        
 
-        public LikeCommentPostController(ILikeCommentPostService likeService, IHubContext<LikeCommentHub> hubContext)
+        public LikeCommentPostController(
+             ILikeCommentPostService likeService,
+             IHubContext<CommentHub> hubContext, // 3. Sửa Hub
+             ICommentPostRepository commentPostRepo) // 4. Thêm Repo
         {
             _likeService = likeService;
             _hubContext = hubContext;
+            _commentPostRepo = commentPostRepo; // 5. Thêm Repo
         }
 
         // POST /api/LikeCommentPost/toggle/{commentPostId}
@@ -34,11 +42,16 @@ namespace SkillUp.API.Controllers
             if (!Guid.TryParse(accountIdClaim, out var accountId))
                 return BadRequest(new { message = "AccountId không hợp lệ" });
 
+            var comment = await _commentPostRepo.GetByIdAsync(commentPostId);
+            if (comment == null)
+            {
+                return NotFound(new { message = "Không tìm thấy bình luận" });
+            }
+
             var totalLikes = await _likeService.LikeOrUnlikeCommentAsync(accountId, commentPostId);
 
-            // Broadcast realtime đến những client đang ở cùng group commentPostId
-            await _hubContext.Clients.Group(commentPostId.ToString())
-                .SendAsync("ReceiveLikeUpdate", commentPostId.ToString(), totalLikes);
+            await _hubContext.Clients.Group(comment.PostId.ToString())
+                .SendAsync("ReceiveLikeUpdate", commentPostId, totalLikes);
 
             return Ok(new
             {

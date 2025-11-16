@@ -132,6 +132,12 @@ class SignalRService {
     }
   }
 
+  onLikeUpdate(callback) {
+    if (this.connection) {
+      // Tên "ReceiveLikeUpdate" phải khớp với Controller C#
+      this.connection.on("ReceiveLikeUpdate", callback);
+    }
+  }
   // --- CÁC HÀM GỠ LẮNG NGHE ---
 
   offCommentReceived() {
@@ -151,7 +157,15 @@ class SignalRService {
       this.connection.off("DeleteComment");
     }
   }
+
+  offLikeUpdate() {
+    if (this.connection) {
+      this.connection.off("ReceiveLikeUpdate");
+    }
+  }
 }
+
+
 
 // Xuất đi một đối tượng duy nhất (singleton)
 const signalRService = new SignalRService();
