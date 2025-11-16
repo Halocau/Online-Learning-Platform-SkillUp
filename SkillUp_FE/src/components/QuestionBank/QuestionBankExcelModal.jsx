@@ -1,5 +1,6 @@
 import { Modal, Button, Upload, message, Popconfirm } from "antd";
 import { DownloadOutlined, UploadOutlined } from "@ant-design/icons";
+import { toast } from "react-toastify";
 
 const QuestionBankExcelModal = ({ open, onClose, onImport }) => {
 
@@ -16,7 +17,7 @@ const QuestionBankExcelModal = ({ open, onClose, onImport }) => {
             file.type === "application/vnd.ms-excel";
 
         if (!isExcel) {
-            console.log("Chỉ được phép nhập file Excel (.xlsx / .xls)");
+            toast.error("Chỉ được phép nhập file Excel (.xlsx / .xls)");
             return Upload.LIST_IGNORE;
         }
 
