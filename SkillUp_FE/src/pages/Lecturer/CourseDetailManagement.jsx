@@ -7,10 +7,7 @@ import {
   DollarSign,
   Tag,
   CheckCircle2,
-  Circle,
-  Lightbulb,
   Send,
-  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { courseAPI } from "@/api/courseAPI";
@@ -66,10 +63,14 @@ function CourseDetailManagement() {
       const response = await courseAPI.getCourseDetail(courseId);
 
       if (response.data.code === 200 && response.data.data.length > 0) {
-        setCourse(response.data.data[0]);
-
-        // If pricing was just completed, mark it
+        const courseData = response.data.data[0];
+        setCourse(courseData);
         if (options.pricingCompleted) {
+          setPricingCompleted(true);
+        } else if (
+          courseData.price !== null &&
+          courseData.price !== undefined
+        ) {
           setPricingCompleted(true);
         }
       } else {
@@ -79,7 +80,6 @@ function CourseDetailManagement() {
     } catch (error) {
       console.error("Error loading course:", error);
 
-      // Don't navigate away on error - just show error message
       if (error.response?.status === 500) {
         toast.error(
           "Lỗi server: " + (error.response?.data?.message || "Vui lòng thử lại")
@@ -88,7 +88,6 @@ function CourseDetailManagement() {
         toast.error("Lỗi khi tải thông tin khóa học");
       }
 
-      // Only navigate away if it's a 404
       if (error.response?.status === 404) {
         navigate("/lecturer/courses");
       }
@@ -101,13 +100,18 @@ function CourseDetailManagement() {
     navigate("/lecturer/courses");
   };
 
-  // Check if each step is completed (excluding voucher for submission requirement)
+  // Check if each step is completed
   const isStepCompleted = (tabId) => {
     if (!course) return false;
 
     switch (tabId) {
       case "landing":
-        return true; // Landing page is always considered complete once course is created
+        return !!(
+          course.title &&
+          course.description &&
+          course.categoryName &&
+          course.subCategoryName
+        );
       case "curriculum":
         return !!(
           course.sections &&
@@ -117,16 +121,18 @@ function CourseDetailManagement() {
           )
         );
       case "pricing":
-        // Only mark as complete if price has been manually saved
-        return pricingCompleted;
+        return (
+          pricingCompleted ||
+          (course.price !== null && course.price !== undefined)
+        );
       case "voucher":
-        return true; // Voucher is optional
+        return true;
       default:
         return false;
     }
   };
 
-  // Calculate overall progress (excluding voucher)
+  // Calculate overall progress
   const calculateProgress = () => {
     const requiredTabs = tabs.filter((tab) => tab.id !== "voucher");
     const completedSteps = requiredTabs.filter((tab) =>
@@ -136,14 +142,17 @@ function CourseDetailManagement() {
   };
 
   const handleSubmitForPreview = async () => {
-    // Check if all required steps are completed (excluding voucher)
     const requiredTabs = tabs.filter((tab) => tab.id !== "voucher");
     const allCompleted = requiredTabs.every((tab) => isStepCompleted(tab.id));
 
     if (!allCompleted) {
-      toast.warning(
-        "Vui lòng hoàn thành tất cả các bước trước khi đề xuất khóa học"
-      );
+      // Find which steps are incomplete
+      const incompleteSteps = requiredTabs
+        .filter((tab) => !isStepCompleted(tab.id))
+        .map((tab) => tab.label)
+        .join(", ");
+
+      toast.warning(`Vui lòng hoàn thành các bước sau: ${incompleteSteps}`);
       return;
     }
 
@@ -159,7 +168,6 @@ function CourseDetailManagement() {
           }
         );
 
-        // Navigate back after 2 seconds
         setTimeout(() => {
           navigate("/lecturer/courses");
         }, 2000);
@@ -274,7 +282,6 @@ function CourseDetailManagement() {
                         : "text-gray-700 hover:bg-gray-50 border border-transparent"
                     }`}
                   >
-                    {/* Step Number or Check */}
                     <div
                       className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 transition-all ${
                         isCompleted
@@ -291,7 +298,6 @@ function CourseDetailManagement() {
                       )}
                     </div>
 
-                    {/* Tab Content */}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Icon
@@ -320,7 +326,6 @@ function CourseDetailManagement() {
                 );
               })}
 
-              {/* Divider */}
               <div className="pt-2">
                 <div className="border-t border-gray-200"></div>
               </div>
@@ -345,13 +350,13 @@ function CourseDetailManagement() {
                 </div>
                 {progress === 100 && (
                   <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded text-xs text-green-700 font-medium text-center">
-                    Tất cả các bước đã hoàn thành! Bạn có thể đề xuất khóa học
+                    Tất cả đã hoàn thành! Có thể đề xuất khóa học
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Submit for Preview Button */}
+            {/* Submit Button */}
             <button
               onClick={handleSubmitForPreview}
               disabled={progress < 100 || submitting}
@@ -380,7 +385,7 @@ function CourseDetailManagement() {
                 </span>
                 {progress < 100 && (
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Hoàn thành {100 - progress}% để đề xuất khóa học
+                    Hoàn thành {100 - progress}% để đề xuất
                   </p>
                 )}
               </div>

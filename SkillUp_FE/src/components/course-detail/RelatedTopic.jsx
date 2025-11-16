@@ -2,10 +2,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Tags, ArrowRight } from "lucide-react";
+import { ca } from "zod/v4/locales";
 
 export default function RelatedTopicsSection({
   categoryName,
   subCategoryName,
+  categoryId,
+  subCategoryId,
 }) {
   return (
     <Card className="border-2 border-[#FFD54F]/20">
@@ -21,7 +24,7 @@ export default function RelatedTopicsSection({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Link
-            to={`/category/${categoryName}`}
+            to={`/courses/${categoryId}`}
             className="group p-6 bg-gradient-to-br from-[#FFD54F]/10 to-[#FFC107]/10 rounded-xl border-2 border-[#FFD54F]/20 hover:border-[#FFD54F] transition-all hover:shadow-lg"
           >
             <div className="flex items-center justify-between mb-2">
@@ -36,7 +39,7 @@ export default function RelatedTopicsSection({
           </Link>
 
           <Link
-            to={`/subcategory/${subCategoryName}`}
+            to={`/courses/${categoryId}/?subcategory/${subCategoryId}`}
             className="group p-6 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl border-2 border-purple-200 hover:border-purple-400 transition-all hover:shadow-lg"
           >
             <div className="flex items-center justify-between mb-2">

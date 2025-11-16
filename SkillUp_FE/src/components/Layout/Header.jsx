@@ -48,17 +48,17 @@ function Header() {
     // Listen to storage event (khi login thành công)
     const handleStorageChange = () => {
       const cachedUser = localStorage.getItem("user");
-      if (cachedUser && cachedUser !== 'null') {
+      if (cachedUser && cachedUser !== "null") {
         setUser(JSON.parse(cachedUser));
       } else {
         setUser(null);
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, [accessToken]);
 
@@ -143,6 +143,14 @@ function Header() {
             >
               Diễn đàn
             </Link>
+            {isAuthenticated && user?.role === "Student" && (
+              <Link
+                to="/student/dashboard"
+                className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
+              >
+                Dashboard
+              </Link>
+            )}
             {isAuthenticated && (
               <Link
                 to="/ticket"

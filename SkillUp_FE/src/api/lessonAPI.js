@@ -28,7 +28,6 @@ const handleAPIError = (
 export const createLesson = async (lessonData) => {
   try {
     const formData = new FormData();
-
     formData.append("SectionId", lessonData.sectionId);
     formData.append("Title", lessonData.title);
     formData.append("Type", lessonData.type);
@@ -62,6 +61,7 @@ export const createLesson = async (lessonData) => {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
+    
     return handleAPIResponse(res, "Tạo bài học mới thành công!");
   } catch (err) {
     return handleAPIError(err, "Không thể tạo bài học!");
@@ -72,7 +72,6 @@ export const createLesson = async (lessonData) => {
 export const updateLesson = async (id, lessonData) => {
   try {
     const formData = new FormData();
-
     formData.append("Title", lessonData.title);
 
     if (lessonData.description) {
@@ -111,7 +110,7 @@ export const updateLesson = async (id, lessonData) => {
   }
 };
 
-// Delete lesson - FIXED
+// Delete lesson
 export const deleteLesson = async (id) => {
   try {
     const res = await axiosInstance.delete(`${API_URL}/${id}`);
@@ -119,7 +118,7 @@ export const deleteLesson = async (id) => {
     return res.data;
   } catch (err) {
     handleAPIError(err, "Không thể xóa bài học!");
-    throw err; // Re-throw so calling code knows it failed
+    throw err;
   }
 };
 
