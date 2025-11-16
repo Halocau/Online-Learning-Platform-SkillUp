@@ -91,7 +91,7 @@ builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 builder.Services.AddScoped<ILessonRepository, LessonRepository>();
 builder.Services.AddScoped<IQuestionQuizRepository, QuestionQuizRepository>();
-
+builder.Services.AddScoped<IQuizSubmissionRepository, QuizSubmissionRepository>();
 
 
 // Register Services
