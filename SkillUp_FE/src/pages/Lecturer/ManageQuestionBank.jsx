@@ -432,7 +432,7 @@ export default function ManageQuestionBank() {
                     open={importOpen}
                     onClose={() => setImportOpen(false)}
                     onImport={handleImport}
-                />;
+                />
             </div>
         </div >
     );
