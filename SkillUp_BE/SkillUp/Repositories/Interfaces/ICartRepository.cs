@@ -12,5 +12,7 @@ namespace SkillUp.Repositories.Interfaces
 
         Task<HashSet<Guid>> GetCourseIdsInCartAsync(Guid cartId);
         Task AddCartItemsRangeAsync(IEnumerable<CartItem> items);
+        Task<bool> IsStudentEnrolledInCourseAsync(Guid studentId, Guid courseId);
+        Task ClearCartAsync(Guid studentId);
     }
 }

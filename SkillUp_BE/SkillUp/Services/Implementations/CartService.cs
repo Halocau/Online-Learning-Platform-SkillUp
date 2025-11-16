@@ -34,6 +34,13 @@ namespace SkillUp.Services.Implementations
         {
             var student = await GetStudentByAccountIdAsync(accountId);
 
+            // Kiểm tra xem student đã đăng ký course chưa
+            var isEnrolled = await _cartRepository.IsStudentEnrolledInCourseAsync(student.Id, request.CourseId);
+            if (isEnrolled)
+            {
+                throw new InvalidOperationException("Bạn đã đăng ký khóa học này rồi. Không thể thêm vào giỏ hàng.");
+            }
+
             var cart = await _cartRepository.GetCartByStudentIdAsync(student.Id);
             if (cart == null)
             {
@@ -146,6 +153,15 @@ namespace SkillUp.Services.Implementations
                     continue;
                 }
 
+                // Kiểm tra xem student đã đăng ký course chưa
+                var isEnrolled = await _cartRepository.IsStudentEnrolledInCourseAsync(student.Id, it.CourseId);
+                if (isEnrolled)
+                {
+                    result.Skipped++;
+                    result.SkippedCourseIds.Add(it.CourseId);
+                    continue;
+                }
+
                 // (Tuỳ chọn) validate course tồn tại
                 var courseExists = await _courseRepository.ExistsAsync(it.CourseId);
                 if (!courseExists)
@@ -177,6 +193,13 @@ namespace SkillUp.Services.Implementations
             }
 
             return result;
+        }
+
+        public async Task<bool> ClearCartAsync(Guid accountId)
+        {
+            var student = await GetStudentByAccountIdAsync(accountId);
+            await _cartRepository.ClearCartAsync(student.Id);
+            return await _cartRepository.SaveChangesAsync();
         }
     }
 }

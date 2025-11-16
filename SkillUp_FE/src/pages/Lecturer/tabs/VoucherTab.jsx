@@ -1,16 +1,49 @@
-import { useState, useEffect, useCallback } from "react";
-import { Ticket, Plus, Percent, Calendar, Users, Edit2, Trash2, X, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Ticket, Plus, Percent, Calendar, Users, X, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { voucherAPI } from "@/api/voucherAPI";
 import { toast } from "sonner";
-import { DatePicker, Popconfirm } from "antd";
+import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import "dayjs/locale/vi";
+import VoucherCard from "@/components/Voucher/VoucherCard";
+import VoucherStats from "@/components/Voucher/VoucherStats";
 
 dayjs.extend(customParseFormat);
 dayjs.locale("vi");
+
+// Constants
+const CODE_LENGTH = 6;
+const CODE_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const DEFAULT_VOUCHER_DURATION_DAYS = 2;
+const DEFAULT_START_TIME_OFFSET_MINUTES = 1;
+
+// Utility functions
+const generateRandomCode = () => {
+  let result = '';
+  for (let i = 0; i < CODE_LENGTH; i++) {
+    result += CODE_CHARACTERS.charAt(Math.floor(Math.random() * CODE_CHARACTERS.length));
+  }
+  return result;
+};
+
+const formatLocalDateTime = (dayjsDate) => {
+  if (!dayjsDate) return null;
+  return dayjsDate.format('YYYY-MM-DDTHH:mm:ss');
+};
+
+const isVoucherActive = (voucher) => {
+  if (!voucher.isActive) return false;
+  const now = new Date();
+  const startTime = voucher.startTime ? new Date(voucher.startTime) : null;
+  const endTime = voucher.endTime ? new Date(voucher.endTime) : null;
+
+  if (startTime && now < startTime) return false;
+  if (endTime && now > endTime) return false;
+  return true;
+};
 
 function VoucherTab({ course, courseId }) {
   const [vouchers, setVouchers] = useState([]);
@@ -22,46 +55,43 @@ function VoucherTab({ course, courseId }) {
     couponCode: "",
     voucherType: 1,
     price: 0,
-    discountAmount: 0, // Số tiền giảm (cho loại giảm số tiền cố định)
+    discountAmount: 0,
     startTime: null,
     endTime: null,
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Lấy giá gốc của khóa học
-  const originalPrice = course?.price || 0;
+  const originalPrice = useMemo(() => course?.price || 0, [course?.price]);
 
-  // Tính toán giá sau khi giảm tự động
-  const calculateFinalPrice = () => {
+  // Memoize selected voucher type
+  const selectedVoucherType = useMemo(
+    () => voucherTypes.find(t => t.id === formData.voucherType),
+    [voucherTypes, formData.voucherType]
+  );
+
+  // Memoize final price calculation
+  const finalPrice = useMemo(() => {
     if (originalPrice <= 0) return 0;
+    if (!selectedVoucherType) return 0;
 
-    const selectedType = voucherTypes.find(t => t.id === formData.voucherType);
-    if (!selectedType) return 0;
-
-    if (selectedType.percentage > 0) {
-      // Giảm theo phần trăm
-      return Math.round(originalPrice * (1 - selectedType.percentage / 100));
+    if (selectedVoucherType.percentage > 0) {
+      return Math.round(originalPrice * (1 - selectedVoucherType.percentage / 100));
     } else {
-      // Giảm số tiền cố định
-      const finalPrice = originalPrice - formData.discountAmount;
-      return Math.max(0, finalPrice); // Đảm bảo không âm
+      return Math.max(0, originalPrice - formData.discountAmount);
     }
-  };
-
-  const finalPrice = calculateFinalPrice();
+  }, [originalPrice, selectedVoucherType, formData.discountAmount]);
 
   const loadVouchers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await voucherAPI.getCourseVouchers(courseId);
-      if (response.data && response.data.code === 200) {
+      if (response.data?.code === 200) {
         const voucherList = response.data.data[0] || [];
         setVouchers(Array.isArray(voucherList) ? voucherList : []);
       } else {
         setVouchers([]);
       }
     } catch (error) {
-      console.error("Error loading vouchers:", error);
       if (error.response?.status !== 404) {
         toast.error("Không thể tải danh sách voucher");
       }
@@ -74,10 +104,9 @@ function VoucherTab({ course, courseId }) {
   const loadVoucherTypes = useCallback(async () => {
     try {
       const response = await voucherAPI.getAllVoucherTypes();
-      if (response.data && response.data.code === 200) {
+      if (response.data?.code === 200) {
         const types = response.data.data[0] || [];
         setVoucherTypes(Array.isArray(types) ? types : []);
-        // Set default voucher type if available
         if (types.length > 0) {
           setFormData(prev => {
             if (!prev.voucherType) {
@@ -87,29 +116,18 @@ function VoucherTab({ course, courseId }) {
           });
         }
       }
-    } catch (error) {
-      console.error("Error loading voucher types:", error);
+    } catch {
+      // Silent fail for voucher types
     }
   }, []);
 
-  // Hàm tạo mã voucher ngẫu nhiên 6 ký tự (chữ và số)
-  const generateRandomCode = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-      result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
-  };
-
-  // Hàm xử lý khi click nút random
-  const handleRandomCode = () => {
+  const handleRandomCode = useCallback(() => {
     const randomCode = generateRandomCode();
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       couponCode: randomCode,
-    });
-  };
+    }));
+  }, []);
 
   useEffect(() => {
     if (courseId) {
@@ -118,13 +136,11 @@ function VoucherTab({ course, courseId }) {
     }
   }, [courseId, loadVouchers, loadVoucherTypes]);
 
-  const handleCreateVoucher = () => {
+  const handleCreateVoucher = useCallback(() => {
     setEditingVoucher(null);
-    // Set thời gian bắt đầu = giờ hiện tại + 1 phút
     const now = dayjs();
-    const defaultStartTime = now.add(1, 'minute');
-    // Set thời gian kết thúc = thời gian bắt đầu + 2 ngày (mặc định)
-    const defaultEndTime = defaultStartTime.add(2, 'day');
+    const defaultStartTime = now.add(DEFAULT_START_TIME_OFFSET_MINUTES, 'minute');
+    const defaultEndTime = defaultStartTime.add(DEFAULT_VOUCHER_DURATION_DAYS, 'day');
 
     setFormData({
       couponCode: "",
@@ -135,12 +151,11 @@ function VoucherTab({ course, courseId }) {
       endTime: defaultEndTime,
     });
     setShowCreateForm(true);
-  };
+  }, [voucherTypes]);
 
-  const handleEditVoucher = (voucher) => {
+  const handleEditVoucher = useCallback((voucher) => {
     setEditingVoucher(voucher);
     const selectedType = voucherTypes.find(t => t.id === voucher.voucherType);
-    // Tính ngược lại số tiền giảm nếu là loại giảm số tiền cố định
     let discountAmount = 0;
     if (selectedType && selectedType.percentage === 0 && originalPrice > 0) {
       discountAmount = originalPrice - voucher.price;
@@ -155,26 +170,28 @@ function VoucherTab({ course, courseId }) {
       endTime: voucher.endTime ? dayjs(voucher.endTime) : null,
     });
     setShowCreateForm(true);
-  };
+  }, [voucherTypes, originalPrice]);
 
-  const handleDeleteVoucher = async (voucherId) => {
+  const handleDeleteVoucher = useCallback(async (voucherId) => {
     try {
-      console.log("Confirm delete, calling API with voucherId:", voucherId);
       const response = await voucherAPI.deleteVoucher(voucherId);
-      console.log("Delete response:", response);
-      if (response.data && response.data.code === 200) {
+      if (response.data?.code === 200) {
         toast.success(response.data.message || "Xóa voucher thành công!");
         loadVouchers();
       } else {
         toast.error(response.data?.message || "Không thể xóa voucher");
       }
     } catch (error) {
-      console.error("Error deleting voucher:", error);
       toast.error(error.response?.data?.message || "Không thể xóa voucher");
     }
-  };
+  }, [loadVouchers]);
 
-  const handleSubmit = async (e) => {
+  const handleCloseForm = useCallback(() => {
+    setShowCreateForm(false);
+    setEditingVoucher(null);
+  }, []);
+
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
     if (!formData.couponCode.trim()) {
@@ -192,15 +209,7 @@ function VoucherTab({ course, courseId }) {
       return;
     }
 
-    // // Kiểm tra giá sau khi giảm
-    // if (finalPrice <= 0) {
-    //   toast.error("Giá sau khi giảm phải lớn hơn 0");
-    //   return;
-    // }
-
-    // Kiểm tra số tiền giảm cho loại giảm số tiền cố định
-    const selectedType = voucherTypes.find(t => t.id === formData.voucherType);
-    if (selectedType && selectedType.percentage === 0) {
+    if (selectedVoucherType && selectedVoucherType.percentage === 0) {
       if (formData.discountAmount <= 0) {
         toast.error("Vui lòng nhập số tiền giảm hợp lệ");
         return;
@@ -213,18 +222,11 @@ function VoucherTab({ course, courseId }) {
 
     try {
       setSubmitting(true);
-      // Format local time thành string (không dùng toISOString để tránh chuyển sang UTC)
-      // Format: "YYYY-MM-DDTHH:mm:ss" (local time format)
-      const formatLocalDateTime = (dayjsDate) => {
-        if (!dayjsDate) return null;
-        return dayjsDate.format('YYYY-MM-DDTHH:mm:ss');
-      };
-
       const payload = {
         CourseId: courseId,
         CouponCode: formData.couponCode.toUpperCase().trim(),
         VoucherType: formData.voucherType,
-        Price: finalPrice, // Sử dụng giá đã tính tự động
+        Price: finalPrice,
         StartTime: formatLocalDateTime(formData.startTime),
         EndTime: formatLocalDateTime(formData.endTime),
       };
@@ -237,47 +239,26 @@ function VoucherTab({ course, courseId }) {
         toast.success("Tạo voucher thành công!");
       }
 
-      setShowCreateForm(false);
-      setEditingVoucher(null);
+      handleCloseForm();
       loadVouchers();
     } catch (error) {
-      console.error("Error saving voucher:", error);
       toast.error(error.response?.data?.message || "Không thể lưu voucher");
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [formData, selectedVoucherType, originalPrice, finalPrice, courseId, editingVoucher, handleCloseForm, loadVouchers]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleString("vi-VN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
+  // Memoize filtered vouchers
+  const { activeVouchers, expiredVouchers } = useMemo(() => {
+    const active = vouchers.filter(isVoucherActive);
+    const expired = vouchers.filter((v) => {
+      if (!v.isActive) return false;
+      const now = new Date();
+      const endTime = v.endTime ? new Date(v.endTime) : null;
+      return endTime && now > endTime;
     });
-  };
-
-  const isVoucherActive = (voucher) => {
-    if (!voucher.isActive) return false;
-    const now = new Date();
-    const startTime = voucher.startTime ? new Date(voucher.startTime) : null;
-    const endTime = voucher.endTime ? new Date(voucher.endTime) : null;
-
-    if (startTime && now < startTime) return false;
-    if (endTime && now > endTime) return false;
-    return true;
-  };
-
-  const activeVouchers = vouchers.filter((v) => isVoucherActive(v));
-  const expiredVouchers = vouchers.filter((v) => {
-    if (!v.isActive) return false;
-    const now = new Date();
-    const endTime = v.endTime ? new Date(v.endTime) : null;
-    return endTime && now > endTime;
-  });
+    return { activeVouchers: active, expiredVouchers: expired };
+  }, [vouchers]);
 
   if (loading) {
     return (
@@ -343,10 +324,7 @@ function VoucherTab({ course, courseId }) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        setShowCreateForm(false);
-                        setEditingVoucher(null);
-                      }}
+                      onClick={handleCloseForm}
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -362,10 +340,10 @@ function VoucherTab({ course, courseId }) {
                           type="text"
                           value={formData.couponCode}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
+                            setFormData(prev => ({
+                              ...prev,
                               couponCode: e.target.value.toUpperCase(),
-                            })
+                            }))
                           }
                           placeholder="VD: SALE20, SUMMER2024"
                           className="w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-[#FCCD04] focus:border-[#FCCD04]"
@@ -390,11 +368,11 @@ function VoucherTab({ course, courseId }) {
                         value={formData.voucherType}
                         onChange={(e) => {
                           const newVoucherType = Number(e.target.value);
-                          setFormData({
-                            ...formData,
+                          setFormData(prev => ({
+                            ...prev,
                             voucherType: newVoucherType,
-                            discountAmount: 0, // Reset số tiền giảm khi đổi loại
-                          });
+                            discountAmount: 0,
+                          }));
                         }}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FCCD04] focus:border-[#FCCD04]"
                         required
@@ -428,56 +406,48 @@ function VoucherTab({ course, courseId }) {
                       </div>
                     )}
 
-                    {(() => {
-                      const selectedType = voucherTypes.find(t => t.id === formData.voucherType);
-                      if (selectedType?.percentage > 0) {
-                        return (
-                          <div>
-                            <label className="block text-sm font-medium mb-2">
-                              Phần trăm giảm (%)
-                            </label>
-                            <input
-                              type="text"
-                              value={`${selectedType.percentage}%`}
-                              disabled
-                              className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Phần trăm giảm được quy định bởi loại voucher đã chọn
-                            </p>
-                          </div>
-                        );
-                      } else {
-                        // Loại giảm số tiền cố định
-                        return (
-                          <div>
-                            <label className="block text-sm font-medium mb-2">
-                              Số tiền giảm (VNĐ) <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="number"
-                              value={formData.discountAmount}
-                              onChange={(e) => {
-                                const discount = Number(e.target.value);
-                                setFormData({
-                                  ...formData,
-                                  discountAmount: discount >= 0 ? discount : 0,
-                                });
-                              }}
-                              placeholder="VD: 50000"
-                              min="0"
-                              step="1000"
-                              max={originalPrice}
-                              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FCCD04] focus:border-[#FCCD04]"
-                              required
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Nhập số tiền được giảm (tối đa {originalPrice.toLocaleString("vi-VN")}đ)
-                            </p>
-                          </div>
-                        );
-                      }
-                    })()}
+                    {selectedVoucherType?.percentage > 0 ? (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Phần trăm giảm (%)
+                        </label>
+                        <input
+                          type="text"
+                          value={`${selectedVoucherType.percentage}%`}
+                          disabled
+                          className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Phần trăm giảm được quy định bởi loại voucher đã chọn
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Số tiền giảm (VNĐ) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.discountAmount}
+                          onChange={(e) => {
+                            const discount = Number(e.target.value);
+                            setFormData(prev => ({
+                              ...prev,
+                              discountAmount: discount >= 0 ? discount : 0,
+                            }));
+                          }}
+                          placeholder="VD: 50000"
+                          min="0"
+                          step="1000"
+                          max={originalPrice}
+                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FCCD04] focus:border-[#FCCD04]"
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Nhập số tiền được giảm (tối đa {originalPrice.toLocaleString("vi-VN")}đ)
+                        </p>
+                      </div>
+                    )}
 
                     <div>
                       <label className="block text-sm font-medium mb-2">
@@ -491,14 +461,9 @@ function VoucherTab({ course, courseId }) {
                         className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed font-semibold"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        {(() => {
-                          const selectedType = voucherTypes.find(t => t.id === formData.voucherType);
-                          if (selectedType?.percentage > 0) {
-                            return `Giá được tính tự động: ${originalPrice.toLocaleString("vi-VN")}đ - ${selectedType.percentage}% = ${finalPrice.toLocaleString("vi-VN")}đ`;
-                          } else {
-                            return `Giá được tính tự động: ${originalPrice.toLocaleString("vi-VN")}đ - ${formData.discountAmount.toLocaleString("vi-VN")}đ = ${finalPrice.toLocaleString("vi-VN")}đ`;
-                          }
-                        })()}
+                        {selectedVoucherType?.percentage > 0
+                          ? `Giá được tính tự động: ${originalPrice.toLocaleString("vi-VN")}đ - ${selectedVoucherType.percentage}% = ${finalPrice.toLocaleString("vi-VN")}đ`
+                          : `Giá được tính tự động: ${originalPrice.toLocaleString("vi-VN")}đ - ${formData.discountAmount.toLocaleString("vi-VN")}đ = ${finalPrice.toLocaleString("vi-VN")}đ`}
                       </p>
                     </div>
 
@@ -513,16 +478,16 @@ function VoucherTab({ course, courseId }) {
                           placeholder="Chọn thời gian bắt đầu"
                           value={formData.startTime}
                           onChange={(value) => {
-                            setFormData({
-                              ...formData,
+                            setFormData(prev => ({
+                              ...prev,
                               startTime: value,
-                            });
+                            }));
                           }}
                           onOk={(value) => {
-                            setFormData({
-                              ...formData,
+                            setFormData(prev => ({
+                              ...prev,
                               startTime: value,
-                            });
+                            }));
                           }}
                           style={{ width: '100%' }}
                           className="w-full"
@@ -538,16 +503,16 @@ function VoucherTab({ course, courseId }) {
                           placeholder="Chọn thời gian kết thúc"
                           value={formData.endTime}
                           onChange={(value) => {
-                            setFormData({
-                              ...formData,
+                            setFormData(prev => ({
+                              ...prev,
                               endTime: value,
-                            });
+                            }));
                           }}
                           onOk={(value) => {
-                            setFormData({
-                              ...formData,
+                            setFormData(prev => ({
+                              ...prev,
                               endTime: value,
-                            });
+                            }));
                           }}
                           disabledDate={(current) => {
                             if (!formData.startTime) return false;
@@ -574,10 +539,7 @@ function VoucherTab({ course, courseId }) {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => {
-                          setShowCreateForm(false);
-                          setEditingVoucher(null);
-                        }}
+                        onClick={handleCloseForm}
                         disabled={submitting}
                       >
                         Hủy
@@ -607,125 +569,23 @@ function VoucherTab({ course, courseId }) {
             </div>
           ) : (
             <div className="space-y-4">
-              {vouchers.map((voucher) => {
-                const isActive = isVoucherActive(voucher);
-                const isExpired =
-                  voucher.endTime && new Date(voucher.endTime) < new Date();
-
-                return (
-                  <div
-                    key={voucher.id}
-                    className={`p-4 rounded-lg border-2 ${isActive
-                      ? "border-green-200 bg-green-50"
-                      : isExpired
-                        ? "border-gray-200 bg-gray-50 opacity-60"
-                        : "border-gray-200 bg-white"
-                      }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="font-bold text-lg text-[#FCCD04]">
-                            {voucher.couponCode}
-                          </span>
-                          {isActive && (
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
-                              Đang hoạt động
-                            </span>
-                          )}
-                          {isExpired && (
-                            <span className="px-2 py-1 bg-gray-200 text-gray-600 text-xs font-semibold rounded">
-                              Đã hết hạn
-                            </span>
-                          )}
-                          {!voucher.isActive && (
-                            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
-                              Đã vô hiệu hóa
-                            </span>
-                          )}
-                        </div>
-                        <div className="space-y-1 text-sm text-gray-600">
-                          <p>
-                            <strong>Loại:</strong>{" "}
-                            {(() => {
-                              const type = voucherTypes.find(t => t.id === voucher.voucherType);
-                              if (type) {
-                                return type.percentage > 0
-                                  ? `${type.name} (Giảm ${type.percentage}%)`
-                                  : type.name;
-                              }
-                              return voucher.voucherType === 1
-                                ? "Giảm theo phần trăm"
-                                : "Giảm số tiền cố định";
-                            })()}
-                          </p>
-                          <p>
-                            <strong>Giá sau khi giảm:</strong>{" "}
-                            {voucher.price.toLocaleString("vi-VN")}đ
-                          </p>
-                          <p>
-                            <strong>Bắt đầu:</strong>{" "}
-                            {formatDate(voucher.startTime)}
-                          </p>
-                          <p>
-                            <strong>Kết thúc:</strong> {formatDate(voucher.endTime)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditVoucher(voucher)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Popconfirm
-                          title="Xác nhận xóa voucher"
-                          description="Bạn có chắc chắn muốn xóa voucher này?"
-                          onConfirm={() => handleDeleteVoucher(voucher.id)}
-                          okText="Xóa"
-                          cancelText="Hủy"
-                          okButtonProps={{ danger: true }}
-                        >
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </Popconfirm>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {vouchers.map((voucher) => (
+                <VoucherCard
+                  key={voucher.id}
+                  voucher={voucher}
+                  voucherTypes={voucherTypes}
+                  onEdit={handleEditVoucher}
+                  onDelete={handleDeleteVoucher}
+                />
+              ))}
             </div>
           )}
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mt-6">
-            <div className="p-3 bg-yellow-50 rounded-lg">
-              <p className="text-xs text-yellow-700 mb-1">Tổng</p>
-              <p className="text-2xl font-bold text-yellow-900">
-                {vouchers.length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <p className="text-xs text-green-700 mb-1">Đang hoạt động</p>
-              <p className="text-2xl font-bold text-green-900">
-                {activeVouchers.length}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-50 rounded-lg">
-              <p className="text-xs text-purple-700 mb-1">Đã hết hạn</p>
-              <p className="text-2xl font-bold text-purple-900">
-                {expiredVouchers.length}
-              </p>
-            </div>
-          </div>
+          <VoucherStats
+            total={vouchers.length}
+            active={activeVouchers.length}
+            expired={expiredVouchers.length}
+          />
         </CardContent>
       </Card>
     </div>

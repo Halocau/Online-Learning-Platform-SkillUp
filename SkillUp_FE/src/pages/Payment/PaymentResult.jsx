@@ -1,10 +1,12 @@
 // src/pages/Payment/PaymentResult.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { paymentAPI } from "@/api/paymentAPI";
+import { getApiUrl } from "@/config/api";
+import { axiosInstance } from "@/config/api";
 import { toast } from "react-toastify";
 
 export default function PaymentResult() {
@@ -12,6 +14,15 @@ export default function PaymentResult() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("processing"); // processing, success, failed
   const [message, setMessage] = useState("Đang xử lý thanh toán...");
+
+  const paymentType = useMemo(() => searchParams.get("type") || "course", [searchParams]);
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null');
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -41,21 +52,51 @@ export default function PaymentResult() {
       }
 
       try {
-        // Gọi API verify payment và tự động enrollment
-        const success = await paymentAPI.verifyCoursePayment(orderCode);
+        let success = false;
 
+        if (paymentType === "cart") {
+          // Verify cart payment
+          success = await paymentAPI.verifyCartPayment(orderCode);
+
+          if (success) {
+            // Clear cart after successful payment
+            if (user?.userId) {
+              try {
+                const apiUrl = getApiUrl('CLEAR_CART').replace('{accountId}', user.userId);
+                await axiosInstance.post(apiUrl);
+                console.log("Cart cleared successfully");
+              } catch (error) {
+                console.error("Error clearing cart:", error);
+                // Don't fail the payment if cart clearing fails
+              }
+            }
+
+            setStatus("success");
+            setMessage("Thanh toán thành công! Bạn đã được đăng ký các khóa học và giỏ hàng đã được xóa.");
+            toast.success("Thanh toán và đăng ký khóa học thành công!");
+          } else {
+            setStatus("failed");
+            setMessage("Thanh toán thất bại hoặc đã xử lý trước đó");
+          }
+        } else {
+          // Verify course payment
+          success = await paymentAPI.verifyCoursePayment(orderCode);
+
+          if (success) {
+            setStatus("success");
+            setMessage("Thanh toán thành công! Bạn đã được đăng ký khóa học.");
+            toast.success("Đăng ký khóa học thành công!");
+          } else {
+            setStatus("failed");
+            setMessage("Thanh toán thất bại hoặc đã xử lý trước đó");
+          }
+        }
+
+        // Tự động redirect đến dashboard sau 2 giây nếu thành công
         if (success) {
-          setStatus("success");
-          setMessage("Thanh toán thành công! Bạn đã được đăng ký khóa học.");
-          toast.success("Đăng ký khóa học thành công!");
-
-          // Tự động redirect đến dashboard sau 2 giây
           setTimeout(() => {
             navigate("/dashboard");
           }, 2000);
-        } else {
-          setStatus("failed");
-          setMessage("Thanh toán thất bại hoặc đã xử lý trước đó");
         }
       } catch (error) {
         console.error("Verify payment error:", error);
@@ -66,7 +107,7 @@ export default function PaymentResult() {
     };
 
     verifyPayment();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, paymentType, user]);
 
   const handleGoToDashboard = () => {
     navigate("/dashboard");

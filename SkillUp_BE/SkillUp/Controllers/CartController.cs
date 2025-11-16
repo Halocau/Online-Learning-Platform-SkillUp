@@ -72,6 +72,16 @@ namespace SkillUp.Controllers
                     data = new List<object>()
                 });
             }
+            catch (InvalidOperationException ex)
+            {
+                // Xử lý lỗi khi đã enrolled
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new APIReturn
@@ -140,6 +150,40 @@ namespace SkillUp.Controllers
                     code = 200,
                     message = "Đồng bộ giỏ hàng (bulk-add) thành công.",
                     data = new List<object> { result }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
+        [HttpPost("clear/{accountId}")]
+        [Authorize]
+        public async Task<IActionResult> ClearCart(Guid accountId)
+        {
+            try
+            {
+                var result = await _cartService.ClearCartAsync(accountId);
+                if (result)
+                {
+                    return Ok(new APIReturn
+                    {
+                        code = 200,
+                        message = "Xóa giỏ hàng thành công!",
+                        data = new List<object>()
+                    });
+                }
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = "Không thể xóa giỏ hàng",
+                    data = new List<object>()
                 });
             }
             catch (Exception ex)
