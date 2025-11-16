@@ -109,7 +109,8 @@ namespace SkillUp.Services.Implementations
                 Id = Guid.NewGuid(),
                 QuizId = quiz.Id,
                 QuestionBankId = question.Id,
-                Orders = createQuestionDTO.Orders
+                Orders = createQuestionDTO.Orders,
+                IsActive = true
             };
 
             quiz.QuestionQuizzes.Add(questionQuiz);
@@ -352,6 +353,27 @@ namespace SkillUp.Services.Implementations
                     IsCorrect = a.IsCorrect
                 }).ToList()
             };
+        }
+        public async Task<bool> RemoveQuestionFromQuizAsync(Guid quizId, Guid questionId, Guid accId)
+        {
+            var lecturer = await _lecturerRepository.GetByAccountIdAsync(accId);
+            if (lecturer == null)
+                throw new Exception("Không tìm thấy giảng viên.");
+            var quiz = await _quizRepository.GetQuizWithSectionAndCourseAsync(quizId);
+            if (quiz == null)
+                throw new Exception("Không tìm thấy quiz.");
+
+            if (quiz.Section.Course.LecturerId != lecturer.Id)
+                throw new UnauthorizedAccessException("Bạn không có quyền xóa câu hỏi khỏi quiz này.");
+
+            var link = await _questionQuizRepository.GetLinkAsync(quizId, questionId);
+            if (link == null)
+                throw new Exception("Không tìm thấy câu hỏi này trong quiz.");
+
+            link.IsActive = false;
+            _questionQuizRepository.Update(link);
+
+            return await _questionBankRepository.SaveChangesAsync();
         }
     }
 }

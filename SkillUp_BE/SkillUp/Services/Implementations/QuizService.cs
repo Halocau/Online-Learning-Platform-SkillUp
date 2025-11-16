@@ -124,6 +124,7 @@ namespace SkillUp.Services.Implementations
                 Orders = quiz.Orders,
 
                 Questions = quiz.QuestionQuizzes
+                    .Where(qq => qq.IsActive == true)
                     .Where(qq => qq.QuestionBank != null && qq.QuestionBank.IsActive)
                     .OrderBy(qq => qq.Orders)
                     .Select(qq => new QuestionDetailDTO
