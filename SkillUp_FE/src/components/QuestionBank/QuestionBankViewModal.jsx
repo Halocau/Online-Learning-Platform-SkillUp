@@ -73,7 +73,7 @@ const QuestionBankViewModal = ({ open, onClose, questionBankObj }) => {
                           : {}
                       }
                     >
-                      {index + 1}. {answer.answerName}
+                      <b>{String.fromCharCode(97 + index)}) </b>{answer.answerName}
                     </span>{" "}
 
                     {answer.isCorrect && (

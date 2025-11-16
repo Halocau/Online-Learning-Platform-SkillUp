@@ -271,7 +271,7 @@ namespace SkillUp.Controllers
 		}
 
 		[HttpPost("add-by-excel")]
-		public async Task<IActionResult> AddByExcel(IFormFile file, Guid sectionId, Guid accountId)
+		public async Task<IActionResult> AddByExcel(IFormFile file, Guid sectionId)
 		{
 			try
 			{
@@ -282,9 +282,20 @@ namespace SkillUp.Controllers
 				if (!file.FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
 					return BadRequest("Chỉ hỗ trợ file Excel (.xlsx).");
 
+				var accountId = _currentUserService.UserId;
+				if (accountId == null)
+				{
+					return Unauthorized(new APIReturn
+					{
+						code = 401,
+						message = "Bạn cần đăng nhập để thực hiện hành động này.",
+						data = new List<object>()
+					});
+				}
+
 				// Read Excel and import data
 				using var stream = file.OpenReadStream();
-				var importedQuestions = await _questionBankService.ReadQuestionsWithMultipleAnswersAsync(stream, sectionId, accountId);
+				var importedQuestions = await _questionBankService.ReadQuestionsWithMultipleAnswersAsync(stream, sectionId, accountId.Value);
 
 				// Handle result
 				if (importedQuestions == null || importedQuestions.Count == 0)

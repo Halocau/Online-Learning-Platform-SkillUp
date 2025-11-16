@@ -168,10 +168,19 @@ namespace SkillUp.Services.Implementations
 					Id = Guid.NewGuid(),
 					QuizId = quiz.Id,
 					QuestionBankId = dto.QuestionBankId,
-					Orders = dto.Orders
+					Orders = dto.Orders,
+                    IsActive = true
 				};
 
-				quiz.QuestionQuizzes.Add(question);
+                var existingLink = await _questionQuizRepository.GetLinkAsync(quiz.Id, dto.QuestionBankId);
+                if (existingLink == null)
+				    quiz.QuestionQuizzes.Add(question);
+                if (existingLink != null && existingLink.IsActive != true)
+                {
+                    existingLink.IsActive = true;
+                    existingLink.Orders = dto.Orders;
+                    _questionQuizRepository.Update(existingLink);
+				}
 
 				result.Add(new CreateQuestionQuizResponseDTO
 				{

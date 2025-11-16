@@ -389,6 +389,7 @@ namespace SkillUp.Services.Implementations
 					CreatedAt = DateTime.Now,
 					UpdatedAt = DateTime.Now,
 					IsActive = true,
+					IsHidden = false,
 					Image = null,
 					Type = (correctOptions.Count > 1 ? "MultiChoice" : "SingleChoice"),
 					AnswerBanks = new List<AnswerBank>()
