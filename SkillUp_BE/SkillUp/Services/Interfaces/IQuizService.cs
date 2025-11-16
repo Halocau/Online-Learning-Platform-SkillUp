@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.DTOs.Quiz;
+﻿using SkillUp.BussinessObjects.DTOs.DoQuiz;
+using SkillUp.BussinessObjects.DTOs.Quiz;
 using SkillUp.BussinessObjects.Models;
 
 namespace SkillUp.Services.Interfaces
@@ -11,5 +12,6 @@ namespace SkillUp.Services.Interfaces
 
         Task<bool> DeleteQuizAsync(Guid quizId, Guid accountId);
         Task<QuizDetailDTO?> GetQuizDetailAsync(Guid quizId, Guid accountId);
+        Task<QuizStartDto> StartQuizAsync(Guid quizId, Guid studentId);
     }
 }
