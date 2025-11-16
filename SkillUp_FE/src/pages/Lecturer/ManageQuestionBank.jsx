@@ -192,7 +192,6 @@ export default function ManageQuestionBank() {
 
     const handleCreate = async (newQuestion) => {
         try {
-            console.log(newQuestion);
             const url = API_ENDPOINTS.QUESTION_BANK_CREATE.replace('{sectionId}', selectedSectionId);
             const response = await axiosInstance.post(url, newQuestion, {
                 params: {

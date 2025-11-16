@@ -9,7 +9,8 @@ namespace SkillUp.Repositories.Interfaces
         void Update(QuestionBank question);
         Task<QuestionBank?> GetByIdAsync(Guid id);
         Task<List<QuestionBank>> GetBySectionId(Guid sectionId);
-        Task<bool> SaveChangesAsync();
+		Task<List<QuestionBank>> GetByCourseId(Guid courseId);
+		Task<bool> SaveChangesAsync();
         Task<QuestionBank?> GetQuestionWithAnswersAsync(Guid questionId);
     }
 }

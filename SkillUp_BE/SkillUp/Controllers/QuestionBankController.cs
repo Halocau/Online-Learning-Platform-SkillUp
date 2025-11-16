@@ -236,6 +236,40 @@ namespace SkillUp.Controllers
 			}
 		}
 
+		[HttpGet("getByCourseId/{courseId}")]
+		public async Task<IActionResult> GetQuestionBanksByCourseId(Guid courseId)
+		{
+			try
+			{
+				var accountId = _currentUserService.UserId;
+				if (accountId == null)
+				{
+					return Unauthorized(new APIReturn
+					{
+						code = 401,
+						message = "Bạn cần đăng nhập để thực hiện hành động này.",
+						data = new List<object>()
+					});
+				}
+				var result = await _questionBankService.GetQuestionBanksByCourseIdAsync(accountId.Value, courseId);
+				return Ok(new APIReturn
+				{
+					code = 200,
+					message = "Lấy danh sách ngân hàng câu hỏi thành công!",
+					data = new List<object> { result }
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new APIReturn
+				{
+					code = 500,
+					message = "Có lỗi xảy ra: " + ex.Message,
+					data = new List<object>()
+				});
+			}
+		}
+
 		[HttpPost("add-by-excel")]
 		public async Task<IActionResult> AddByExcel(IFormFile file, Guid sectionId, Guid accountId)
 		{

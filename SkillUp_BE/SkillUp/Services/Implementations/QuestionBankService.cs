@@ -40,6 +40,36 @@ namespace SkillUp.Services.Implementations
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
 
+			if (string.IsNullOrWhiteSpace(createQuestionBankDTO.Type))
+			{
+				throw new Exception("Loại câu hỏi (Type) không được để trống.");
+			}
+
+			int correctAnswersCount = createQuestionBankDTO.Answers.Count(a => a.IsCorrect == true);
+
+			if (createQuestionBankDTO.Type == "SingleChoice")
+			{
+				if (correctAnswersCount == 0)
+				{
+					throw new Exception("Câu hỏi chọn 1 (SingleChoice) phải có 1 đáp án đúng.");
+				}
+				if (correctAnswersCount > 1)
+				{
+					throw new Exception("Câu hỏi chọn 1 (SingleChoice) chỉ được có 1 đáp án đúng.");
+				}
+			}
+			else if (createQuestionBankDTO.Type == "MultiChoice")
+			{
+				if (correctAnswersCount == 0)
+				{
+					throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
+				}
+			}
+			else
+			{
+				throw new Exception($"Loại câu hỏi '{createQuestionBankDTO.Type}' không hợp lệ.");
+			}
+
 			var answerList = createQuestionBankDTO.Answers;
 
 			QuestionBank questionBank = new QuestionBank
@@ -179,6 +209,38 @@ namespace SkillUp.Services.Implementations
 			return questionBankDTOs;
 		}
 
+		public async Task<List<DetailQuestionBankDTO>> GetQuestionBanksByCourseIdAsync(Guid accountId, Guid courseId)
+		{
+			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+			var course = await _courseRepository.GetCourseByIdAsync(courseId);
+			if (lecturer == null || course!.LecturerId != lecturer.Id)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
+			}
+			var questionBanks = await _questionBankRepository.GetByCourseId(courseId);
+			var questionBankDTOs = questionBanks.Select(q => new DetailQuestionBankDTO
+			{
+				Id = (Guid)q.Id,
+				SectionId = q.SectionId,
+				LecturerId = q.LecturerId,
+				Title = q.Title,
+				Description = q.Description,
+				CreatedAt = q.CreatedAt,
+				UpdatedAt = q.UpdatedAt,
+				IsActive = q.IsActive,
+				Image = q.Image,
+				Type = q.Type,
+				Answers = q.AnswerBanks.Select(a => new AnswerBankDetailDTO
+				{
+					AnswerId = (Guid)a.Id,
+					AnswerName = a.AnswerName,
+					IsCorrect = a.IsCorrect,
+					IsActive = a.IsActive,
+				}).ToList()
+			}).ToList();
+			return questionBankDTOs;
+		}
+
 		public async Task<UpdateQuestionBankDTO> UpdateQuestionBank(UpdateQuestionBankDTO updateQuestionBankDTO, Guid questionBankId, Guid accountId, Guid courseId)
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
@@ -187,6 +249,37 @@ namespace SkillUp.Services.Implementations
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
+
+			if (string.IsNullOrWhiteSpace(updateQuestionBankDTO.Type))
+			{
+				throw new Exception("Loại câu hỏi (Type) không được để trống.");
+			}
+
+			int correctAnswersCount = updateQuestionBankDTO.Answers.Count(a => a.IsCorrect == true);
+
+			if (updateQuestionBankDTO.Type == "SingleChoice")
+			{
+				if (correctAnswersCount == 0)
+				{
+					throw new Exception("Câu hỏi chọn 1 (SingleChoice) phải có 1 đáp án đúng.");
+				}
+				if (correctAnswersCount > 1)
+				{
+					throw new Exception("Câu hỏi chọn 1 (SingleChoice) chỉ được có 1 đáp án đúng.");
+				}
+			}
+			else if (updateQuestionBankDTO.Type == "MultiChoice")
+			{
+				if (correctAnswersCount == 0)
+				{
+					throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
+				}
+			}
+			else
+			{
+				throw new Exception($"Loại câu hỏi '{updateQuestionBankDTO.Type}' không hợp lệ.");
+			}
+
 			var existingQuestion = await _questionBankRepository.GetByIdAsync(questionBankId);
 			if (existingQuestion == null)
 			{
@@ -194,6 +287,8 @@ namespace SkillUp.Services.Implementations
 			}
 			existingQuestion.SectionId = updateQuestionBankDTO.SectionId;
 			existingQuestion.Title = updateQuestionBankDTO.Title;
+			existingQuestion.Type = updateQuestionBankDTO.Type;
+			existingQuestion.Image = updateQuestionBankDTO.Image;
 			existingQuestion.UpdatedAt = DateTime.Now;
 			foreach (var answerDTO in updateQuestionBankDTO.Answers)
 			{
