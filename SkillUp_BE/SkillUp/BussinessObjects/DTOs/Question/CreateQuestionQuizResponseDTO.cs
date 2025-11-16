@@ -11,7 +11,5 @@
 		public string Title { get; set; } = null!;
 
 		public double? Orders { get; set; }
-
-		public string? Type { get; set; } = null;
 	}
 }

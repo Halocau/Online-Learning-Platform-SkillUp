@@ -35,7 +35,16 @@ namespace SkillUp.Repositories.Implementations
 			return await _context.QuestionBanks
                 .Include(q => q.AnswerBanks.Where(a => a.IsActive))
 				.Where(q => q.SectionId == sectionId)
-				.Where(q => q.IsActive)
+				.Where(q => q.IsActive && q.IsHidden == false)
+				.ToListAsync();
+		}
+
+		public async Task<List<QuestionBank>> GetByCourseId(Guid courseId)
+		{
+			return await _context.QuestionBanks
+				.Include(q => q.AnswerBanks.Where(a => a.IsActive))
+				.Where(q => q.Section.CourseId == courseId)
+				.Where(q => q.IsActive && q.IsHidden == false)
 				.ToListAsync();
 		}
 

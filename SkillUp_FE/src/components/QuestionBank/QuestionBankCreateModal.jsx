@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Descriptions, Checkbox, Input, Button, Space, Upload } from "antd";
+import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select } from "antd";
 import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axios";
 
 const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
+    const [fileList, setFileList] = useState([]);
+
+    const [loading, setLoading] = useState(false);
     const [questionData, setQuestionData] = useState({
         title: "",
         description: "description",
         answers: [],
         sectionId: sectionId,
+        Type: "SingleChoice",
     });
 
     useEffect(() => {
@@ -19,6 +23,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                 description: "description",
                 answers: [],
                 sectionId: sectionId,
+                Type: "SingleChoice",
             });
         }
     }, [open]);
@@ -31,6 +36,16 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                     ? { ...ans, isCorrect: !ans.isCorrect }
                     : ans
             ),
+        }));
+    };
+
+    const handleRadioChange = (selectedId) => {
+        setQuestionData((prev) => ({
+            ...prev,
+            answers: prev.answers.map((a) => ({
+                ...a,
+                isCorrect: a.answerId === selectedId
+            }))
         }));
     };
 
@@ -50,56 +65,66 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
     };
 
     const handleSave = async () => {
-    const currentData = { ...questionData };
+        if (!questionData.title?.trim()) {
+            toast.error("Vui lòng nhập câu hỏi!");
+            return;
+        }
+        const hasCorrectAnswer = questionData.answers.some(ans => ans.isCorrect);
+        if (!hasCorrectAnswer) {
+            toast.error("Bạn phải chọn ít nhất một đáp án đúng!");
+            return;
+        }
 
-    if (!questionData.title?.trim()) {
-        toast.error("Vui lòng nhập câu hỏi!");
-        return;
-    }
+        setLoading(true);
 
-    if (
-        !questionData.answers.length ||
-        questionData.answers.some(a => !a.answerName?.trim())
-    ) {
-        toast.error("Vui lòng nhập đầy đủ đáp án!");
-        return;
-    }
+        try {
+            const currentData = { ...questionData };
+            let imageUrl = null;
 
-    // Upload image only if it's a File
-    let imageUrl = null;
-    if (questionData.questionImage instanceof File) {
-        imageUrl = await uploadImage(questionData.questionImage);
-    }
+            if (questionData.questionImage instanceof File) {
+                imageUrl = await uploadImage(questionData.questionImage);
+            }
 
-    currentData.questionImage = imageUrl;
+            currentData.questionImage = imageUrl;
+            await onCreate(currentData);
+            toast.success("Lưu thành công!");
 
-    if (onCreate) onCreate(currentData);
+            // Reset form và đóng modal
+            setQuestionData({
+                title: "",
+                description: "description",
+                questionImage: null,
+                answers: [],
+                sectionId: sectionId,
+                Type: "SingleChoice",
+            });
+            setFileList([]);
+            onClose();
 
-    // Reset
-    setQuestionData({
-        title: "",
-        questionImage: null,
-        answers: [],
-    });
+        } catch (error) {
+            console.error("Lưu thất bại:", error);
+            toast.error(error.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
 
-    onClose();
-};
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     const uploadImage = async (file) => {
-    const formData = new FormData();
-    formData.append("image", file);
+        const formData = new FormData();
+        formData.append("image", file);
 
-    const response = await axiosInstance.post(
-        "http://localhost:5120/api/Upload/image",
-        formData,
-        {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        }
-    );
-    return response.data.data[0].url; // Assuming the API returns the image URL in data field
+        const response = await axiosInstance.post(
+            "http://localhost:5120/api/Upload/image",
+            formData,
+            {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }
+        );
+        return response.data.data[0].url; // Assuming the API returns the image URL in data field
     };
 
     // Delete an answer
@@ -119,7 +144,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
     const handleAddAnswer = () => {
         const newAnswer = {
             answerId: crypto.randomUUID(),
-            answerName: "Cau tra loi moi",
+            answerName: "Đáp án mới",
             isCorrect: false,
             isActive: true
         };
@@ -161,6 +186,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
 
                         {/* Title Textarea (Left) */}
                         <Input.TextArea
+                            value={questionData.title}
                             onChange={handleTitleChange}
                             placeholder="Nhập câu hỏi"
                             maxLength={255}
@@ -169,15 +195,28 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                             required
                         />
 
-                        {/* Image Upload (Right) */}
+                        {/* Image Upload */}
                         <Upload
                             listType="picture-card"
                             maxCount={1}
                             accept="image/*"
                             beforeUpload={() => false}
-                            onChange={(info) => handleQuestionImageChange(info.file)}
+                            showUploadList={{
+                                showPreviewIcon: false,
+                                showRemoveIcon: true,
+                            }}
+                            fileList={fileList}
+                            onChange={({ fileList: newList }) => {
+                                setFileList(newList);
+
+                                if (newList.length > 0) {
+                                    handleQuestionImageChange(newList[0].originFileObj);
+                                } else {
+                                    handleQuestionImageChange(null); // user clicked trash icon
+                                }
+                            }}
                         >
-                            {questionData?.questionImage ? null : (
+                            {fileList.length >= 1 ? null : (
                                 <div>
                                     <UploadOutlined />
                                     <div style={{ marginTop: 8 }}>Ảnh</div>
@@ -204,10 +243,19 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                                                 gap: "10px",
                                             }}
                                         >
-                                            <Checkbox
-                                                checked={answer.isCorrect}
-                                                onChange={() => handleCheckboxChange(answer.answerId)}
-                                            />
+
+                                            {questionData.Type === "MultiChoice" ? (
+                                                <Checkbox
+                                                    checked={answer.isCorrect}
+                                                    onChange={() => handleCheckboxChange(answer.answerId)}
+                                                />
+                                            ) : (
+                                                <Radio
+                                                    checked={answer.isCorrect}
+                                                    onChange={() => handleRadioChange(answer.answerId)}
+                                                />
+                                            )}
+
                                             <Input.TextArea
                                                 value={answer.answerName}
                                                 onChange={(e) =>
@@ -215,9 +263,10 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                                                 }
                                                 placeholder="Nhập nội dung đáp án"
                                                 maxLength={255}
-                                                autoSize={{ minRows: 1, maxRows: 4 }} //auto expand as text grows
+                                                autoSize={{ minRows: 1, maxRows: 4 }}
                                                 style={{ flex: 1, minWidth: 0 }}
                                             />
+
                                             <Button
                                                 type="text"
                                                 danger
@@ -248,8 +297,37 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                             >
                                 Thêm đáp án
                             </Button>
+
+                            {questionData.answers.length > 0 &&
+                                !questionData.answers.some(ans => ans.isCorrect) && (
+                                    <Alert
+                                        message="Vui lòng chọn ít nhất một đáp án đúng."
+                                        type="warning"
+                                        showIcon
+                                        style={{ marginTop: "10px" }}
+                                    />
+                                )}
                         </>
                     )}
+                </Descriptions.Item>
+
+                <Descriptions.Item label="Loại câu hỏi">
+                    <Select
+                        defaultValue="SingleChoice"
+                        value={questionData.Type}
+                        onChange={(value) => {
+                            setQuestionData((prev) => ({
+                                ...prev,
+                                Type: value,
+                                answers: prev.answers.map((a) => ({ ...a, isCorrect: false })) // reset lại đáp án đúng
+                            }));
+                        }}
+                        style={{ width: 200 }}
+                        options={[
+                            { label: "Một đáp án đúng", value: "SingleChoice" },
+                            { label: "Nhiều đáp án đúng", value: "MultiChoice" }
+                        ]}
+                    />
                 </Descriptions.Item>
 
             </Descriptions>
@@ -257,11 +335,11 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
             {/* Footer Buttons */}
             <Space style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
                 <Button onClick={onClose}>Huỷ</Button>
-                <Button type="primary" onClick={handleSave}>
+                <Button type="primary" loading={loading} onClick={handleSave}>
                     Lưu
                 </Button>
             </Space>
-        </Modal>
+        </Modal >
 
     );
 };

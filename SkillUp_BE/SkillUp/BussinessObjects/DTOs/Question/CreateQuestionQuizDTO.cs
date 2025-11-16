@@ -7,7 +7,5 @@
 		public Guid QuizId { get; set; }
 
 		public double? Orders { get; set; }
-
-		public string? Type { get; set; } = null;
 	}
 }

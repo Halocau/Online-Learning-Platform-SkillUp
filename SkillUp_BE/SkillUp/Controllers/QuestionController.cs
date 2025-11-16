@@ -222,5 +222,59 @@ namespace SkillUp.Controllers
 				return StatusCode(500, new APIReturn { code = 500, message = ex.Message });
 			}
 		}
+        [HttpDelete("RemoveQuestionFromQuiz/{quizId}/{questionId}")]
+        [Authorize]
+        public async Task<IActionResult> RemoveQuestionFromQuiz(Guid quizId, Guid questionId)
+        {
+            try
+            {
+                var accId = _currentUserService.UserId;
+                if (!accId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var success = await _questionService.RemoveQuestionFromQuizAsync(quizId, questionId, accId.Value);
+
+                if (!success)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Xóa câu hỏi thất bại"
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Xóa câu hỏi khỏi quiz thành công"
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy giảng viên") ||
+                    ex.Message.Contains("Không tìm thấy quiz") ||
+                    ex.Message.Contains("Không tìm thấy câu hỏi này trong quiz"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }

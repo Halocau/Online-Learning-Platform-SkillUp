@@ -10,6 +10,8 @@ namespace SkillUp.BussinessObjects.DTOs.QuestionBank
 
 		public string? Image { get; set; }
 
+		public string? Type { get; set; }
+
 		public List<UpdateAnswerBankDTO> Answers { get; set; } = new List<UpdateAnswerBankDTO>();
 	}
 }
