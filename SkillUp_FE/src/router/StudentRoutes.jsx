@@ -1,7 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
-import StudentDashboard from "../pages/student/StudentDashboard";
+import StudentDashboard from "@/pages/Student/StudentDashboard";
+import CourseLearning from "@/pages/Student/Learn/CourseLearning";
 
 const StudentRoutes = () => {
   return (
@@ -16,9 +17,9 @@ const StudentRoutes = () => {
       >
         <Route index element={<StudentDashboard />} />
         <Route path="dashboard" element={<StudentDashboard />} />
-        {/* <Route path="courses" element={<MyCourses />} /> */}
-        {/* <Route path="profile" element={<MyProfile />} /> */}
-        {/* <Route path="progress" element={<MyProgress />} /> */}
+        {/* Updated: Now includes sectionId */}
+        <Route path="learn/:courseId/:sectionId" element={<CourseLearning />} />
+        <Route path="learn/:courseId" element={<CourseLearning />} />
       </Route>
     </Routes>
   );

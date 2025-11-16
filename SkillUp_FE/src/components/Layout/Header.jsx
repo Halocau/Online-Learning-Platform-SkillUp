@@ -48,17 +48,17 @@ function Header() {
     // Listen to storage event (khi login thành công)
     const handleStorageChange = () => {
       const cachedUser = localStorage.getItem("user");
-      if (cachedUser && cachedUser !== 'null') {
+      if (cachedUser && cachedUser !== "null") {
         setUser(JSON.parse(cachedUser));
       } else {
         setUser(null);
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, [accessToken]);
 
@@ -74,10 +74,10 @@ function Header() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
-      
+
       // Clear guest cart khi logout
       clearGuestCart();
-      
+
       setUser(null);
       setShowDropdown(false);
       toast.success("Đăng xuất thành công!");
@@ -145,7 +145,7 @@ function Header() {
             </Link>
             {isAuthenticated && user?.role === "Student" && (
               <Link
-                to="/dashboard"
+                to="/student/dashboard"
                 className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
               >
                 Dashboard
@@ -177,7 +177,6 @@ function Header() {
               className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm"
             ></Link>
 
-            
             {/* Cart - Cho phép guest truy cập */}
             <Link
               to="/cart"
