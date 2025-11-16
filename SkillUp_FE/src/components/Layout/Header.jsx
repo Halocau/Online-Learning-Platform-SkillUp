@@ -74,10 +74,10 @@ function Header() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
-      
+
       // Clear guest cart khi logout
       clearGuestCart();
-      
+
       setUser(null);
       setShowDropdown(false);
       toast.success("Đăng xuất thành công!");
@@ -143,14 +143,6 @@ function Header() {
             >
               Diễn đàn
             </Link>
-            {isAuthenticated && user?.role === "Student" && (
-              <Link
-                to="/dashboard"
-                className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
-              >
-                Dashboard
-              </Link>
-            )}
             {isAuthenticated && (
               <Link
                 to="/ticket"
@@ -170,14 +162,21 @@ function Header() {
             >
               Tin tức
             </Link>
-
+            {isAuthenticated && user?.role === "Student" && (
+              <Link
+                to="/dashboard"
+                className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
+              >
+                Trang điều khiển
+              </Link>
+            )}
             {/* Teach Link - Hidden on mobile */}
             <Link
               to="/teach"
               className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm"
             ></Link>
 
-            
+
             {/* Cart - Cho phép guest truy cập */}
             <Link
               to="/cart"
