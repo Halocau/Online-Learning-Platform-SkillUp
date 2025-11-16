@@ -10,5 +10,7 @@ namespace SkillUp.Services.Interfaces
 		Task<List<ViewVoucherDTO>> GetVoucherByCourseId(Guid id);
 		Task<AddVoucherDTO> UpdateVoucher(AddVoucherDTO addVoucherDTO, Guid voucherId);
 		Task DeleteVoucher(Guid id);
+		Task<ValidateVoucherResponseDTO> ValidateVoucherByCode(ValidateVoucherDTO validateVoucherDTO, decimal totalPrice);
+		Task<List<VoucherType>> GetAllVoucherTypes();
 	}
 }

@@ -16,18 +16,30 @@ namespace SkillUp.Repositories.Implementations
 			await _context.Vouchers.AddAsync(voucher);
 		}
 
-		public async Task<List<Voucher>> GetVoucherByCourseId(Guid id)
-		{
-			return await _context.Vouchers.
-				Include(v => v.VoucherTypeNavigation).
-				Where(v => v.CourseId == id).ToListAsync();
-		}
+	public async Task<List<Voucher>> GetVoucherByCourseId(Guid id)
+	{
+		return await _context.Vouchers.
+			Include(v => v.VoucherTypeNavigation).
+			Where(v => v.CourseId == id && v.IsActive == true).ToListAsync();
+	}
 
 		public async Task<Voucher?> GetVoucherById(Guid id)
 		{
 			return await _context.Vouchers.
 				Include(v => v.VoucherTypeNavigation).
 				FirstOrDefaultAsync(v => v.Id == id);
+		}
+
+		public async Task<Voucher?> GetVoucherByCode(string couponCode)
+		{
+			return await _context.Vouchers.
+				Include(v => v.VoucherTypeNavigation).
+				FirstOrDefaultAsync(v => v.CouponCode == couponCode && v.IsActive == true);
+		}
+
+		public async Task<List<VoucherType>> GetAllVoucherTypes()
+		{
+			return await _context.VoucherTypes.ToListAsync();
 		}
 
 		public async Task SaveChangesAsync()

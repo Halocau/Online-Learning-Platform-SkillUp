@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getApiUrl } from '../../config/api.js';
 import { axiosInstance } from '../../config/api.js';
 import { GuestCartView } from '@/components/Cart/GuestCartView';
+import { voucherAPI } from '../../api/voucherAPI.js';
 import {
     List,
     Button,
@@ -34,40 +35,33 @@ function MyCart() {
     // Get user from localStorage (decoded from JWT)
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     const accountId = user?.userId;
-    
+
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [voucherCode, setVoucherCode] = useState('');
+    const [appliedVoucher, setAppliedVoucher] = useState(null);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [applyingVoucher, setApplyingVoucher] = useState(false);
 
     // Hàm gọi API để lấy giỏ hàng
     const fetchCart = async () => {
         setLoading(true);
         try {
-            console.log('🛒 Fetching cart for accountId:', accountId); // DEBUG
-            
-            // Giả sử key trong config của bạn là 'CART'
             const apiUrlTemplate = getApiUrl('CART');
             const apiUrl = apiUrlTemplate.replace('{accountId}', accountId);
-            
-            console.log('📡 API URL:', apiUrl); // DEBUG
-            
+
             const response = await axiosInstance.get(apiUrl);
-            
-            console.log('📦 Cart API Response:', response.data); // DEBUG
 
             if (response.data && response.data.code === 200) {
-                // --- BỎ MOCK DATA ---
-                // Lấy dữ liệu giỏ hàng gốc trực tiếp
                 const originalCart = response.data.data[0];
-                console.log('✅ Cart loaded:', originalCart); // DEBUG
-                
+
                 // Nếu cart null hoặc undefined → set cart rỗng
                 if (!originalCart) {
                     setCart({ cartItems: [] });
                 } else {
                     setCart(originalCart);
                 }
-                // --- KẾT THÚC SỬA ĐỔI ---
 
             } else {
                 throw new Error(response.data.message || "Không thể tải giỏ hàng");
@@ -75,8 +69,7 @@ function MyCart() {
             setError(null);
         } catch (err) {
             console.error("Lỗi khi tải giỏ hàng:", err);
-            console.error("Error response:", err.response); // DEBUG
-            
+
             // Xử lý 404 (Không tìm thấy giỏ hàng) bằng cách hiển thị giỏ hàng trống
             if (err.response?.status === 404) {
                 setCart({ cartItems: [] }); // Set giỏ hàng rỗng
@@ -121,16 +114,89 @@ function MyCart() {
         }
     };
 
-    // Tính tổng tiền (Không thay đổi)
+    // Tính tổng tiền
     const totalPrice = cart?.cartItems?.reduce((acc, item) => acc + item.price, 0) || 0;
+    const finalPrice = Math.max(0, totalPrice - discountAmount);
+
+    // Hàm xử lý áp dụng voucher
+    const handleApplyVoucher = async () => {
+        if (!voucherCode.trim()) {
+            message.warning('Vui lòng nhập mã giảm giá');
+            return;
+        }
+
+        if (!cart || !cart.cartItems || cart.cartItems.length === 0) {
+            message.warning('Giỏ hàng trống');
+            return;
+        }
+
+        setApplyingVoucher(true);
+        try {
+            // Lấy course ID từ cart items
+            const courseIds = cart.cartItems.map(item => {
+                return item.courseId ||
+                    item.course?.id ||
+                    item.course?.courseId;
+            }).filter(id => id != null && id !== undefined);
+
+            if (courseIds.length === 0) {
+                message.error('Không thể lấy thông tin khóa học từ giỏ hàng');
+                setApplyingVoucher(false);
+                return;
+            }
+
+            const response = await voucherAPI.validateVoucher(
+                voucherCode.trim(),
+                courseIds,
+                totalPrice
+            );
+
+            if (response.data && response.data.code === 200) {
+                // Backend trả về ValidateVoucherResponseDTO trong data[0] với PascalCase
+                const voucherData = response.data.data[0];
+
+                // Backend trả về PascalCase: IsValid, Voucher, DiscountAmount, Message
+                const isValid = voucherData?.IsValid ?? voucherData?.isValid ?? false;
+                const voucher = voucherData?.Voucher ?? voucherData?.voucher;
+                const discountAmount = voucherData?.DiscountAmount ?? voucherData?.discountAmount ?? 0;
+                const messageText = voucherData?.Message ?? voucherData?.message;
+
+                if (voucherData && isValid) {
+                    setAppliedVoucher(voucher);
+                    setDiscountAmount(discountAmount);
+                    message.success(messageText || 'Áp dụng mã giảm giá thành công!');
+                } else {
+                    throw new Error(messageText || 'Mã giảm giá không hợp lệ');
+                }
+            } else {
+                throw new Error(response.data?.message || 'Mã giảm giá không hợp lệ');
+            }
+        } catch (err) {
+            console.error("Lỗi khi áp dụng voucher:", err);
+            const errorMessage = err.response?.data?.message || err.message || "Không thể áp dụng mã giảm giá. Vui lòng thử lại.";
+            message.error(errorMessage);
+            setAppliedVoucher(null);
+            setDiscountAmount(0);
+        } finally {
+            setApplyingVoucher(false);
+        }
+    };
+
+    // Hàm xử lý xóa voucher
+    const handleRemoveVoucher = () => {
+        setAppliedVoucher(null);
+        setDiscountAmount(0);
+        setVoucherCode('');
+        message.info('Đã xóa mã giảm giá');
+    };
 
     // --- RENDER LOGIC ---
-    
+
     // Kiểm tra nếu không có accountId => Guest user
     if (!accountId) {
         return <GuestCartView />;
     }
-    
+
     if (loading) {
         return <Spin tip="Đang tải giỏ hàng..." fullscreen />;
     }
@@ -240,16 +306,99 @@ function MyCart() {
                     />
                 </Col>
 
-                {/* Cột tổng tiền (Không thay đổi) */}
+                {/* Cột tổng tiền */}
                 <Col xs={24} lg={8}>
                     <div style={{ position: 'sticky', top: '24px' }}>
                         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
 
-                            <Typography.Text type="secondary" style={{ fontSize: '16px', fontWeight: 700 }}>Tổng:</Typography.Text>
+                            {/* Voucher Section */}
+                            <Card size="small" style={{ width: '100%' }}>
+                                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                                    <Typography.Text strong style={{ fontSize: '14px' }}>
+                                        Mã giảm giá
+                                    </Typography.Text>
 
-                            <Typography.Title level={2} style={{ margin: 0, marginTop: '-10px', lineHeight: 1.2 }}>
-                                {formatPrice(totalPrice)}
-                            </Typography.Title>
+                                    {appliedVoucher ? (
+                                        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                                            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                                <Tag color="green" style={{ fontSize: '12px', padding: '4px 8px' }}>
+                                                    {appliedVoucher.couponCode}
+                                                </Tag>
+                                                <Button
+                                                    type="link"
+                                                    danger
+                                                    size="small"
+                                                    onClick={handleRemoveVoucher}
+                                                    style={{ padding: 0, height: 'auto' }}
+                                                >
+                                                    Xóa
+                                                </Button>
+                                            </Space>
+                                            <Typography.Text type="success" style={{ fontSize: '12px' }}>
+                                                Giảm: {formatPrice(discountAmount)}
+                                            </Typography.Text>
+                                        </Space>
+                                    ) : (
+                                        <Space style={{ width: '100%' }} size="small">
+                                            <Input
+                                                placeholder="Nhập mã giảm giá"
+                                                value={voucherCode}
+                                                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                onPressEnter={handleApplyVoucher}
+                                                disabled={applyingVoucher}
+                                                style={{ flex: 1 }}
+                                            />
+                                            <Button
+                                                type="primary"
+                                                onClick={handleApplyVoucher}
+                                                loading={applyingVoucher}
+                                                style={{
+                                                    backgroundColor: primaryColor,
+                                                    borderColor: primaryColor,
+                                                }}
+                                            >
+                                                Áp dụng
+                                            </Button>
+                                        </Space>
+                                    )}
+                                </Space>
+                            </Card>
+
+                            <Divider style={{ margin: '8px 0' }} />
+
+                            {/* Price Summary */}
+                            <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                                <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                    <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
+                                        Tạm tính:
+                                    </Typography.Text>
+                                    <Typography.Text style={{ fontSize: '14px' }}>
+                                        {formatPrice(totalPrice)}
+                                    </Typography.Text>
+                                </Space>
+
+                                {discountAmount > 0 && (
+                                    <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                        <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
+                                            Giảm giá:
+                                        </Typography.Text>
+                                        <Typography.Text type="success" style={{ fontSize: '14px' }}>
+                                            -{formatPrice(discountAmount)}
+                                        </Typography.Text>
+                                    </Space>
+                                )}
+
+                                <Divider style={{ margin: '8px 0' }} />
+
+                                <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                                    <Typography.Text strong style={{ fontSize: '16px' }}>
+                                        Tổng cộng:
+                                    </Typography.Text>
+                                    <Typography.Title level={3} style={{ margin: 0, color: primaryColor }}>
+                                        {formatPrice(finalPrice)}
+                                    </Typography.Title>
+                                </Space>
+                            </Space>
 
                             <Button
                                 type="primary"
@@ -268,8 +417,6 @@ function MyCart() {
                             <Typography.Text type="secondary" style={{ fontSize: '12px', textAlign: 'center', display: 'block' }}>
                                 Bạn sẽ không bị tính phí ngay bây giờ
                             </Typography.Text>
-
-                            <Divider />
 
                         </Space>
                     </div>

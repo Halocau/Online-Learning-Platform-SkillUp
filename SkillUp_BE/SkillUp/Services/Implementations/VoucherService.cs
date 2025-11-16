@@ -2,6 +2,7 @@
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
+using System;
 
 namespace SkillUp.Services.Implementations
 {
@@ -114,6 +115,113 @@ namespace SkillUp.Services.Implementations
 				EndTime = existingVoucher.EndTime,
 				Price = existingVoucher.Price
 			};
+		}
+
+		public async Task<ValidateVoucherResponseDTO> ValidateVoucherByCode(ValidateVoucherDTO validateVoucherDTO, decimal totalPrice)
+		{
+			var voucher = await _voucherRepository.GetVoucherByCode(validateVoucherDTO.CouponCode);
+			
+			if (voucher == null)
+			{
+				return new ValidateVoucherResponseDTO
+				{
+					IsValid = false,
+					Message = "Mã giảm giá không tồn tại hoặc đã bị vô hiệu hóa.",
+					Voucher = null,
+					DiscountAmount = 0
+				};
+			}
+
+			// Kiểm tra thời gian hiệu lực
+			var now = DateTime.Now;
+			if (voucher.StartTime.HasValue && now < voucher.StartTime.Value)
+			{
+				return new ValidateVoucherResponseDTO
+				{
+					IsValid = false,
+					Message = "Mã giảm giá chưa có hiệu lực.",
+					Voucher = null,
+					DiscountAmount = 0
+				};
+			}
+
+			if (voucher.EndTime.HasValue && now > voucher.EndTime.Value)
+			{
+				return new ValidateVoucherResponseDTO
+				{
+					IsValid = false,
+					Message = "Mã giảm giá đã hết hạn.",
+					Voucher = null,
+					DiscountAmount = 0
+				};
+			}
+
+			// Kiểm tra nếu voucher chỉ áp dụng cho một khóa học cụ thể
+			if (voucher.CourseId.HasValue)
+			{
+				if (!validateVoucherDTO.CourseIds.Contains(voucher.CourseId.Value))
+				{
+					return new ValidateVoucherResponseDTO
+					{
+						IsValid = false,
+						Message = "Mã giảm giá này không áp dụng cho các khóa học trong giỏ hàng.",
+						Voucher = null,
+						DiscountAmount = 0
+					};
+				}
+			}
+
+			// Tính toán số tiền giảm
+			decimal discountAmount = 0;
+			if (voucher.VoucherTypeNavigation != null)
+			{
+				// Nếu là phần trăm
+				if (voucher.VoucherTypeNavigation.Percentage > 0)
+				{
+					discountAmount = totalPrice * (voucher.VoucherTypeNavigation.Percentage / 100m);
+				}
+				else
+				{
+					// Nếu là số tiền cố định
+					discountAmount = voucher.Price;
+				}
+			}
+			else
+			{
+				// Fallback: sử dụng Price như số tiền giảm cố định
+				discountAmount = voucher.Price;
+			}
+
+			// Đảm bảo discount không vượt quá tổng tiền
+			if (discountAmount > totalPrice)
+			{
+				discountAmount = totalPrice;
+			}
+
+			var voucherDTO = new ViewVoucherDTO
+			{
+				Id = voucher.Id,
+				CourseId = voucher.CourseId,
+				VoucherType = voucher.VoucherType,
+				CouponCode = voucher.CouponCode,
+				StartTime = voucher.StartTime,
+				EndTime = voucher.EndTime,
+				Price = voucher.Price,
+				IsActive = voucher.IsActive
+			};
+
+			return new ValidateVoucherResponseDTO
+			{
+				IsValid = true,
+				Message = "Mã giảm giá hợp lệ.",
+				Voucher = voucherDTO,
+				DiscountAmount = discountAmount
+			};
+		}
+
+		public async Task<List<VoucherType>> GetAllVoucherTypes()
+		{
+			return await _voucherRepository.GetAllVoucherTypes();
 		}
 	}
 }
