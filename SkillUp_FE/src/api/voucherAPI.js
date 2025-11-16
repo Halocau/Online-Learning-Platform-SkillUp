@@ -47,6 +47,20 @@ export const voucherAPI = {
         }
     },
 
+    // Get vouchers by multiple course IDs (batch)
+    getCourseVouchersBatch: async (courseIds) => {
+        try {
+            const response = await axiosInstance.post(
+                `${API_BASE_URL}/course-vouchers-batch`,
+                courseIds
+            );
+            return response;
+        } catch (error) {
+            console.error("Error getting course vouchers batch:", error);
+            throw error;
+        }
+    },
+
     // Add new voucher
     addVoucher: async (voucherData) => {
         try {

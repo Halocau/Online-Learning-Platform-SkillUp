@@ -15,14 +15,19 @@ namespace SkillUp.Services.Implementations
 		}
 		public async Task<AddVoucherDTO> AddVoucher(AddVoucherDTO addVoucherDTO)
 		{
+			// Normalize thời gian về Local time trước khi lưu
+			// Frontend gửi local time string → parse thành Unspecified → chuyển thành Local
+			var normalizedStartTime = NormalizeToLocalTime(addVoucherDTO.StartTime);
+			var normalizedEndTime = NormalizeToLocalTime(addVoucherDTO.EndTime);
+
 			var voucher = new Voucher
 			{
 				Id = Guid.NewGuid(),
 				CourseId = addVoucherDTO.CourseId,
 				VoucherType = addVoucherDTO.VoucherType,
 				CouponCode = addVoucherDTO.CouponCode,
-				StartTime = addVoucherDTO.StartTime,
-				EndTime = addVoucherDTO.EndTime,
+				StartTime = normalizedStartTime,
+				EndTime = normalizedEndTime,
 				Price = addVoucherDTO.Price,
 				IsActive = true
 			};
@@ -64,9 +69,48 @@ namespace SkillUp.Services.Implementations
 				StartTime = v.StartTime,
 				EndTime = v.EndTime,
 				Price = v.Price,
-				IsActive = v.IsActive
+				IsActive = v.IsActive,
+				Percentage = v.VoucherTypeNavigation?.Percentage
 			}).ToList();
 			return voucherDTOs;
+		}
+
+		public async Task<Dictionary<Guid, List<ViewVoucherDTO>>> GetVouchersByCourseIds(List<Guid> courseIds)
+		{
+			if (courseIds == null || !courseIds.Any())
+			{
+				return new Dictionary<Guid, List<ViewVoucherDTO>>();
+			}
+
+			var vouchersDict = await _voucherRepository.GetVouchersByCourseIds(courseIds);
+			var result = new Dictionary<Guid, List<ViewVoucherDTO>>();
+
+			foreach (var kvp in vouchersDict)
+			{
+				result[kvp.Key] = kvp.Value.Select(v => new ViewVoucherDTO
+				{
+					Id = v.Id,
+					CourseId = v.CourseId,
+					VoucherType = v.VoucherType,
+					CouponCode = v.CouponCode,
+					StartTime = v.StartTime,
+					EndTime = v.EndTime,
+					Price = v.Price,
+					IsActive = v.IsActive,
+					Percentage = v.VoucherTypeNavigation?.Percentage
+				}).ToList();
+			}
+
+			// Đảm bảo tất cả courseIds đều có trong result (kể cả không có voucher)
+			foreach (var courseId in courseIds)
+			{
+				if (!result.ContainsKey(courseId))
+				{
+					result[courseId] = new List<ViewVoucherDTO>();
+				}
+			}
+
+			return result;
 		}
 
 		public async Task<ViewVoucherDTO> GetVoucherById(Guid id)
@@ -85,7 +129,8 @@ namespace SkillUp.Services.Implementations
 				StartTime = voucher.StartTime,
 				EndTime = voucher.EndTime,
 				Price = voucher.Price,
-				IsActive = voucher.IsActive
+				IsActive = voucher.IsActive,
+				Percentage = voucher.VoucherTypeNavigation?.Percentage
 			};
 		}
 
@@ -96,11 +141,17 @@ namespace SkillUp.Services.Implementations
 			{
 				return null;
 			}
+
+			// Normalize thời gian về Local time trước khi lưu
+			// Frontend gửi local time string → parse thành Unspecified → chuyển thành Local
+			var normalizedStartTime = NormalizeToLocalTime(addVoucherDTO.StartTime);
+			var normalizedEndTime = NormalizeToLocalTime(addVoucherDTO.EndTime);
+
 			existingVoucher.CourseId = addVoucherDTO.CourseId;
 			existingVoucher.VoucherType = addVoucherDTO.VoucherType;
 			existingVoucher.CouponCode = addVoucherDTO.CouponCode;
-			existingVoucher.StartTime = addVoucherDTO.StartTime;
-			existingVoucher.EndTime = addVoucherDTO.EndTime;
+			existingVoucher.StartTime = normalizedStartTime;
+			existingVoucher.EndTime = normalizedEndTime;
 			existingVoucher.Price = addVoucherDTO.Price;
 
 			_voucherRepository.UpdateVoucher(existingVoucher);
@@ -132,28 +183,62 @@ namespace SkillUp.Services.Implementations
 				};
 			}
 
-			// Kiểm tra thời gian hiệu lực
+			// Kiểm tra thời gian hiệu lực (so sánh cả ngày và giờ)
 			var now = DateTime.Now;
-			if (voucher.StartTime.HasValue && now < voucher.StartTime.Value)
+			
+			// Normalize thời gian về cùng timezone để so sánh chính xác
+			if (voucher.StartTime.HasValue)
 			{
-				return new ValidateVoucherResponseDTO
+				var startTime = voucher.StartTime.Value;
+				// Nếu StartTime là UTC, chuyển về Local time
+				if (startTime.Kind == DateTimeKind.Utc)
 				{
-					IsValid = false,
-					Message = "Mã giảm giá chưa có hiệu lực.",
-					Voucher = null,
-					DiscountAmount = 0
-				};
+					startTime = startTime.ToLocalTime();
+				}
+				else if (startTime.Kind == DateTimeKind.Unspecified)
+				{
+					// Giả sử là Local time nếu không xác định
+					startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Local);
+				}
+				
+				// So sánh cả ngày và giờ
+				if (now < startTime)
+				{
+					return new ValidateVoucherResponseDTO
+					{
+						IsValid = false,
+						Message = $"Mã giảm giá chưa có hiệu lực. Thời gian bắt đầu: {startTime:dd/MM/yyyy HH:mm:ss}",
+						Voucher = null,
+						DiscountAmount = 0
+					};
+				}
 			}
 
-			if (voucher.EndTime.HasValue && now > voucher.EndTime.Value)
+			if (voucher.EndTime.HasValue)
 			{
-				return new ValidateVoucherResponseDTO
+				var endTime = voucher.EndTime.Value;
+				// Nếu EndTime là UTC, chuyển về Local time
+				if (endTime.Kind == DateTimeKind.Utc)
 				{
-					IsValid = false,
-					Message = "Mã giảm giá đã hết hạn.",
-					Voucher = null,
-					DiscountAmount = 0
-				};
+					endTime = endTime.ToLocalTime();
+				}
+				else if (endTime.Kind == DateTimeKind.Unspecified)
+				{
+					// Giả sử là Local time nếu không xác định
+					endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Local);
+				}
+				
+				// So sánh cả ngày và giờ
+				if (now > endTime)
+				{
+					return new ValidateVoucherResponseDTO
+					{
+						IsValid = false,
+						Message = $"Mã giảm giá đã hết hạn. Thời gian kết thúc: {endTime:dd/MM/yyyy HH:mm:ss}",
+						Voucher = null,
+						DiscountAmount = 0
+					};
+				}
 			}
 
 			// Kiểm tra nếu voucher chỉ áp dụng cho một khóa học cụ thể
@@ -207,7 +292,8 @@ namespace SkillUp.Services.Implementations
 				StartTime = voucher.StartTime,
 				EndTime = voucher.EndTime,
 				Price = voucher.Price,
-				IsActive = voucher.IsActive
+				IsActive = voucher.IsActive,
+				Percentage = voucher.VoucherTypeNavigation?.Percentage
 			};
 
 			return new ValidateVoucherResponseDTO
@@ -223,5 +309,90 @@ namespace SkillUp.Services.Implementations
 		{
 			return await _voucherRepository.GetAllVoucherTypes();
 		}
-	}
+
+		/// <summary>
+		/// Validate thời gian của voucher
+		/// </summary>
+		/// <param name="startTime">Thời gian bắt đầu</param>
+		/// <param name="endTime">Thời gian kết thúc</param>
+		/// <param name="requireFutureStart">Yêu cầu thời gian bắt đầu phải trong tương lai (mặc định true)</param>
+		/// <returns>Null nếu hợp lệ, hoặc error message nếu không hợp lệ</returns>
+		public string? ValidateVoucherTime(DateTime? startTime, DateTime? endTime, bool requireFutureStart = true)
+		{
+			// Kiểm tra null
+			if (!startTime.HasValue || !endTime.HasValue)
+			{
+				return "Vui lòng nhập đầy đủ thời gian bắt đầu và kết thúc!";
+			}
+
+			// Normalize về Local time để so sánh chính xác
+			var normalizedStartTime = startTime.Value;
+			var normalizedEndTime = endTime.Value;
+			
+			// Nếu DateTime là UTC (từ frontend toISOString), chuyển về Local time
+			if (normalizedStartTime.Kind == DateTimeKind.Utc)
+			{
+				normalizedStartTime = normalizedStartTime.ToLocalTime();
+			}
+			else if (normalizedStartTime.Kind == DateTimeKind.Unspecified)
+			{
+				normalizedStartTime = DateTime.SpecifyKind(normalizedStartTime, DateTimeKind.Local);
+			}
+			
+			if (normalizedEndTime.Kind == DateTimeKind.Utc)
+			{
+				normalizedEndTime = normalizedEndTime.ToLocalTime();
+			}
+			else if (normalizedEndTime.Kind == DateTimeKind.Unspecified)
+			{
+				normalizedEndTime = DateTime.SpecifyKind(normalizedEndTime, DateTimeKind.Local);
+			}
+
+			// Kiểm tra thời gian bắt đầu phải trước thời gian kết thúc
+			if (normalizedEndTime <= normalizedStartTime)
+			{
+				return "Thời gian kết thúc phải sau thời gian bắt đầu!";
+			}
+
+			// Kiểm tra thời gian bắt đầu phải lớn hơn thời gian hiện tại (nếu yêu cầu)
+			if (requireFutureStart)
+			{
+				var now = DateTime.Now;
+				if (normalizedStartTime < now)
+				{
+					return "Thời gian bắt đầu phải lớn hơn thời gian hiện tại!";
+				}
+			}
+
+			return null; // Hợp lệ
+		}
+
+        /// <summary>
+        /// Normalize DateTime về Local time
+        /// Frontend gửi local time string (format: "YYYY-MM-DDTHH:mm:ss") → .NET parse thành Unspecified
+        /// Cần chuyển Unspecified → Local để lưu đúng vào database
+        /// </summary>
+        private DateTime? NormalizeToLocalTime(DateTime? dateTime)
+        {
+            if (!dateTime.HasValue)
+                return null;
+
+            var dt = dateTime.Value;
+            if (dt.Kind == DateTimeKind.Utc)
+            {
+                // Nếu là UTC (từ toISOString cũ), chuyển về Local
+                return dt.ToLocalTime();
+            }
+            else if (dt.Kind == DateTimeKind.Unspecified)
+            {
+                // Nếu là Unspecified (từ local time string), đặt thành Local
+                return DateTime.SpecifyKind(dt, DateTimeKind.Local);
+            }
+            else
+            {
+                // Đã là Local, giữ nguyên
+                return dt;
+            }
+        }
+    }
 }

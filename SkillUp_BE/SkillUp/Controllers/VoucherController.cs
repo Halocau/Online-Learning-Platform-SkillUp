@@ -38,6 +38,40 @@ namespace SkillUp.Controllers
 			});
 		}
 
+		[HttpPost("course-vouchers-batch")]
+		public async Task<IActionResult> GetCourseVouchersBatch([FromBody] List<Guid> courseIds)
+		{
+			try
+			{
+				if (courseIds == null || !courseIds.Any())
+				{
+					return BadRequest(new APIReturn
+					{
+						code = 400,
+						message = "Danh sách khóa học không hợp lệ.",
+						data = new List<object>()
+					});
+				}
+
+				var vouchersDict = await _voucherService.GetVouchersByCourseIds(courseIds);
+				return Ok(new APIReturn
+				{
+					code = 200,
+					message = "Lấy mã giảm giá thành công!",
+					data = new List<object> { vouchersDict }
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, new APIReturn
+				{
+					code = 500,
+					message = "Có lỗi xảy ra: " + ex.Message,
+					data = new List<object>()
+				});
+			}
+		}
+
 		[HttpGet("{voucherId}")]
 		public async Task<IActionResult> GetVoucherById(Guid voucherId)
 		{
@@ -74,59 +108,18 @@ namespace SkillUp.Controllers
 					});
 				}
 
-			// Kiểm tra null
-			if (!addVoucherDTO.StartTime.HasValue || !addVoucherDTO.EndTime.HasValue)
+			// Validate thời gian voucher
+			var timeValidationError = _voucherService.ValidateVoucherTime(
+				addVoucherDTO.StartTime, 
+				addVoucherDTO.EndTime, 
+				requireFutureStart: true
+			);
+			if (timeValidationError != null)
 			{
 				return BadRequest(new APIReturn
 				{
 					code = 400,
-					message = "Vui lòng nhập đầy đủ thời gian bắt đầu và kết thúc!",
-					data = new List<object>()
-				});
-			}
-
-			// Normalize về Local time để so sánh chính xác
-			var startTime = addVoucherDTO.StartTime.Value;
-			var endTime = addVoucherDTO.EndTime.Value;
-			
-			// Nếu DateTime là UTC (từ frontend toISOString), chuyển về Local time
-			if (startTime.Kind == DateTimeKind.Utc)
-			{
-				startTime = startTime.ToLocalTime();
-			}
-			else if (startTime.Kind == DateTimeKind.Unspecified)
-			{
-				startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Local);
-			}
-			
-			if (endTime.Kind == DateTimeKind.Utc)
-			{
-				endTime = endTime.ToLocalTime();
-			}
-			else if (endTime.Kind == DateTimeKind.Unspecified)
-			{
-				endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Local);
-			}
-
-			// Kiểm tra thời gian bắt đầu phải trước thời gian kết thúc
-			if (endTime <= startTime)
-			{
-				return BadRequest(new APIReturn
-				{
-					code = 400,
-					message = "Thời gian kết thúc phải sau thời gian bắt đầu!",
-					data = new List<object>()
-				});
-			}
-
-			// Kiểm tra thời gian bắt đầu phải lớn hơn thời gian hiện tại
-			var now = DateTime.Now;
-			if (startTime < now)
-			{
-				return BadRequest(new APIReturn
-				{
-					code = 400,
-					message = "Thời gian bắt đầu phải lớn hơn thời gian hiện tại!",
+					message = timeValidationError,
 					data = new List<object>()
 				});
 			}
@@ -198,59 +191,18 @@ namespace SkillUp.Controllers
 					});
 				}
 
-			// Kiểm tra null
-			if (!updateVoucherDTO.StartTime.HasValue || !updateVoucherDTO.EndTime.HasValue)
+			// Validate thời gian voucher
+			var timeValidationError = _voucherService.ValidateVoucherTime(
+				updateVoucherDTO.StartTime, 
+				updateVoucherDTO.EndTime, 
+				requireFutureStart: true
+			);
+			if (timeValidationError != null)
 			{
 				return BadRequest(new APIReturn
 				{
 					code = 400,
-					message = "Vui lòng nhập đầy đủ thời gian bắt đầu và kết thúc!",
-					data = new List<object>()
-				});
-			}
-
-			// Normalize về Local time để so sánh chính xác
-			var startTime = updateVoucherDTO.StartTime.Value;
-			var endTime = updateVoucherDTO.EndTime.Value;
-			
-			// Nếu DateTime là UTC (từ frontend toISOString), chuyển về Local time
-			if (startTime.Kind == DateTimeKind.Utc)
-			{
-				startTime = startTime.ToLocalTime();
-			}
-			else if (startTime.Kind == DateTimeKind.Unspecified)
-			{
-				startTime = DateTime.SpecifyKind(startTime, DateTimeKind.Local);
-			}
-			
-			if (endTime.Kind == DateTimeKind.Utc)
-			{
-				endTime = endTime.ToLocalTime();
-			}
-			else if (endTime.Kind == DateTimeKind.Unspecified)
-			{
-				endTime = DateTime.SpecifyKind(endTime, DateTimeKind.Local);
-			}
-
-			// Kiểm tra thời gian bắt đầu phải trước thời gian kết thúc
-			if (endTime <= startTime)
-			{
-				return BadRequest(new APIReturn
-				{
-					code = 400,
-					message = "Thời gian kết thúc phải sau thời gian bắt đầu!",
-					data = new List<object>()
-				});
-			}
-
-			// Kiểm tra thời gian bắt đầu phải lớn hơn thời gian hiện tại
-			var now = DateTime.Now;
-			if (startTime < now)
-			{
-				return BadRequest(new APIReturn
-				{
-					code = 400,
-					message = "Thời gian bắt đầu phải lớn hơn thời gian hiện tại!",
+					message = timeValidationError,
 					data = new List<object>()
 				});
 			}

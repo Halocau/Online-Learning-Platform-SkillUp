@@ -23,6 +23,18 @@ namespace SkillUp.Repositories.Implementations
 			Where(v => v.CourseId == id && v.IsActive == true).ToListAsync();
 	}
 
+	public async Task<Dictionary<Guid, List<Voucher>>> GetVouchersByCourseIds(List<Guid> courseIds)
+	{
+		var vouchers = await _context.Vouchers
+			.Include(v => v.VoucherTypeNavigation)
+			.Where(v => courseIds.Contains(v.CourseId.Value) && v.IsActive == true)
+			.ToListAsync();
+
+		return vouchers
+			.GroupBy(v => v.CourseId.Value)
+			.ToDictionary(g => g.Key, g => g.ToList());
+	}
+
 		public async Task<Voucher?> GetVoucherById(Guid id)
 		{
 			return await _context.Vouchers.

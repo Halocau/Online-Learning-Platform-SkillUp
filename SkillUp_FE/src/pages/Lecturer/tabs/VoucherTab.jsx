@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Ticket, Plus, Percent, Calendar, Users, Edit2, Trash2, X } from "lucide-react";
+import { Ticket, Plus, Percent, Calendar, Users, Edit2, Trash2, X, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { voucherAPI } from "@/api/voucherAPI";
@@ -92,6 +92,25 @@ function VoucherTab({ course, courseId }) {
     }
   }, []);
 
+  // Hàm tạo mã voucher ngẫu nhiên 6 ký tự (chữ và số)
+  const generateRandomCode = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  };
+
+  // Hàm xử lý khi click nút random
+  const handleRandomCode = () => {
+    const randomCode = generateRandomCode();
+    setFormData({
+      ...formData,
+      couponCode: randomCode,
+    });
+  };
+
   useEffect(() => {
     if (courseId) {
       loadVouchers();
@@ -101,13 +120,19 @@ function VoucherTab({ course, courseId }) {
 
   const handleCreateVoucher = () => {
     setEditingVoucher(null);
+    // Set thời gian bắt đầu = giờ hiện tại + 1 phút
+    const now = dayjs();
+    const defaultStartTime = now.add(1, 'minute');
+    // Set thời gian kết thúc = thời gian bắt đầu + 2 ngày (mặc định)
+    const defaultEndTime = defaultStartTime.add(2, 'day');
+
     setFormData({
       couponCode: "",
       voucherType: voucherTypes.length > 0 ? voucherTypes[0].id : 1,
       price: 0,
       discountAmount: 0,
-      startTime: null,
-      endTime: null,
+      startTime: defaultStartTime,
+      endTime: defaultEndTime,
     });
     setShowCreateForm(true);
   };
@@ -188,13 +213,20 @@ function VoucherTab({ course, courseId }) {
 
     try {
       setSubmitting(true);
+      // Format local time thành string (không dùng toISOString để tránh chuyển sang UTC)
+      // Format: "YYYY-MM-DDTHH:mm:ss" (local time format)
+      const formatLocalDateTime = (dayjsDate) => {
+        if (!dayjsDate) return null;
+        return dayjsDate.format('YYYY-MM-DDTHH:mm:ss');
+      };
+
       const payload = {
         CourseId: courseId,
         CouponCode: formData.couponCode.toUpperCase().trim(),
         VoucherType: formData.voucherType,
         Price: finalPrice, // Sử dụng giá đã tính tự động
-        StartTime: formData.startTime.toISOString(),
-        EndTime: formData.endTime.toISOString(),
+        StartTime: formatLocalDateTime(formData.startTime),
+        EndTime: formatLocalDateTime(formData.endTime),
       };
 
       if (editingVoucher) {
@@ -325,19 +357,29 @@ function VoucherTab({ course, courseId }) {
                       <label className="block text-sm font-medium mb-2">
                         Mã voucher <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        value={formData.couponCode}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            couponCode: e.target.value.toUpperCase(),
-                          })
-                        }
-                        placeholder="VD: SALE20, SUMMER2024"
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FCCD04] focus:border-[#FCCD04]"
-                        required
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={formData.couponCode}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              couponCode: e.target.value.toUpperCase(),
+                            })
+                          }
+                          placeholder="VD: SALE20, SUMMER2024"
+                          className="w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-[#FCCD04] focus:border-[#FCCD04]"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRandomCode}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+                          title="Tạo mã ngẫu nhiên"
+                        >
+                          <RefreshCw className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
                     </div>
 
                     <div>
