@@ -350,7 +350,8 @@ namespace SkillUp.Services.Implementations
                             .Select(a => new AssetCourseDetailDto
                             {
                                 Url = a.Url ?? "default-url",
-                                Content = a.Contents ?? "No content"
+                                Content = a.Contents ?? "No content",
+                                FileUrl = a.FileUrl ?? "default-file-url"
                             })
                             .ToList() ?? new List<AssetCourseDetailDto>(),
                         CreatedAt = l.CreatedAt,

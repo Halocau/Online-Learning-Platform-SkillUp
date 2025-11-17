@@ -4,5 +4,6 @@
     {
         public string Url { get; set; } = "default-url";
         public string Content { get; set; } = "No content";
+        public string? FileUrl { get; set; } = "default-file-url";
     }
 }
