@@ -5,7 +5,6 @@ import {
   Volume2,
   VolumeX,
   Maximize,
-  Minimize,
   SkipForward,
   SkipBack,
   Settings,
@@ -158,7 +157,7 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full bg-black rounded-lg overflow-hidden shadow-2xl group"
+      className="relative w-full bg-black rounded-lg overflow-hidden group"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
@@ -179,108 +178,90 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
 
       {/* Play/Pause Overlay */}
       {!isPlaying && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <button
             onClick={togglePlay}
-            className="w-20 h-20 rounded-full bg-[#FFD54F] hover:bg-[#FFC107] flex items-center justify-center transition-all transform hover:scale-110 shadow-2xl"
+            className="w-16 h-16 rounded-full bg-[#FFD54F]/90 hover:bg-[#FFD54F] flex items-center justify-center transition-all transform hover:scale-110"
           >
-            <Play className="w-10 h-10 text-gray-900 ml-1" />
+            <Play className="w-8 h-8 text-gray-900 ml-1" />
           </button>
         </div>
       )}
 
-      {/* Custom Controls */}
+      {/* Simplified Controls */}
       <div
         className={cn(
-          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent transition-opacity duration-300",
+          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent transition-opacity duration-300 p-4",
           showControls ? "opacity-100" : "opacity-0"
         )}
       >
         {/* Progress Bar */}
         <div
           ref={progressBarRef}
-          className="relative h-2 bg-gray-700 cursor-pointer group/progress hover:h-3 transition-all"
+          className="relative h-1 bg-white/30 cursor-pointer hover:h-1.5 transition-all mb-3 rounded-full"
           onClick={handleProgressClick}
         >
           <div
-            className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFD54F] to-[#FFC107] transition-all"
+            className="absolute top-0 left-0 h-full bg-[#FFD54F] rounded-full transition-all"
             style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
-          >
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity" />
-          </div>
+          />
         </div>
 
         {/* Control Buttons */}
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
-            {/* Play/Pause */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <button
               onClick={togglePlay}
               className="text-white hover:text-[#FFD54F] transition-colors"
             >
               {isPlaying ? (
-                <Pause className="w-6 h-6" />
+                <Pause className="w-5 h-5" />
               ) : (
-                <Play className="w-6 h-6" />
+                <Play className="w-5 h-5" />
               )}
             </button>
 
-            {/* Skip Buttons */}
             <button
               onClick={() => skip(-10)}
-              className="text-white hover:text-[#FFD54F] transition-colors"
+              className="text-white/80 hover:text-white transition-colors"
             >
-              <SkipBack className="w-5 h-5" />
+              <SkipBack className="w-4 h-4" />
             </button>
             <button
               onClick={() => skip(10)}
-              className="text-white hover:text-[#FFD54F] transition-colors"
+              className="text-white/80 hover:text-white transition-colors"
             >
-              <SkipForward className="w-5 h-5" />
+              <SkipForward className="w-4 h-4" />
             </button>
 
-            {/* Volume Control */}
-            <div className="flex items-center gap-2 group/volume">
-              <button
-                onClick={toggleMute}
-                className="text-white hover:text-[#FFD54F] transition-colors"
-              >
-                {isMuted || volume === 0 ? (
-                  <VolumeX className="w-5 h-5" />
-                ) : (
-                  <Volume2 className="w-5 h-5" />
-                )}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-0 group-hover/volume:w-20 transition-all opacity-0 group-hover/volume:opacity-100 accent-[#FFD54F]"
-              />
-            </div>
+            <button
+              onClick={toggleMute}
+              className="text-white hover:text-[#FFD54F] transition-colors"
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX className="w-5 h-5" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
+            </button>
 
-            {/* Time Display */}
-            <div className="text-white text-sm font-medium">
+            <span className="text-white text-sm font-medium">
               {formatTime(currentTime)} / {formatTime(duration)}
-            </div>
+            </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Playback Speed */}
+          <div className="flex items-center gap-3">
             <div className="relative">
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className="text-white hover:text-[#FFD54F] transition-colors flex items-center gap-1"
+                className="text-white hover:text-[#FFD54F] transition-colors text-sm flex items-center gap-1"
               >
-                <Settings className="w-5 h-5" />
-                <span className="text-sm">{playbackRate}x</span>
+                <Settings className="w-4 h-4" />
+                <span>{playbackRate}x</span>
               </button>
 
               {showSettings && (
-                <div className="absolute bottom-full right-0 mb-2 bg-gray-900 rounded-lg shadow-xl border border-gray-700 overflow-hidden">
+                <div className="absolute bottom-full right-0 mb-2 bg-black/95 rounded-lg overflow-hidden">
                   {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                     <button
                       key={rate}
@@ -289,26 +270,21 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
                         "w-full px-4 py-2 text-left text-sm transition-colors",
                         playbackRate === rate
                           ? "bg-[#FFD54F] text-gray-900"
-                          : "text-white hover:bg-gray-800"
+                          : "text-white hover:bg-white/10"
                       )}
                     >
-                      {rate}x{rate === 1 && " (Bình thường)"}
+                      {rate}x
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Fullscreen */}
             <button
               onClick={toggleFullscreen}
               className="text-white hover:text-[#FFD54F] transition-colors"
             >
-              {isFullscreen ? (
-                <Minimize className="w-5 h-5" />
-              ) : (
-                <Maximize className="w-5 h-5" />
-              )}
+              <Maximize className="w-5 h-5" />
             </button>
           </div>
         </div>

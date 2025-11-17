@@ -1,30 +1,38 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "sonner";
-import { BookOpen, Award, ArrowLeft } from "lucide-react";
-import ProgressBar from "./components/ProgressBar";
-import CommentSection from "./components/CommentSection";
-import RatingModal from "./components/RatingModal";
+import { BookOpen, Loader2 } from "lucide-react";
 import CourseSidebar from "./components/CourseSidebar";
 import LessonContent from "./components/LessonContent";
 import CourseOverview from "./components/CourseOverview";
+import SectionDetail from "./components/SectionDetail";
+import RatingModal from "./components/RatingModal";
 
 const CourseLearning = () => {
-  const { courseId, sectionId } = useParams();
+  const { courseId, sectionId, lessonId } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [transitioning, setTransitioning] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [currentSection, setCurrentSection] = useState(null);
   const [completedItems, setCompletedItems] = useState(new Set());
   const [showRatingModal, setShowRatingModal] = useState(false);
 
   useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, [location.pathname]);
+
+  useEffect(() => {
     fetchCourseDetail();
-  }, [courseId, sectionId]);
+  }, [courseId, sectionId, lessonId]);
 
   const fetchCourseDetail = async () => {
     try {
@@ -37,64 +45,93 @@ const CourseLearning = () => {
         const section = course.sections.find((s) => s.id === sectionId);
         if (section) {
           setCurrentSection(section);
-          const itemId = searchParams.get("item");
-          const item = itemId
-            ? section.items.find((i) => i.id === itemId)
-            : section.items[0];
-          setCurrentItem(item || null);
+
+          if (lessonId) {
+            const item = section.items.find((i) => i.id === lessonId);
+            setCurrentItem(item || null);
+          } else {
+            setCurrentItem(null);
+          }
         } else {
           navigate(`/student/learn/${courseId}`);
         }
+      } else {
+        setCurrentSection(null);
+        setCurrentItem(null);
       }
     } catch (error) {
       toast.error("Không thể tải khóa học");
     } finally {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 500);
     }
   };
 
   const handleItemSelect = (item, section) => {
+    setTransitioning(true);
     setCurrentItem(item);
-    navigate(`/student/learn/${courseId}/${section.id}?item=${item.id}`, {
-      replace: true,
-    });
+
+    setTimeout(() => {
+      navigate(
+        `/student/learn/${courseId}/section/${section.id}/lesson/${item.id}`,
+        { replace: true }
+      );
+      setTransitioning(false);
+    }, 550);
   };
 
   const handleNext = () => {
     if (!currentSection || !currentItem) return;
+
+    setTransitioning(true);
     const items = currentSection.items;
     const idx = items.findIndex((i) => i.id === currentItem.id);
-    if (idx < items.length - 1) {
-      handleItemSelect(items[idx + 1], currentSection);
-    } else {
-      const secIdx = courseData.sections.findIndex(
-        (s) => s.id === currentSection.id
-      );
-      if (secIdx < courseData.sections.length - 1) {
-        const nextSec = courseData.sections[secIdx + 1];
-        navigate(`/student/learn/${courseId}/${nextSec.id}`);
+
+    setTimeout(() => {
+      if (idx < items.length - 1) {
+        const nextItem = items[idx + 1];
+        navigate(
+          `/student/learn/${courseId}/section/${currentSection.id}/lesson/${nextItem.id}`
+        );
+      } else {
+        const secIdx = courseData.sections.findIndex(
+          (s) => s.id === currentSection.id
+        );
+        if (secIdx < courseData.sections.length - 1) {
+          const nextSec = courseData.sections[secIdx + 1];
+          navigate(`/student/learn/${courseId}/section/${nextSec.id}`);
+        }
       }
-    }
+      setTransitioning(false);
+    }, 550);
   };
 
   const handlePrev = () => {
     if (!currentSection || !currentItem) return;
+
+    setTransitioning(true);
     const items = currentSection.items;
     const idx = items.findIndex((i) => i.id === currentItem.id);
-    if (idx > 0) {
-      handleItemSelect(items[idx - 1], currentSection);
-    } else {
-      const secIdx = courseData.sections.findIndex(
-        (s) => s.id === currentSection.id
-      );
-      if (secIdx > 0) {
-        const prevSec = courseData.sections[secIdx - 1];
-        const lastItem = prevSec.items[prevSec.items.length - 1];
+
+    setTimeout(() => {
+      if (idx > 0) {
+        const prevItem = items[idx - 1];
         navigate(
-          `/student/learn/${courseId}/${prevSec.id}?item=${lastItem.id}`
+          `/student/learn/${courseId}/section/${currentSection.id}/lesson/${prevItem.id}`
         );
+      } else {
+        const secIdx = courseData.sections.findIndex(
+          (s) => s.id === currentSection.id
+        );
+        if (secIdx > 0) {
+          const prevSec = courseData.sections[secIdx - 1];
+          const lastItem = prevSec.items[prevSec.items.length - 1];
+          navigate(
+            `/student/learn/${courseId}/section/${prevSec.id}/lesson/${lastItem.id}`
+          );
+        }
       }
-    }
+      setTransitioning(false);
+    }, 550);
   };
 
   const hasNext = () => {
@@ -141,106 +178,126 @@ const CourseLearning = () => {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFD54F]"></div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <Loader2 className="w-12 h-12 text-[#FFD54F] animate-spin mb-4" />
+        <p className="text-gray-600 font-medium">Đang tải khóa học...</p>
       </div>
     );
+
+  // Error screen
   if (!courseData)
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
         <BookOpen className="w-16 h-16 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-semibold">Không tìm thấy khóa học</h2>
+        <h2 className="text-2xl font-semibold mb-2">Không tìm thấy khóa học</h2>
+        <button
+          onClick={() => navigate("/student/dashboard")}
+          className="mt-4 px-6 py-2 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-colors"
+        >
+          Quay lại trang chủ
+        </button>
       </div>
     );
 
-  const isOverview = !sectionId;
+  const isOverview = !sectionId && !lessonId;
+  const isSectionDetail = sectionId && !lessonId;
+  const isLessonView = sectionId && lessonId;
+
+  // Transition overlay
+  const TransitionOverlay = () =>
+    transitioning ? (
+      <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-150">
+        <Loader2 className="w-8 h-8 text-[#FFD54F] animate-spin" />
+      </div>
+    ) : null;
+
+  if (isOverview) {
+    return (
+      <div className="animate-fadeIn">
+        <CourseOverview
+          courseData={courseData}
+          completedItems={completedItems}
+          courseId={courseId}
+        />
+        {showRatingModal && (
+          <RatingModal
+            courseName={courseData.title}
+            onSubmit={() => {}}
+            onClose={() => setShowRatingModal(false)}
+          />
+        )}
+        <TransitionOverlay />
+      </div>
+    );
+  }
+
+  // SECTION DETAIL VIEW
+  if (isSectionDetail && currentSection) {
+    return (
+      <div className="animate-fadeIn">
+        <SectionDetail
+          section={currentSection}
+          courseId={courseId}
+          completedItems={completedItems}
+          courseData={courseData}
+        />
+        {showRatingModal && (
+          <RatingModal
+            courseName={courseData.title}
+            onSubmit={() => {}}
+            onClose={() => setShowRatingModal(false)}
+          />
+        )}
+        <TransitionOverlay />
+      </div>
+    );
+  }
+
+  // LESSON VIEW
+  if (isLessonView && currentItem) {
+    const progress = calculateProgress();
+
+    return (
+      <div className="flex min-h-screen w-full bg-gray-50 overflow-x-hidden">
+        <CourseSidebar
+          courseData={courseData}
+          currentItem={currentItem}
+          currentSection={currentSection}
+          completedItems={completedItems}
+          onItemSelect={handleItemSelect}
+          courseId={courseId}
+          progress={progress}
+        />
+
+        <div className="flex-1 w-full overflow-x-hidden">
+          <LessonContent
+            item={currentItem}
+            section={currentSection}
+            onComplete={handleItemComplete}
+            isCompleted={completedItems.has(currentItem.id)}
+            onNext={handleNext}
+            onPrev={handlePrev}
+            hasNext={hasNext()}
+            hasPrev={hasPrev()}
+          />
+        </div>
+
+        {showRatingModal && (
+          <RatingModal
+            courseName={courseData.title}
+            onSubmit={() => {}}
+            onClose={() => setShowRatingModal(false)}
+          />
+        )}
+        <TransitionOverlay />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Always visible */}
-      <CourseSidebar
-        courseData={courseData}
-        currentItem={currentItem}
-        currentSection={currentSection}
-        completedItems={completedItems}
-        onItemSelect={handleItemSelect}
-        isOverview={isOverview}
-        courseId={courseId}
-      />
-
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {isOverview ? (
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {courseData.title}
-                </h1>
-              ) : (
-                <>
-                  <button
-                    onClick={() => navigate(`/student/learn/${courseId}`)}
-                    className="p-1 hover:bg-gray-100 rounded"
-                  >
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <h1 className="text-xl font-bold text-gray-900">
-                    {currentSection?.title}
-                  </h1>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-4">
-              <ProgressBar progress={calculateProgress()} />
-              {calculateProgress() === 100 && (
-                <button
-                  onClick={() => setShowRatingModal(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-[#FFD54F] text-gray-900 rounded-lg text-sm font-medium hover:bg-[#FFC107]"
-                >
-                  <Award className="w-4 h-4" /> Đánh giá
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Scrollable Content — ONLY ONE SCROLL */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 p-4">
-          {isOverview ? (
-            <CourseOverview
-              courseData={courseData}
-              completedItems={completedItems}
-              courseId={courseId}
-            />
-          ) : currentItem ? (
-            <LessonContent
-              item={currentItem}
-              section={currentSection}
-              onComplete={handleItemComplete}
-              isCompleted={completedItems.has(currentItem.id)}
-              onNext={handleNext}
-              onPrev={handlePrev}
-              hasNext={hasNext()}
-              hasPrev={hasPrev()}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <BookOpen className="w-16 h-16 mb-4 text-gray-400" />
-              <p>Chọn một mục để bắt đầu</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {showRatingModal && (
-        <RatingModal
-          courseName={courseData.title}
-          onSubmit={() => {}}
-          onClose={() => setShowRatingModal(false)}
-        />
-      )}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <BookOpen className="w-16 h-16 text-gray-400 mb-4" />
+      <p>Không tìm thấy nội dung</p>
     </div>
   );
 };
