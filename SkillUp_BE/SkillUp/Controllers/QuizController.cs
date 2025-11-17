@@ -238,7 +238,50 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpPost("{quizId}/start")]
+        [Authorize]
+        public async Task<IActionResult> StartQuiz(Guid quizId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
 
+                var quizStartData = await _quizService.StartQuizAsync(quizId, accountId.Value);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Bắt đầu làm bài",
+                    data = new List<object> { quizStartData }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Bài quiz không tồn tại"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
 
 
 

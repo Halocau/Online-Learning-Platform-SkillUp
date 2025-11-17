@@ -12,5 +12,7 @@ namespace SkillUp.Services.Interfaces
 
         Task<QuestionResponseDto> UpdateQuestionInQuizAsync(Guid oldQuestionId, UpdateQuestionDTO dto, Guid accId);
 
+        Task<bool> RemoveQuestionFromQuizAsync(Guid quizId, Guid questionId, Guid accId);
+
     }
 }

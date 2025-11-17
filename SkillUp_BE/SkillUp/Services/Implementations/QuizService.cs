@@ -1,4 +1,6 @@
-﻿using SkillUp.BussinessObjects.DTOs.Question;
+﻿using Microsoft.Identity.Client;
+using SkillUp.BussinessObjects.DTOs.DoQuiz;
+using SkillUp.BussinessObjects.DTOs.Question;
 using SkillUp.BussinessObjects.DTOs.Quiz;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
@@ -12,11 +14,15 @@ namespace SkillUp.Services.Implementations
         private readonly IQuizRepository _quizRepository;
         private readonly ILecturerRepository _lecturerRepository;
         private readonly ISectionRepository _sectionRepository;
-        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository)
+        private readonly IQuizSubmissionRepository _quizSubmissionRepository;
+        private readonly IStudentRepository _studentRepository;
+        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository)
         {
             _quizRepository = quizRepository;
             _lecturerRepository = lecturerRepository;
             _sectionRepository = sectionRepository;
+            _quizSubmissionRepository = quizSubmissionRepository;
+            _studentRepository = studentRepository;
         }
 
         public async Task<Guid> CreateQuizAsync(CreateQuizDTO dto, Guid accId)
@@ -124,6 +130,7 @@ namespace SkillUp.Services.Implementations
                 Orders = quiz.Orders,
 
                 Questions = quiz.QuestionQuizzes
+                    .Where(qq => qq.IsActive == true)
                     .Where(qq => qq.QuestionBank != null && qq.QuestionBank.IsActive)
                     .OrderBy(qq => qq.Orders)
                     .Select(qq => new QuestionDetailDTO
@@ -167,6 +174,62 @@ namespace SkillUp.Services.Implementations
             var success = await _quizRepository.SaveChangesAsync();
 
             return success;
+        }
+
+        public async Task<QuizStartDto> StartQuizAsync(Guid quizId, Guid accountId)
+        {
+            var quiz = await _quizRepository.GetQuizWithQuestionsAsync(quizId);
+            if (quiz == null || !quiz.IsActive)
+            {
+                throw new Exception("Bài quiz không tồn tại hoặc không hoạt động.");
+            }
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null)
+            {
+                throw new Exception("Không tìm thấy hồ sơ sinh viên cho tài khoản này.");
+            }
+            var newSubmission = new QuizSubmission
+            {
+                Id = Guid.NewGuid(),
+                QuizId = quizId,
+                StudentId = student.Id,
+                StartedAt = DateTime.Now,
+                Score = null,
+                EndedAt = null
+            };
+
+            await _quizSubmissionRepository.AddAsync(newSubmission);
+
+            var questionDtos = quiz.QuestionQuizzes
+                .Where(qq => qq.IsActive == true)
+                .Where(qq => qq.QuestionBank.IsActive == true)
+                .OrderBy(qq => qq.Orders)
+                .Select(qq => new QuestionStudentDto
+                {
+                    QuestionId = qq.QuestionBank.Id,
+                    Title = qq.QuestionBank.Title,
+                    Description = qq.QuestionBank.Description,
+                    Image = qq.QuestionBank.Image,
+                    Type = qq.QuestionBank.Type,
+                    Answers = qq.QuestionBank.AnswerBanks
+                        .Where(a => a.IsActive)
+                        .Select(a => new AnswerStudentDto
+                        {
+                            AnswerId = a.Id,
+                            AnswerName = a.AnswerName
+                        }).ToList()
+                }).ToList();
+
+            await _quizSubmissionRepository.SaveChangesAsync();
+
+            return new QuizStartDto
+            {
+                SubmissionId = newSubmission.Id,
+                QuizId = quiz.Id,
+                Title = quiz.Title,
+                Timer = quiz.Timer,
+                Questions = questionDtos
+            };
         }
     }
 }
