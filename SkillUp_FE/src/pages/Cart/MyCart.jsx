@@ -15,6 +15,7 @@ import {
     Col,
     message,
 } from 'antd';
+import { toast } from 'react-toastify';
 
 // Constants
 const PRIMARY_COLOR = '#FCCD04';
@@ -389,7 +390,8 @@ function MyCart() {
 
             if (isSuccess) {
                 if (isFreeCart) {
-                    // Free cart - enrollment already done, just show success message
+                    // Free cart - enrollment already done, just show success toast
+                    toast.success(responseMessage || 'Khóa học miễn phí đã được kích hoạt!');
                     message.success(responseMessage || 'Đăng ký khóa học thành công!');
                     // Refresh cart to show empty state
                     fetchCart();
