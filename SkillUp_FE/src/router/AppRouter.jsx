@@ -27,6 +27,7 @@ import LecturerRoutes from "./LecturerRoute";
 import MyCart from "@/pages/Cart/MyCart";
 import CourseDetail from "@/pages/Course/CourseDetail";
 import CoursesByCategory from "@/pages/Course/CoursesByCategory";
+import MyCourses from "@/pages/Student/MyCourses";
 import PaymentResult from "@/pages/Payment/PaymentResult";
 import LecturerPendingGuard from "./LecturerPendingGuard";
 
@@ -52,6 +53,7 @@ function AppRouter() {
           <Route path="/cart" element={<MyCart />} />
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/courses/:categoryId" element={<CoursesByCategory />} />
+          <Route path="/my-courses" element={<MyCourses />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />

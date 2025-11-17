@@ -8,7 +8,7 @@ const CourseCardItem = memo(({ course, index }) => {
 
     const handleLearnClick = useCallback((e) => {
         e.preventDefault();
-        navigate(`/course/${course.id}`);
+        navigate(`/student/learn/${course.id}`);
     }, [navigate, course.id]);
 
     return (
@@ -19,7 +19,7 @@ const CourseCardItem = memo(({ course, index }) => {
                 maxHeight: '100%'
             }}
         >
-            <Link to={`/course/${course.id}`} className="flex flex-col">
+            <Link to={`/student/learn/${course.id}`} className="flex flex-col">
                 <div className="aspect-video overflow-hidden bg-gray-100 relative flex-shrink-0">
                     <img
                         src={course.image}

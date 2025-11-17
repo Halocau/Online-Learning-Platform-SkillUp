@@ -5,10 +5,10 @@ import { PlayCircle } from "lucide-react";
 const ContinueLearningCard = memo(({ course }) => {
     return (
         <Link
-            to={`/course/${course.id}`}
-            className="group flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-[#FFD54F] transition-all"
+            to={`/student/learn/${course.id}`}
+            className="group flex items-center gap-4 p-3 md:p-4 border border-gray-200 rounded-2xl hover:shadow-lg hover:border-[#FFD54F] transition-all min-h-[120px] w-full h-full"
         >
-            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50">
                 <img
                     src={course.image}
                     alt={course.title}
@@ -36,7 +36,7 @@ const ContinueLearningCard = memo(({ course }) => {
                     <p className="text-xs text-gray-500 mt-1">30% hoàn thành</p>
                 </div>
             </div>
-            <PlayCircle className="w-6 h-6 text-[#FFD54F] flex-shrink-0" />
+            <PlayCircle className="w-5 h-5 text-[#FFD54F] flex-shrink-0 opacity-80 group-hover:opacity-100" />
         </Link>
     );
 });
