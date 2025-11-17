@@ -222,23 +222,7 @@ namespace SkillUp.Services.Implementations
         public async Task<List<CourseSummaryDTO>> SearchCoursesAsync(string keyword, int limit)
         {
             var courses = await _courseRepository.SearchCoursesAsync(keyword, limit);
-
-            if (courses == null || courses.Count == 0)
-            {
-                return new List<CourseSummaryDTO>();
-            }
-
-            return courses.Select(course => new CourseSummaryDTO
-            {
-                Id = course.Id,
-                Title = course.Title,
-                Image = course.Image,
-                Price = course.Price,
-                Rating = course.Rating,
-                EnrollmentCount = course.EnrollmentCount,
-                LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty,
-                SubCategoryId = course.SubCategoryId
-            }).ToList();
+            return courses ?? new List<CourseSummaryDTO>();
         }
         // Check Authorization for Roles
         private async Task<bool> IsAuthorizedAsync(Guid accountId, int requiredRoleId)

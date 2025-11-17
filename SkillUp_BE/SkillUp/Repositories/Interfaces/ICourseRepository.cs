@@ -28,6 +28,6 @@ namespace SkillUp.Repositories.Interfaces
         // enrolled courses
         Task<List<CourseStudentEnrollDTO>> GetEnrolledCoursesByAccountIdAsync(Guid accountId);
 
-        Task<List<Course>> SearchCoursesAsync(string keyword, int limit);
+        Task<List<CourseSummaryDTO>> SearchCoursesAsync(string keyword, int limit);
     }
 }
