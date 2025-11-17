@@ -17,9 +17,17 @@ const StudentRoutes = () => {
       >
         <Route index element={<StudentDashboard />} />
         <Route path="dashboard" element={<StudentDashboard />} />
-        {/* Updated: Now includes sectionId */}
-        <Route path="learn/:courseId/:sectionId" element={<CourseLearning />} />
+
         <Route path="learn/:courseId" element={<CourseLearning />} />
+        <Route
+          path="learn/:courseId/section/:sectionId"
+          element={<CourseLearning />}
+        />
+
+        <Route
+          path="learn/:courseId/section/:sectionId/lesson/:lessonId"
+          element={<CourseLearning />}
+        />
       </Route>
     </Routes>
   );

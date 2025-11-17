@@ -1,7 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { PlayCircle, FileText, HelpCircle, CheckCircle2 } from "lucide-react";
+import {
+  PlayCircle,
+  FileText,
+  CheckCircle2,
+  HelpCircle,
+  ArrowLeft,
+  ChevronRight,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import ProgressBar from "./ProgressBar";
 
 const CourseSidebar = ({
   courseData,
@@ -9,124 +15,175 @@ const CourseSidebar = ({
   currentSection,
   completedItems,
   onItemSelect,
-  isOverview,
   courseId,
+  progress,
 }) => {
   const navigate = useNavigate();
 
   const getItemIcon = (item) => {
+    if (completedItems.has(item.id)) {
+      return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+    }
     if (item.kind === "Lesson") {
       return item.lessonType === "Video" ? (
-        <PlayCircle className="w-4 h-4" />
+        <PlayCircle className="w-4 h-4 text-gray-400" />
       ) : (
-        <FileText className="w-4 h-4" />
+        <FileText className="w-4 h-4 text-gray-400" />
       );
     }
-    return <HelpCircle className="w-4 h-4" />;
+    return <HelpCircle className="w-4 h-4 text-gray-400" />;
   };
 
-  const calculateSectionProgress = (section) => {
-    if (!section.items?.length) return 0;
-    const done = section.items.filter((i) => completedItems.has(i.id)).length;
-    return (done / section.items.length) * 100;
+  const getSectionProgress = () => {
+    if (!currentSection?.items?.length) return 0;
+    const completed = currentSection.items.filter((i) =>
+      completedItems.has(i.id)
+    ).length;
+    return Math.round((completed / currentSection.items.length) * 100);
   };
+
+  const sectionProgress = getSectionProgress();
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
-      <div className="p-4 border-b bg-gradient-to-r from-[#FFD54F] to-[#FFC107]">
-        <h2 className="font-bold text-center text-gray-900 text-lg ">Nội dung</h2>
-      </div>
+    <div className="h-full flex flex-col bg-white border-r border-gray-200 shadow-sm">
+      {/* Header */}
+      <div className="px-4 py-5 border-b border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+        <button
+          onClick={() => navigate(`/student/learn/${courseId}`)}
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-3 transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <span>Tổng quan khóa học</span>
+        </button>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {isOverview ? (
-          courseData.sections?.map((section) => (
-            <button
-              key={section.id}
-              onClick={() =>
-                navigate(`/student/learn/${courseId}/${section.id}`)
-              }
-              className="w-full text-left"
-            >
-              <div className="bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex justify-between items-center mb-1">
-                  <h3 className="font-medium text-gray-800 text-sm">
-                    {section.title}
-                  </h3>
-                  <span className="text-xs text-gray-500">
-                    {section.items?.length} mục
-                  </span>
-                </div>
-                <ProgressBar
-                  progress={calculateSectionProgress(section)}
-                  height="h-1.5"
-                />
-              </div>
-            </button>
-          ))
-        ) : (
-          <>
-            <h3 className="font-bold text-gray-900 text-base mb-2">
-              {currentSection?.title}
-            </h3>
-            <div className="space-y-0.5">
-              {currentSection?.items?.map((item) => {
-                const isActive = currentItem?.id === item.id;
-                const isDone = completedItems.has(item.id);
+        <button
+          onClick={() =>
+            navigate(`/student/learn/${courseId}/section/${currentSection.id}`)
+          }
+          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 mb-3 transition-colors group w-full"
+        >
+          <span className="flex-1 text-left">Quay lại danh sách bài học</span>
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </button>
 
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => onItemSelect(item, currentSection)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors",
-                      isActive
-                        ? "bg-[#FFF9E6] text-[#F57C00]"
-                        : "hover:bg-gray-50"
-                    )}
-                  >
-                    {isDone ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <div
-                        className={cn(
-                          "w-4 h-4",
-                          isActive ? "text-[#FFD54F]" : "text-gray-400"
-                        )}
-                      >
-                        {getItemIcon(item)}
-                      </div>
-                    )}
-                    <span
-                      className={cn(
-                        "truncate",
-                        isActive ? "font-medium" : "text-gray-700"
-                      )}
-                    >
-                      {item.title}
-                    </span>
-                  </button>
-                );
-              })}
+        <h2 className="text-sm font-semibold text-gray-900 mb-3 line-clamp-2">
+          {currentSection?.title}
+        </h2>
+
+        {/* Section Progress */}
+        {sectionProgress > 0 && (
+          <div>
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
+              <span className="font-medium">{sectionProgress}% hoàn thành</span>
+              <span className="text-gray-500">
+                {currentSection.items.filter((i) => completedItems.has(i.id)).length}/
+                {currentSection.items?.length}
+              </span>
             </div>
-          </>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  "h-full transition-all duration-500",
+                  sectionProgress === 100
+                    ? "bg-gradient-to-r from-green-400 to-green-600"
+                    : "bg-gradient-to-r from-[#FFD54F] to-[#FFC107]"
+                )}
+                style={{ width: `${sectionProgress}%` }}
+              />
+            </div>
+          </div>
         )}
       </div>
 
-      <div className="p-3 border-t bg-gray-50 text-xs">
-        <div className="flex items-center gap-2">
-          <img
-            src={courseData.lecturer?.avartar || "/default-avatar.png"}
-            alt=""
-            className="w-8 h-8 rounded-full object-cover ring-1 ring-[#FFD54F]"
-          />
-          <div>
-            <p className="font-medium text-gray-900 truncate">
-              {courseData.lecturer?.fullName}
-            </p>
-            <p className="text-gray-500 truncate">
-              {courseData.lecturer?.profession || "Giảng viên"}
-            </p>
+      {/* Current Section Lessons Only */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-2">
+          <div className="text-xs font-semibold text-gray-500 px-3 py-2 uppercase tracking-wide">
+            Bài học trong chương này
           </div>
+          {currentSection?.items?.map((item, index) => {
+            const isCompleted = completedItems.has(item.id);
+            const isCurrent = currentItem?.id === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => onItemSelect(item, currentSection)}
+                className={cn(
+                  "w-full p-3 rounded-lg flex items-start gap-3 text-left transition-all group mb-1",
+                  isCurrent
+                    ? "bg-gradient-to-r from-[#FFF9E6] to-[#FFF3CD] border-l-3 border-[#FFD54F] shadow-sm"
+                    : "hover:bg-gray-50 border-l-3 border-transparent"
+                )}
+              >
+                {/* Lesson Number Badge */}
+                <div
+                  className={cn(
+                    "flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all",
+                    isCompleted
+                      ? "bg-green-500 text-white"
+                      : isCurrent
+                      ? "bg-[#FFD54F] text-gray-900"
+                      : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
+                  )}
+                >
+                  {isCompleted ? (
+                    <CheckCircle2 className="w-4 h-4" />
+                  ) : (
+                    <span>{index + 1}</span>
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {getItemIcon(item)}
+                    <span
+                      className={cn(
+                        "text-xs font-medium",
+                        item.kind === "Lesson"
+                          ? item.lessonType === "Video"
+                            ? "text-blue-600"
+                            : "text-green-600"
+                          : "text-purple-600"
+                      )}
+                    >
+                      {item.kind === "Lesson"
+                        ? item.lessonType === "Video"
+                          ? "Video"
+                          : "Văn bản"
+                        : "Quiz"}
+                    </span>
+                  </div>
+                  <span
+                    className={cn(
+                      "text-sm line-clamp-2 block",
+                      isCurrent
+                        ? "text-gray-900 font-semibold"
+                        : "text-gray-700 group-hover:text-gray-900"
+                    )}
+                  >
+                    {item.title}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Footer with Course Progress */}
+      <div className="px-4 py-4 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+        <div className="text-xs text-gray-600 mb-2">Tiến độ khóa học</div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#FFD54F] to-[#FFC107] transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-sm font-semibold text-gray-900">
+            {Math.round(progress)}%
+          </span>
         </div>
       </div>
     </div>
