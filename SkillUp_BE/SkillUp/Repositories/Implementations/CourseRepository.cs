@@ -30,7 +30,7 @@ namespace SkillUp.Repositories.Implementations
 
         public async Task<Course?> GetCourseByIdAsync(Guid courseId)
         {
-            return await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
+            return await _context.Courses.Include(c => c.Lecturer).FirstOrDefaultAsync(c => c.Id == courseId);
         }
 
         public async Task<List<Course>> GetCoursesBySubCategoryId(int id)

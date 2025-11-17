@@ -571,7 +571,7 @@ namespace SkillUp.Controllers
 
         [HttpPut("Approve-Course/{courseId}")]
         [Authorize]
-        public async Task<IActionResult> ApproveCourse(Guid courseId, [FromQuery] bool decision)
+        public async Task<IActionResult> ApproveCourse(Guid courseId, [FromQuery] bool decision, [FromQuery] string reason)
         {
             try
             {
@@ -585,7 +585,7 @@ namespace SkillUp.Controllers
                         data = new List<object>()
                     });
                 }
-                var result = await _courseService.PublishCourseForModerator(courseId, accountId.Value, decision);
+                var result = await _courseService.PublishCourseForModerator(courseId, accountId.Value, decision, reason);
                 if (!result)
                 {
                     return BadRequest(new APIReturn

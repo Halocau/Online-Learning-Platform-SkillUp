@@ -7,70 +7,70 @@ using SkillUp.BussinessObjects.Models;
 
 namespace SkillUp.Services.Implementations
 {
-    public class EmailService : Interfaces.IEmailService
-    {
-        private readonly string _frontendUrl;
-        private readonly string _backendUrl; 
-        private readonly string _fromEmail;
-        private readonly string _smtpServer;
-        private readonly int _smtpPort;
-        private readonly string _smtpPassword;
-        private readonly ILogger<EmailService> _logger;
+	public class EmailService : Interfaces.IEmailService
+	{
+		private readonly string _frontendUrl;
+		private readonly string _backendUrl;
+		private readonly string _fromEmail;
+		private readonly string _smtpServer;
+		private readonly int _smtpPort;
+		private readonly string _smtpPassword;
+		private readonly ILogger<EmailService> _logger;
 
-        // 3. Tiêm ILogger và load cấu hình MỘT LẦN trong constructor
-        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
-        {
-            _logger = logger;
-            _frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
-            _backendUrl = configuration["BackendUrl"] ?? "http://localhost:5120"; 
+		// 3. Tiêm ILogger và load cấu hình MỘT LẦN trong constructor
+		public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+		{
+			_logger = logger;
+			_frontendUrl = configuration["FrontendUrl"] ?? "http://localhost:5173";
+			_backendUrl = configuration["BackendUrl"] ?? "http://localhost:5120";
 
-            var emailSettings = configuration.GetSection("Email");
-            _fromEmail = emailSettings["From"];
-            _smtpServer = emailSettings["Smtp"];
-            _smtpPort = int.Parse(emailSettings["Port"] ?? "587");
-            _smtpPassword = emailSettings["Password"];
+			var emailSettings = configuration.GetSection("Email");
+			_fromEmail = emailSettings["From"];
+			_smtpServer = emailSettings["Smtp"];
+			_smtpPort = int.Parse(emailSettings["Port"] ?? "587");
+			_smtpPassword = emailSettings["Password"];
 
-            // Fail-fast: Kiểm tra cấu hình thiết yếu khi khởi động
-            if (string.IsNullOrEmpty(_fromEmail) || string.IsNullOrEmpty(_smtpServer) || string.IsNullOrEmpty(_smtpPassword))
-            {
-                _logger.LogCritical("Email settings (From, Smtp, Password) are not configured properly.");
-                throw new InvalidOperationException("Email settings are not configured.");
-            }
-        }
+			// Fail-fast: Kiểm tra cấu hình thiết yếu khi khởi động
+			if (string.IsNullOrEmpty(_fromEmail) || string.IsNullOrEmpty(_smtpServer) || string.IsNullOrEmpty(_smtpPassword))
+			{
+				_logger.LogCritical("Email settings (From, Smtp, Password) are not configured properly.");
+				throw new InvalidOperationException("Email settings are not configured.");
+			}
+		}
 
-        // 4. Phương thức private CORE để gửi TẤT CẢ email
-        private async Task<bool> SendEmailCoreAsync(MimeMessage message)
-        {
-            try
-            {
-                using (var client = new SmtpClient())
-                {
-                    await client.ConnectAsync(_smtpServer, _smtpPort, SecureSocketOptions.StartTls);
-                    await client.AuthenticateAsync(_fromEmail, _smtpPassword);
-                    await client.SendAsync(message);
-                    await client.DisconnectAsync(true);
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                // 5. Log lỗi chi tiết!
-                _logger.LogError(ex, "Failed to send email to {ToAddresses}", string.Join(", ", message.To));
-                return false;
-            }
-        }
+		// 4. Phương thức private CORE để gửi TẤT CẢ email
+		private async Task<bool> SendEmailCoreAsync(MimeMessage message)
+		{
+			try
+			{
+				using (var client = new SmtpClient())
+				{
+					await client.ConnectAsync(_smtpServer, _smtpPort, SecureSocketOptions.StartTls);
+					await client.AuthenticateAsync(_fromEmail, _smtpPassword);
+					await client.SendAsync(message);
+					await client.DisconnectAsync(true);
+				}
+				return true;
+			}
+			catch (Exception ex)
+			{
+				// 5. Log lỗi chi tiết!
+				_logger.LogError(ex, "Failed to send email to {ToAddresses}", string.Join(", ", message.To));
+				return false;
+			}
+		}
 
-        // 6. Các phương thức public giờ chỉ việc xây dựng MimeMessage
-        public async Task<bool> SendOtpEmailAsync(string toEmail, string otpCode, string fullname)
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
-            message.To.Add(new MailboxAddress(fullname, toEmail));
-            message.Subject = "Xác thực tài khoản SkillUp - Mã OTP của bạn";
+		// 6. Các phương thức public giờ chỉ việc xây dựng MimeMessage
+		public async Task<bool> SendOtpEmailAsync(string toEmail, string otpCode, string fullname)
+		{
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(fullname, toEmail));
+			message.Subject = "Xác thực tài khoản SkillUp - Mã OTP của bạn";
 
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = $@"
+			var bodyBuilder = new BodyBuilder
+			{
+				HtmlBody = $@"
                 <html>
                 <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                     <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
@@ -96,34 +96,34 @@ namespace SkillUp.Services.Implementations
                     </div>
                 </body>
                 </html>"
-            };
-            message.Body = bodyBuilder.ToMessageBody();
+			};
+			message.Body = bodyBuilder.ToMessageBody();
 
-            return await SendEmailCoreAsync(message);
-        }
+			return await SendEmailCoreAsync(message);
+		}
 
-        public async Task<bool> SendLecturerApplicationStatusEmailAsync(Account account, bool isApproved, string reason)
-        {
-            string htmlBody;
-            string subject;
+		public async Task<bool> SendLecturerApplicationStatusEmailAsync(Account account, bool isApproved, string reason)
+		{
+			string htmlBody;
+			string subject;
 
-            // --- Biến CSS chung để dễ quản lý ---
-            // (Lấy từ _frontendUrl và config sẽ tốt hơn, nhưng tạm hard-code)
-            string fontFamily = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
-            string brandColor = "#4CAF50";
-            string brandColorRejected = "#e74c3c";
-            string bgColor = "#f4f7f6";
-            string cardColor = "#ffffff";
-            string textColor = "#555555";
-            string lightTextColor = "#999999";
-            string linkLogin = _frontendUrl + "/login"; // Sử dụng biến _frontendUrl đã có
-            string emailContact = _fromEmail; // Sử dụng biến _fromEmail đã có
+			// --- Biến CSS chung để dễ quản lý ---
+			// (Lấy từ _frontendUrl và config sẽ tốt hơn, nhưng tạm hard-code)
+			string fontFamily = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
+			string brandColor = "#4CAF50";
+			string brandColorRejected = "#e74c3c";
+			string bgColor = "#f4f7f6";
+			string cardColor = "#ffffff";
+			string textColor = "#555555";
+			string lightTextColor = "#999999";
+			string linkLogin = _frontendUrl + "/login"; // Sử dụng biến _frontendUrl đã có
+			string emailContact = _fromEmail; // Sử dụng biến _fromEmail đã có
 
-            if (isApproved)
-            {
-                // === EMAIL CHẤP THUẬN ===
-                subject = "Chúc mừng! Bạn đã trở thành Giảng viên SkillUp";
-                htmlBody = $@"
+			if (isApproved)
+			{
+				// === EMAIL CHẤP THUẬN ===
+				subject = "Chúc mừng! Bạn đã trở thành Giảng viên SkillUp";
+				htmlBody = $@"
 <!DOCTYPE html>
 <html lang='vi'>
 <head>
@@ -175,14 +175,14 @@ namespace SkillUp.Services.Implementations
     </table>
 </body>
 </html>";
-            }
-            else
-            {
-                // === EMAIL TỪ CHỐI ===
-                subject = "Cập nhật đơn đăng ký giảng viên SkillUp";
-                string reasonHtml = string.IsNullOrEmpty(reason)
-                    ? ""
-                    : $@"<table width='100%' border='0' cellspacing='0' cellpadding='0' style='margin: 25px 0;'>
+			}
+			else
+			{
+				// === EMAIL TỪ CHỐI ===
+				subject = "Cập nhật đơn đăng ký giảng viên SkillUp";
+				string reasonHtml = string.IsNullOrEmpty(reason)
+					? ""
+					: $@"<table width='100%' border='0' cellspacing='0' cellpadding='0' style='margin: 25px 0;'>
                      <tr>
                          <td style='background-color: #fef0f0; border: 1px solid #fde0e0; border-radius: 8px; padding: 20px; font-size: 15px; line-height: 1.6; color: #721c24;'>
                              <strong style='color: {brandColorRejected};'>Phản hồi từ đội ngũ xét duyệt:</strong><br>
@@ -191,7 +191,7 @@ namespace SkillUp.Services.Implementations
                      </tr>
                  </table>";
 
-                htmlBody = $@"
+				htmlBody = $@"
 <!DOCTYPE html>
 <html lang='vi'>
 <head>
@@ -244,31 +244,31 @@ namespace SkillUp.Services.Implementations
     </table>
 </body>
 </html>";
-            }
+			}
 
-            // Xây dựng MimeMessage
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
-            message.To.Add(new MailboxAddress(account.Fullname, account.Email));
-            message.Subject = subject; // Subject đã được set ở trên
-            message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
+			// Xây dựng MimeMessage
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(account.Fullname, account.Email));
+			message.Subject = subject; // Subject đã được set ở trên
+			message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
-            // Gọi hàm core để gửi
-            return await SendEmailCoreAsync(message);
-        }
-        public async Task<bool> SendVerifyEmailAsync(string toEmail, string verifyToken, string fullname)
-        {
-            // 7. Sử dụng _backendUrl từ cấu hình
-            var verifyLink = $"{_backendUrl}/api/auth/verify-email?email={Uri.EscapeDataString(toEmail)}&token={Uri.EscapeDataString(verifyToken)}";
+			// Gọi hàm core để gửi
+			return await SendEmailCoreAsync(message);
+		}
+		public async Task<bool> SendVerifyEmailAsync(string toEmail, string verifyToken, string fullname)
+		{
+			// 7. Sử dụng _backendUrl từ cấu hình
+			var verifyLink = $"{_backendUrl}/api/auth/verify-email?email={Uri.EscapeDataString(toEmail)}&token={Uri.EscapeDataString(verifyToken)}";
 
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
-            message.To.Add(new MailboxAddress(fullname, toEmail));
-            message.Subject = "Xác thực tài khoản SkillUp - Click để kích hoạt";
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(fullname, toEmail));
+			message.Subject = "Xác thực tài khoản SkillUp - Click để kích hoạt";
 
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = $@"
+			var bodyBuilder = new BodyBuilder
+			{
+				HtmlBody = $@"
                 <html>
                 <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                     <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
@@ -299,25 +299,25 @@ namespace SkillUp.Services.Implementations
                     </div>
                 </body>
                 </html>"
-            };
-            message.Body = bodyBuilder.ToMessageBody();
+			};
+			message.Body = bodyBuilder.ToMessageBody();
 
-            return await SendEmailCoreAsync(message);
-        }
+			return await SendEmailCoreAsync(message);
+		}
 
-        public async Task<bool> SendResetPasswordEmailAsync(string toEmail, string resetToken, string fullname)
-        {
-            // Phương thức này đã dùng _frontendUrl (đúng)
-            var resetPasswordLink = $"{_frontendUrl}/reset-password?email={Uri.EscapeDataString(toEmail)}&token={resetToken}";
+		public async Task<bool> SendResetPasswordEmailAsync(string toEmail, string resetToken, string fullname)
+		{
+			// Phương thức này đã dùng _frontendUrl (đúng)
+			var resetPasswordLink = $"{_frontendUrl}/reset-password?email={Uri.EscapeDataString(toEmail)}&token={resetToken}";
 
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
-            message.To.Add(new MailboxAddress(fullname, toEmail));
-            message.Subject = "Khôi phục mật khẩu SkillUp";
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(fullname, toEmail));
+			message.Subject = "Khôi phục mật khẩu SkillUp";
 
-            var bodyBuilder = new BodyBuilder
-            {
-                HtmlBody = $@"
+			var bodyBuilder = new BodyBuilder
+			{
+				HtmlBody = $@"
                 <html>
                 <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
                     <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
@@ -351,10 +351,126 @@ namespace SkillUp.Services.Implementations
                     </div>
                 </body>
                 </html>"
-            };
-            message.Body = bodyBuilder.ToMessageBody();
+			};
+			message.Body = bodyBuilder.ToMessageBody();
 
-            return await SendEmailCoreAsync(message);
-        }
-    }
+			return await SendEmailCoreAsync(message);
+		}
+
+		public async Task<bool> SendCoursePublishedEmailAsync(
+	string toEmail,
+	string fullname,
+	string courseName,
+	string courseId)
+		{
+			var courseLink = $"{_frontendUrl}/course/{courseId}";
+
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(fullname, toEmail));
+			message.Subject = "Khoá học của bạn đã được xuất bản";
+
+			var bodyBuilder = new BodyBuilder
+			{
+				HtmlBody = $@"
+        <html>
+        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+            <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
+                <h2 style='color: #4CAF50; text-align: center;'>SkillUp</h2>
+
+                <h3>Xin chào {fullname},</h3>
+
+                <p>Chúc mừng! Khoá học <strong>{courseName}</strong> của bạn đã được đội ngũ kiểm duyệt phê duyệt và chính thức xuất bản trên nền tảng.</p>
+
+                <p>Bạn có thể xem khoá học tại liên kết bên dưới:</p>
+
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{courseLink}'
+                       style='background-color: #4CAF50;
+                              color: white;
+                              padding: 12px 30px;
+                              text-decoration: none;
+                              border-radius: 5px;
+                              font-weight: bold;'>
+                        Xem khóa học
+                    </a>
+                </div>
+
+                <p>Chúc bạn thu hút được nhiều học viên và tiếp tục mang lại giá trị cho cộng đồng!</p>
+
+                <hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>
+                <p style='text-align: center; color: #666; font-size: 14px;'>
+                    Email này được gửi tự động. Vui lòng không trả lời.
+                </p>
+            </div>
+        </body>
+        </html>"
+			};
+
+			message.Body = bodyBuilder.ToMessageBody();
+
+			return await SendEmailCoreAsync(message);
+		}
+
+		public async Task<bool> SendCourseRejectedEmailAsync(
+	string toEmail,
+	string fullname,
+	string courseName,
+	string rejectReason,
+	string courseId)
+		{
+			var editCourseLink = $"{_frontendUrl}/lecturer/courses/{courseId}";
+
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(fullname, toEmail));
+			message.Subject = "Khoá học của bạn chưa được phê duyệt";
+
+			var bodyBuilder = new BodyBuilder
+			{
+				HtmlBody = $@"
+        <html>
+        <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+            <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
+                <h2 style='color: #FF5252; text-align: center;'>SkillUp</h2>
+
+                <h3>Xin chào {fullname},</h3>
+
+                <p>Rất tiếc! Khoá học <strong>{courseName}</strong> chưa thể được phê duyệt do không đáp ứng một số tiêu chí kiểm duyệt của SkillUp.</p>
+
+                <p><strong>Lý do từ chối:</strong></p>
+                <p style='background: #f8f8f8; padding: 10px; border-left: 4px solid #FF5252;'>
+                    {rejectReason}
+                </p>
+
+                <p>Bạn vui lòng chỉnh sửa khoá học theo góp ý trên và gửi yêu cầu duyệt lại bất kỳ lúc nào.</p>
+
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{editCourseLink}'
+                       style='background-color: #FF5252;
+                              color: white;
+                              padding: 12px 30px;
+                              text-decoration: none;
+                              border-radius: 5px;
+                              font-weight: bold;'>
+                        Chỉnh sửa khoá học
+                    </a>
+                </div>
+
+                <p>Nếu bạn cần thêm hỗ trợ, vui lòng liên hệ đội ngũ hỗ trợ giảng viên của SkillUp.</p>
+
+                <hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>
+                <p style='text-align: center; color: #666; font-size: 14px;'>
+                    Email này được gửi tự động. Vui lòng không trả lời.
+                </p>
+            </div>
+        </body>
+        </html>"
+			};
+
+			message.Body = bodyBuilder.ToMessageBody();
+
+			return await SendEmailCoreAsync(message);
+		}
+	}
 }
