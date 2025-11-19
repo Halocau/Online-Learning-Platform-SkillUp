@@ -7,6 +7,8 @@ import {
   Award,
   ChevronRight,
   Trophy,
+  Lock,
+  CheckCircle2,
 } from "lucide-react";
 
 const CourseOverview = ({ courseData, completedItems, courseId }) => {
@@ -30,16 +32,7 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
     ).length;
     const quizzes = items.filter((i) => i.kind === "Quiz").length;
 
-    const parts = [];
-    if (videos > 0) parts.push(`${videos} video`);
-    if (texts > 0) parts.push(`${texts} bài đọc`);
-    if (quizzes > 0) parts.push(`${quizzes} quiz`);
-
-    return parts.join(", ");
-  };
-
-  const getTotalDuration = (section) => {
-    return `${section.items?.length * 15 || 0} phút`;
+    return { videos, texts, quizzes };
   };
 
   const calculateOverallProgress = () => {
@@ -51,243 +44,290 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
   };
 
   const overallProgress = calculateOverallProgress();
+  const totalLessons = courseData.sections.reduce(
+    (acc, s) => acc + (s.items?.length || 0),
+    0
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* Hero Section with Three-Color Gradient */}
-      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD54F]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-white via-[#FFD54F]/5 to-white">
+        {/* Decorative glow */}
+        <div className="pointer-events-none absolute right-10 top-10 -z-10 h-[10rem] w-[20rem] rounded-full bg-[#FFD54F]/20 blur-3xl"></div>
 
-        <div className="relative max-w-6xl mx-auto px-6 py-16">
-          <div className="flex items-start justify-between gap-8">
-            <div className="flex-1 space-y-6">
-              {/* Category Badge */}
-              <div className="flex items-center gap-2">
-                <span className="px-4 py-1.5 bg-[#FFD54F]/20 text-[#FFD54F] rounded-full font-semibold text-sm backdrop-blur-sm border border-[#FFD54F]/30">
-                  Khóa học
-                </span>
+        <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+            {/* Main Content */}
+            <div className="relative flex-1 space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#FFD54F]/30 bg-[#FFD54F]/10 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-tight text-[#B8860B]">
+                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#FFD54F]"></span>
+                <span>Khóa học</span>
+                {overallProgress > 0 && (
+                  <span className="rounded-full bg-[#FFD54F]/20 px-2 py-0.5 text-[0.65rem] font-medium text-[#B8860B]">
+                    Đang học
+                  </span>
+                )}
               </div>
 
-              <h1 className="text-5xl font-bold leading-tight bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-semibold leading-tight tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
                 {courseData.title}
               </h1>
 
-              <p className="text-lg text-gray-300 leading-relaxed max-w-3xl">
+              <p className="max-w-xl text-sm leading-relaxed text-gray-600 sm:text-base">
                 {courseData.description}
               </p>
 
-              {/* Stats */}
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/20 shadow-lg">
-                  <Award className="w-6 h-6 text-[#FFD54F]" />
+              {/* Stats Strip */}
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-sm sm:px-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20">
+                    <Award className="h-4 w-4" />
+                  </div>
                   <div>
-                    <div className="text-sm text-gray-400">Chương học</div>
-                    <div className="text-xl font-bold">
-                      {courseData.sections?.length || 0}
+                    <div className="text-[0.7rem] font-medium text-gray-500">
+                      Chương học
+                    </div>
+                    <div className="text-base font-semibold text-gray-900">
+                      {courseData.sections?.length || 0} chương
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-5 py-3 border border-white/20 shadow-lg">
-                  <PlayCircle className="w-6 h-6 text-[#FFD54F]" />
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-sm sm:px-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 ring-1 ring-sky-500/20">
+                    <PlayCircle className="h-4 w-4" />
+                  </div>
                   <div>
-                    <div className="text-sm text-gray-400">Bài học</div>
-                    <div className="text-xl font-bold">
-                      {courseData.sections.reduce(
-                        (acc, s) => acc + (s.items?.length || 0),
-                        0
-                      )}
+                    <div className="text-[0.7rem] font-medium text-gray-500">
+                      Bài học
+                    </div>
+                    <div className="text-base font-semibold text-gray-900">
+                      {totalLessons} bài
                     </div>
                   </div>
                 </div>
+
+                {overallProgress > 0 && (
+                  <div className="flex items-center gap-3 rounded-2xl border border-[#FFD54F]/30 bg-[#FFD54F]/10 px-3 py-2 shadow-sm sm:px-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-[#FFD54F]/30 text-[#B8860B] ring-1 ring-[#FFD54F]/40">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="text-[0.7rem] font-medium text-[#B8860B]">
+                        Tiến độ tổng
+                      </div>
+                      <div className="text-base font-semibold text-gray-900">
+                        {overallProgress}%
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Progress Card */}
+            {/* Overall Progress Card */}
             {overallProgress > 0 && (
-              <div className="flex-shrink-0 bg-white rounded-2xl shadow-2xl p-8 min-w-[280px] border border-gray-100">
-                <div className="text-center mb-6">
-                  <div className="relative inline-block">
-                    <svg className="w-32 h-32 transform -rotate-90">
+              <aside className="mt-2 w-full max-w-xs rounded-2xl border border-gray-200 bg-white p-4 shadow-lg sm:p-5 lg:mt-0">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[0.7rem] font-semibold uppercase tracking-tight text-gray-500">
+                      Tiến độ khóa học
+                    </div>
+                    <div className="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
+                      {overallProgress}%
+                    </div>
+                    <p className="mt-1 text-xs text-gray-600">
+                      Bạn đã hoàn thành {completedItems.size}/{totalLessons} bài
+                      học.
+                    </p>
+                  </div>
+
+                  {/* Circular Progress */}
+                  <div className="relative h-20 w-20">
+                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 120 120">
                       <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="#e5e7eb"
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        stroke="rgba(229, 231, 235, 1)"
                         strokeWidth="8"
                         fill="none"
-                      />
-                      <circle
-                        cx="64"
-                        cy="64"
-                        r="56"
-                        stroke="url(#gradient)"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 56}`}
-                        strokeDashoffset={`${
-                          2 * Math.PI * 56 * (1 - overallProgress / 100)
-                        }`}
-                        strokeLinecap="round"
-                        className="transition-all duration-1000"
                       />
                       <defs>
                         <linearGradient
-                          id="gradient"
+                          id="overallGrad"
                           x1="0%"
                           y1="0%"
                           x2="100%"
                           y2="100%"
                         >
-                          <stop
-                            offset="0%"
-                            style={{ stopColor: "#FFD54F", stopOpacity: 1 }}
-                          />
-                          <stop
-                            offset="100%"
-                            style={{ stopColor: "#FFC107", stopOpacity: 1 }}
-                          />
+                          <stop offset="0%" stopColor="#FFD54F" />
+                          <stop offset="100%" stopColor="#FFC107" />
                         </linearGradient>
                       </defs>
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        stroke="url(#overallGrad)"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray="314"
+                        strokeDashoffset={314 - (314 * overallProgress) / 100}
+                      />
                     </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-gray-900">
-                          {overallProgress}%
-                        </div>
-                      </div>
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {overallProgress}%
+                      </span>
                     </div>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-4 font-medium">
-                    Đã hoàn thành
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-gray-200">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="text-gray-600">Tiến độ</span>
-                    <span className="font-semibold text-gray-900">
-                      {completedItems.size}/
-                      {courseData.sections.reduce(
-                        (acc, s) => acc + (s.items?.length || 0),
-                        0
-                      )}{" "}
-                      bài
+                {overallProgress === 100 && (
+                  <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-emerald-700 ring-1 ring-emerald-200">
+                    <Trophy className="h-5 w-5" />
+                    <span className="text-sm font-semibold">
+                      Hoàn thành xuất sắc!
                     </span>
                   </div>
-                  {overallProgress === 100 && (
-                    <div className="flex items-center gap-2 mt-4 px-4 py-2.5 bg-green-50 text-green-700 rounded-lg border border-green-200">
-                      <Trophy className="w-5 h-5" />
-                      <span className="text-sm font-semibold">
-                        Hoàn thành xuất sắc!
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
+                )}
+              </aside>
             )}
           </div>
         </div>
       </div>
 
-      {/* Sections Grid */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8">
-          Nội dung khóa học
-        </h2>
-
+      {/* Curriculum / Sections List */}
+      <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-16 pt-8 sm:px-6">
         <div className="space-y-4">
-          {courseData.sections.map((section, index) => {
+          {/* Section Cards */}
+          {courseData.sections.map((section, sectionIndex) => {
             const progress = getSectionProgress(section);
             const isStarted = progress > 0;
             const isCompleted = progress === 100;
+            const { videos, texts, quizzes } = getItemCounts(section);
+            const completedCount = section.items.filter((i) =>
+              completedItems.has(i.id)
+            ).length;
 
             return (
-              <div
+              <article
                 key={section.id}
-                className="bg-white rounded-2xl border-2 border-gray-100 hover:border-[#FFD54F]/50 hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-[#FFD54F]/40 hover:shadow-lg sm:p-5"
               >
-                <div className="p-6">
-                  <div className="flex items-start gap-6">
-                    {/* Section Number Badge */}
+                {/* Hover glow effect - FIXED: Added pointer-events-none */}
+                <div className="pointer-events-none absolute inset-y-6 right-0 w-32 bg-gradient-to-l from-[#FFD54F]/10 via-transparent to-transparent opacity-0 blur-3xl transition-opacity group-hover:opacity-100"></div>
+
+                <div className="relative flex items-start gap-4 sm:gap-5">
+                  {/* Section Index / Status */}
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200 shadow-inner">
                     <div
-                      className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold transition-all shadow-md ${
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold tracking-tight ring-1 ${
                         isCompleted
-                          ? "bg-gradient-to-br from-green-400 to-green-600 text-white shadow-green-200"
+                          ? "bg-emerald-400/15 text-emerald-600 ring-emerald-400/60"
                           : isStarted
-                          ? "bg-gradient-to-br from-[#FFD54F] to-[#FFC107] text-gray-900 shadow-yellow-200"
-                          : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 group-hover:from-gray-200 group-hover:to-gray-300"
+                          ? "bg-[#FFD54F]/15 text-[#B8860B] ring-[#FFD54F]/60"
+                          : "bg-gray-100 text-gray-600 ring-gray-300"
                       }`}
                     >
-                      {isCompleted ? "✓" : index + 1}
-                    </div>
-
-                    {/* Section Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-[#FFC107] transition-colors">
-                            {section.title}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                            <span className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-                              {getItemCounts(section)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/student/learn/${courseId}/section/${section.id}`
-                            )
-                          }
-                          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#FFD54F] to-[#FFC107] hover:from-[#FFC107] hover:to-[#FFB300] text-gray-900 font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg hover:shadow-xl whitespace-nowrap"
-                        >
-                          {isStarted ? "Tiếp tục" : "Bắt đầu"}
-                          <ChevronRight className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      {/* Progress Bar */}
-                      {isStarted && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                          <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="text-gray-600 font-medium">
-                              {progress}% hoàn thành
-                            </span>
-                            <span className="text-gray-500">
-                              {
-                                section.items.filter((i) =>
-                                  completedItems.has(i.id)
-                                ).length
-                              }
-                              /{section.items?.length || 0} bài
-                            </span>
-                          </div>
-                          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                            <div
-                              className={`h-full transition-all duration-500 ${
-                                isCompleted
-                                  ? "bg-gradient-to-r from-green-400 to-green-600"
-                                  : "bg-gradient-to-r from-[#FFD54F] to-[#FFC107]"
-                              }`}
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                        </div>
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-4 w-4" />
+                      ) : (
+                        sectionIndex + 1
                       )}
                     </div>
                   </div>
+
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[0.7rem] font-medium uppercase tracking-tight text-gray-700 ring-1 ring-gray-200">
+                            Chương {sectionIndex + 1}
+                          </span>
+                          {isStarted && (
+                            <span className="hidden text-[0.7rem] text-emerald-600 sm:inline-flex">
+                              {isCompleted
+                                ? "Hoàn thành"
+                                : `Đã hoàn thành ${completedCount}/${section.items?.length} bài`}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="mt-1 text-base font-semibold tracking-tight text-gray-900 sm:text-lg">
+                          {section.title}
+                        </h3>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                          {videos > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 ring-1 ring-gray-200">
+                              <PlayCircle className="h-3.5 w-3.5 text-sky-500" />
+                              <span>{videos} video</span>
+                            </span>
+                          )}
+                          {texts > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 ring-1 ring-gray-200">
+                              <FileText className="h-3.5 w-3.5 text-amber-500" />
+                              <span>{texts} bài đọc</span>
+                            </span>
+                          )}
+                          {quizzes > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 ring-1 ring-gray-200">
+                              <HelpCircle className="h-3.5 w-3.5 text-violet-500" />
+                              <span>{quizzes} quiz</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Call to Action */}
+                      <button
+                        onClick={() => {
+                          console.log(
+                            "Button clicked, navigating to:",
+                            `/student/learn/${courseId}/section/${section.id}`
+                          );
+                          navigate(
+                            `/student/learn/${courseId}/section/${section.id}`
+                          );
+                        }}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#FFD54F]/90 px-4 py-2 text-xs font-semibold tracking-tight text-gray-900 shadow-sm transition-all hover:bg-[#FFD54F] hover:shadow-md relative z-10"
+                      >
+                        {isStarted ? "Tiếp tục" : "Bắt đầu"}
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Progress Bar */}
+                    {isStarted && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[0.7rem] text-gray-600">
+                          <span>Tiến độ chương</span>
+                          <span className="font-semibold text-emerald-600">
+                            {completedCount}/{section.items?.length} bài (
+                            {progress}%)
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isCompleted
+                                ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600"
+                                : "bg-gradient-to-r from-[#FFD54F] via-[#FFC107] to-[#FFB300]"
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

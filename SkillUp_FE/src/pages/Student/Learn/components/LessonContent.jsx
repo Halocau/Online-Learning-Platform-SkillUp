@@ -21,6 +21,7 @@ const LessonContent = ({
   onPrev,
   hasNext,
   hasPrev,
+  lessonId,
 }) => {
   const [videoProgress, setVideoProgress] = useState(0);
 
@@ -159,10 +160,9 @@ const LessonContent = ({
           </button>
         </div>
 
-        {/* Comments - Only for videos */}
         {item.kind === "Lesson" && item.lessonType === "Video" && (
           <div className="mt-8">
-            <CommentSection courseId={item.courseId} itemId={item.id} />
+            <CommentSection lessonId={lessonId} />
           </div>
         )}
       </div>

@@ -108,7 +108,6 @@ export default function CommentSection({ postId }) {
 
       setComments(rootComments);
       setExpandedReplies(newExpanded);
-
     } catch (err) {
       console.error("Error fetching comments:", err);
       toast.error("Không thể tải bình luận");
@@ -122,21 +121,20 @@ export default function CommentSection({ postId }) {
     if (postId) fetchComments();
   }, [postId, fetchComments]);
 
-
   // --- 2. useEffect MỚI cho SIGNALR ---
   useEffect(() => {
     // Chỉ chạy khi có postId VÀ user đã đăng nhập (để có token)
-    if (!postId || !userId) return; 
+    if (!postId || !userId) return;
 
     // === Các hàm xử lý state khi nhận tín hiệu ===
-    
+
     // Khi nhận comment mới
     const handleReceiveComment = (newComment) => {
       console.log("signalR: Nhận comment mới", newComment);
       setComments((prevComments) => {
         // Kiểm tra trùng lặp
         if (findCommentById(prevComments, newComment.id)) return prevComments;
-        
+
         const normalized = normalizeComment(newComment);
 
         if (normalized.parentCommentId) {
@@ -154,7 +152,10 @@ export default function CommentSection({ postId }) {
             });
           };
           // Tự động mở rộng comment cha
-          setExpandedReplies((prev) => ({ ...prev, [normalized.parentCommentId]: true }));
+          setExpandedReplies((prev) => ({
+            ...prev,
+            [normalized.parentCommentId]: true,
+          }));
           return addReply(prevComments);
         } else {
           // Đây là một root comment mới (thêm vào đầu danh sách)
@@ -171,7 +172,7 @@ export default function CommentSection({ postId }) {
           return commentsList.map((c) => {
             if (c.id === updatedComment.id) {
               // Cập nhật nội dung/like, giữ nguyên replies
-              return { ...c, ...updatedComment, replies: c.replies }; 
+              return { ...c, ...updatedComment, replies: c.replies };
             }
             if (c.replies?.length > 0) {
               return { ...c, replies: update(c.replies) };
@@ -187,56 +188,57 @@ export default function CommentSection({ postId }) {
     const handleDeleteComment = (commentId) => {
       console.log("signalR: Nhận xóa", commentId);
       setComments((prevComments) => {
-         const remove = (comments, idToRemove) => {
-           return comments.reduce((acc, c) => {
-             if (c.id === idToRemove) return acc; // Lọc bỏ
-             if (c.replies?.length > 0) {
-               return [
-                 ...acc,
-                 { ...c, replies: remove(c.replies, idToRemove) },
-               ];
-             }
-             return [...acc, c];
-           }, []);
-         };
-         return remove(prevComments, commentId);
+        const remove = (comments, idToRemove) => {
+          return comments.reduce((acc, c) => {
+            if (c.id === idToRemove) return acc; // Lọc bỏ
+            if (c.replies?.length > 0) {
+              return [...acc, { ...c, replies: remove(c.replies, idToRemove) }];
+            }
+            return [...acc, c];
+          }, []);
+        };
+        return remove(prevComments, commentId);
       });
     };
 
     // === Kết nối và lắng nghe ===
-    
-    signalRService.startConnection()
+
+    signalRService
+      .startConnection()
       .then(() => {
         signalRService.joinPostGroup(postId);
-        
+
         // Đăng ký các hàm lắng nghe
         signalRService.onCommentReceived(handleReceiveComment);
         signalRService.onCommentUpdated(handleUpdateComment);
         signalRService.onCommentDeleted(handleDeleteComment);
       })
-      .catch(err => console.log("SignalR connection failed (có thể do chưa đăng nhập): ", err));
+      .catch((err) =>
+        console.log(
+          "SignalR connection failed (có thể do chưa đăng nhập): ",
+          err
+        )
+      );
 
     // Dọn dẹp (rất quan trọng)
     return () => {
       console.log(`Dọn dẹp SignalR cho post ${postId}`);
       signalRService.leavePostGroup(postId);
-      
+
       // Gỡ lắng nghe
       signalRService.offCommentReceived();
       signalRService.offCommentUpdated();
       signalRService.offCommentDeleted();
       // Không gọi stopConnection() ở đây, để giữ kết nối cho trang khác
     };
-
   }, [postId, userId]); // Chạy lại khi đổi PostId hoặc user (đăng nhập)
-
 
   // --- 3. CÁC HÀM SUBMIT VÀ HANDLER (Giữ nguyên logic của bạn) ---
   // Các hàm này (handleSubmit, handleDelete...) vẫn cập nhật state
   // ngay lập tức (Optimistic Update) để UI mượt mà.
   // SignalR sẽ lo việc cập nhật cho *các user khác*.
-  
- // Thay thế TOÀN BỘ hàm handleSubmitComment bằng code này
+
+  // Thay thế TOÀN BỘ hàm handleSubmitComment bằng code này
 
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return toast.warning("Vui lòng nhập bình luận");
@@ -247,7 +249,7 @@ export default function CommentSection({ postId }) {
       if (editingId) {
         // --- LOGIC UPDATE (CẬP NHẬT) ---
         // Block này gọi commentApi.update
-        
+
         const res = await commentApi.update({
           commentId: editingId,
           contents: commentText,
@@ -256,31 +258,29 @@ export default function CommentSection({ postId }) {
 
         // Cập nhật state (để UI mượt)
         if (updatedComment) {
-            setComments((prev) => {
-              const update = (commentsList) => {
-                return commentsList.map((c) => {
-                  if (c.id === editingId) {
-                    // Giữ nguyên replies, cập nhật phần còn lại
-                    return { ...c, ...updatedComment, replies: c.replies };
-                  }
-                  if (c.replies?.length > 0) {
-                    return { ...c, replies: update(c.replies) };
-                  }
-                  return c;
-                });
-              };
-              return update(prev);
-            });
+          setComments((prev) => {
+            const update = (commentsList) => {
+              return commentsList.map((c) => {
+                if (c.id === editingId) {
+                  // Giữ nguyên replies, cập nhật phần còn lại
+                  return { ...c, ...updatedComment, replies: c.replies };
+                }
+                if (c.replies?.length > 0) {
+                  return { ...c, replies: update(c.replies) };
+                }
+                return c;
+              });
+            };
+            return update(prev);
+          });
         }
-        
+
         toast.success("Cập nhật bình luận thành công");
         setEditingId(null);
-        
       } else {
-        
         // --- LOGIC CREATE (TẠO MỚI) ---
         // Block này gọi commentApi.create
-        
+
         const res = await commentApi.create({
           postId,
           contents: commentText,
@@ -303,13 +303,12 @@ export default function CommentSection({ postId }) {
           return [normalized, ...prev]; // Thêm mới
         });
         // --- KẾT THÚC PHẦN SỬA ---
-        
+
         toast.success("Bình luận thành công");
       }
-      
+
       // Xóa nội dung ô nhập liệu (cho cả 2 trường hợp)
       setCommentText("");
-      
     } catch (err) {
       toast.error(err?.response?.data?.message || "Lỗi khi gửi bình luận");
     } finally {
@@ -374,23 +373,19 @@ export default function CommentSection({ postId }) {
 
       // Cập nhật state (để UI mượt)
       setComments((prev) => {
-         const remove = (comments, idToRemove) => {
-           return comments.reduce((acc, c) => {
-             if (c.id === idToRemove) return acc;
-             if (c.replies?.length > 0) {
-               return [
-                 ...acc,
-                 { ...c, replies: remove(c.replies, idToRemove) },
-               ];
-             }
-             return [...acc, c];
-           }, []);
-         };
-         return remove(prev, deleteCommentId);
+        const remove = (comments, idToRemove) => {
+          return comments.reduce((acc, c) => {
+            if (c.id === idToRemove) return acc;
+            if (c.replies?.length > 0) {
+              return [...acc, { ...c, replies: remove(c.replies, idToRemove) }];
+            }
+            return [...acc, c];
+          }, []);
+        };
+        return remove(prev, deleteCommentId);
       });
 
       toast.success("Xóa bình luận thành công");
-
     } catch (err) {
       toast.error(err?.response?.data?.message || "Lỗi khi xóa bình luận");
     } finally {
@@ -410,39 +405,41 @@ export default function CommentSection({ postId }) {
         return c;
       });
     };
-    
+
     // Optimistic Update: Cập nhật UI trước
-    setComments((prev) => updateLike(prev, commentId, (c) => c + 1)); 
+    setComments((prev) => updateLike(prev, commentId, (c) => c + 1));
 
     try {
       // Gọi API
       const res = await commentApi.toggleLike(commentId);
       const actualLikes = res?.data?.data?.totalLikes ?? 0;
-      
+
       // Cập nhật lại state với số like CHUẨN từ server
       setComments((prev) => updateLike(prev, commentId, () => actualLikes));
     } catch (err) {
       // Rollback nếu lỗi
-      setComments((prev) => updateLike(prev, commentId, (c) => Math.max(0, c - 1)));
+      setComments((prev) =>
+        updateLike(prev, commentId, (c) => Math.max(0, c - 1))
+      );
       toast.error("Lỗi khi thích bình luận");
     }
   };
 
   const handleReportComment = async () => {
-     if (!reportReason.trim()) return toast.warning("Vui lòng nhập lý do");
-     try {
-       await commentApi.report({
-         commentPostId: reportCommentId,
-         reason: reportReason,
-       });
-       toast.success("Báo cáo thành công");
-     } catch (err) {
-       toast.error(err?.response?.data?.message || "Lỗi khi báo cáo");
-     } finally {
-        setReportModalVisible(false);
-        setReportCommentId(null);
-        setReportReason("");
-     }
+    if (!reportReason.trim()) return toast.warning("Vui lòng nhập lý do");
+    try {
+      await commentApi.report({
+        commentPostId: reportCommentId,
+        reason: reportReason,
+      });
+      toast.success("Báo cáo thành công");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Lỗi khi báo cáo");
+    } finally {
+      setReportModalVisible(false);
+      setReportCommentId(null);
+      setReportReason("");
+    }
   };
 
   const toggleReplies = (commentId) => {
