@@ -11,6 +11,7 @@ import { getQuizById } from "@/api/quizAPI";
 import { toast } from "react-toastify";
 import QuestionForm from "./QuestionForm";
 import QuestionBankSelector from "./QuestionBankSelector";
+import { extractCleanText } from "@/utils/htmlUtils";
 
 const getQuestionId = (question) =>
   question?.id ?? question?.questionId ?? question?.questionID ?? null;
@@ -116,9 +117,11 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
         setQuestions((prev) => [...prev, newQuestion]);
         setAddingMode(null);
+        toast.success("Câu hỏi đã được tạo thành công!");
       }
     } catch (error) {
       console.error("❌ Error adding question:", error);
+      toast.error(error.message || "Lỗi khi tạo câu hỏi");
     } finally {
       setLoading(false);
     }
@@ -145,9 +148,11 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       if (result !== null) {
         await loadQuestions();
         setAddingMode(null);
+        toast.success("Câu hỏi đã được thêm từ ngân hàng!");
       }
     } catch (error) {
       console.error("❌ Error adding questions from bank:", error);
+      toast.error(error.message || "Lỗi khi thêm câu hỏi từ ngân hàng");
     } finally {
       setLoading(false);
     }
@@ -197,9 +202,11 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         );
 
         setEditingQuestionId(null);
+        toast.success("Câu hỏi đã được cập nhật!");
       }
     } catch (error) {
       console.error("❌ Error updating question:", error);
+      toast.error(error.message || "Lỗi khi cập nhật câu hỏi");
     } finally {
       setLoading(false);
     }
@@ -208,16 +215,25 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
   const handleCancelEdit = () => {
     setEditingQuestionId(null);
   };
+
   const handleDeleteQuestion = async (questionId) => {
     if (!questionId) return;
+    
+    if (!window.confirm("Bạn có chắc muốn xóa câu hỏi này?")) {
+      return;
+    }
+
     try {
       setLoading(true);
 
       setQuestions((prev) =>
         prev.filter((q) => getQuestionId(q) !== questionId)
       );
+
+      toast.success("Câu hỏi đã được xóa!");
     } catch (err) {
       console.error("❌ Error deleting question:", err);
+      toast.error("Lỗi khi xóa câu hỏi");
     } finally {
       setLoading(false);
     }
@@ -231,7 +247,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
           onClick={() => setAddingMode("bank")}
           size="sm"
           variant="outline"
-          className="border-orange-300 text-orange-700 hover:bg-orange-50"
+          className="border-[#FFD54F]/30 text-[#272343] hover:bg-[#FFD54F]/10 rounded-full"
           disabled={loading || loadingQuestions}
         >
           <Plus className="w-4 h-4 mr-1" />
@@ -263,15 +279,15 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       {/* Loading State */}
       {loadingQuestions && (
         <div className="text-center py-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-          <p className="text-sm text-gray-600 mt-2">Đang tải câu hỏi...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FFD54F] mx-auto"></div>
+          <p className="text-sm text-[#2d334a] mt-2">Đang tải câu hỏi...</p>
         </div>
       )}
 
       {/* Questions List - Simple Udemy Style */}
       {!loadingQuestions && questions.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-gray-700">
+          <h4 className="text-sm font-semibold text-[#272343] tracking-tight">
             Câu hỏi ({questions.length})
           </h4>
           {questions
@@ -280,37 +296,40 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
               const qId = getQuestionId(question) ?? index;
               const isEditing = editingQuestionId === qId;
 
+              // Extract clean text from HTML title
+              const cleanTitle = extractCleanText(question.title, 100);
+
               return (
-                <Card key={qId} className="overflow-hidden">
+                <Card key={qId} className="overflow-hidden rounded-2xl border border-[#272343]/15">
                   {/* Simple Question Display - Collapsed by default */}
                   {!isEditing && (
-                    <div className="flex items-center gap-3 p-3 bg-orange-50">
+                    <div className="flex items-center gap-3 p-3 bg-[#FFD54F]/5">
                       {/* Order Number */}
-                      <span className="flex items-center justify-center w-8 h-8 bg-orange-200 text-orange-900 rounded-full font-semibold text-xs flex-shrink-0">
+                      <span className="flex items-center justify-center w-8 h-8 bg-[#FFD54F]/20 text-[#272343] rounded-full font-semibold text-xs flex-shrink-0">
                         #{question.orders || index + 1}
                       </span>
 
                       {/* Question Info */}
                       <div className="flex-1 min-w-0">
-                        <h5 className="font-medium text-gray-900 truncate">
-                          {question.title}
+                        <h5 className="font-medium text-[#272343] truncate">
+                          {cleanTitle}
                         </h5>
                         <div className="flex gap-2 mt-1">
                           {question.type && (
-                            <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded">
+                            <span className="text-xs px-2 py-0.5 bg-[#FFD54F]/20 text-[#272343] rounded-full">
                               {question.type === "SingleChoice"
                                 ? "Một đáp án"
                                 : "Nhiều đáp án"}
                             </span>
                           )}
                           {question.imageUrl && (
-                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
+                            <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#272343] rounded-full flex items-center gap-1">
                               <ImageIcon className="w-3 h-3" />
                               Có ảnh
                             </span>
                           )}
                           {question.answers && (
-                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                            <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#2d334a] rounded-full">
                               {question.answers.length} đáp án
                             </span>
                           )}
@@ -321,14 +340,14 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => handleEditQuestion(question)}
-                          className="p-2 hover:bg-orange-200 rounded text-orange-600 transition-colors"
+                          className="p-2 hover:bg-[#FFD54F]/20 rounded-full text-[#272343] transition-colors"
                           title="Chỉnh sửa"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteQuestion(qId)}
-                          className="p-2 hover:bg-red-100 rounded text-red-600 transition-colors"
+                          className="p-2 hover:bg-red-100 rounded-full text-red-600 transition-colors"
                           title="Xóa"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -367,9 +386,9 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
       {/* Empty State */}
       {!loadingQuestions && questions.length === 0 && !addingMode && (
-        <div className="p-4 bg-gray-50 rounded-lg text-center border-2 border-dashed border-gray-300">
-          <p className="text-sm text-gray-600">Chưa có câu hỏi nào</p>
-          <p className="text-xs text-gray-500 mt-1">
+        <div className="p-4 bg-[#e3f6f5]/40 rounded-2xl text-center border-2 border-dashed border-[#272343]/20">
+          <p className="text-sm text-[#2d334a]">Chưa có câu hỏi nào</p>
+          <p className="text-xs text-[#2d334a]/60 mt-1">
             Nhấn "Thêm câu hỏi" để bắt đầu
           </p>
         </div>
