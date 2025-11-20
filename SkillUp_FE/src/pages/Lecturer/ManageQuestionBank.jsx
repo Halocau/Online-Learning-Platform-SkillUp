@@ -125,8 +125,11 @@ export default function ManageQuestionBank() {
     useEffect(() => {
         if (sections.length > 0) {
             setSelectedSectionId(sections[0].id);
+        } else if (sections.length === 0) {
+            setSelectedSectionId(null);
         }
     }, [sections, courseId]);
+
 
     // Tìm kiếm phía client
     const displayed = useMemo(() => {
@@ -370,13 +373,18 @@ export default function ManageQuestionBank() {
 
                         <Space>
                             {selectedSectionId ? (
-                                <Button type="primary" onClick={() => setCreateOpen(true)}>
-                                    Tạo câu hỏi mới
-                                </Button>
+                                <>
+                                    <Button type="primary" onClick={() => setCreateOpen(true)}>
+                                        Tạo câu hỏi mới
+                                    </Button>
+
+                                    <Button onClick={() => setImportOpen(true)}>
+                                        Nhập từ Excel
+                                    </Button>
+                                </>
                             ) : (
                                 <div></div>
                             )}
-                            <Button onClick={() => setImportOpen(true)}>Nhập từ Excel</Button>
                         </Space>
                     </div>
 
