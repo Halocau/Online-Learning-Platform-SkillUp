@@ -34,7 +34,7 @@ export const courseAPI = {
     }
   },
 
-updateCourse: async (courseId, formData) => {
+  updateCourse: async (courseId, formData) => {
     try {
       const response = await axiosInstance.put(
         `${API_BASE_URL}/Update-Course/${courseId}`,
@@ -53,7 +53,7 @@ updateCourse: async (courseId, formData) => {
     }
   },
 
- deleteCourse: async (courseId) => {
+  deleteCourse: async (courseId) => {
     try {
       const response = await axiosInstance.delete(
         `${API_BASE_URL}/Delete-Course/${courseId}`
@@ -128,7 +128,7 @@ updateCourse: async (courseId, formData) => {
       throw error;
     }
   },
-    // Get student enrolled courses
+  // Get student enrolled courses
   getStudentEnrolledCourses: async () => {
     try {
       const response = await axiosInstance.get(
@@ -137,6 +137,18 @@ updateCourse: async (courseId, formData) => {
       return response;
     } catch (error) {
       console.error("Error fetching enrolled courses:", error);
+      throw error;
+    }
+  },
+
+  searchCourses: async (keyword, limit = 8) => {
+    try {
+      const response = await axiosInstance.get(`${API_BASE_URL}/search`, {
+        params: { keyword, limit },
+      });
+      return response;
+    } catch (error) {
+      console.error("Error searching courses:", error);
       throw error;
     }
   },

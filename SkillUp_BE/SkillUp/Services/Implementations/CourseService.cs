@@ -186,56 +186,78 @@ namespace SkillUp.Services.Implementations
 			return course.IsActive;
 		}
 
-		public async Task<List<CourseSummaryDTO>> GetListCourseBySubCateId(int id)
-		{
-			var courses = await _courseRepository.GetCoursesBySubCategoryId(id);
-			if (courses == null || !courses.Any())
-			{
-				throw new Exception("Không tìm thấy khóa học nào");
-			}
-			return courses.Select(course => new CourseSummaryDTO
-			{
-				Id = course.Id,
-				Title = course.Title,
-				Image = course.Image,
-				Price = course.Price,
-				Rating = course.Rating,
-				EnrollmentCount = course.EnrollmentCount,
-				LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
-			}).ToList();
-		}
-		public async Task<List<CourseSummaryDTO>> GetListCourseByCateId(int id)
-		{
-			var courses = await _courseRepository.GetCoursesByCategoryId(id);
-			if (courses == null || !courses.Any())
-			{
-				throw new Exception("Không tìm thấy khóa học nào");
-			}
-			return courses.Select(course => new CourseSummaryDTO
-			{
-				Id = course.Id,
-				Title = course.Title,
-				Image = course.Image,
-				Price = course.Price,
-				Rating = course.Rating,
-				EnrollmentCount = course.EnrollmentCount,
-				LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
-			}).ToList();
-		}
-		// Check Authorization for Roles
-		private async Task<bool> IsAuthorizedAsync(Guid accountId, int requiredRoleId)
-		{
-			var account = await _accountRepository.GetByIdAsync(accountId);
-			if (account == null)
-			{
-				throw new Exception("Không tìm thấy tài khoản!");
-			}
-			if (account.RoleId != requiredRoleId)
-			{
-				throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng này!");
-			}
-			return true;
-		}
+        public async Task<List<CourseSummaryDTO>> GetListCourseBySubCateId(int id)
+        {
+            var courses = await _courseRepository.GetCoursesBySubCategoryId(id);
+            if (courses == null || !courses.Any())
+            {
+                throw new Exception("Không tìm thấy khóa học nào");
+            }
+            return courses.Select(course => new CourseSummaryDTO
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Image = course.Image,
+                Price = course.Price,
+                Rating = course.Rating,
+                EnrollmentCount = course.EnrollmentCount,
+                LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
+            }).ToList();
+        }
+        public async Task<List<CourseSummaryDTO>> GetListCourseByCateId(int id)
+        {
+            var courses = await _courseRepository.GetCoursesByCategoryId(id);
+            if (courses == null || !courses.Any())
+            {
+                throw new Exception("Không tìm thấy khóa học nào");
+            }
+            return courses.Select(course => new CourseSummaryDTO
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Image = course.Image,
+                Price = course.Price,
+                Rating = course.Rating,
+                EnrollmentCount = course.EnrollmentCount,
+                LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty
+            }).ToList();
+        }
+
+        public async Task<List<CourseSummaryDTO>> SearchCoursesAsync(string keyword, int limit)
+        {
+            var courses = await _courseRepository.SearchCoursesAsync(keyword, limit);
+
+            if (courses == null || courses.Count == 0)
+            {
+                return new List<CourseSummaryDTO>();
+            }
+
+            return courses.Select(course => new CourseSummaryDTO
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Image = course.Image,
+                Price = course.Price,
+                Rating = course.Rating,
+                EnrollmentCount = course.EnrollmentCount,
+                LecturerName = course.Lecturer?.Account.Fullname ?? string.Empty,
+                SubCategoryId = course.SubCategoryId
+            }).ToList();
+        }
+        // Check Authorization for Roles
+        private async Task<bool> IsAuthorizedAsync(Guid accountId, int requiredRoleId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+            {
+                throw new Exception("Không tìm thấy tài khoản!");
+            }
+            if (account.RoleId != requiredRoleId)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền thực hiện chức năng này!");
+            }
+            return true;
+        }
 
 		public async Task<List<CourseMorderatorResponseDto>> GetAllCourseAsync(Guid accountId)
 		{
@@ -312,32 +334,33 @@ namespace SkillUp.Services.Implementations
 				} : null
 			};
 
-			detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
-			{
-				// Map Lesson -> SectionItemDto (CÓ Assets)
-				// Only include active lessons and their active assets
-				var lessonItems = section.Lessons
-					.Where(l => l.IsActive)
-					.Select(l => new SectionItemDto
-					{
-						Kind = "Lesson",
-						Id = l.Id,
-						Orders = (double)l.Orders,
-						Title = l.Title,
-						Description = l.Description,
-						LessonType = l.Type,                 // "Video" | "Text"
-						IsFree = l.IsFree ?? false,
-						Assets = l.Assets?
-							.Where(a => a.IsActive)
-							.Select(a => new AssetCourseDetailDto
-							{
-								Url = a.Url ?? "default-url",
-								Content = a.Contents ?? "No content"
-							})
-							.ToList() ?? new List<AssetCourseDetailDto>(),
-						CreatedAt = l.CreatedAt,
-						UpdatedAt = l.UpdatedAt
-					});
+            detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
+            {
+                // Map Lesson -> SectionItemDto (CÓ Assets)
+                // Only include active lessons and their active assets
+                var lessonItems = section.Lessons
+                    .Where(l => l.IsActive)
+                    .Select(l => new SectionItemDto
+                    {
+                        Kind = "Lesson",
+                        Id = l.Id,
+                        Orders = (double)l.Orders,
+                        Title = l.Title,
+                        Description = l.Description,
+                        LessonType = l.Type,                 // "Video" | "Text"
+                        IsFree = l.IsFree ?? false,
+                        Assets = l.Assets?
+                            .Where(a => a.IsActive)
+                            .Select(a => new AssetCourseDetailDto
+                            {
+                                Url = a.Url ?? "default-url",
+                                Content = a.Contents ?? "No content",
+                                FileUrl = a.FileUrl ?? "default-file-url"
+                            })
+                            .ToList() ?? new List<AssetCourseDetailDto>(),
+                        CreatedAt = l.CreatedAt,
+                        UpdatedAt = l.UpdatedAt
+                    });
 
 				// Map Quiz -> SectionItemDto (KHÔNG có Assets)
 				// Only include active quizzes

@@ -1,10 +1,31 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/logo_skillup.png";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
 import { clearGuestCart } from "@/utils/guestCart";
+import { courseAPI } from "@/api/courseAPI";
+
+const useDebounce = (value, delay = 300) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+const formatCoursePrice = (price) => {
+  if (price === 0) return "Miễn phí";
+  if (typeof price === "number") {
+    return `₫${price.toLocaleString("vi-VN")}`;
+  }
+  return "Đang cập nhật";
+};
+
 function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -16,6 +37,11 @@ function Header() {
   const { cartCount } = useCart();
   const accessToken = localStorage.getItem("accessToken");
   const isAuthenticated = !!accessToken;
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchWrapperRef = useRef(null);
+  const debouncedQuery = useDebounce(searchQuery);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -31,12 +57,14 @@ function Header() {
 
         if (res.data.code === 200) {
           const userData = res.data.data[0];
-          const updatedUser = {
-            ...user,
-            fullname: userData.fullName,
-          };
-          setUser(updatedUser);
-          localStorage.setItem("user", JSON.stringify(updatedUser));
+          setUser((prev) => {
+            const updatedUser = {
+              ...(prev || {}),
+              fullname: userData.fullName,
+            };
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+            return updatedUser;
+          });
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -61,6 +89,65 @@ function Header() {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, [accessToken]);
+
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setShowSuggestions(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const fetchCourses = async () => {
+      try {
+        setIsSearching(true);
+        const response = await courseAPI.searchCourses(debouncedQuery, 5);
+        if (isCancelled) return;
+        const payload = Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+        setSearchResults(payload);
+        setShowSuggestions(true);
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Search suggestion error:", error);
+          setSearchResults([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsSearching(false);
+        }
+      }
+    };
+
+    fetchCourses();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setShowSuggestions(false);
+    }
+  }, [searchQuery]);
 
   const handleLogout = async () => {
     try {
@@ -87,8 +174,11 @@ function Header() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    if (!searchQuery.trim()) return;
+
+    if (searchResults.length > 0) {
+      navigate(`/course/${searchResults[0].id}`);
+      setShowSuggestions(false);
     }
   };
 
@@ -102,12 +192,18 @@ function Header() {
           </Link>
 
           {/* Search Bar - Responsive */}
-          <div className="flex-1 max-w-2xl mx-2 sm:mx-4">
+          <div
+            className="flex-1 max-w-2xl mx-2 sm:mx-4"
+            ref={searchWrapperRef}
+          >
             <form onSubmit={handleSearch} className="relative">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => {
+                  if (searchResults.length > 0) setShowSuggestions(true);
+                }}
                 placeholder="Tìm kiếm khóa học..."
                 className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 text-sm sm:text-base"
               />
@@ -126,6 +222,47 @@ function Header() {
                   />
                 </svg>
               </div>
+              {showSuggestions && (
+                <div className="absolute mt-2 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 p-3">
+                  {isSearching ? (
+                    <p className="text-center text-sm text-gray-500 py-3">
+                      Đang tìm khóa học...
+                    </p>
+                  ) : searchResults.length === 0 ? (
+                    <p className="text-center text-sm text-gray-500 py-3">
+                      Không tìm thấy khóa học phù hợp
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {searchResults.map((course) => (
+                        <Link
+                          key={course.id}
+                          to={`/course/${course.id}`}
+                          className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50"
+                          onClick={() => setShowSuggestions(false)}
+                        >
+                          <img
+                            src={course.image}
+                            alt={course.title}
+                            className="w-12 h-12 rounded-lg object-cover border border-gray-100"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">
+                              {course.title}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {course.lecturerName || "SkillUp Instructor"}
+                            </p>
+                          </div>
+                          <span className="text-xs font-medium text-gray-700">
+                            {formatCoursePrice(course.price)}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
           </div>
 
@@ -143,7 +280,7 @@ function Header() {
             >
               Diễn đàn
             </Link>
-           
+
             {isAuthenticated && (
               <Link
                 to="/ticket"
@@ -165,7 +302,7 @@ function Header() {
             </Link>
             {isAuthenticated && user?.role === "Student" && (
               <Link
-               to="/student/dashboard"
+                to="/student/dashboard"
                 className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
               >
                 Trang điều khiển

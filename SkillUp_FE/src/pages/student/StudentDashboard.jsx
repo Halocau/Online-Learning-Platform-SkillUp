@@ -199,7 +199,17 @@ export default function StudentDashboard() {
                                 <CardHeader>
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                         <div>
-                                            <CardTitle className="text-xl">Khóa học đã đăng ký</CardTitle>
+                                            <CardTitle className="text-xl flex items-center gap-3">
+                                                Khóa học đã đăng ký
+                                                {enrolledCourses.length > 0 && (
+                                                    <Link
+                                                        to="/my-courses"
+                                                        className="text-sm font-medium text-[#FFD54F] hover:text-[#FFC107] transition-colors"
+                                                    >
+                                                        Xem tất cả
+                                                    </Link>
+                                                )}
+                                            </CardTitle>
                                             <CardDescription className="mt-1">
                                                 {enrolledCourses.length > 0
                                                     ? `${enrolledCourses.length} khóa học của bạn`

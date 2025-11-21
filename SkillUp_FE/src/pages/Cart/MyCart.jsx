@@ -457,13 +457,13 @@ function MyCart() {
                                     courseVouchers={courseVouchers}
                                     availableVouchers={availableVouchers[courseId] || []}
                                     loadingVouchers={loadingVouchers[courseId]}
-                                    popoverVisible={popoverVisible[courseId]}
+                                    popoverVisible={Boolean(popoverVisible[courseId])}
                                     primaryColor={PRIMARY_COLOR}
                                     onRemoveItem={handleRemoveItem}
                                     onApplyVoucher={handleApplyCourseVoucher}
                                     onRemoveVoucher={handleRemoveCourseVoucher}
                                     onVoucherCodeChange={handleCourseVoucherCodeChange}
-                                    onPopoverChange={(visible) => handlePopoverChange(courseId, visible)}
+                                    onPopoverChange={handlePopoverChange}
                                 />
                             );
                         }}

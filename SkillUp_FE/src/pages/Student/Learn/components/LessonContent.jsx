@@ -3,6 +3,7 @@ import {
   ChevronRight,
   CheckCircle2,
   AlertCircle,
+  FileDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -27,56 +28,83 @@ const LessonContent = ({
     if (!isCompleted && videoProgress > 90) onComplete(item.id);
   };
 
+  const pdfAssets =
+    item.assets?.filter(
+      (asset) => asset.type === "PDF" || asset.url?.endsWith(".pdf")
+    ) || [];
+
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Title & Meta */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
-                Chương {section.orders}
-              </span>
-              {item.kind === "Lesson" && (
+    <div className="w-full bg-gray-50 min-h-full">
+      {/* Minimal Title Section */}
+      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm text-gray-500">
+                  Chương {section.orders}
+                </span>
+                <span className="text-gray-300">•</span>
                 <span
                   className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-full",
-                    item.lessonType === "Video"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-green-100 text-green-700"
+                    "px-2.5 py-0.5 rounded-full text-xs font-medium",
+                    item.kind === "Lesson"
+                      ? item.lessonType === "Video"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-green-100 text-green-700"
+                      : "bg-purple-100 text-purple-700"
                   )}
                 >
-                  {item.lessonType === "Video" ? "Video" : "Văn bản"}
+                  {item.kind === "Lesson"
+                    ? item.lessonType === "Video"
+                      ? "Video"
+                      : "Văn bản"
+                    : "Quiz"}
                 </span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {item.title}
+              </h1>
+              {item.description && (
+                <p className="text-gray-600">{item.description}</p>
               )}
-              {item.kind === "Quiz" && (
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                  Quiz
-                </span>
+
+              {/* PDF Downloads */}
+              {pdfAssets.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {pdfAssets.map((asset, index) => (
+                    <a
+                      key={index}
+                      href={asset.url}
+                      download
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition-colors text-sm font-medium"
+                    >
+                      <FileDown className="w-4 h-4" />
+                      <span>
+                        Tải tài liệu {pdfAssets.length > 1 ? index + 1 : ""}
+                      </span>
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {item.title}
-            </h1>
-            {item.description && (
-              <p className="text-gray-600">{item.description}</p>
+
+            {isCompleted && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg border border-green-200 whitespace-nowrap">
+                <CheckCircle2 className="w-5 h-5" />
+                <span className="text-sm font-medium">Đã hoàn thành</span>
+              </div>
             )}
           </div>
-          {isCompleted && (
-            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg whitespace-nowrap">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <span className="text-sm font-medium text-green-700">
-                Đã hoàn thành
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="bg-white rounded-lg border border-gray-200">
+      {/* Content - NO INTERNAL SCROLLING */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
         {item.kind === "Lesson" && item.lessonType === "Video" && (
-          <div className="p-0">
+          <div className="mb-8">
             {item.assets?.[0]?.url ? (
               <VideoPlayer
                 videoUrl={item.assets[0].url}
@@ -84,8 +112,8 @@ const LessonContent = ({
                 onProgress={setVideoProgress}
               />
             ) : (
-              <div className="flex flex-col items-center justify-center py-32 text-gray-500">
-                <AlertCircle className="w-16 h-16 mb-4" />
+              <div className="flex flex-col items-center justify-center py-32 text-gray-500 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <AlertCircle className="w-12 h-12 mb-3" />
                 <p>Video không khả dụng</p>
               </div>
             )}
@@ -93,45 +121,51 @@ const LessonContent = ({
         )}
 
         {item.kind === "Lesson" && item.lessonType === "Text" && (
-          <TextLesson
-            content={item.assets?.[0]?.content || "Không có nội dung"}
-            isCompleted={isCompleted}
-            onComplete={() => onComplete(item.id)}
-          />
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <TextLesson
+              content={item.assets?.[0]?.content || "Không có nội dung"}
+              isCompleted={isCompleted}
+              onComplete={() => onComplete(item.id)}
+            />
+          </div>
         )}
 
         {item.kind === "Quiz" && (
-          <QuizView
-            quiz={item}
-            isCompleted={isCompleted}
-            onComplete={(passed) => passed && onComplete(item.id)}
-          />
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <QuizView
+              quiz={item}
+              isCompleted={isCompleted}
+              onComplete={(passed) => passed && onComplete(item.id)}
+            />
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
+          <button
+            onClick={onPrev}
+            disabled={!hasPrev}
+            className="flex items-center gap-2 px-6 py-3 text-gray-700 hover:text-gray-900 font-medium rounded-lg hover:bg-white border border-gray-200 hover:border-gray-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-200 shadow-sm hover:shadow"
+          >
+            <ChevronLeft className="w-5 h-5" /> Bài trước
+          </button>
+
+          <button
+            onClick={onNext}
+            disabled={!hasNext}
+            className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+          >
+            Bài tiếp theo <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Comments - Only for videos */}
+        {item.kind === "Lesson" && item.lessonType === "Video" && (
+          <div className="mt-8">
+            <CommentSection courseId={item.courseId} itemId={item.id} />
+          </div>
         )}
       </div>
-
-      {/* Navigation */}
-      <div className="flex justify-between items-center">
-        <button
-          onClick={onPrev}
-          disabled={!hasPrev}
-          className="flex items-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft className="w-5 h-5" /> Trước đó
-        </button>
-
-        <button
-          onClick={onNext}
-          disabled={!hasNext}
-          className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Tiếp theo <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* Comments (only for video) */}
-      {item.kind === "Lesson" && item.lessonType === "Video" && (
-        <CommentSection courseId={item.courseId} itemId={item.id} />
-      )}
     </div>
   );
 };

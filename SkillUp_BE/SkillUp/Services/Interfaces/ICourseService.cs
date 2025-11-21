@@ -22,5 +22,7 @@ namespace SkillUp.Services.Interfaces
         Task<bool> PublishCourseForModerator(Guid courseId, Guid accountId, bool decision, string reason);
         Task<List<CourseStudentEnrollDTO>> GetEnrolledCoursesByAccountIdAsync(Guid accountId);
 
+        Task<List<CourseSummaryDTO>> SearchCoursesAsync(string keyword, int limit);
+
     }
 }

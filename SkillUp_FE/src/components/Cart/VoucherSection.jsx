@@ -185,8 +185,8 @@ const VoucherSection = memo(({
                     title="Chọn voucher"
                     trigger="click"
                     placement="bottomLeft"
-                    open={popoverVisible}
-                    onOpenChange={(visible) => onPopoverChange(courseId, visible)}
+                    open={!!popoverVisible}
+                    onOpenChange={(visible) => onPopoverChange?.(visible)}
                 >
                     <Button
                         type="link"

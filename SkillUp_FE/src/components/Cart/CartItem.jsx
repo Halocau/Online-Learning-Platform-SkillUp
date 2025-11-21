@@ -85,7 +85,9 @@ const CartItem = memo(({
                                 onApplyVoucher={onApplyVoucher}
                                 onRemoveVoucher={onRemoveVoucher}
                                 onVoucherCodeChange={onVoucherCodeChange}
-                                onPopoverChange={onPopoverChange}
+                                onPopoverChange={(visible) =>
+                                    onPopoverChange(courseId, visible)
+                                }
                             />
                         </div>
                     </Space>

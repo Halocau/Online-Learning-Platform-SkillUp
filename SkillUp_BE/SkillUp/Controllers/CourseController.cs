@@ -663,5 +663,42 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpGet("search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SearchCourses([FromQuery] string keyword, [FromQuery] int limit = 10)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return BadRequest(new APIReturn
+                {
+                    code = 400,
+                    message = "Từ khóa tìm kiếm không được để trống",
+                    data = new List<object>()
+                });
+            }
+
+            try
+            {
+                var safeLimit = Math.Clamp(limit, 1, 50);
+                var results = await _courseService.SearchCoursesAsync(keyword, safeLimit);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Tìm kiếm khóa học thành công",
+                    data = results.Cast<object>().ToList()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }
