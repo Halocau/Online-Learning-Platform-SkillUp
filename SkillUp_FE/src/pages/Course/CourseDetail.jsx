@@ -98,14 +98,14 @@ export default function CourseDetail() {
         <div className="lg:grid lg:grid-cols-3 lg:gap-8">
           <div className="lg:col-span-2 space-y-8">
             <CourseDescriptionSection description={course.description} />
-            
+
             <RelatedTopicsSection
               categoryId={course.categoryId}
               categoryName={course.categoryName}
               subCategoryId={course.subCategoryId}
               subCategoryName={course.subCategoryName}
             />
-            
+
             <CourseCurriculumSection sections={course.sections} />
 
             <LecturerSection

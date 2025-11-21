@@ -1,16 +1,15 @@
 // src/components/course-detail/CourseCurriculumSection.jsx
-import { Card, CardContent } from "@/components/ui/card";
 import {
+  BookOpen,
   PlayCircle,
   FileText,
-  BookOpen,
   ChevronDown,
   Lock,
   Unlock,
   Eye,
   Clock,
   Target,
-  BadgeQuestionMark,
+  HelpCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -27,33 +26,30 @@ export default function CourseCurriculumSection({ sections }) {
 
   const handleClosePreview = () => {
     setIsPreviewOpen(false);
-    // Small delay before clearing lesson to prevent flickering
     setTimeout(() => setPreviewLesson(null), 300);
   };
 
   if (!sections || sections.length === 0) {
     return (
-      <Card className="border-2 border-[#FFD54F]/20">
-        <CardContent className="p-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-[#FFD54F]/20 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-[#FFD54F]" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Nội dung khóa học
-            </h2>
-          </div>
-          <div className="text-center py-12 text-gray-500">
-            <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p className="text-lg">Nội dung khóa học sẽ được cập nhật sớm</p>
-          </div>
-        </CardContent>
-      </Card>
+      <section aria-labelledby="course-curriculum">
+        <h2
+          id="course-curriculum"
+          className="text-xl sm:text-2xl font-semibold tracking-tight text-[#272343]"
+        >
+          Nội dung khóa học
+        </h2>
+        <div className="mt-4 text-center py-12 rounded-2xl border border-[#e5e7eb] bg-[#fffffe]">
+          <BookOpen className="w-16 h-16 mx-auto mb-4 text-[#e5e7eb]" />
+          <p className="text-sm text-[#6b7280]">
+            Nội dung khóa học sẽ được cập nhật sớm
+          </p>
+        </div>
+      </section>
     );
   }
 
-  // Count lessons and quizzes separately
-  const counts = sections.reduce(
+  // Count lessons and quizzes
+  const stats = sections.reduce(
     (acc, s) => {
       s.items?.forEach((item) => {
         if (item.kind === "Lesson") acc.lessons++;
@@ -66,47 +62,34 @@ export default function CourseCurriculumSection({ sections }) {
 
   return (
     <>
-      <Card className="border-2 border-[#FFD54F]/20">
-        <CardContent className="p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-[#FFD54F]/20 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-[#FFD54F]" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Nội dung khóa học
-            </h2>
-          </div>
+      <section aria-labelledby="course-curriculum">
+        <div className="flex items-center justify-between gap-2">
+          <h2
+            id="course-curriculum"
+            className="text-xl sm:text-2xl font-semibold tracking-tight text-[#272343]"
+          >
+            Nội dung khóa học
+          </h2>
+          <span className="text-xs font-medium text-[#6b7280]">
+            {sections.length} chương · {stats.lessons} bài học
+            {stats.quizzes > 0 && ` · ${stats.quizzes} bài kiểm tra`}
+          </span>
+        </div>
 
-          <div className="mb-6 flex flex-wrap items-center gap-4 text-sm text-gray-600 bg-[#FFD54F]/10 px-4 py-3 rounded-lg">
-            <span className="font-semibold">{sections.length} chương</span>
-            <span>•</span>
-            <span className="font-semibold">{counts.lessons} bài học</span>
-            {counts.quizzes > 0 && (
-              <>
-                <span>•</span>
-                <span className="font-semibold">
-                  {counts.quizzes} bài kiểm tra
-                </span>
-              </>
-            )}
-          </div>
+        <div className="mt-4 space-y-3">
+          {[...sections]
+            .sort((a, b) => (a.orders || 0) - (b.orders || 0))
+            .map((section, idx) => (
+              <SectionAccordion
+                key={section.id}
+                section={section}
+                index={idx}
+                onPreview={handlePreview}
+              />
+            ))}
+        </div>
+      </section>
 
-          <div className="space-y-3">
-            {[...sections]
-              .sort((a, b) => (a.orders || 0) - (b.orders || 0))
-              .map((section, idx) => (
-                <SectionAccordion
-                  key={section.id}
-                  section={section}
-                  index={idx}
-                  onPreview={handlePreview}
-                />
-              ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Video Preview Modal - Now passing sections data */}
       <VideoPreviewModal
         isOpen={isPreviewOpen}
         onClose={handleClosePreview}
@@ -118,190 +101,166 @@ export default function CourseCurriculumSection({ sections }) {
 }
 
 function SectionAccordion({ section, index, onPreview }) {
-  const [isOpen, setIsOpen] = useState(index === 0); // First section open by default
+  const [isOpen, setIsOpen] = useState(index === 0);
+
+  // Calculate section stats
+  const lessonCount =
+    section.items?.filter((item) => item.kind === "Lesson").length || 0;
+  const quizCount =
+    section.items?.filter((item) => item.kind === "Quiz").length || 0;
 
   return (
-    <div className="border-2 border-gray-200 rounded-xl overflow-hidden hover:border-[#FFD54F]/50 transition-all">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-5 hover:bg-gray-50 transition-colors"
+    <details
+      className="group rounded-2xl border border-[#e5e7eb] bg-[#fffffe]"
+      open={isOpen}
+    >
+      <summary
+        className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 sm:px-5 list-none"
+        onClick={(e) => {
+          e.preventDefault();
+          setIsOpen(!isOpen);
+        }}
       >
-        <div className="flex items-center gap-4 text-left flex-1">
-          <div className="w-8 h-8 bg-[#FFD54F]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="font-bold text-sm text-gray-900">
-              {section.orders || index + 1}
-            </span>
+        <div>
+          <div className="text-sm font-medium text-[#272343]">
+            Chương {section.orders || index + 1} ·{" "}
+            {section.title || `Chương ${index + 1}`}
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">
-              {section.title || `Chương ${index + 1}`}
-            </h3>
-            {section.description && (
-              <p className="text-sm text-gray-500 mt-1">
-                {section.description}
-              </p>
-            )}
+          <div className="mt-1 text-xs text-[#6b7280]">
+            {lessonCount} bài giảng
+            {quizCount > 0 && ` · ${quizCount} bài kiểm tra`}
           </div>
         </div>
-        <div className="flex items-center gap-4 flex-shrink-0 ml-4">
-          <span className="text-sm text-gray-500 font-medium">
-            {section.items?.length || 0} nội dung
-          </span>
-          <ChevronDown
-            className={`w-5 h-5 text-gray-400 transition-transform ${
-              isOpen ? "rotate-180" : ""
-            }`}
-          />
-        </div>
-      </button>
+        <ChevronDown
+          className={`h-4 w-4 text-[#6b7280] transition-transform flex-shrink-0 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </summary>
 
       {isOpen && (
-        <div className="px-5 pb-5 bg-gray-50/50 space-y-2">
+        <div className="border-t border-[#e5e7eb] px-4 py-3 sm:px-5">
           {section.items && section.items.length > 0 ? (
-            section.items.map((item, itemIdx) =>
-              item.kind === "Lesson" ? (
-                <LessonItem
-                  key={item.id}
-                  lesson={item}
-                  index={itemIdx}
-                  onPreview={onPreview}
-                />
-              ) : item.kind === "Quiz" ? (
-                <QuizItem key={item.id} quiz={item} index={itemIdx} />
-              ) : null
-            )
+            <ul className="space-y-2 text-sm text-[#2d334a]">
+              {section.items
+                .sort((a, b) => (a.orders || 0) - (b.orders || 0))
+                .map((item) => {
+                  if (item.kind === "Lesson") {
+                    return (
+                      <LessonItem
+                        key={item.id}
+                        lesson={item}
+                        onPreview={onPreview}
+                      />
+                    );
+                  } else if (item.kind === "Quiz") {
+                    return <QuizItem key={item.id} quiz={item} />;
+                  }
+                  return null;
+                })}
+            </ul>
           ) : (
-            <div className="text-center py-6 text-gray-500 text-sm">
+            <p className="text-sm text-[#6b7280] text-center py-4">
               Chương này chưa có nội dung
-            </div>
+            </p>
           )}
         </div>
       )}
-    </div>
+    </details>
   );
 }
 
-function LessonItem({ lesson, index, onPreview }) {
+function LessonItem({ lesson, onPreview }) {
   const isVideo = lesson.lessonType === "Video";
   const isFree = lesson.isFree;
   const canPreview = isFree && isVideo;
+  const duration = "07:32"; // You can get this from lesson data if available
 
   return (
-    <div className="flex items-center gap-3 py-3 px-4 bg-white rounded-lg border border-gray-200 hover:border-[#FFD54F]/50 transition-all group">
-      {/* Lesson Icon based on type */}
-      <div className="flex-shrink-0">
+    <li className="flex items-center justify-between gap-2 py-2 hover:text-[#272343] transition-colors">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
         {isVideo ? (
-          <PlayCircle className="w-5 h-5 text-[#FFD54F]" />
+          <PlayCircle className="h-3.5 w-3.5 text-[#272343] flex-shrink-0" />
         ) : (
-          <FileText className="w-5 h-5 text-purple-500" />
+          <FileText className="h-3.5 w-3.5 text-[#272343] flex-shrink-0" />
         )}
+        <span className="truncate">{lesson.title}</span>
       </div>
 
-      {/* Lesson Order */}
-      <span className="text-xs font-bold text-gray-400 w-8 flex-shrink-0">
-        {lesson.orders}
-      </span>
-
-      {/* Lesson Title */}
-      <div className="flex-1 min-w-0">
-        <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium line-clamp-1">
-          {lesson.title}
-        </span>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {isFree ? (
+          <>
+            {canPreview && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPreview(lesson);
+                }}
+                size="sm"
+                className="h-auto py-1 px-2 text-xs bg-[#FFD54F] hover:bg-[#ffca28] text-[#272343] font-medium rounded-md"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Xem trước
+              </Button>
+            )}
+            <span className="text-xs text-[#16a34a] font-medium flex items-center gap-1">
+              <Unlock className="w-3 h-3" />
+              Miễn phí
+            </span>
+          </>
+        ) : (
+          <Lock className="w-3 h-3 text-[#9ca3af]" />
+        )}
+        {isVideo && <span className="text-xs text-[#6b7280]">{duration}</span>}
       </div>
-
-      {/* Lesson Type Badge */}
-      <span
-        className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
-          isVideo
-            ? "bg-[#FFD54F]/20 text-gray-700"
-            : "bg-purple-100 text-purple-700"
-        }`}
-      >
-        {isVideo ? "Video" : "Bài viết"}
-      </span>
-
-      {/* Free/Locked Badge or Preview Button */}
-      {isFree ? (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="flex items-center gap-1 text-xs text-green-600 font-semibold">
-            <Unlock className="w-4 h-4" />
-            <span>Miễn phí</span>
-          </div>
-
-          {/* Preview Button - Only show for free video lessons */}
-          {canPreview && (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPreview(lesson);
-              }}
-              size="sm"
-              className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold px-3 py-1 h-auto text-xs"
-            >
-              <Eye className="w-3 h-3 mr-1" />
-              Xem trước
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
-          <Lock className="w-4 h-4" />
-        </div>
-      )}
-    </div>
+    </li>
   );
 }
 
-function QuizItem({ quiz, index }) {
+function QuizItem({ quiz }) {
   return (
-    <div className="flex items-center gap-3 py-3 px-4 bg-white rounded-lg border border-gray-200 hover:border-blue-200 transition-all group">
-      {/* Quiz Icon */}
-      <div className="flex-shrink-0">
-        <BadgeQuestionMark className="w-5 h-5 text-orange-500" />
+    <li className="flex items-center justify-between gap-2 py-2 hover:text-[#272343] transition-colors bg-[#fef3c7]/30 rounded-lg px-3 -mx-3">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <HelpCircle className="h-3.5 w-3.5 text-[#f59e0b] flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <span className="block truncate font-medium">{quiz.title}</span>
+          {quiz.description && (
+            <span className="block text-xs text-[#6b7280] truncate">
+              {quiz.description}
+            </span>
+          )}
+        </div>
       </div>
 
-      <span className="text-xs font-bold text-gray-400 w-8 flex-shrink-0">
-        {quiz.orders}
-      </span>
-
-      <div className="flex-1 min-w-0">
-        <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium line-clamp-1">
-          {quiz.title}
-        </span>
-        {quiz.description && (
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-            {quiz.description}
-          </p>
-        )}
-      </div>
-
-      {/* Quiz Info */}
       <div className="flex items-center gap-3 flex-shrink-0">
         {/* Timer */}
         {quiz.timer && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <Clock className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1 text-xs text-[#6b7280]">
+            <Clock className="w-3 h-3" />
             <span>{quiz.timer} phút</span>
           </div>
         )}
 
         {/* Pass Percent */}
         {quiz.passPercent && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <Target className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1 text-xs text-[#6b7280]">
+            <Target className="w-3 h-3" />
             <span>{quiz.passPercent}%</span>
           </div>
         )}
 
-        {/* Quiz Badge */}
-        <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
+        {/* Quiz Action Button */}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-auto py-1 px-2 text-xs border-[#3b82f6] text-[#3b82f6] hover:bg-[#3b82f6] hover:text-white rounded-md font-medium"
+        >
           Kiểm tra
-        </span>
-      </div>
+        </Button>
 
-      <div className="flex items-center gap-1 text-xs text-gray-400 flex-shrink-0">
-        <Lock className="w-4 h-4" />
+        {/* Lock Icon */}
+        <Lock className="w-3 h-3 text-[#9ca3af]" />
       </div>
-    </div>
+    </li>
   );
 }

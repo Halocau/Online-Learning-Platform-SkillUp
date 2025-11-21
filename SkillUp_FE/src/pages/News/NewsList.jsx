@@ -3,6 +3,7 @@ import { getAllNews } from "../../api/newsAPI";
 import { useNavigate } from "react-router-dom";
 import { MagnifyingGlassIcon, CalendarIcon } from "@heroicons/react/24/outline";
 import { Input } from "@/components/ui/input";
+import { Spin } from "antd";
 
 export default function NewsList() {
   const [newsList, setNewsList] = useState([]);
@@ -10,7 +11,7 @@ export default function NewsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-useEffect(() => {
+  useEffect(() => {
     window.scrollTo({
       top: 0,
       left: 0,
@@ -23,9 +24,7 @@ useEffect(() => {
         setLoading(true);
         const data = await getAllNews();
         // Sort by date descending (newest first)
-        const sorted = data.sort(
-          (a, b) => new Date(b.date) - new Date(a.date)
-        );
+        const sorted = data.sort((a, b) => new Date(b.date) - new Date(a.date));
         setNewsList(sorted);
         setFilteredNews(sorted);
       } catch (error) {
@@ -70,7 +69,7 @@ useEffect(() => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="text-lg text-gray-600">Đang tải tin tức...</div>
+        <Spin size="large" />
       </div>
     );
   }
@@ -178,9 +177,7 @@ useEffect(() => {
                       >
                         <div className="relative h-52 overflow-hidden">
                           <img
-                            src={
-                              image || "https://via.placeholder.com/400x300"
-                            }
+                            src={image || "https://via.placeholder.com/400x300"}
                             alt={news.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />

@@ -156,7 +156,7 @@ const LessonContent = ({
             disabled={!hasNext}
             className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
           >
-            Bài tiếp theo <ChevronRight className="w-5 h-5" />
+            Tiếp theo <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 

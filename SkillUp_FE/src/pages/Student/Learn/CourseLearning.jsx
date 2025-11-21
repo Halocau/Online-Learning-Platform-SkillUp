@@ -279,7 +279,7 @@ const CourseLearning = () => {
             onPrev={handlePrev}
             hasNext={hasNext()}
             hasPrev={hasPrev()}
-            lessonId={lessonId} 
+            lessonId={lessonId}
           />
         </div>
 
