@@ -4,6 +4,7 @@ import {
   Pause,
   Volume2,
   VolumeX,
+  Volume1,
   Maximize,
   SkipForward,
   SkipBack,
@@ -16,6 +17,7 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
+  const controlsTimeoutRef = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -27,8 +29,7 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
-
-  let controlsTimeout;
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -82,8 +83,16 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
 
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const newMutedState = !isMuted;
+      videoRef.current.muted = newMutedState;
+      setIsMuted(newMutedState);
+
+      // If unmuting and volume is 0, set to 50%
+      if (!newMutedState && volume === 0) {
+        const newVolume = 0.5;
+        videoRef.current.volume = newVolume;
+        setVolume(newVolume);
+      }
     }
   };
 
@@ -93,6 +102,10 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
     if (videoRef.current) {
       videoRef.current.volume = newVolume;
       setIsMuted(newVolume === 0);
+      if (newVolume > 0 && isMuted) {
+        videoRef.current.muted = false;
+        setIsMuted(false);
+      }
     }
   };
 
@@ -148,18 +161,52 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
 
   const handleMouseMove = () => {
     setShowControls(true);
-    clearTimeout(controlsTimeout);
-    controlsTimeout = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
-    }, 3000);
+
+    // Clear existing timeout
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+
+    // Set new timeout - increased to 5 seconds
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying && !showSettings && !showVolumeSlider) {
+        setShowControls(false);
+      }
+    }, 5000);
   };
+
+  const handleMouseLeave = () => {
+    if (isPlaying && !showSettings && !showVolumeSlider) {
+      setShowControls(false);
+    }
+  };
+
+  // Get appropriate volume icon
+  const getVolumeIcon = () => {
+    if (isMuted || volume === 0) {
+      return <VolumeX className="w-5 h-5" />;
+    } else if (volume < 0.5) {
+      return <Volume1 className="w-5 h-5" />;
+    } else {
+      return <Volume2 className="w-5 h-5" />;
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div
       ref={containerRef}
       className="relative w-full bg-black rounded-lg overflow-hidden group"
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => isPlaying && setShowControls(false)}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Video Element */}
       <video
@@ -188,12 +235,13 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
         </div>
       )}
 
-      {/* Simplified Controls */}
+      {/* Controls */}
       <div
         className={cn(
           "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent transition-opacity duration-300 p-4",
           showControls ? "opacity-100" : "opacity-0"
         )}
+        onMouseEnter={() => setShowControls(true)}
       >
         {/* Progress Bar */}
         <div
@@ -234,16 +282,58 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
               <SkipForward className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={toggleMute}
-              className="text-white hover:text-[#FFD54F] transition-colors"
+            {/* Volume Control Group */}
+            <div
+              className="flex items-center gap-2 group/volume"
+              onMouseEnter={() => setShowVolumeSlider(true)}
+              onMouseLeave={() => setShowVolumeSlider(false)}
             >
-              {isMuted || volume === 0 ? (
-                <VolumeX className="w-5 h-5" />
-              ) : (
-                <Volume2 className="w-5 h-5" />
-              )}
-            </button>
+              <button
+                onClick={toggleMute}
+                className="text-white  hover:text-[#FFD54F] transition-colors"
+              >
+                {getVolumeIcon()}
+              </button>
+
+              {/* Volume Slider */}
+              <div
+                className={cn(
+                  "flex items-center justify-center transition-all duration-350",
+                  showVolumeSlider ? "w-20  opacity-100" : "w-0 opacity-0"
+                )}
+              >
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer
+                    [&::-webkit-slider-thumb]:appearance-none
+                    [&::-webkit-slider-thumb]:w-3
+                    [&::-webkit-slider-thumb]:h-3
+                    [&::-webkit-slider-thumb]:rounded-full
+                    [&::-webkit-slider-thumb]:bg-[#FFD54F]
+                    [&::-webkit-slider-thumb]:cursor-pointer
+                    [&::-webkit-slider-thumb]:transition-all
+                    [&::-webkit-slider-thumb]:hover:scale-110
+                    [&::-moz-range-thumb]:w-3
+                    [&::-moz-range-thumb]:h-3
+                    [&::-moz-range-thumb]:rounded-full
+                    [&::-moz-range-thumb]:bg-[#FFD54F]
+                    [&::-moz-range-thumb]:border-0
+                    [&::-moz-range-thumb]:cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, #FFD54F 0%, #FFD54F ${
+                      volume * 100
+                    }%, rgba(255,255,255,0.3) ${
+                      volume * 100
+                    }%, rgba(255,255,255,0.3) 100%)`,
+                  }}
+                />
+              </div>
+            </div>
 
             <span className="text-white text-sm font-medium">
               {formatTime(currentTime)} / {formatTime(duration)}
@@ -251,25 +341,27 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className="text-white hover:text-[#FFD54F] transition-colors text-sm flex items-center gap-1"
-              >
+            {/* Playback Speed */}
+            <div
+              className="relative"
+              onMouseEnter={() => setShowSettings(true)}
+              onMouseLeave={() => setShowSettings(false)}
+            >
+              <button className="text-white hover:text-[#FFD54F] transition-colors text-sm flex items-center gap-1">
                 <Settings className="w-4 h-4" />
                 <span>{playbackRate}x</span>
               </button>
 
               {showSettings && (
-                <div className="absolute bottom-full right-0 mb-2 bg-black/95 rounded-lg overflow-hidden">
+                <div className="absolute bottom-full right-0 mb-2 bg-black/95 rounded-lg overflow-hidden shadow-xl">
                   {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                     <button
                       key={rate}
                       onClick={() => changePlaybackRate(rate)}
                       className={cn(
-                        "w-full px-4 py-2 text-left text-sm transition-colors",
+                        "w-full px-4 py-2 text-left text-sm transition-colors whitespace-nowrap",
                         playbackRate === rate
-                          ? "bg-[#FFD54F] text-gray-900"
+                          ? "bg-[#FFD54F] text-gray-900 font-semibold"
                           : "text-white hover:bg-white/10"
                       )}
                     >

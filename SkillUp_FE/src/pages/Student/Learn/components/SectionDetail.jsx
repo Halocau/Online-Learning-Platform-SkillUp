@@ -25,12 +25,12 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
   const getItemIcon = (item) => {
     if (item.kind === "Lesson") {
       return item.lessonType === "Video" ? (
-        <PlayCircle className="w-6 h-6" />
+        <PlayCircle className="w-4 h-4" />
       ) : (
-        <FileText className="w-6 h-6" />
+        <FileText className="w-4 h-4" />
       );
     }
-    return <HelpCircle className="w-6 h-6" />;
+    return <HelpCircle className="w-4 h-4" />;
   };
 
   const getItemType = (item) => {
@@ -40,14 +40,14 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
     return "Quiz";
   };
 
-  const getItemDuration = (item) => {
+  const getItemColor = (item) => {
     if (item.kind === "Lesson" && item.lessonType === "Video") {
-      return "15 phút";
+      return "sky";
     }
     if (item.kind === "Lesson" && item.lessonType === "Text") {
-      return "10 phút";
+      return "amber";
     }
-    return "5 phút";
+    return "violet";
   };
 
   const progress = getSectionProgress();
@@ -56,47 +56,44 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      {/* Compact Header Section */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <button
-            onClick={() => navigate(`/student/learn/${courseId}`)}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-3 transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Quay lại tổng quan</span>
-          </button>
-
-          <div className="flex items-center justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-3 py-1 bg-[#FFD54F] text-gray-900 text-xs font-bold rounded-full">
-                  Chương {section.orders}
-                </span>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
+      {/* Header Section */}
+      <div className="border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
+        <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <button
+                  onClick={() => navigate(`/student/learn/${courseId}`)}
+                  className="mb-3 inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 text-[0.7rem] font-medium text-gray-600 ring-1 ring-gray-200 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Quay lại tổng quan
+                </button>
+                <h2 className="mt-2 text-lg font-semibold tracking-tight text-gray-900 sm:text-xl">
+                  Chương {section.orders} · {section.title}
+                </h2>
+                <p className="mt-1 text-xs text-gray-600 sm:text-sm">
+                  Hoàn thành lần lượt từng bài dưới đây để nắm chắc nền tảng.
+                </p>
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {section.title}
-              </h1>
-            </div>
 
-            {/* Check Line Progress */}
-            <div className="flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="text-sm text-gray-600">Tiến độ</div>
-                  <div className="text-lg font-bold text-gray-900">
-                    {completedCount}/{section.items?.length || 0}
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  {section.items?.map((item, index) => (
+              {/* Vertical Progress Bars */}
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[0.7rem] font-medium text-gray-500">
+                  Tiến độ chương
+                </span>
+                <span className="text-lg font-semibold tracking-tight text-emerald-600">
+                  {completedCount}/{section.items?.length || 0}
+                </span>
+                <div className="mt-1 flex gap-1">
+                  {section.items?.map((item) => (
                     <div
                       key={item.id}
                       className={cn(
-                        "w-2 h-8 rounded-full transition-all duration-300",
+                        "h-6 w-1 rounded-full transition-all duration-300",
                         completedItems.has(item.id)
-                          ? "bg-gradient-to-b from-green-400 to-green-600 shadow-sm"
+                          ? "bg-gradient-to-b from-emerald-400 to-emerald-500"
                           : "bg-gray-200"
                       )}
                       title={item.title}
@@ -109,12 +106,13 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
         </div>
       </div>
 
-      {/* Lessons List */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      {/* Lesson List */}
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <div className="space-y-3">
           {section.items?.map((item, index) => {
             const isCompleted = completedItems.has(item.id);
             const isLocked = false;
+            const color = getItemColor(item);
 
             return (
               <button
@@ -127,69 +125,61 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
                 }
                 disabled={isLocked}
                 className={cn(
-                  "w-full bg-white rounded-xl border-2 transition-all duration-300 text-left group shadow-sm hover:shadow-lg",
+                  "group flex w-full items-stretch gap-3 rounded-2xl border-2 p-3 text-left shadow-sm transition-all duration-300",
                   isCompleted
-                    ? "border-green-200 hover:border-green-300"
-                    : "border-gray-200 hover:border-[#FFD54F]",
-                  isLocked && "opacity-50 cursor-not-allowed"
+                    ? "border-emerald-400/30 bg-emerald-500/5 hover:border-emerald-300 hover:bg-emerald-500/10 hover:shadow-md"
+                    : isLocked
+                    ? "border-gray-200 bg-gray-50/60 opacity-70"
+                    : "border-gray-200 bg-white hover:border-[#FFD54F]/40 hover:bg-[#FFD54F]/5 hover:shadow-lg"
                 )}
               >
-                <div className="p-5">
-                  <div className="flex items-center gap-5">
-                    {/* Lesson Number/Status */}
-                    <div
+                {/* Index / Status Badge */}
+                <div
+                  className={cn(
+                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xs font-semibold tracking-tight ring-1 transition-all shadow-sm",
+                    isCompleted
+                      ? "bg-emerald-500/20 text-emerald-700 ring-emerald-400/60"
+                      : isLocked
+                      ? "bg-gray-200 text-gray-400 ring-gray-300"
+                      : "bg-gray-50 text-gray-700 ring-gray-200 group-hover:bg-[#FFD54F]/20 group-hover:text-[#B8860B] group-hover:ring-[#FFD54F]/60"
+                  )}
+                >
+                  {isCompleted ? (
+                    <Check className="h-4 w-4" />
+                  ) : isLocked ? (
+                    <Lock className="h-3.5 w-3.5 text-gray-500" />
+                  ) : (
+                    <span className="text-sm">{index + 1}</span>
+                  )}
+                </div>
+
+                {/* Lesson Content */}
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="truncate text-sm font-semibold tracking-tight text-gray-900 transition-colors group-hover:text-[#FFC107] sm:text-base">
+                      {item.title}
+                    </h3>
+                    {isCompleted && (
+                      <span className="hidden text-[0.7rem] font-medium text-emerald-600 sm:inline">
+                        Hoàn thành
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-[0.7rem] text-gray-600">
+                    <span
                       className={cn(
-                        "flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold transition-all shadow-md",
-                        isCompleted
-                          ? "bg-gradient-to-br from-green-400 to-green-600 text-white shadow-green-200"
-                          : isLocked
-                          ? "bg-gray-200 text-gray-400"
-                          : "bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 group-hover:from-[#FFD54F] group-hover:to-[#FFC107] group-hover:text-gray-900 group-hover:shadow-yellow-200"
+                        "inline-flex items-center gap-1 rounded-full px-2 py-1 ring-1",
+                        color === "sky" &&
+                          "bg-sky-50 text-sky-700 ring-sky-200",
+                        color === "amber" &&
+                          "bg-amber-50 text-amber-700 ring-amber-200",
+                        color === "violet" &&
+                          "bg-violet-50 text-violet-700 ring-violet-200"
                       )}
                     >
-                      {isCompleted ? (
-                        <Check className="w-6 h-6" />
-                      ) : isLocked ? (
-                        <Lock className="w-5 h-5" />
-                      ) : (
-                        <span className="text-lg">{index + 1}</span>
-                      )}
-                    </div>
-
-                    {/* Lesson Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-[#FFC107] transition-colors">
-                            {item.title}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                            <span
-                              className={cn(
-                                "flex items-center gap-1.5 px-3 py-1 rounded-full font-medium border",
-                                item.kind === "Lesson" &&
-                                  item.lessonType === "Video"
-                                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                                  : item.kind === "Lesson"
-                                  ? "bg-green-50 text-green-700 border-green-200"
-                                  : "bg-purple-50 text-purple-700 border-purple-200"
-                              )}
-                            >
-                              {getItemIcon(item)}
-                              <span>{getItemType(item)}</span>
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Status Badge */}
-                        {isCompleted && (
-                          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg border border-green-200 text-sm font-semibold whitespace-nowrap shadow-sm">
-                            <CheckCircle2 className="w-4 h-4" />
-                            Hoàn thành
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                      {getItemIcon(item)}
+                      <span>{getItemType(item)}</span>
+                    </span>
                   </div>
                 </div>
               </button>
@@ -199,9 +189,9 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
 
         {/* Empty State */}
         {(!section.items || section.items.length === 0) && (
-          <div className="bg-white rounded-2xl border-2 border-gray-200 p-16 text-center shadow-sm">
-            <FileText className="w-20 h-20 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-gray-200 bg-white p-16 text-center shadow-sm">
+            <FileText className="mx-auto mb-4 h-20 w-20 text-gray-300" />
+            <h3 className="mb-2 text-2xl font-bold text-gray-900">
               Chưa có bài học
             </h3>
             <p className="text-gray-600">
@@ -210,28 +200,35 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
           </div>
         )}
 
-        {/* Progress Summary */}
+        {/* Section Progress Summary */}
         {section.items && section.items.length > 0 && (
-          <div className="mt-8 p-6 bg-gradient-to-br from-[#FFF9E6] to-[#FFF3CD] rounded-2xl border-2 border-[#FFD54F]/30 shadow-lg">
+          <div className="mt-8 rounded-2xl border-2 border-[#FFD54F]/20 bg-gradient-to-br from-[#FFF9E6] via-[#FFF9E6]/50 to-white p-4 shadow-lg sm:p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFD54F] to-[#FFC107] flex items-center justify-center shadow-md">
-                  <CheckCircle2 className="w-6 h-6 text-gray-900" />
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFD54F]/30 text-[#B8860B] ring-1 ring-[#FFD54F]/60 sm:h-12 sm:w-12">
+                  <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-700 font-medium">
+                  <div className="text-[0.7rem] font-semibold uppercase tracking-tight text-[#B8860B]/80 sm:text-xs">
                     Tiến độ chương này
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="mt-1 text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
                     {progress}% hoàn thành
                   </div>
+                  <p className="mt-1 text-xs text-gray-600 sm:text-sm">
+                    {completedCount === section.items.length
+                      ? "Xuất sắc! Bạn đã hoàn thành toàn bộ chương này."
+                      : `Chỉ còn ${
+                          section.items.length - completedCount
+                        } bài nữa, bạn sẽ hoàn thành toàn bộ chương này.`}
+                  </p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-700 mb-1">Đã học</div>
-                <div className="text-3xl font-bold text-gray-900">
+                <div className="text-[0.7rem] text-gray-600">Đã học</div>
+                <div className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
                   {completedCount}
-                  <span className="text-lg text-gray-600">
+                  <span className="text-sm text-gray-600 sm:text-lg">
                     /{section.items?.length}
                   </span>
                 </div>

@@ -1,6 +1,6 @@
 // src/components/course-detail/MobileStickyBar.jsx
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Zap } from "lucide-react";
+import { ShoppingCart, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -32,10 +32,18 @@ export default function MobileStickyBar({ course }) {
     try {
       setPaymentLoading(true);
       const result = await paymentAPI.createCoursePayment(course.id);
-      
-      if (result.success && result.checkoutUrl) {
-        // Chuyển sang trang PayOS
-        window.location.href = result.checkoutUrl;
+
+      if (result.success) {
+        if (result.isFreeCourse) {
+          toast.success(result.message || "Đăng ký khóa học miễn phí thành công!");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else if (result.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+        } else {
+          toast.error(result.message || "Không thể tạo thanh toán");
+        }
       } else {
         toast.error(result.message || "Không thể tạo thanh toán");
       }
@@ -48,37 +56,36 @@ export default function MobileStickyBar({ course }) {
   };
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t-2 border-[#FFD54F]/30 p-4 z-50 shadow-2xl">
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#fffffe]/95 backdrop-blur-sm border-t border-[#272343]/15 p-4 z-50 shadow-2xl">
       <div className="flex items-center gap-3">
-        <div className="flex-1">
-          {course.price === 0 ? (
-            <p className="text-2xl font-bold text-green-600">Miễn phí</p>
-          ) : (
-            <>
-              <p className="text-2xl font-bold text-gray-900">
-                {course.price.toLocaleString()} ₫
-              </p>
-              <p className="text-xs text-gray-500 line-through">
-                {(course.price * 1.5).toLocaleString()} ₫
-              </p>
-            </>
-          )}
+        <div className="flex-1 min-w-0">
+          <div className="truncate text-sm font-medium text-[#272343]">
+            {course.title}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#6b7280]">
+            <span>{course.rating.toFixed(1)} · {course.enrollmentCount} đánh giá</span>
+            <span className="h-3 w-px bg-[#e5e7eb]"></span>
+            <span className="font-semibold text-[#272343]">
+              {course.price === 0 ? "Miễn phí" : `${course.price.toLocaleString()}đ`}
+            </span>
+          </div>
         </div>
         <Button
           onClick={handleAddToCart}
           disabled={loading || paymentLoading}
           variant="outline"
-          className="border-2 border-[#FFD54F] text-gray-900 hover:bg-[#FFD54F]/10 px-4"
+          className="rounded-full border-[#272343]/15 bg-[#fffffe] px-3 py-1.5 hover:bg-[#e3f6f5] flex-shrink-0"
+          size="sm"
         >
-          <ShoppingCart className="w-5 h-5" />
+          <ShoppingCart className="w-4 h-4" />
         </Button>
         <Button
           onClick={handleBuyNow}
           disabled={loading || paymentLoading}
-          className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-bold px-6"
+          className="inline-flex items-center gap-2 rounded-full bg-[#FFD54F] hover:bg-[#ffca28] text-[#272343] font-semibold tracking-tight px-4 py-1.5 text-xs shadow-sm flex-shrink-0"
         >
-          <Zap className="w-4 h-4 mr-1" />
-          {paymentLoading ? "..." : "Mua ngay"}
+          {paymentLoading ? "..." : "Đăng ký ngay"}
+          <ArrowRight className="w-3.5 h-3.5" />
         </Button>
       </div>
     </div>

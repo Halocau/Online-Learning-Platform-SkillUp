@@ -1,7 +1,5 @@
 // src/components/course-detail/CourseEnrollmentCard.jsx
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Zap, CheckCircle } from "lucide-react";
+import { ShoppingCart,Play, Percent, Coins } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -14,7 +12,6 @@ export default function CourseEnrollmentCard({ course }) {
   const navigate = useNavigate();
 
   const handleAddToCart = async () => {
-    // Guest users có thể add to cart
     const result = await addToCart(course.id, course.price);
     if (result.success) {
       toast.success(result.message);
@@ -36,15 +33,12 @@ export default function CourseEnrollmentCard({ course }) {
       const result = await paymentAPI.createCoursePayment(course.id);
 
       if (result.success) {
-        // Nếu là khóa học miễn phí, enrollment trực tiếp
         if (result.isFreeCourse) {
           toast.success(result.message || "Đăng ký khóa học miễn phí thành công!");
-          // Có thể reload trang hoặc redirect đến trang học
           setTimeout(() => {
             window.location.reload();
           }, 1500);
         } else if (result.checkoutUrl) {
-          // Chuyển sang trang PayOS cho khóa học có phí
           window.location.href = result.checkoutUrl;
         } else {
           toast.error(result.message || "Không thể tạo thanh toán");
@@ -60,62 +54,68 @@ export default function CourseEnrollmentCard({ course }) {
     }
   };
 
+  const originalPrice = course.price > 0 ? Math.round(course.price * 1.5) : 0;
+  const discount = course.price > 0 ? Math.round(((originalPrice - course.price) / originalPrice) * 100) : 0;
+
   return (
-      <Card className="sticky top-4 overflow-hidden border-2 border-[#FFD54F]/20 shadow-xl">
-        <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-          <img
-            src={course.image}
-            alt={course.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-3 right-3 bg-[#FFD54F] text-gray-900 px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-            {course.price === 0
-              ? "MIỄN PHÍ"
-              : `${(course.price / 1000).toFixed(0)}K ₫`}
+    <div className="sticky top-6 w-full lg:max-w-sm">
+      <div className="rounded-2xl border border-[#272343]/15 bg-[#fffffe]/90 shadow-sm backdrop-blur overflow-hidden">
+        {/* Video preview placeholder */}
+        <div className="relative overflow-hidden rounded-t-2xl bg-gradient-to-tr from-[#FFD54F] via-[#ffecb3] to-[#e3f6f5]">
+          <div className="aspect-video flex items-center justify-center">
+            {course.image ? (
+              <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+            ) : (
+              <button className="inline-flex items-center justify-center rounded-full bg-[#272343]/90 px-4 py-2 text-xs font-semibold tracking-tight text-[#fffffe] hover:bg-[#272343] transition-colors">
+                <Play className="mr-2 h-4 w-4 text-[#FFD54F]" />
+                Xem video giới thiệu
+              </button>
+            )}
           </div>
         </div>
 
-        <CardContent className="p-6 space-y-4">
-          {/* Price */}
-          <div className="space-y-2">
-            {course.price === 0 ? (
-              <div>
-                <p className="text-4xl font-bold text-green-600">Miễn phí</p>
+        <div className="space-y-4 p-4 sm:p-5">
+          {/* Price Section */}
+          <div className="flex items-baseline justify-between gap-3">
+            <div className="flex items-end gap-2">
+              <div className="text-xl font-semibold tracking-tight text-[#272343]">
+                {course.price === 0 ? "Miễn phí" : `${course.price.toLocaleString()}đ`}
               </div>
-            ) : (
-              <div>
-                <p className="text-4xl font-bold text-gray-900">
-                  {course.price.toLocaleString()} ₫
-                </p>
-                <p className="text-sm text-gray-500 line-through">
-                  {(course.price * 1.5).toLocaleString()} ₫
-                </p>
-              </div>
+              {course.price > 0 && originalPrice > course.price && (
+                <div className="text-xs text-[#6b7280] line-through">
+                  {originalPrice.toLocaleString()}đ
+                </div>
+              )}
+            </div>
+            {discount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#FFD54F]/15 px-3 py-1 text-xs font-medium tracking-tight text-[#272343]">
+                <Percent className="h-3.5 w-3.5 text-[#272343]" />
+                Giảm {discount}% hôm nay
+              </span>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-3">
-            <Button
-              onClick={handleBuyNow}
-              disabled={loading || paymentLoading}
-              className="w-full bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-bold py-6 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-            >
-              <Zap className="w-5 h-5 mr-2" />
-              {paymentLoading ? "Đang xử lý..." : "Mua ngay"}
-            </Button>
+          
+          <button
+            onClick={handleBuyNow}
+            disabled={loading || paymentLoading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFD54F] px-4 py-2.5 text-sm font-semibold tracking-tight text-[#272343] shadow-sm hover:bg-[#ffca28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {paymentLoading ? "Đang xử lý..." : course.price === 0 ? "Đăng ký miễn phí" : "Mua ngay"}
+            <Coins className="h-4 w-4 text-[#272343]" />
+          </button>
 
-            <Button
-              onClick={handleAddToCart}
-              disabled={loading || paymentLoading}
-              variant="outline"
-              className="w-full border-2 border-[#FFD54F] text-gray-900 hover:bg-[#FFD54F]/10 font-semibold py-6 text-lg"
-            >
-              <ShoppingCart className="w-5 h-5 mr-2" />
-              Thêm vào giỏ
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+          
+          <button
+            onClick={handleAddToCart}
+            disabled={loading || paymentLoading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#272343]/15 bg-[#fffffe] px-4 py-2 text-xs font-medium tracking-tight text-[#272343] hover:bg-[#FFF8E1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Thêm vào giỏ hàng
+            <ShoppingCart className="h-4 w-4 text-[#272343]" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

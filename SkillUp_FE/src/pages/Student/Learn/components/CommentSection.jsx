@@ -1,116 +1,234 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
-  MessageCircle,
+  MessageSquare,
   Send,
   ThumbsUp,
   Reply,
+  Edit,
+  Trash2,
+  Flag,
 } from "lucide-react";
+import { commentLessonApi } from "@/api/commentLesson";
+import { jwtDecode } from "jwt-decode";
+import CommentModals from "@/pages/forum/components/CommentModal";
 
-const CommentSection = ({ courseId, itemId }) => {
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      userId: "user-1",
-      userName: "Nguyễn Văn A",
-      userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-      content:
-        "Giải thích rất hay! Video này đã giúp tôi hiểu khái niệm tốt hơn nhiều.",
-      timestamp: "2 giờ trước",
-      likes: 5,
-      replies: [
-        {
-          id: 2,
-          userId: "user-2",
-          userName: "Trần Thị B",
-          userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-          content: "Tôi cũng đồng ý! Rất rõ ràng và súc tích.",
-          timestamp: "1 giờ trước",
-          likes: 2,
-        },
-      ],
-    },
-  ]);
-
+const CommentSection = ({ lessonId }) => {
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [currentUserId, setCurrentUserId] = useState(null);
 
+  // Modal states
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [commentToDelete, setCommentToDelete] = useState(null);
+  const [commentToReport, setCommentToReport] = useState(null);
+
+  const commentsTopRef = useRef(null);
+
+  const getRelativeTime = (dateString) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+
+    if (diffInSeconds < 60) {
+      return "vừa xong";
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} phút trước`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours} giờ trước`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays} ngày trước`;
+    }
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks} tuần trước`;
+    }
+
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) {
+      return `${diffInMonths} tháng trước`;
+    }
+
+    const diffInYears = Math.floor(diffInDays / 365);
+    return `${diffInYears} năm trước`;
+  };
+
+  // Get current user ID from JWT
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        const decoded = jwtDecode(token);
+        setCurrentUserId(decoded.userId);
+      }
+    } catch (err) {
+      console.error("Error decoding token:", err);
+    }
+  }, []);
+
+  // Load comments on mount
+  useEffect(() => {
+    loadComments();
+  }, [lessonId]);
+
+  const loadComments = async () => {
+    const data = await commentLessonApi.getByLesson(lessonId);
+
+    const roots = data.filter((c) => !c.parentCommentId);
+    const replies = data.filter((c) => c.parentCommentId);
+
+    const sortedRoots = roots.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    const grouped = sortedRoots.map((c) => ({
+      ...c,
+      replies: replies
+        .filter((r) => r.parentCommentId === c.id)
+
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
+    }));
+
+    setComments(grouped);
+  };
+
+  // Create main comment
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
-    const comment = {
-      id: Date.now(),
-      userId: "current-user",
-      userName: "Bạn",
-      userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=You",
-      content: newComment,
-      timestamp: "Vừa xong",
-      likes: 0,
-      replies: [],
-    };
+    await commentLessonApi.create({
+      lessonId,
+      contents: newComment,
+      parentCommentId: null,
+    });
 
-    setComments([comment, ...comments]);
     setNewComment("");
+    await loadComments();
+
+    commentsTopRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
+  // Create reply
   const handleAddReply = async (parentId) => {
     if (!replyText.trim()) return;
 
-    const reply = {
-      id: Date.now(),
-      userId: "current-user",
-      userName: "Bạn",
-      userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=You",
-      content: replyText,
-      timestamp: "Vừa xong",
-      likes: 0,
-    };
-
-    setComments(
-      comments.map((comment) =>
-        comment.id === parentId
-          ? { ...comment, replies: [...(comment.replies || []), reply] }
-          : comment
-      )
-    );
+    await commentLessonApi.create({
+      lessonId,
+      contents: replyText,
+      parentCommentId: parentId,
+    });
 
     setReplyText("");
     setReplyingTo(null);
+    await loadComments();
   };
 
-  const handleLike = async (commentId) => {
-    setComments(
-      comments.map((comment) =>
-        comment.id === commentId
-          ? { ...comment, likes: comment.likes + 1 }
-          : comment
-      )
-    );
+  // Toggle like
+  const handleLike = async (id) => {
+    await commentLessonApi.toggleLike(id);
+    await loadComments();
+  };
+
+  // Open delete modal
+  const openDeleteModal = (id) => {
+    setCommentToDelete(id);
+    setDeleteModalVisible(true);
+  };
+
+  // Confirm delete
+  const handleDeleteConfirm = async () => {
+    if (commentToDelete) {
+      await commentLessonApi.delete(commentToDelete);
+      await loadComments();
+      setDeleteModalVisible(false);
+      setCommentToDelete(null);
+    }
+  };
+
+  // Start editing
+  const startEditing = (comment) => {
+    setEditingId(comment.id);
+    setEditText(comment.contents);
+  };
+
+  // Save edit
+  const handleSaveEdit = async () => {
+    await commentLessonApi.update({
+      commentId: editingId,
+      contents: editText,
+    });
+
+    setEditingId(null);
+    setEditText("");
+    await loadComments();
+  };
+
+  // Open report modal
+  const openReportModal = (id) => {
+    setCommentToReport(id);
+    setReportModalVisible(true);
+  };
+
+  // Confirm report
+  const handleReportConfirm = async () => {
+    if (commentToReport && reportReason.trim()) {
+      await commentLessonApi.report({
+        commentLessonId: commentToReport,
+        reason: reportReason,
+      });
+      setReportModalVisible(false);
+      setCommentToReport(null);
+      setReportReason("");
+    }
+  };
+
+  // Check if current user is the comment creator
+  const isOwner = (comment) => {
+    return currentUserId && comment.accountId === currentUserId;
   };
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <MessageCircle className="w-5 h-5 text-gray-600" />
+      {/* HEADER */}
+      <div ref={commentsTopRef} className="flex items-center gap-2 mb-6">
+        <MessageSquare className="w-5 h-5 text-gray-600" />
         <h2 className="text-lg font-semibold text-gray-900">
           Thảo luận ({comments.length})
         </h2>
       </div>
 
-      {/* Add Comment */}
+      {/* ADD COMMENT */}
       <div className="mb-8">
         <textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Chia sẻ suy nghĩ hoặc đặt câu hỏi..."
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD54F] focus:border-transparent resize-none"
+          placeholder="Chia sẻ suy nghĩ của bạn..."
+          className="w-full px-4 py-3 border rounded-lg resize-none focus:ring-2 focus:ring-yellow-400"
           rows={3}
         />
         <div className="flex justify-end mt-2">
           <button
             onClick={handleAddComment}
             disabled={!newComment.trim()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-4 h-4" />
             Đăng
@@ -118,133 +236,221 @@ const CommentSection = ({ courseId, itemId }) => {
         </div>
       </div>
 
-      {/* Comments */}
-      <div className="space-y-6">
-        {comments.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-            <p>Chưa có bình luận. Hãy là người đầu tiên!</p>
-          </div>
-        ) : (
-          comments.map((comment) => (
-            <div key={comment.id}>
-              {/* Main Comment */}
-              <div className="flex gap-3">
-                <img
-                  src={comment.userAvatar}
-                  alt={comment.userName}
-                  className="w-10 h-10 rounded-full flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-sm text-gray-900">
-                        {comment.userName}
-                      </h4>
-                      <span className="text-xs text-gray-500">
-                        {comment.timestamp}
-                      </span>
-                    </div>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {comment.content}
-                    </p>
-                  </div>
+      {/* LIST COMMENTS */}
+      <div className="space-y-8">
+        {comments.map((c) => (
+          <div key={c.id}>
+            {/* Main comment */}
+            <div className="flex gap-3">
+              <div className="flex-1 bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold">{c.accountName}</div>
+                  <span className="text-xs text-gray-500">
+                    {getRelativeTime(c.createdAt)}
+                  </span>
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-4 mt-2 ml-2">
-                    <button
-                      onClick={() => handleLike(comment.id)}
-                      className="flex items-center gap-1 text-sm text-gray-600 hover:text-[#FFD54F] transition-colors"
-                    >
-                      <ThumbsUp className="w-4 h-4" />
-                      <span>{comment.likes}</span>
-                    </button>
-                    <button
-                      onClick={() => setReplyingTo(comment.id)}
-                      className="flex items-center gap-1 text-sm text-gray-600 hover:text-[#FFD54F] transition-colors"
-                    >
-                      <Reply className="w-4 h-4" />
-                      Trả lời
-                    </button>
-                  </div>
+                {editingId === c.id ? (
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    className="w-full border mt-2 p-2 rounded"
+                  />
+                ) : (
+                  <p className="mt-1 text-gray-700">{c.contents}</p>
+                )}
 
-                  {/* Reply Input */}
-                  {replyingTo === comment.id && (
-                    <div className="mt-3 flex gap-2">
-                      <input
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        placeholder={`Trả lời ${comment.userName}...`}
-                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD54F] focus:border-transparent"
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => handleAddReply(comment.id)}
-                        disabled={!replyText.trim()}
-                        className="px-4 py-2 text-sm bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-colors disabled:opacity-40"
-                      >
-                        Gửi
-                      </button>
-                      <button
-                        onClick={() => {
-                          setReplyingTo(null);
-                          setReplyText("");
-                        }}
-                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                      >
-                        Hủy
-                      </button>
-                    </div>
+                <div className="flex gap-4 mt-3 text-sm text-gray-600">
+                  <button
+                    onClick={() => handleLike(c.id)}
+                    className="flex items-center gap-1 hover:text-yellow-500"
+                  >
+                    <ThumbsUp size={16} />
+                    {c.likeCount}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setReplyingTo(c.id);
+                      setEditingId(null);
+                    }}
+                    className="flex items-center gap-1 hover:text-yellow-500"
+                  >
+                    <Reply size={16} /> Trả lời
+                  </button>
+
+                  {isOwner(c) && (
+                    <button
+                      onClick={() => startEditing(c)}
+                      className="flex items-center gap-1 hover:text-green-600"
+                    >
+                      <Edit size={16} /> Sửa
+                    </button>
                   )}
 
-                  {/* Replies */}
-                  {comment.replies && comment.replies.length > 0 && (
-                    <div className="mt-4 space-y-3 ml-6">
-                      {comment.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-3">
-                          <img
-                            src={reply.userAvatar}
-                            alt={reply.userName}
-                            className="w-8 h-8 rounded-full flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="bg-gray-50 rounded-lg p-3">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h5 className="font-semibold text-xs text-gray-900">
-                                  {reply.userName}
-                                </h5>
-                                <span className="text-xs text-gray-500">
-                                  {reply.timestamp}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-700">
-                                {reply.content}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => handleLike(reply.id)}
-                              className="flex items-center gap-1 text-xs text-gray-600 hover:text-[#FFD54F] transition-colors mt-1 ml-2"
-                            >
-                              <ThumbsUp className="w-3 h-3" />
-                              <span>{reply.likes}</span>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                  {isOwner(c) && (
+                    <button
+                      onClick={() => openDeleteModal(c.id)}
+                      className="flex items-center gap-1 hover:text-red-600"
+                    >
+                      <Trash2 size={16} /> Xóa
+                    </button>
+                  )}
+
+                  {!isOwner(c) && (
+                    <button
+                      onClick={() => openReportModal(c.id)}
+                      className="flex items-center gap-1 hover:text-red-400"
+                    >
+                      <Flag size={16} /> Báo cáo
+                    </button>
                   )}
                 </div>
+
+                {editingId === c.id && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={handleSaveEdit}
+                      className="px-4 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                      Lưu
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                )}
+
+                {replyingTo === c.id && (
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      className="flex-1 border rounded p-2"
+                      placeholder={`Trả lời ${c.accountName}...`}
+                    />
+                    <button
+                      onClick={() => handleAddReply(c.id)}
+                      className="px-4 py-2 bg-yellow-400 rounded hover:bg-yellow-300"
+                    >
+                      Gửi
+                    </button>
+                    <button
+                      onClick={() => setReplyingTo(null)}
+                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                )}
+
+                {c.replies?.length > 0 && (
+                  <div className="mt-4 pl-6 border-l space-y-3">
+                    {c.replies.map((r) => (
+                      <div
+                        key={r.id}
+                        className="bg-white p-3 rounded border border-gray-100"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="font-semibold">
+                            {r.accountName}{" "}
+                            <span className="text-xs text-gray-500 font-normal">
+                              · trả lời {c.accountName}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {getRelativeTime(r.createdAt)}
+                          </span>
+                        </div>
+
+                        {editingId === r.id ? (
+                          <textarea
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            className="w-full border mt-2 p-2 rounded"
+                          />
+                        ) : (
+                          <p className="text-gray-700 mt-1">{r.contents}</p>
+                        )}
+
+                        <div className="flex gap-4 mt-2 text-xs text-gray-600">
+                          <button
+                            onClick={() => handleLike(r.id)}
+                            className="flex items-center gap-1 hover:text-yellow-500"
+                          >
+                            <ThumbsUp size={14} /> {r.likeCount}
+                          </button>
+
+                          {isOwner(r) && (
+                            <button
+                              onClick={() => startEditing(r)}
+                              className="flex items-center gap-1 hover:text-green-600"
+                            >
+                              <Edit size={14} /> Sửa
+                            </button>
+                          )}
+
+                          {isOwner(r) && (
+                            <button
+                              onClick={() => openDeleteModal(r.id)}
+                              className="flex items-center gap-1 hover:text-red-600"
+                            >
+                              <Trash2 size={14} /> Xóa
+                            </button>
+                          )}
+
+                          {/* REPORT - Only for non-owners */}
+                          {!isOwner(r) && (
+                            <button
+                              onClick={() => openReportModal(r.id)}
+                              className="flex items-center gap-1 hover:text-red-400"
+                            >
+                              <Flag size={14} /> Báo cáo
+                            </button>
+                          )}
+                        </div>
+
+                        {/* SAVE EDIT for reply */}
+                        {editingId === r.id && (
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              onClick={handleSaveEdit}
+                              className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
+                            >
+                              Lưu
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="px-3 py-1 bg-gray-300 rounded text-sm hover:bg-gray-400"
+                            >
+                              Hủy
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
 
-      {comments.length > 3 && (
-        <button className="w-full mt-6 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors">
-          Tải thêm bình luận
-        </button>
-      )}
+      {/* Modals */}
+      <CommentModals
+        deleteModalVisible={deleteModalVisible}
+        setDeleteModalVisible={setDeleteModalVisible}
+        reportModalVisible={reportModalVisible}
+        setReportModalVisible={setReportModalVisible}
+        reportReason={reportReason}
+        setReportReason={setReportReason}
+        onDeleteConfirm={handleDeleteConfirm}
+        onReportConfirm={handleReportConfirm}
+      />
     </div>
   );
 };

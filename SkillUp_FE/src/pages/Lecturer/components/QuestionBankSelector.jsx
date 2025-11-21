@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getQuestionsBySection } from "@/api/questionBankAPI";
 import { toast } from "react-toastify";
+import { extractCleanText } from "@/utils/htmlUtils";
 
-function QuestionBankSelector({ 
-  courseId, 
-  sectionId, 
-  onAddFromBank, 
-  onSwitchToManual, 
-  onCancel, 
-  loading 
+function QuestionBankSelector({
+  courseId,
+  sectionId,
+  onAddFromBank,
+  onSwitchToManual,
+  onCancel,
+  loading,
 }) {
   const [bankQuestions, setBankQuestions] = useState([]);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
@@ -28,20 +29,19 @@ function QuestionBankSelector({
     try {
       setLoadingBank(true);
       setError(null);
-      
-      
+
       if (!courseId || !sectionId) {
         setError("Missing courseId or sectionId");
         setBankQuestions([]);
         setLoadingBank(false);
         return;
       }
-      
+
       const data = await getQuestionsBySection(sectionId, courseId);
-      
+
       if (data && Array.isArray(data)) {
         setBankQuestions(data);
-        
+
         if (data.length === 0) {
           setError("Không có câu hỏi nào trong ngân hàng cho chương này");
         }
@@ -74,9 +74,17 @@ function QuestionBankSelector({
     onAddFromBank(selectedQuestions);
   };
 
-  const filteredQuestions = bankQuestions.filter((q) =>
-    q.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter questions with HTML-aware search
+  const filteredQuestions = bankQuestions.filter((q) => {
+    const plainTitle = extractCleanText(q.title || "", 500);
+    const plainDescription = extractCleanText(q.description || "", 500);
+    const searchLower = searchTerm.toLowerCase();
+
+    return (
+      plainTitle.toLowerCase().includes(searchLower) ||
+      plainDescription.toLowerCase().includes(searchLower)
+    );
+  });
 
   // Loading State
   if (loadingBank) {
@@ -84,9 +92,12 @@ function QuestionBankSelector({
       <Card className="border-2 border-blue-200 bg-blue-50">
         <CardContent className="p-4 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="text-sm text-gray-600 mt-2">Đang tải ngân hàng câu hỏi...</p>
+          <p className="text-sm text-gray-600 mt-2">
+            Đang tải ngân hàng câu hỏi...
+          </p>
           <p className="text-xs text-gray-500 mt-1">
-            Course: {courseId?.substring(0, 8)}... | Section: {sectionId?.substring(0, 8)}...
+            Course: {courseId?.substring(0, 8)}... | Section:{" "}
+            {sectionId?.substring(0, 8)}...
           </p>
         </CardContent>
       </Card>
@@ -121,7 +132,12 @@ function QuestionBankSelector({
               <Plus className="w-3 h-3 mr-1" />
               Tạo câu hỏi mới
             </Button>
-            <Button onClick={onCancel} variant="outline" size="sm" className="text-xs">
+            <Button
+              onClick={onCancel}
+              variant="outline"
+              size="sm"
+              className="text-xs"
+            >
               Hủy
             </Button>
           </div>
@@ -172,65 +188,81 @@ function QuestionBankSelector({
               <p className="text-sm">Không tìm thấy câu hỏi phù hợp</p>
             </div>
           ) : (
-            filteredQuestions.map((question, index) => (
-              <div
-                key={question.id}
-                onClick={() => toggleQuestion(question.id)}
-                className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                  selectedQuestions.includes(question.id)
-                    ? "bg-blue-100 border-blue-400 shadow-sm"
-                    : "bg-white border-gray-200 hover:border-blue-300"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  {/* Checkbox */}
-                  <div className="flex-shrink-0 mt-1">
-                    <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                        selectedQuestions.includes(question.id)
-                          ? "bg-blue-600 border-blue-600"
-                          : "border-gray-300 bg-white"
-                      }`}
-                    >
-                      {selectedQuestions.includes(question.id) && (
-                        <Check className="w-3 h-3 text-white" />
-                      )}
-                    </div>
-                  </div>
+            filteredQuestions.map((question, index) => {
+              // Clean the title and description from HTML
+              const cleanTitle =
+                extractCleanText(question.title, 200) || "Không có tiêu đề";
+              const cleanDescription = question.description
+                ? extractCleanText(question.description, 100)
+                : null;
 
-                  {/* Question Info - Table-like */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs font-semibold text-gray-500 flex-shrink-0">
-                        #{index + 1}
-                      </span>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 text-sm leading-snug">
-                          {question.title || "Không có tiêu đề"}
-                        </p>
-                        {question.description && (
-                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                            {question.description}
-                          </p>
+              return (
+                <div
+                  key={question.id}
+                  onClick={() => toggleQuestion(question.id)}
+                  className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                    selectedQuestions.includes(question.id)
+                      ? "bg-blue-100 border-blue-400 shadow-sm"
+                      : "bg-white border-gray-200 hover:border-blue-300"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Checkbox */}
+                    <div className="flex-shrink-0 mt-1">
+                      <div
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                          selectedQuestions.includes(question.id)
+                            ? "bg-blue-600 border-blue-600"
+                            : "border-gray-300 bg-white"
+                        }`}
+                      >
+                        {selectedQuestions.includes(question.id) && (
+                          <Check className="w-3 h-3 text-white" />
                         )}
-                        <div className="flex gap-2 mt-2 flex-wrap">
-                          {question.answers && question.answers.length > 0 && (
-                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                              {question.answers.length} đáp án
-                            </span>
+                      </div>
+                    </div>
+
+                    {/* Question Info - Table-like */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs font-semibold text-gray-500 flex-shrink-0">
+                          #{index + 1}
+                        </span>
+                        <div className="flex-1">
+                          {/* Display clean title without HTML tags */}
+                          <p className="font-medium text-gray-900 text-sm leading-snug">
+                            {cleanTitle}
+                          </p>
+
+                          {/* Display clean description if available */}
+                          {cleanDescription && (
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              {cleanDescription}
+                            </p>
                           )}
-                          {question.createdAt && (
-                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                              {new Date(question.createdAt).toLocaleDateString('vi-VN')}
-                            </span>
-                          )}
+
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            {question.answers &&
+                              question.answers.length > 0 && (
+                                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                  {question.answers.length} đáp án
+                                </span>
+                              )}
+                            {question.createdAt && (
+                              <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                {new Date(
+                                  question.createdAt
+                                ).toLocaleDateString("vi-VN")}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
@@ -251,7 +283,9 @@ function QuestionBankSelector({
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Check className="w-4 h-4 mr-1" />
-            Thêm {selectedQuestions.length > 0 && `${selectedQuestions.length} `}câu hỏi
+            Thêm{" "}
+            {selectedQuestions.length > 0 && `${selectedQuestions.length} `}câu
+            hỏi
           </Button>
           <Button
             onClick={onSwitchToManual}
