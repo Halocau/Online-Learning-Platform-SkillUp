@@ -76,8 +76,11 @@ const CourseSidebar = ({
             <div className="flex items-center justify-between text-xs text-gray-600 mb-1.5">
               <span className="font-medium">{sectionProgress}% hoàn thành</span>
               <span className="text-gray-500">
-                {currentSection.items.filter((i) => completedItems.has(i.id)).length}/
-                {currentSection.items?.length}
+                {
+                  currentSection.items.filter((i) => completedItems.has(i.id))
+                    .length
+                }
+                /{currentSection.items?.length}
               </span>
             </div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">

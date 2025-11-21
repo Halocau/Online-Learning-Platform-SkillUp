@@ -102,7 +102,7 @@ const LessonContent = ({
         </div>
       </div>
 
-      {/* Content - NO INTERNAL SCROLLING */}
+      {/* Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         {item.kind === "Lesson" && item.lessonType === "Video" && (
           <div className="mb-8">
