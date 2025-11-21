@@ -15,5 +15,6 @@ namespace SkillUp.Services.Interfaces
         Task<QuizStartDto> StartQuizAsync(Guid quizId, Guid accId);
 
         Task<QuizResultSummaryDto> SubmitQuizAsync(Guid submissionId, QuizSubmitDto submitDto, Guid accId);
+        Task<QuizResultDetailDto> GetQuizResultDetailAsync(Guid submissionId, Guid accountId);
     }
 }

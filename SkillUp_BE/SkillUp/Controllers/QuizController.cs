@@ -322,7 +322,51 @@ namespace SkillUp.Controllers
                 return StatusCode(500, new APIReturn { code = 500, message = $"Có lỗi xảy ra: {ex.Message}", data = new List<object>() });
             }
         }
+        [HttpGet("results/{submissionId}")]
+        [Authorize]
+        public async Task<IActionResult> GetQuizResultDetail(Guid submissionId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
 
+                var detail = await _quizService.GetQuizResultDetailAsync(submissionId, accountId.Value);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy chi tiết kết quả thành công",
+                    data = new List<object> { detail }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy sinh viên") ||
+                    ex.Message.Contains("Không tìm thấy lượt làm bài"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
 
     }
 }
