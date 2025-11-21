@@ -59,7 +59,13 @@ namespace SkillUp.Repositories.Implementations
                 .Include(q => q.AnswerBanks)
                 .FirstOrDefaultAsync(q => q.Id == questionId && q.IsActive);
         }
-
+        public async Task<List<QuestionBank>> GetQuestionsWithAnswersAsync(List<Guid> questionIds)
+        {
+            return await _context.QuestionBanks
+                .Where(q => questionIds.Contains(q.Id))
+                .Include(q => q.AnswerBanks) 
+                .ToListAsync();
+        }
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

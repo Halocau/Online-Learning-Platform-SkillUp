@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SkillUp.BussinessObjects.DTOs.DoQuiz;
 using SkillUp.BussinessObjects.DTOs.Quiz;
 using SkillUp.ExceptionHandling;
 using SkillUp.Services.Interfaces;
@@ -282,8 +283,90 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpPost("submit/{submissionId}")]
+        [Authorize]
+        public async Task<IActionResult> SubmitQuiz(Guid submissionId, [FromBody] QuizSubmitDto submitDto)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn { code = 401, message = "Token không hợp lệ", data = new List<object>() });
+                }
 
+                var result = await _quizService.SubmitQuizAsync(submissionId, submitDto, accountId.Value);
 
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Nộp bài thành công",
+                    data = new List<object> { result } 
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+                if (ex.Message.Contains("đã được nộp trước đó"))
+                {
+                    return BadRequest(new APIReturn { code = 400, message = ex.Message, data = new List<object>() });
+                }
+
+                return StatusCode(500, new APIReturn { code = 500, message = $"Có lỗi xảy ra: {ex.Message}", data = new List<object>() });
+            }
+        }
+        [HttpGet("results/{submissionId}")]
+        [Authorize]
+        public async Task<IActionResult> GetQuizResultDetail(Guid submissionId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var detail = await _quizService.GetQuizResultDetailAsync(submissionId, accountId.Value);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy chi tiết kết quả thành công",
+                    data = new List<object> { detail }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Forbid(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy sinh viên") ||
+                    ex.Message.Contains("Không tìm thấy lượt làm bài"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
 
     }
 }
