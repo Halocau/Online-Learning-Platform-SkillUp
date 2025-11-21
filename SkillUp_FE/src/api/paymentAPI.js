@@ -11,7 +11,7 @@ export const paymentAPI = {
         `${API_BASE_URL}/create-course-payment`,
         { courseId }
       );
-      
+
       // Backend trả về format: { code, message, data }
       if (response.data.code === 200 && response.data.data && response.data.data.length > 0) {
         return response.data.data[0]; // Trả về CoursePaymentResponseDto
@@ -29,7 +29,7 @@ export const paymentAPI = {
       const response = await axiosInstance.get(
         `${API_BASE_URL}/verify-course-payment/${orderCode}`
       );
-      
+
       // Backend trả về format: { code, message, data }
       return response.data.code === 200;
     } catch (error) {
@@ -43,7 +43,7 @@ export const paymentAPI = {
       const response = await axiosInstance.post(
         `${API_BASE_URL}/cancel-course-payment/${orderCode}`
       );
-      
+
       // Backend trả về format: { code, message, data }
       return response.data.code === 200;
     } catch (error) {
@@ -57,7 +57,7 @@ export const paymentAPI = {
       const response = await axiosInstance.get(
         `${API_BASE_URL}/my-enrollments`
       );
-      
+
       // Backend trả về format: { code, message, data }
       if (response.data.code === 200 && response.data.data && response.data.data.length > 0) {
         return response.data.data[0]; // Trả về List<CourseEnrollmentDto>
@@ -65,6 +65,63 @@ export const paymentAPI = {
       return [];
     } catch (error) {
       console.error("Error getting enrollments:", error);
+      throw error;
+    }
+  },
+
+  // Cart payment (PayOS)
+  createCartPayment: async (items, totalAmount, discountAmount = 0) => {
+    try {
+      console.log("Creating cart payment with:", { items, totalAmount, discountAmount });
+
+      const response = await axiosInstance.post(
+        `${API_BASE_URL}/create-cart-payment`,
+        {
+          items: items.map(item => ({
+            courseId: item.courseId,
+            price: item.price,
+            finalPrice: item.finalPrice,
+            voucherCode: item.voucherCode || null,
+            voucherId: item.voucherId || null,
+            cartItemId: item.cartItemId || null
+          })),
+          totalAmount,
+          discountAmount
+        }
+      );
+
+      console.log("Cart payment API response:", response.data);
+
+      if (response.data.code === 200) {
+        if (response.data.data && response.data.data.length > 0) {
+          return response.data.data[0]; // Trả về CartPaymentResponseDto
+        } else {
+          // Response thành công nhưng không có data - có thể là free cart
+          return {
+            Success: true,
+            Message: response.data.message || "Thanh toán thành công",
+            IsFreeCart: true
+          };
+        }
+      } else {
+        throw new Error(response.data.message || "Không thể tạo thanh toán");
+      }
+    } catch (error) {
+      console.error("Error creating cart payment:", error);
+      console.error("Error response:", error.response?.data);
+      throw error;
+    }
+  },
+
+  verifyCartPayment: async (orderCode) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_BASE_URL}/verify-cart-payment/${orderCode}`
+      );
+
+      return response.data.code === 200;
+    } catch (error) {
+      console.error("Error verifying cart payment:", error);
       throw error;
     }
   },

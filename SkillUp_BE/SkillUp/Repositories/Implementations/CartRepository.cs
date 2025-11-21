@@ -59,5 +59,22 @@ namespace SkillUp.Repositories.Implementations
                 .Select(ci => ci.CourseId)
                 .ToListAsync()).ToHashSet();
         }
+
+        // Kiểm tra xem student đã đăng ký course chưa
+        public async Task<bool> IsStudentEnrolledInCourseAsync(Guid studentId, Guid courseId)
+        {
+            return await _context.Enrollments
+                .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+        }
+
+        // Xóa tất cả items trong cart
+        public async Task ClearCartAsync(Guid studentId)
+        {
+            var cart = await GetCartByStudentIdAsync(studentId);
+            if (cart != null && cart.CartItems != null && cart.CartItems.Any())
+            {
+                _context.CartItems.RemoveRange(cart.CartItems);
+            }
+        }
     }
 }

@@ -19,8 +19,10 @@ namespace SkillUp.Services.Interfaces
         Task<CategoryPageDto> GetCategoryPageAsync(int categoryId);
         Task<bool> SetCoursePriceAsync(Guid courseId, CoursePriceDto request, Guid accountId);
         Task<bool> PublishCourseForReviewAsync(Guid courseId, Guid accountId);
-        Task<bool> PublishCourseForModerator(Guid courseId, Guid accountId, bool decision);
+        Task<bool> PublishCourseForModerator(Guid courseId, Guid accountId, bool decision, string reason);
         Task<List<CourseStudentEnrollDTO>> GetEnrolledCoursesByAccountIdAsync(Guid accountId);
+
+        Task<List<CourseSummaryDTO>> SearchCoursesAsync(string keyword, int limit);
 
     }
 }

@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
     CART: `/Cart/{accountId}`,
     ADD_TO_CART: '/Cart/AddToCart/{accountId}',
     REMOVE_FROM_CART: '/Cart/RemoveFromCart/{cartItemId}',
+    CLEAR_CART: '/Cart/clear/{accountId}',
 
     //Question Bank endpoints
     GET_BY_ID: '/QuestionBank/getById/{questionBankId}',

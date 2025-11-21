@@ -35,7 +35,16 @@ namespace SkillUp.Repositories.Implementations
 			return await _context.QuestionBanks
                 .Include(q => q.AnswerBanks.Where(a => a.IsActive))
 				.Where(q => q.SectionId == sectionId)
-				.Where(q => q.IsActive)
+				.Where(q => q.IsActive && q.IsHidden == false)
+				.ToListAsync();
+		}
+
+		public async Task<List<QuestionBank>> GetByCourseId(Guid courseId)
+		{
+			return await _context.QuestionBanks
+				.Include(q => q.AnswerBanks.Where(a => a.IsActive))
+				.Where(q => q.Section.CourseId == courseId)
+				.Where(q => q.IsActive && q.IsHidden == false)
 				.ToListAsync();
 		}
 
@@ -50,7 +59,13 @@ namespace SkillUp.Repositories.Implementations
                 .Include(q => q.AnswerBanks)
                 .FirstOrDefaultAsync(q => q.Id == questionId && q.IsActive);
         }
-
+        public async Task<List<QuestionBank>> GetQuestionsWithAnswersAsync(List<Guid> questionIds)
+        {
+            return await _context.QuestionBanks
+                .Where(q => questionIds.Contains(q.Id))
+                .Include(q => q.AnswerBanks) 
+                .ToListAsync();
+        }
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

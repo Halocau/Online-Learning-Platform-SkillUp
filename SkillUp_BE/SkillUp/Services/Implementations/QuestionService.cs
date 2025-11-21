@@ -160,28 +160,7 @@ namespace SkillUp.Services.Implementations
 				if (questionBank == null)
 					throw new Exception($"Không tìm thấy câu hỏi ID: {dto.QuestionBankId}");
 
-				// Kiểm tra loại câu hỏi
-				if (string.IsNullOrWhiteSpace(dto.Type))
-					throw new Exception($"ID:{questionBank.Id}: Loại câu hỏi (Type) không được để trống.");
-
 				int correctAnswersCount = questionBank.AnswerBanks.Count(a => a.IsCorrect == true);
-
-				if (dto.Type == "SingleChoice")
-				{
-					if (correctAnswersCount == 0)
-						throw new Exception($"ID:{questionBank.Id}: Câu hỏi chọn 1 (SingleChoice) phải có 1 đáp án đúng.");
-					if (correctAnswersCount > 1)
-						throw new Exception($"ID:{questionBank.Id}: Câu hỏi chọn 1 (SingleChoice) chỉ được có 1 đáp án đúng.");
-				}
-				else if (dto.Type == "MultiChoice")
-				{
-					if (correctAnswersCount == 0)
-						throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
-				}
-				else
-				{
-					throw new Exception($"Loại câu hỏi '{dto.Type}' không hợp lệ.");
-				}
 
 				// Tạo và thêm câu hỏi
 				var question = new QuestionQuiz
@@ -189,10 +168,19 @@ namespace SkillUp.Services.Implementations
 					Id = Guid.NewGuid(),
 					QuizId = quiz.Id,
 					QuestionBankId = dto.QuestionBankId,
-					Orders = dto.Orders
+					Orders = dto.Orders,
+                    IsActive = true
 				};
 
-				quiz.QuestionQuizzes.Add(question);
+                var existingLink = await _questionQuizRepository.GetLinkAsync(quiz.Id, dto.QuestionBankId);
+                if (existingLink == null)
+				    quiz.QuestionQuizzes.Add(question);
+                if (existingLink != null && existingLink.IsActive != true)
+                {
+                    existingLink.IsActive = true;
+                    existingLink.Orders = dto.Orders;
+                    _questionQuizRepository.Update(existingLink);
+				}
 
 				result.Add(new CreateQuestionQuizResponseDTO
 				{
@@ -200,8 +188,7 @@ namespace SkillUp.Services.Implementations
 					QuestionBankId = question.QuestionBankId,
 					QuizId = question.QuizId,
 					Title = questionBank.Title,
-					Orders = question.Orders,
-					Type = dto.Type
+					Orders = question.Orders
 				});
 			}
 

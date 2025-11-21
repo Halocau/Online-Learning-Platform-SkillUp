@@ -95,6 +95,8 @@ public partial class SkillUpContext : DbContext
 
     public virtual DbSet<StudentProgress> StudentProgresses { get; set; }
 
+    public virtual DbSet<StudentSelectedAnswer> StudentSelectedAnswers { get; set; }
+
     public virtual DbSet<SubCategory> SubCategories { get; set; }
 
     public virtual DbSet<Ticket> Tickets { get; set; }
@@ -683,11 +685,6 @@ public partial class SkillUpContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_QuizAnswerSubmission_QuestionBank");
 
-            entity.HasOne(d => d.SelectedAnswer).WithMany(p => p.QuizAnswerSubmissions)
-                .HasForeignKey(d => d.SelectedAnswerId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_QuizAnswerSubmission_AnswerBank");
-
             entity.HasOne(d => d.Submission).WithMany(p => p.QuizAnswerSubmissions)
                 .HasForeignKey(d => d.SubmissionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -875,6 +872,21 @@ public partial class SkillUpContext : DbContext
                 .HasForeignKey(d => d.StudentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_StudentProgress_Student");
+        });
+
+        modelBuilder.Entity<StudentSelectedAnswer>(entity =>
+        {
+            entity.Property(e => e.Id).ValueGeneratedNever();
+
+            entity.HasOne(d => d.AnswerBank).WithMany(p => p.StudentSelectedAnswers)
+                .HasForeignKey(d => d.AnswerBankId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_StudentSelectedAnswers_AnswerBank");
+
+            entity.HasOne(d => d.QuizAnswerSubmission).WithMany(p => p.StudentSelectedAnswers)
+                .HasForeignKey(d => d.QuizAnswerSubmissionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_StudentSelectedAnswers_QuizAnswerSubmission");
         });
 
         modelBuilder.Entity<SubCategory>(entity =>

@@ -16,5 +16,8 @@
 		public decimal Price { get; set; }
 
 		public bool IsActive { get; set; }
+		
+		// Thêm thông tin percentage để frontend có thể tính discount
+		public int? Percentage { get; set; }
 	}
 }

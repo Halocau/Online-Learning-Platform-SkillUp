@@ -92,7 +92,10 @@ builder.Services.AddScoped<IQuestionBankRepository, QuestionBankRepository>();
 builder.Services.AddScoped<ILessonRepository, LessonRepository>();
 builder.Services.AddScoped<IQuestionQuizRepository, QuestionQuizRepository>();
 builder.Services.AddScoped<IQuizSubmissionRepository, QuizSubmissionRepository>();
-
+builder.Services.AddScoped<IStudentSelectedAnswersRepository, StudentSelectedAnswersRepository>();
+builder.Services.AddScoped<IQuizAnswerSubmissionRepository, QuizAnswerSubmissionRepository>();
+builder.Services.AddScoped<IAnswerBankRepository, AnswerBankRepository>();
+builder.Services.AddScoped<IStudentProgressRepository, StudentProgressRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -115,6 +118,7 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IBannerService, BannerService>();
 
 
 // POST

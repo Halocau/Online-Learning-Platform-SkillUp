@@ -1,85 +1,81 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { getApiUrl } from '../../config/api.js';
 import { axiosInstance } from '../../config/api.js';
 import { GuestCartView } from '@/components/Cart/GuestCartView';
+import CartItem from '@/components/Cart/CartItem';
+import PriceSummary from '@/components/Cart/PriceSummary';
+import { voucherAPI } from '../../api/voucherAPI.js';
+import { paymentAPI } from '../../api/paymentAPI.js';
 import {
     List,
-    Button,
     Spin,
     Empty,
     Typography,
     Row,
     Col,
-    Card,
     message,
-    Image,
-    Space,
-    Tag,
-    Rate,
-    Divider,
-    Input,
 } from 'antd';
+import { toast } from 'react-toastify';
 
-// Định dạng tiền tệ
-const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+// Constants
+const PRIMARY_COLOR = '#FCCD04';
+const CART_STYLES = {
+    container: {
+        padding: '24px',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        background: '#fff'
+    }
 };
 
-// Định dạng số (cho rating/enrollment)
-const formatNumber = (num) => {
-    return new Intl.NumberFormat('vi-VN').format(num);
+// Utility function
+const getCourseId = (item) => {
+    return item.courseId || item.course?.id || item.course?.courseId;
 };
 
+
+// Main Component
 function MyCart() {
-    // Get user from localStorage (decoded from JWT)
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    // Get user from localStorage
+    const user = useMemo(() => {
+        try {
+            return JSON.parse(localStorage.getItem('user') || 'null');
+        } catch {
+            return null;
+        }
+    }, []);
+
     const accountId = user?.userId;
-    
+
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [courseVouchers, setCourseVouchers] = useState({});
+    const [availableVouchers, setAvailableVouchers] = useState({});
+    const [loadingVouchers, setLoadingVouchers] = useState({});
+    const [popoverVisible, setPopoverVisible] = useState({});
 
-    // Hàm gọi API để lấy giỏ hàng
-    const fetchCart = async () => {
+    // Fetch cart
+    const fetchCart = useCallback(async () => {
+        if (!accountId) return;
+
         setLoading(true);
         try {
-            console.log('🛒 Fetching cart for accountId:', accountId); // DEBUG
-            
-            // Giả sử key trong config của bạn là 'CART'
             const apiUrlTemplate = getApiUrl('CART');
             const apiUrl = apiUrlTemplate.replace('{accountId}', accountId);
-            
-            console.log('📡 API URL:', apiUrl); // DEBUG
-            
             const response = await axiosInstance.get(apiUrl);
-            
-            console.log('📦 Cart API Response:', response.data); // DEBUG
 
-            if (response.data && response.data.code === 200) {
-                // --- BỎ MOCK DATA ---
-                // Lấy dữ liệu giỏ hàng gốc trực tiếp
+            if (response.data?.code === 200) {
                 const originalCart = response.data.data[0];
-                console.log('✅ Cart loaded:', originalCart); // DEBUG
-                
-                // Nếu cart null hoặc undefined → set cart rỗng
-                if (!originalCart) {
-                    setCart({ cartItems: [] });
-                } else {
-                    setCart(originalCart);
-                }
-                // --- KẾT THÚC SỬA ĐỔI ---
-
+                setCart(originalCart || { cartItems: [] });
+                setError(null);
             } else {
-                throw new Error(response.data.message || "Không thể tải giỏ hàng");
+                throw new Error(response.data?.message || "Không thể tải giỏ hàng");
             }
-            setError(null);
         } catch (err) {
             console.error("Lỗi khi tải giỏ hàng:", err);
-            console.error("Error response:", err.response); // DEBUG
-            
-            // Xử lý 404 (Không tìm thấy giỏ hàng) bằng cách hiển thị giỏ hàng trống
             if (err.response?.status === 404) {
-                setCart({ cartItems: [] }); // Set giỏ hàng rỗng
+                setCart({ cartItems: [] });
                 setError(null);
             } else {
                 setError("Lỗi khi tải giỏ hàng. Vui lòng thử lại.");
@@ -88,24 +84,99 @@ function MyCart() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [accountId]);
 
+    // Filter valid vouchers
+    const filterValidVouchers = useCallback((vouchers) => {
+        if (!vouchers?.length) return [];
+        const now = new Date();
+        return vouchers.filter(v => {
+            if (!v.isActive) return false;
+            if (v.startTime && now < new Date(v.startTime)) return false;
+            if (v.endTime && now > new Date(v.endTime)) return false;
+            return true;
+        });
+    }, []);
+
+    // Fetch all course vouchers
+    const fetchAllCourseVouchers = useCallback(async (cartItems) => {
+        if (!cartItems?.length) return;
+
+        const courseIds = cartItems
+            .map(item => getCourseId(item))
+            .filter(id => id != null);
+
+        if (!courseIds.length) return;
+
+        // Set loading state
+        setLoadingVouchers(prev => {
+            const newState = { ...prev };
+            courseIds.forEach(id => { newState[id] = true; });
+            return newState;
+        });
+
+        try {
+            const response = await voucherAPI.getCourseVouchersBatch(courseIds);
+            if (response.data?.code === 200) {
+                const vouchersDict = response.data.data[0] || {};
+                const newAvailableVouchers = {};
+
+                Object.keys(vouchersDict).forEach(courseId => {
+                    const courseIdGuid = courseIds.find(id =>
+                        id.toString() === courseId || id === courseId
+                    );
+                    if (courseIdGuid) {
+                        newAvailableVouchers[courseIdGuid] = filterValidVouchers(vouchersDict[courseId] || []);
+                    }
+                });
+
+                // Ensure all courseIds have entries
+                courseIds.forEach(id => {
+                    if (!newAvailableVouchers[id]) {
+                        newAvailableVouchers[id] = [];
+                    }
+                });
+
+                setAvailableVouchers(prev => ({ ...prev, ...newAvailableVouchers }));
+            }
+        } catch (err) {
+            console.error("Lỗi khi tải voucher:", err);
+            const emptyVouchers = {};
+            courseIds.forEach(id => { emptyVouchers[id] = []; });
+            setAvailableVouchers(prev => ({ ...prev, ...emptyVouchers }));
+        } finally {
+            setLoadingVouchers(prev => {
+                const newState = { ...prev };
+                courseIds.forEach(id => { newState[id] = false; });
+                return newState;
+            });
+        }
+    }, [filterValidVouchers]);
+
+    // Effects
     useEffect(() => {
-        // Chỉ fetch nếu có accountId (logged-in user)
         if (accountId) {
             fetchCart();
         } else {
-            // Guest user - không cần fetch
             setLoading(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accountId]);
+    }, [accountId, fetchCart]);
 
-    // Hàm xử lý xóa một item khỏi giỏ hàng (Không thay đổi)
-    const handleRemoveItem = async (cartItemId) => {
+    useEffect(() => {
+        if (cart?.cartItems?.length) {
+            fetchAllCourseVouchers(cart.cartItems);
+        }
+    }, [cart, fetchAllCourseVouchers]);
+
+    // Remove item handler
+    const handleRemoveItem = useCallback(async (cartItemId) => {
         try {
             const apiUrlTemplate = getApiUrl('REMOVE_FROM_CART');
             const apiUrl = apiUrlTemplate.replace('{cartItemId}', cartItemId);
+
+            const itemToRemove = cart?.cartItems?.find(item => item.id === cartItemId);
+            const courseId = getCourseId(itemToRemove);
+
             await axiosInstance.delete(apiUrl);
 
             setCart(prevCart => ({
@@ -113,168 +184,304 @@ function MyCart() {
                 cartItems: prevCart.cartItems.filter(item => item.id !== cartItemId),
             }));
 
-            message.success("Đã xóa khóa học khỏi giỏ hàng");
+            if (courseId) {
+                setCourseVouchers(prev => {
+                    const newState = { ...prev };
+                    delete newState[courseId];
+                    return newState;
+                });
+            }
 
+            message.success("Đã xóa khóa học khỏi giỏ hàng");
         } catch (err) {
             console.error("Lỗi khi xóa item:", err);
             message.error("Lỗi khi xóa khóa học. Vui lòng thử lại.");
         }
-    };
+    }, [cart]);
 
-    // Tính tổng tiền (Không thay đổi)
-    const totalPrice = cart?.cartItems?.reduce((acc, item) => acc + item.price, 0) || 0;
+    // Calculate totals
+    const totalPrice = useMemo(() => {
+        return cart?.cartItems?.reduce((acc, item) => acc + item.price, 0) || 0;
+    }, [cart?.cartItems]);
 
-    // --- RENDER LOGIC ---
-    
-    // Kiểm tra nếu không có accountId => Guest user
+    const totalDiscount = useMemo(() => {
+        return Object.values(courseVouchers).reduce((acc, voucher) => {
+            return acc + (voucher.discountAmount || 0);
+        }, 0);
+    }, [courseVouchers]);
+
+    const finalPrice = useMemo(() => {
+        return Math.max(0, totalPrice - totalDiscount);
+    }, [totalPrice, totalDiscount]);
+
+    // Apply voucher handler
+    const handleApplyCourseVoucher = useCallback(async (courseId, coursePrice, voucherCodeToApply = null, closePopover = false) => {
+        let codeToUse = voucherCodeToApply;
+
+        if (!codeToUse) {
+            const voucherData = courseVouchers[courseId];
+            codeToUse = voucherData?.voucherCode?.trim();
+
+            if (!codeToUse) {
+                message.warning('Vui lòng nhập mã giảm giá hoặc chọn từ danh sách');
+                return;
+            }
+        }
+
+        // Lấy giá gốc từ cart item (không dùng giá đã giảm)
+        const cartItem = cart?.cartItems?.find(item => {
+            const id = getCourseId(item);
+            return id === courseId;
+        });
+        const originalPrice = cartItem?.price || coursePrice;
+
+        // Set applying state - reset discountAmount trước khi apply mới
+        setCourseVouchers(prev => ({
+            ...prev,
+            [courseId]: {
+                voucherCode: codeToUse,
+                appliedVoucher: null,
+                discountAmount: 0, // Reset discount trước khi apply mới
+                applying: true
+            }
+        }));
+
+        try {
+            const response = await voucherAPI.validateVoucher(
+                codeToUse,
+                [courseId],
+                originalPrice // Luôn dùng giá gốc từ cart item
+            );
+
+            if (response.data?.code === 200) {
+                const voucherDataResponse = response.data.data[0];
+                const isValid = voucherDataResponse?.IsValid ?? voucherDataResponse?.isValid ?? false;
+                const voucher = voucherDataResponse?.Voucher ?? voucherDataResponse?.voucher;
+                const discountAmount = voucherDataResponse?.DiscountAmount ?? voucherDataResponse?.discountAmount ?? 0;
+                const messageText = voucherDataResponse?.Message ?? voucherDataResponse?.message;
+
+                if (isValid) {
+                    setCourseVouchers(prev => ({
+                        ...prev,
+                        [courseId]: {
+                            voucherCode: codeToUse,
+                            appliedVoucher: voucher,
+                            discountAmount: discountAmount, // Sử dụng discountAmount mới từ API, không cộng dồn
+                            applying: false
+                        }
+                    }));
+                    message.success(messageText || 'Áp dụng mã giảm giá thành công!');
+
+                    if (closePopover) {
+                        setPopoverVisible(prev => ({
+                            ...prev,
+                            [courseId]: false
+                        }));
+                    }
+                } else {
+                    throw new Error(messageText || 'Mã giảm giá không hợp lệ');
+                }
+            } else {
+                throw new Error(response.data?.message || 'Mã giảm giá không hợp lệ');
+            }
+        } catch (err) {
+            console.error("Lỗi khi áp dụng voucher:", err);
+            const errorMessage = err.response?.data?.message || err.message || "Không thể áp dụng mã giảm giá. Vui lòng thử lại.";
+            message.error(errorMessage);
+            setCourseVouchers(prev => ({
+                ...prev,
+                [courseId]: {
+                    ...prev[courseId],
+                    appliedVoucher: null,
+                    discountAmount: 0,
+                    applying: false
+                }
+            }));
+        }
+    }, [courseVouchers, cart?.cartItems]);
+
+    // Remove voucher handler
+    const handleRemoveCourseVoucher = useCallback((courseId) => {
+        setCourseVouchers(prev => {
+            const newState = { ...prev };
+            // Reset về state rỗng thay vì xóa hoàn toàn
+            newState[courseId] = {
+                voucherCode: '',
+                appliedVoucher: null,
+                discountAmount: 0,
+                applying: false
+            };
+            return newState;
+        });
+        message.info('Đã xóa mã giảm giá');
+    }, []);
+
+    // Voucher code change handler
+    const handleCourseVoucherCodeChange = useCallback((courseId, value) => {
+        setCourseVouchers(prev => ({
+            ...prev,
+            [courseId]: {
+                ...prev[courseId],
+                voucherCode: value.toUpperCase(),
+                appliedVoucher: null,
+                discountAmount: 0
+            }
+        }));
+    }, []);
+
+    // Popover change handler
+    const handlePopoverChange = useCallback((courseId, visible) => {
+        setPopoverVisible(prev => ({
+            ...prev,
+            [courseId]: visible
+        }));
+    }, []);
+
+    // Checkout handler
+    const handleCheckout = useCallback(async () => {
+        if (!cart?.cartItems?.length) {
+            message.warning('Giỏ hàng trống');
+            return;
+        }
+
+        if (finalPrice < 0) {
+            message.warning('Tổng tiền không hợp lệ');
+            return;
+        }
+
+        try {
+            console.log('Starting checkout process...', { finalPrice, totalDiscount, cartItemsCount: cart.cartItems.length });
+
+            // Prepare payment items
+            const paymentItems = cart.cartItems.map(item => {
+                const courseId = getCourseId(item);
+                const voucherData = courseVouchers[courseId];
+                const itemFinalPrice = item.price - (voucherData?.discountAmount || 0);
+                return {
+                    courseId: courseId,
+                    price: item.price, // Original price
+                    finalPrice: itemFinalPrice, // Price after discount
+                    voucherCode: voucherData?.voucherCode || null,
+                    voucherId: voucherData?.appliedVoucher?.id || null,
+                    cartItemId: item.id
+                };
+            });
+
+            console.log('Payment items prepared:', paymentItems);
+
+            // Create payment
+            const paymentResponse = await paymentAPI.createCartPayment(
+                paymentItems,
+                finalPrice,
+                totalDiscount
+            );
+
+            console.log('Payment response:', paymentResponse);
+
+            if (!paymentResponse) {
+                throw new Error('Không nhận được phản hồi từ server');
+            }
+
+            // Check both Success (C#) and success (JavaScript) property names
+            const isSuccess = paymentResponse?.Success || paymentResponse?.success;
+            const isFreeCart = paymentResponse?.IsFreeCart || paymentResponse?.isFreeCart;
+            const checkoutUrl = paymentResponse?.CheckoutUrl || paymentResponse?.checkoutUrl;
+            const responseMessage = paymentResponse?.Message || paymentResponse?.message;
+
+            if (isSuccess) {
+                if (isFreeCart) {
+                    // Free cart - enrollment already done, just show success toast
+                    toast.success(responseMessage || 'Khóa học miễn phí đã được kích hoạt!');
+                    message.success(responseMessage || 'Đăng ký khóa học thành công!');
+                    // Refresh cart to show empty state
+                    fetchCart();
+                } else if (checkoutUrl) {
+                    // Redirect to PayOS checkout
+                    window.location.href = checkoutUrl;
+                } else {
+                    throw new Error(responseMessage || 'Không thể tạo thanh toán');
+                }
+            } else {
+                throw new Error(responseMessage || 'Không thể tạo thanh toán');
+            }
+        } catch (error) {
+            console.error('Error during checkout:', error);
+            message.error(error.response?.data?.message || error.message || 'Không thể tạo thanh toán. Vui lòng thử lại.');
+        }
+    }, [cart, finalPrice, totalDiscount, courseVouchers, fetchCart]);
+
+    // Early returns
     if (!accountId) {
         return <GuestCartView />;
     }
-    
+
     if (loading) {
         return <Spin tip="Đang tải giỏ hàng..." fullscreen />;
     }
 
     if (error) {
-        return <Typography.Title level={3} style={{ textAlign: 'center', color: 'red' }}>{error}</Typography.Title>;
+        return (
+            <Typography.Title level={3} style={{ textAlign: 'center', color: 'red' }}>
+                {error}
+            </Typography.Title>
+        );
     }
 
-    if (!cart || !cart.cartItems || cart.cartItems.length === 0) {
+    if (!cart?.cartItems?.length) {
         return <Empty description="Giỏ hàng của bạn trống" style={{ marginTop: '50px' }} />;
     }
 
-    // --- GIAO DIỆN ĐÃ THIẾT KẾ LẠI ---
-    const primaryColor = '#FCCD04'; // Màu tím chủ đạo
-
     return (
-        <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', background: '#fff' }}>
-            <Typography.Title level={2} style={{ marginBottom: '20px' }}>
+        <div style={CART_STYLES.container}>
+            <Typography.Title level={2} style={{ marginBottom: '24px', fontWeight: 600 }}>
                 Giỏ hàng
             </Typography.Title>
 
-            <Row gutter={[48, 24]}>
-
+            <Row gutter={[32, 24]}>
                 {/* Cột danh sách item */}
                 <Col xs={24} lg={16}>
-                    <Typography.Title level={5} style={{ fontWeight: 400, marginBottom: '20px' }}>
+                    <Typography.Text type="secondary" style={{ fontSize: '14px', marginBottom: '16px', display: 'block' }}>
                         {cart.cartItems.length} khóa học trong giỏ hàng
-                    </Typography.Title>
+                    </Typography.Text>
 
                     <List
                         itemLayout="vertical"
                         dataSource={cart.cartItems}
-                        renderItem={(item) => (
-                            <List.Item
-                                key={item.id}
-                                style={{ padding: '16px 0' }}
-                            >
-                                <Row gutter={[16, 16]} wrap={false}>
-                                    {/* Ảnh */}
-                                    <Col flex="120px">
-                                        <Image
-                                            src={item.course.image}
-                                            alt={item.course.title}
-                                            preview={false}
-                                            style={{
-                                                width: '120px',
-                                                height: '70px',
-                                                objectFit: 'cover',
-                                                border: '1px solid #d9d9d9'
-                                            }}
-                                        />
-                                    </Col>
-
-                                    {/* Thông tin khóa học (Tên, tác giả, rating...) */}
-                                    <Col flex="auto" style={{ minWidth: '200px' }}>
-                                        <Space direction="vertical" size="small">
-                                            <Typography.Title level={5} style={{ margin: 0, fontWeight: 700 }} ellipsis={{ rows: 2 }}>
-                                                {item.course.title}
-                                            </Typography.Title>
-
-                                            <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                                                {/* SỬA: Dùng lecturerName từ API */}
-                                                Giáo viên:  {item.course.lecturerName}
-                                            </Typography.Text>
-
-                                            {/* Hàng Rating (ĐÃ SỬA) */}
-                                            <Space size="small" align="center" wrap>
-                                                {/* ẨN: isBestseller (Không có trong API) */}
-
-                                                <Typography.Text strong style={{ color: '#b4690e', fontSize: '14px' }}>{item.course.rating}</Typography.Text>
-                                                <Rate disabled allowHalf value={item.course.rating} style={{ fontSize: '14px', position: 'relative', top: '-2px' }} />
-
-                                                {/* SỬA: Dùng enrollmentCount và đổi text */}
-                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                                                    ({formatNumber(item.course.enrollmentCount)} học viên)
-                                                </Typography.Text>
-                                            </Space>
-
-                                            {/* ẨN: Hàng Metadata (totalHours, lectureCount, level không có trong API) */}
-
-                                        </Space>
-                                    </Col>
-
-                                    {/* Nút (Xóa,...) */}
-                                    <Col flex="150px" style={{ textAlign: 'right' }}>
-                                        <Space direction="vertical" align="end" size={0}>
-                                            <Button
-                                                type="link"
-                                                danger
-                                                onClick={() => handleRemoveItem(item.id)}
-                                                style={{ padding: '4px 0', height: 'auto' }}
-                                            >
-                                                Xóa
-                                            </Button>
-                                        </Space>
-                                    </Col>
-
-                                    {/* Giá */}
-                                    <Col flex="120px" style={{ textAlign: 'right' }}>
-                                        <Typography.Title level={4} style={{ margin: 0, color: primaryColor, whiteSpace: 'nowrap' }}>
-                                            {formatPrice(item.price)}
-                                        </Typography.Title>
-                                    </Col>
-                                </Row>
-                            </List.Item>
-                        )}
+                        split={true}
+                        renderItem={(item) => {
+                            const courseId = getCourseId(item);
+                            return (
+                                <CartItem
+                                    key={item.id}
+                                    item={item}
+                                    courseVouchers={courseVouchers}
+                                    availableVouchers={availableVouchers[courseId] || []}
+                                    loadingVouchers={loadingVouchers[courseId]}
+                                    popoverVisible={Boolean(popoverVisible[courseId])}
+                                    primaryColor={PRIMARY_COLOR}
+                                    onRemoveItem={handleRemoveItem}
+                                    onApplyVoucher={handleApplyCourseVoucher}
+                                    onRemoveVoucher={handleRemoveCourseVoucher}
+                                    onVoucherCodeChange={handleCourseVoucherCodeChange}
+                                    onPopoverChange={handlePopoverChange}
+                                />
+                            );
+                        }}
                     />
                 </Col>
 
-                {/* Cột tổng tiền (Không thay đổi) */}
+                {/* Cột tổng tiền */}
                 <Col xs={24} lg={8}>
-                    <div style={{ position: 'sticky', top: '24px' }}>
-                        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-
-                            <Typography.Text type="secondary" style={{ fontSize: '16px', fontWeight: 700 }}>Tổng:</Typography.Text>
-
-                            <Typography.Title level={2} style={{ margin: 0, marginTop: '-10px', lineHeight: 1.2 }}>
-                                {formatPrice(totalPrice)}
-                            </Typography.Title>
-
-                            <Button
-                                type="primary"
-                                size="large"
-                                block
-                                style={{
-                                    backgroundColor: primaryColor,
-                                    borderColor: primaryColor,
-                                    height: '48px',
-                                    fontWeight: 700
-                                }}
-                            >
-                                Tiến hành thanh toán
-                            </Button>
-
-                            <Typography.Text type="secondary" style={{ fontSize: '12px', textAlign: 'center', display: 'block' }}>
-                                Bạn sẽ không bị tính phí ngay bây giờ
-                            </Typography.Text>
-
-                            <Divider />
-
-                        </Space>
+                    <div style={{ position: 'sticky', top: '24px', marginTop: '40px' }}>
+                        <PriceSummary
+                            totalPrice={totalPrice}
+                            totalDiscount={totalDiscount}
+                            finalPrice={finalPrice}
+                            primaryColor={PRIMARY_COLOR}
+                            onCheckout={handleCheckout}
+                        />
                     </div>
                 </Col>
-
             </Row>
         </div>
     );

@@ -12,6 +12,9 @@ namespace SkillUp.Services.Interfaces
 
         Task<bool> DeleteQuizAsync(Guid quizId, Guid accountId);
         Task<QuizDetailDTO?> GetQuizDetailAsync(Guid quizId, Guid accountId);
-        Task<QuizStartDto> StartQuizAsync(Guid quizId, Guid studentId);
+        Task<QuizStartDto> StartQuizAsync(Guid quizId, Guid accId);
+
+        Task<QuizResultSummaryDto> SubmitQuizAsync(Guid submissionId, QuizSubmitDto submitDto, Guid accId);
+        Task<QuizResultDetailDto> GetQuizResultDetailAsync(Guid submissionId, Guid accountId);
     }
 }

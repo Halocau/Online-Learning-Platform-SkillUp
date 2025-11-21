@@ -1,11 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
 import { clearGuestCart } from "@/utils/guestCart";
-import { ShoppingCart, Bell, Search } from "lucide-react";
+import { courseAPI } from "@/api/courseAPI";
 import avatar from "../../assets/logo_skillup.png";
+import { Bell, Search, ShoppingCart } from "lucide-react";
+
+const useDebounce = (value, delay = 300) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+const formatCoursePrice = (price) => {
+  if (price === 0) return "Miễn phí";
+  if (typeof price === "number") {
+    return `₫${price.toLocaleString("vi-VN")}`;
+  }
+  return "Đang cập nhật";
+};
+
 function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -17,6 +38,11 @@ function Header() {
   const { cartCount } = useCart();
   const accessToken = localStorage.getItem("accessToken");
   const isAuthenticated = !!accessToken;
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchWrapperRef = useRef(null);
+  const debouncedQuery = useDebounce(searchQuery);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -32,12 +58,14 @@ function Header() {
 
         if (res.data.code === 200) {
           const userData = res.data.data[0];
-          const updatedUser = {
-            ...user,
-            fullname: userData.fullName,
-          };
-          setUser(updatedUser);
-          localStorage.setItem("user", JSON.stringify(updatedUser));
+          setUser((prev) => {
+            const updatedUser = {
+              ...(prev || {}),
+              fullname: userData.fullName,
+            };
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+            return updatedUser;
+          });
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -62,6 +90,65 @@ function Header() {
     };
   }, [accessToken]);
 
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setShowSuggestions(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const fetchCourses = async () => {
+      try {
+        setIsSearching(true);
+        const response = await courseAPI.searchCourses(debouncedQuery, 5);
+        if (isCancelled) return;
+        const payload = Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+        setSearchResults(payload);
+        setShowSuggestions(true);
+      } catch (error) {
+        if (!isCancelled) {
+          console.error("Search suggestion error:", error);
+          setSearchResults([]);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsSearching(false);
+        }
+      }
+    };
+
+    fetchCourses();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setShowSuggestions(false);
+    }
+  }, [searchQuery]);
+
   const handleLogout = async () => {
     try {
       await axiosInstance.post(API_ENDPOINTS.LOGOUT);
@@ -81,8 +168,11 @@ function Header() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    if (!searchQuery.trim()) return;
+
+    if (searchResults.length > 0) {
+      navigate(`/course/${searchResults[0].id}`);
+      setShowSuggestions(false);
     }
   };
 

@@ -11,13 +11,11 @@ public partial class QuizAnswerSubmission
 
     public Guid QuestionBankId { get; set; }
 
-    public Guid SelectedAnswerId { get; set; }
-
     public bool? IsCorrect { get; set; }
 
     public virtual QuestionBank QuestionBank { get; set; } = null!;
 
-    public virtual AnswerBank SelectedAnswer { get; set; } = null!;
+    public virtual ICollection<StudentSelectedAnswer> StudentSelectedAnswers { get; set; } = new List<StudentSelectedAnswer>();
 
     public virtual QuizSubmission Submission { get; set; } = null!;
 }

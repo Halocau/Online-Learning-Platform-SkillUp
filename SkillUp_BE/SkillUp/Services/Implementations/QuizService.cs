@@ -3,6 +3,7 @@ using SkillUp.BussinessObjects.DTOs.DoQuiz;
 using SkillUp.BussinessObjects.DTOs.Question;
 using SkillUp.BussinessObjects.DTOs.Quiz;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
 using System.Text;
@@ -16,13 +17,23 @@ namespace SkillUp.Services.Implementations
         private readonly ISectionRepository _sectionRepository;
         private readonly IQuizSubmissionRepository _quizSubmissionRepository;
         private readonly IStudentRepository _studentRepository;
-        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository)
+        private readonly IAnswerBankRepository _answerBankRepository;
+        private readonly IQuizAnswerSubmissionRepository _quizAnswerSubmissionRepository;
+        private readonly IStudentSelectedAnswersRepository _studentSelectedAnswersRepository;
+        private readonly IQuestionBankRepository _questionBankRepository;
+        private readonly IStudentProgressRepository _studentProgressRepository;
+        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository, IAnswerBankRepository answerBankRepository, IQuizAnswerSubmissionRepository quizAnswerSubmissionRepository, IStudentSelectedAnswersRepository studentSelectedAnswersRepository, IQuestionBankRepository questionBankRepository, IStudentProgressRepository studentProgressRepository)
         {
             _quizRepository = quizRepository;
             _lecturerRepository = lecturerRepository;
             _sectionRepository = sectionRepository;
             _quizSubmissionRepository = quizSubmissionRepository;
             _studentRepository = studentRepository;
+            _answerBankRepository = answerBankRepository;
+            _quizAnswerSubmissionRepository = quizAnswerSubmissionRepository;
+            _studentSelectedAnswersRepository = studentSelectedAnswersRepository;
+            _questionBankRepository = questionBankRepository;
+            _studentProgressRepository = studentProgressRepository;
         }
 
         public async Task<Guid> CreateQuizAsync(CreateQuizDTO dto, Guid accId)
@@ -229,6 +240,199 @@ namespace SkillUp.Services.Implementations
                 Title = quiz.Title,
                 Timer = quiz.Timer,
                 Questions = questionDtos
+            };
+        }
+        public async Task<QuizResultSummaryDto> SubmitQuizAsync(Guid submissionId, QuizSubmitDto submitDto, Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null)
+            {
+                throw new Exception("Không tìm thấy hồ sơ sinh viên cho tài khoản này.");
+            }
+            Guid studentId = student.Id;
+
+            var submission = await _quizSubmissionRepository.GetByIdAsync(submissionId);
+            if (submission == null || submission.StudentId != studentId)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền nộp bài quiz này.");
+            }
+            if (submission.EndedAt != null)
+            {
+                throw new Exception("Bài quiz này đã được nộp trước đó.");
+            }
+
+            var quiz = await _quizRepository.GetQuizByIdAsync(submission.QuizId);
+            if (quiz == null)
+            {
+                throw new Exception("Không tìm thấy bài quiz.");
+            }
+
+            decimal totalRawScore = 0;
+            int totalQuestions = submitDto.Answers.Count;
+
+            var answerSubmissionsToSave = new List<QuizAnswerSubmission>();
+            var selectedAnswersToSave = new List<StudentSelectedAnswer>();
+
+            foreach (var studentAnswer in submitDto.Answers)
+            {
+                var allAnswersForQuestion = await _answerBankRepository.GetActiveAnswersForQuestionAsync(studentAnswer.QuestionId);
+
+                var correctDbIds = allAnswersForQuestion
+                    .Where(a => a.IsCorrect)
+                    .Select(a => a.Id)
+                    .ToHashSet();
+
+                var studentSelectedIds = new HashSet<Guid>(studentAnswer.SelectedAnswerIds);
+
+                decimal questionScore = 0;
+                int totalCorrectOptions = correctDbIds.Count;
+
+                if (totalCorrectOptions > 0)
+                {
+                    decimal pointsPerCorrectOption = 1.0m / totalCorrectOptions;
+                    int correctlyChosenCount = studentSelectedIds.Count(id => correctDbIds.Contains(id));
+                    int incorrectlyChosenCount = studentSelectedIds.Count(id => !correctDbIds.Contains(id));
+
+                    decimal scoreForThisQuestion = (correctlyChosenCount * pointsPerCorrectOption) - (incorrectlyChosenCount * pointsPerCorrectOption);
+
+                    questionScore = Math.Max(0, scoreForThisQuestion);
+                }
+
+                totalRawScore += questionScore;
+
+                bool isQuestionFullyCorrect = correctDbIds.SetEquals(studentSelectedIds);
+
+                var newAnswerSubmission = new QuizAnswerSubmission
+                {
+                    Id = Guid.NewGuid(),
+                    SubmissionId = submissionId,
+                    QuestionBankId = studentAnswer.QuestionId,
+                    IsCorrect = isQuestionFullyCorrect
+                };
+                answerSubmissionsToSave.Add(newAnswerSubmission);
+
+                foreach (var selectedId in studentAnswer.SelectedAnswerIds)
+                {
+                    selectedAnswersToSave.Add(new StudentSelectedAnswer
+                    {
+                        Id = Guid.NewGuid(),
+                        QuizAnswerSubmissionId = newAnswerSubmission.Id,
+                        AnswerBankId = selectedId
+                    });
+                }
+            }
+
+            decimal finalPercentage = (totalQuestions > 0) ? ((totalRawScore / totalQuestions) * 100) : 0;
+
+            submission.EndedAt = DateTime.Now;
+            submission.Score = finalPercentage;
+
+            _quizSubmissionRepository.Update(submission);
+
+            await _quizAnswerSubmissionRepository.AddRangeAsync(answerSubmissionsToSave);
+            await _studentSelectedAnswersRepository.AddRangeAsync(selectedAnswersToSave);
+
+            //cập nhật progress khi pass quiz
+            bool isPassed = (submission.Score >= quiz.PassPercent);
+
+            if (isPassed)
+            {
+                var quizFull = await _quizRepository.GetQuizWithSectionAndCourseAsync(quiz.Id);
+
+                if (quizFull != null && quizFull.Section != null)
+                {
+                    var courseId = quizFull.Section.CourseId;
+
+                    var existingProgress = await _studentProgressRepository.GetByStudentAndQuizAsync(studentId, quiz.Id);
+
+                    if (existingProgress == null)
+                    {
+                        var newProgress = new StudentProgress
+                        {
+                            Id = Guid.NewGuid(),
+                            StudentId = studentId,
+                            CourseId = courseId,
+                            QuizId = quiz.Id,
+                            LessonId = null 
+                        };
+                        await _studentProgressRepository.AddAsync(newProgress);
+                    }
+                }
+            }
+            await _quizRepository.SaveChangesAsync();
+
+            return new QuizResultSummaryDto
+            {
+                SubmissionId = submission.Id,
+                Score = submission.Score,
+                StartedAt = submission.StartedAt,
+                EndedAt = submission.EndedAt,
+                IsPassed = (submission.Score >= quiz.PassPercent)
+            };
+        }
+        public async Task<QuizResultDetailDto> GetQuizResultDetailAsync(Guid submissionId, Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null)
+            {
+                throw new Exception("Không tìm thấy sinh viên.");
+            }
+
+            var submission = await _quizSubmissionRepository.GetSubmissionWithDetailsAsync(submissionId, student.Id);
+            if (submission == null)
+            {
+                throw new Exception("Không tìm thấy lượt làm bài này hoặc bạn không có quyền xem.");
+            }
+
+            var answerSubmissions = await _quizAnswerSubmissionRepository.GetBySubmissionIdAsync(submissionId);
+
+            var allSelectedAnswers = await _studentSelectedAnswersRepository.GetSelectedAnswersBySubmissionIdAsync(submissionId);
+
+            var studentChoiceSet = allSelectedAnswers.Select(sa => sa.AnswerBankId).ToHashSet();
+
+            var questionIds = answerSubmissions.Select(x => x.QuestionBankId).ToList();
+            var questionsData = await _questionBankRepository.GetQuestionsWithAnswersAsync(questionIds);
+
+            var detailedQuestions = new List<QuestionResultDetailDto>();
+
+            foreach (var qSub in answerSubmissions)
+            {
+                var question = questionsData.FirstOrDefault(q => q.Id == qSub.QuestionBankId);
+                if (question == null) continue;
+
+                var answerDtos = question.AnswerBanks.Select(a =>
+                {                 
+                    bool isSelected = studentChoiceSet.Contains(a.Id);
+
+                    return new AnswerResultDetailDto
+                    {
+                        AnswerId = a.Id,
+                        AnswerName = a.AnswerName,
+                        WasSelected = isSelected,
+                        IsCorrect = isSelected && a.IsCorrect
+                    };
+                }).ToList();
+
+                detailedQuestions.Add(new QuestionResultDetailDto
+                {
+                    QuestionId = question.Id,
+                    Title = question.Title,
+                    Image = question.Image,
+                    Type = question.Type,
+                    IsQuestionCorrect = qSub.IsCorrect ?? false,
+                    AllAnswers = answerDtos
+                });
+            }
+
+            return new QuizResultDetailDto
+            {
+                SubmissionId = submission.Id,
+                QuizTitle = submission.Quiz.Title,
+                QuizDescription = submission.Quiz.Description,
+                Score = submission.Score,
+                EndedAt = submission.EndedAt,
+                IsPassed = (submission.Score >= submission.Quiz.PassPercent),
+                Questions = detailedQuestions
             };
         }
     }

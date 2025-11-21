@@ -17,5 +17,5 @@ public partial class AnswerBank
 
     public virtual QuestionBank QuestionBank { get; set; } = null!;
 
-    public virtual ICollection<QuizAnswerSubmission> QuizAnswerSubmissions { get; set; } = new List<QuizAnswerSubmission>();
+    public virtual ICollection<StudentSelectedAnswer> StudentSelectedAnswers { get; set; } = new List<StudentSelectedAnswer>();
 }

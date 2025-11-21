@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Table, Button, Space, Tag, Input, Segmented, Tooltip, Select } from 'antd';
-import { ReloadOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
 import QuestionBankViewModal from '@/components/QuestionBank/QuestionBankViewModal';
 import QuestionBankEditModal from '@/components/QuestionBank/QuestionBankEditModal';
 import QuestionBankCreateModal from '@/components/QuestionBank/QuestionBanKCreateModal';
+import QuestionBankExcelModal from '@/components/QuestionBank/QuestionBankExcelModal';
 
 const PAGE_SIZE = 10;
 
@@ -36,6 +37,7 @@ export default function ManageQuestionBank() {
     const [detailOpen, setDetailOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
+    const [importOpen, setImportOpen] = useState(false);
 
     const [detailCode, setDetailCode] = useState(null);
     const [questionBankObj, setQuestionBankObj] = useState(null);
@@ -98,33 +100,40 @@ export default function ManageQuestionBank() {
         fetchCourses();
     }, [fetchCourses]);
 
-    // This effect runs when 'fetchSections' (or courseId) changes
     useEffect(() => {
         if (courseId) {
             fetchSections();
+        } else {
+            setSections([]);
         }
-    }, [fetchSections, courseId]);
+    }, [courseId, fetchSections]);
+
 
     // This effect runs when 'fetchQuestionBank' (or sectionId/courseId) changes
     useEffect(() => {
         if (selectedSectionId) {
             fetchQuestionBank();
+        } else {
+            setQuestionBanks([]);
         }
     }, [fetchQuestionBank, selectedSectionId]);
 
     useEffect(() => {
-        // Auto-select the first course if not already selected
-        if (!courseId && courses.length > 0) {
+        if (courses.length > 0 && !courseId) {
             setCourseId(courses[0].id);
         }
-    }, [courses, courseId]);
+    }, [courses]);
 
-    // Add this hook after your component definition
+
     useEffect(() => {
         if (sections.length > 0) {
             setSelectedSectionId(sections[0].id);
+        } else {
+            setSelectedSectionId(null);
         }
-    }, [sections, courseId]);
+    }, [sections]);
+
+
 
     // Tìm kiếm phía client
     const displayed = useMemo(() => {
@@ -192,7 +201,6 @@ export default function ManageQuestionBank() {
 
     const handleCreate = async (newQuestion) => {
         try {
-            console.log(newQuestion);
             const url = API_ENDPOINTS.QUESTION_BANK_CREATE.replace('{sectionId}', selectedSectionId);
             const response = await axiosInstance.post(url, newQuestion, {
                 params: {
@@ -214,6 +222,38 @@ export default function ManageQuestionBank() {
             toast.error('Không thể tạo câu hỏi.');
         }
     }
+
+    const handleImport = async (file) => {
+        // Your import handler logic
+        console.log("Selected Excel file:", file);
+        try {
+            await uploadQuizExcel(file);
+            console.log("Nhập câu hỏi thành công!");
+            toast.success('Nhập câu hỏi thành công từ file Excel.');
+            setImportOpen(false);
+            fetchQuestionBank();
+        } catch (err) {
+            console.log("Nhập thất bại!");
+            console.log(err);
+            toast.error('Nhập câu hỏi thất bại từ file Excel.');
+        }
+    };
+    const uploadQuizExcel = async (file) => {
+        const formData = new FormData();
+        formData.append("file", file); // must match backend param name
+        return axiosInstance.post(
+            `http://localhost:5120/api/QuestionBank/add-by-excel`,
+            formData,
+            {
+                params: {
+                    sectionId: selectedSectionId,
+                },
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }
+        );
+    };
 
     const clearFilters = () => setFilteredInfo({});
     const clearAll = () => { setFilteredInfo({}); setSortedInfo({}); setSearch(''); };
@@ -317,14 +357,22 @@ export default function ManageQuestionBank() {
                         ))}
                     </ul>
                 ) : (
-                    <div className="text-gray-500 text-sm">Không có chương nào</div>
+                    <Button
+                        type="dashed"
+                        icon={<PlusOutlined />}
+                        onClick={() => navigate(`/lecturer/courses/${courseId}`)}
+                        style={{ marginTop: "8px", width: "100%" }}
+                    >
+                        Thêm chương mới
+                    </Button>
                 )}
             </div>
 
             {/* MAIN CONTENT */}
             <div className="flex-1 bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-3">
-                    <div className="flex items-center gap-3">
+
+                    <div className="flex items-center gap-3 flex-wrap">
                         <Input
                             allowClear
                             prefix={<SearchOutlined />}
@@ -333,27 +381,33 @@ export default function ManageQuestionBank() {
                             onChange={(e) => setSearch(e.target.value)}
                             style={{ width: 320 }}
                         />
+
+                        <Space>
+                            {selectedSectionId ? (
+                                <>
+                                    <Button type="primary" onClick={() => setCreateOpen(true)}>
+                                        Tạo câu hỏi mới
+                                    </Button>
+
+                                    <Button onClick={() => setImportOpen(true)}>
+                                        Nhập từ Excel
+                                    </Button>
+                                </>
+                            ) : (
+                                <div></div>
+                            )}
+                        </Space>
                     </div>
-                    {selectedSectionId ? (
-                        <Button type="primary" onClick={() => setCreateOpen(true)}>
-                        Tạo câu hỏi mới
-                    </Button>
-                    ) : (
-                        <div></div>
-                    )
-                    }
-                    
 
                     <Space wrap>
                         <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>
                             Sắp xếp mới nhất
                         </Button>
-                        <Button onClick={clearFilters}>Xoá bộ lọc</Button>
-                        <Button onClick={clearAll}>Xoá tất cả</Button>
                         <Button icon={<ReloadOutlined />} onClick={refresh}>
                             Tải lại
                         </Button>
                     </Space>
+
                 </div>
 
                 <Table
@@ -391,6 +445,12 @@ export default function ManageQuestionBank() {
                     onClose={() => setCreateOpen(false)}
                     onCreate={handleCreate}
                     sectionId={selectedSectionId}
+                />
+
+                <QuestionBankExcelModal
+                    open={importOpen}
+                    onClose={() => setImportOpen(false)}
+                    onImport={handleImport}
                 />
             </div>
         </div >

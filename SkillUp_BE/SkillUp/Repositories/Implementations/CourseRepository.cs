@@ -30,7 +30,7 @@ namespace SkillUp.Repositories.Implementations
 
         public async Task<Course?> GetCourseByIdAsync(Guid courseId)
         {
-            return await _context.Courses.FirstOrDefaultAsync(c => c.Id == courseId);
+            return await _context.Courses.Include(c => c.Lecturer).FirstOrDefaultAsync(c => c.Id == courseId);
         }
 
         public async Task<List<Course>> GetCoursesBySubCategoryId(int id)
@@ -174,6 +174,33 @@ namespace SkillUp.Repositories.Implementations
                 .ToListAsync();
 
             return enrolledCourses;
+        }
+
+        public async Task<List<Course>> SearchCoursesAsync(string keyword, int limit)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return new List<Course>();
+            }
+
+            var pattern = $"%{keyword.Trim()}%";
+            var safeLimit = Math.Clamp(limit, 1, 50);
+
+            var query = _context.Courses
+                .Where(c => c.IsActive && c.Status == "Public")
+                .Include(c => c.Lecturer)
+                    .ThenInclude(l => l.Account)
+                .Include(c => c.SubCategory)
+                .Where(c =>
+                    EF.Functions.Like(c.Title, pattern) ||
+                    (c.Description != null && EF.Functions.Like(c.Description, pattern)) ||
+                    (c.Lecturer != null && c.Lecturer.Account != null && EF.Functions.Like(c.Lecturer.Account.Fullname, pattern)) ||
+                    (c.SubCategory != null && EF.Functions.Like(c.SubCategory.Name, pattern)))
+                .OrderByDescending(c => c.EnrollmentCount)
+                .ThenByDescending(c => c.Rating)
+                .Take(safeLimit);
+
+            return await query.ToListAsync();
         }
     }
 }
