@@ -47,7 +47,7 @@ const renderStars = (rating) => {
               ? "fill-[#FFD54F] text-[#FFD54F]"
               : i === fullStars && hasHalf
               ? "fill-[#FFD54F]/50 text-[#FFD54F]"
-              : "text-gray-300"
+              : "text-[#e3f6f5]"
           }`}
         />
       ))}
@@ -57,32 +57,41 @@ const renderStars = (rating) => {
 
 export default function TestimonialsSection() {
   return (
-    <section className="bg-gradient-to-br from-amber-50 to-yellow-50 py-16">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="bg-[#fffffe] py-12 lg:py-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <SectionTitle title="Đánh giá từ học viên" />
+        <p className="text-base text-[#2d334a] mb-8 max-w-2xl">
+          Khám phá những câu chuyện thành công và đánh giá từ các học viên đã trải nghiệm khóa học tại SkillUp.
+        </p>
+        
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {reviews.map((review, i) => (
             <Card
               key={i}
-              className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 rounded-3xl overflow-hidden"
+              className="bg-[#fffffe] border border-[#272343]/15 rounded-2xl shadow-sm hover:shadow-[0_18px_60px_rgba(39,35,67,0.12)] transition-all duration-300 hover:-translate-y-1"
             >
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={review.avatar}
-                    alt={review.name}
-                    className="w-12 h-12 rounded-full object-cover ring-2 ring-[#FFD54F]/20"
-                  />
+                  <div className="relative">
+                    <img
+                      src={review.avatar}
+                      alt={review.name}
+                      className="w-12 h-12 rounded-full object-cover ring-2 ring-[#e3f6f5]"
+                    />
+                    <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-[#FFD54F] ring-2 ring-[#fffffe]" />
+                  </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{review.name}</p>
-                    <p className="text-sm text-gray-500">{review.role}</p>
+                    <p className="font-semibold text-[#272343] tracking-tight">
+                      {review.name}
+                    </p>
+                    <p className="text-sm text-[#2d334a]">{review.role}</p>
                   </div>
                 </div>
 
                 <div>{renderStars(review.rating)}</div>
 
-                <p className="text-gray-700 italic text-sm leading-relaxed">
-                  “{review.quote}”
+                <p className="text-[#2d334a] text-sm leading-relaxed">
+                  "{review.quote}"
                 </p>
               </CardContent>
             </Card>

@@ -21,7 +21,8 @@ namespace SkillUp.Services.Implementations
         private readonly IQuizAnswerSubmissionRepository _quizAnswerSubmissionRepository;
         private readonly IStudentSelectedAnswersRepository _studentSelectedAnswersRepository;
         private readonly IQuestionBankRepository _questionBankRepository;
-        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository, IAnswerBankRepository answerBankRepository, IQuizAnswerSubmissionRepository quizAnswerSubmissionRepository, IStudentSelectedAnswersRepository studentSelectedAnswersRepository, IQuestionBankRepository questionBankRepository)
+        private readonly IStudentProgressRepository _studentProgressRepository;
+        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository, IAnswerBankRepository answerBankRepository, IQuizAnswerSubmissionRepository quizAnswerSubmissionRepository, IStudentSelectedAnswersRepository studentSelectedAnswersRepository, IQuestionBankRepository questionBankRepository, IStudentProgressRepository studentProgressRepository)
         {
             _quizRepository = quizRepository;
             _lecturerRepository = lecturerRepository;
@@ -32,6 +33,7 @@ namespace SkillUp.Services.Implementations
             _quizAnswerSubmissionRepository = quizAnswerSubmissionRepository;
             _studentSelectedAnswersRepository = studentSelectedAnswersRepository;
             _questionBankRepository = questionBankRepository;
+            _studentProgressRepository = studentProgressRepository;
         }
 
         public async Task<Guid> CreateQuizAsync(CreateQuizDTO dto, Guid accId)
@@ -330,6 +332,33 @@ namespace SkillUp.Services.Implementations
             await _quizAnswerSubmissionRepository.AddRangeAsync(answerSubmissionsToSave);
             await _studentSelectedAnswersRepository.AddRangeAsync(selectedAnswersToSave);
 
+            //cập nhật progress khi pass quiz
+            bool isPassed = (submission.Score >= quiz.PassPercent);
+
+            if (isPassed)
+            {
+                var quizFull = await _quizRepository.GetQuizWithSectionAndCourseAsync(quiz.Id);
+
+                if (quizFull != null && quizFull.Section != null)
+                {
+                    var courseId = quizFull.Section.CourseId;
+
+                    var existingProgress = await _studentProgressRepository.GetByStudentAndQuizAsync(studentId, quiz.Id);
+
+                    if (existingProgress == null)
+                    {
+                        var newProgress = new StudentProgress
+                        {
+                            Id = Guid.NewGuid(),
+                            StudentId = studentId,
+                            CourseId = courseId,
+                            QuizId = quiz.Id,
+                            LessonId = null 
+                        };
+                        await _studentProgressRepository.AddAsync(newProgress);
+                    }
+                }
+            }
             await _quizRepository.SaveChangesAsync();
 
             return new QuizResultSummaryDto

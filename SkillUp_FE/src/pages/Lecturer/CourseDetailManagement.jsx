@@ -23,8 +23,14 @@ function CourseDetailManagement() {
   const [activeTab, setActiveTab] = useState("landing");
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [pricingCompleted, setPricingCompleted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Track completion status explicitly
+  const [completionStatus, setCompletionStatus] = useState({
+    landing: false,
+    curriculum: false,
+    pricing: false,
+  });
 
   const tabs = [
     {
@@ -65,14 +71,9 @@ function CourseDetailManagement() {
       if (response.data.code === 200 && response.data.data.length > 0) {
         const courseData = response.data.data[0];
         setCourse(courseData);
-        if (options.pricingCompleted) {
-          setPricingCompleted(true);
-        } else if (
-          courseData.price !== null &&
-          courseData.price !== undefined
-        ) {
-          setPricingCompleted(true);
-        }
+
+        // Update completion status based on actual data
+        updateCompletionStatus(courseData, options);
       } else {
         toast.error("Không tìm thấy khóa học");
         navigate("/lecturer/courses");
@@ -96,6 +97,48 @@ function CourseDetailManagement() {
     }
   };
 
+  const updateCompletionStatus = (courseData, options = {}) => {
+    const newStatus = {
+      landing: checkLandingCompleted(courseData),
+      curriculum: checkCurriculumCompleted(courseData),
+      pricing: checkPricingCompleted(courseData, options),
+    };
+
+    setCompletionStatus(newStatus);
+  };
+
+  const checkLandingCompleted = (courseData) => {
+    return !!(
+      courseData.title &&
+      courseData.description &&
+      courseData.categoryName &&
+      courseData.subCategoryName
+    );
+  };
+
+  const checkCurriculumCompleted = (courseData) => {
+    // Must have at least one section
+    if (!courseData.sections || courseData.sections.length === 0) {
+      return false;
+    }
+
+    // At least one section must have at least one item (lesson or quiz)
+    const hasContent = courseData.sections.some(
+      (section) => section.items && section.items.length > 0
+    );
+
+    return hasContent;
+  };
+
+  const checkPricingCompleted = (courseData, options = {}) => {
+
+    if (options.pricingCompleted) {
+      return true;
+    }
+
+    return courseData.price !== null && courseData.price !== undefined;
+  };
+
   const handleBackToCourses = () => {
     navigate("/lecturer/courses");
   };
@@ -106,27 +149,13 @@ function CourseDetailManagement() {
 
     switch (tabId) {
       case "landing":
-        return !!(
-          course.title &&
-          course.description &&
-          course.categoryName &&
-          course.subCategoryName
-        );
+        return completionStatus.landing;
       case "curriculum":
-        return !!(
-          course.sections &&
-          course.sections.length > 0 &&
-          course.sections.some(
-            (section) => section.items && section.items.length > 0
-          )
-        );
+        return completionStatus.curriculum;
       case "pricing":
-        return (
-          pricingCompleted ||
-          (course.price !== null && course.price !== undefined)
-        );
+        return completionStatus.pricing;
       case "voucher":
-        return true;
+        return true; // Voucher is optional
       default:
         return false;
     }
@@ -139,6 +168,30 @@ function CourseDetailManagement() {
       isStepCompleted(tab.id)
     ).length;
     return Math.round((completedSteps / requiredTabs.length) * 100);
+  };
+
+  // Handle updates from child tabs - refresh immediately
+  const handleTabUpdate = async (options = {}) => {
+    try {
+      // Reload course data
+      const response = await courseAPI.getCourseDetail(courseId);
+
+      if (response.data.code === 200 && response.data.data.length > 0) {
+        const courseData = response.data.data[0];
+        setCourse(courseData);
+
+        // Update completion status
+        updateCompletionStatus(courseData, options);
+
+        // Show success feedback if needed
+        if (options.showSuccess) {
+          toast.success(options.successMessage || "Cập nhật thành công!");
+        }
+      }
+    } catch (error) {
+      console.error("Error refreshing course:", error);
+      // Don't show error to user, just log it
+    }
   };
 
   const handleSubmitForPreview = async () => {
@@ -188,36 +241,36 @@ function CourseDetailManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-[#fffffe]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải thông tin khóa học...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFD54F] mx-auto mb-4"></div>
+          <p className="text-[#2d334a]">Đang tải thông tin khóa học...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fffffe]">
       {/* Top Navigation Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+      <div className="bg-white border-b border-[#272343]/15 sticky top-0 z-30 shadow-sm backdrop-blur-xl bg-white/80">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 onClick={handleBackToCourses}
-                className="flex items-center gap-2 hover:bg-gray-100"
+                className="flex items-center gap-2 hover:bg-[#e3f6f5] rounded-full"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden md:inline">Quay lại khóa học</span>
               </Button>
-              <div className="border-l border-gray-300 h-8"></div>
+              <div className="border-l border-[#272343]/20 h-8"></div>
               <div>
-                <h1 className="text-lg md:text-xl font-bold text-gray-900 line-clamp-1">
+                <h1 className="text-lg md:text-xl font-bold text-[#272343] line-clamp-1 tracking-tight">
                   {course?.title || "Khóa học"}
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#2d334a]">
                   Chỉnh sửa chi tiết khóa học
                 </p>
               </div>
@@ -226,14 +279,14 @@ function CourseDetailManagement() {
             {/* Progress Badge */}
             <div className="hidden md:flex items-center gap-3">
               <div className="text-right">
-                <p className="text-xs text-gray-500 font-medium">
+                <p className="text-xs text-[#2d334a] font-medium tracking-tight">
                   Tiến độ hoàn thành
                 </p>
-                <p className="text-lg font-bold text-blue-600">{progress}%</p>
+                <p className="text-lg font-bold text-[#FFD54F]">{progress}%</p>
               </div>
-              <div className="w-32 bg-gray-200 rounded-full h-2.5">
+              <div className="w-32 bg-[#e3f6f5] rounded-full h-2.5">
                 <div
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-[#FFD54F] to-[#F4C430] h-2.5 rounded-full transition-all duration-500"
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
@@ -244,13 +297,13 @@ function CourseDetailManagement() {
         {/* Progress Bar for Mobile */}
         <div className="md:hidden px-6 pb-3">
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-gray-200 rounded-full h-2">
+            <div className="flex-1 bg-[#e3f6f5] rounded-full h-2">
               <div
-                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                className="bg-gradient-to-r from-[#FFD54F] to-[#F4C430] h-2 rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-            <span className="text-xs font-semibold text-blue-600 min-w-[40px] text-right">
+            <span className="text-xs font-semibold text-[#FFD54F] min-w-[40px] text-right">
               {progress}%
             </span>
           </div>
@@ -260,9 +313,9 @@ function CourseDetailManagement() {
       {/* Main Layout */}
       <div className="flex">
         {/* Left Sidebar */}
-        <div className="w-72 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)] sticky top-[73px] hidden lg:block shadow-sm">
+        <div className="w-72 bg-white border-r border-[#272343]/15 min-h-[calc(100vh-73px)] sticky top-[73px] hidden lg:block shadow-sm">
           <div className="p-4">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4 px-3">
+            <h2 className="text-xs font-semibold text-[#2d334a] uppercase mb-4 px-3 tracking-tight">
               Quản lý nội dung khóa học
             </h2>
             <nav className="space-y-2">
@@ -276,10 +329,10 @@ function CourseDetailManagement() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 group ${
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all duration-200 group ${
                       isActive
-                        ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 font-semibold shadow-sm border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-50 border border-transparent"
+                        ? "bg-gradient-to-r from-[#FFD54F]/20 to-[#FFD54F]/10 text-[#272343] font-semibold shadow-sm border border-[#FFD54F]/30"
+                        : "text-[#2d334a] hover:bg-[#e3f6f5] border border-transparent"
                     }`}
                   >
                     <div
@@ -287,8 +340,8 @@ function CourseDetailManagement() {
                         isCompleted
                           ? "bg-green-500 text-white"
                           : isActive
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-200 text-gray-600 group-hover:bg-gray-300"
+                          ? "bg-[#FFD54F] text-[#272343]"
+                          : "bg-[#e3f6f5] text-[#2d334a] group-hover:bg-[#bae8e8]"
                       }`}
                     >
                       {isCompleted ? (
@@ -303,15 +356,17 @@ function CourseDetailManagement() {
                         <Icon
                           className={`w-4 h-4 flex-shrink-0 ${
                             isActive
-                              ? "text-blue-600"
+                              ? "text-[#FFD54F]"
                               : isCompleted
                               ? "text-green-500"
-                              : "text-gray-400"
+                              : "text-[#2d334a]"
                           }`}
                         />
-                        <span className="text-sm">{tab.label}</span>
+                        <span className="text-sm tracking-tight">
+                          {tab.label}
+                        </span>
                         {!isRequired && (
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-[#2d334a]/60">
                             (Tùy chọn)
                           </span>
                         )}
@@ -327,19 +382,19 @@ function CourseDetailManagement() {
               })}
 
               <div className="pt-2">
-                <div className="border-t border-gray-200"></div>
+                <div className="border-t border-[#272343]/10"></div>
               </div>
             </nav>
 
             {/* Progress Summary */}
-            <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+            <div className="mt-6 p-4 bg-gradient-to-br from-[#e3f6f5]/60 to-[#bae8e8]/40 rounded-2xl border border-[#272343]/10">
+              <h3 className="text-sm font-semibold text-[#272343] mb-2 tracking-tight">
                 Tổng quan tiến độ
               </h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-600">Đã hoàn thành:</span>
-                  <span className="font-bold text-blue-600">
+                  <span className="text-[#2d334a]">Đã hoàn thành:</span>
+                  <span className="font-bold text-[#FFD54F]">
                     {
                       tabs.filter(
                         (tab) => tab.id !== "voucher" && isStepCompleted(tab.id)
@@ -349,8 +404,8 @@ function CourseDetailManagement() {
                   </span>
                 </div>
                 {progress === 100 && (
-                  <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded text-xs text-green-700 font-medium text-center">
-                    Tất cả đã hoàn thành! Có thể đề xuất khóa học
+                  <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded-lg text-xs text-green-700 font-medium text-center">
+                    ✓ Tất cả đã hoàn thành! Có thể đề xuất khóa học
                   </div>
                 )}
               </div>
@@ -360,17 +415,17 @@ function CourseDetailManagement() {
             <button
               onClick={handleSubmitForPreview}
               disabled={progress < 100 || submitting}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 mt-2 ${
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all duration-200 mt-2 ${
                 progress === 100
                   ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 text-green-800 cursor-pointer"
-                  : "bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+                  : "bg-[#e3f6f5]/40 border border-[#272343]/10 text-[#2d334a]/60 cursor-not-allowed opacity-60"
               }`}
             >
               <div
                 className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 ${
                   progress === 100
                     ? "bg-green-500 text-white"
-                    : "bg-gray-300 text-gray-500"
+                    : "bg-[#e3f6f5] text-[#2d334a]/60"
                 }`}
               >
                 {submitting ? (
@@ -380,11 +435,11 @@ function CourseDetailManagement() {
                 )}
               </div>
               <div className="flex-1">
-                <span className="text-sm font-semibold">
+                <span className="text-sm font-semibold tracking-tight">
                   {submitting ? "Đang gửi..." : "Đề xuất khóa học"}
                 </span>
                 {progress < 100 && (
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-[#2d334a]/60 mt-0.5">
                     Hoàn thành {100 - progress}% để đề xuất
                   </p>
                 )}
@@ -399,7 +454,7 @@ function CourseDetailManagement() {
             <ActiveComponent
               course={course}
               courseId={courseId}
-              onUpdate={loadCourseDetail}
+              onUpdate={handleTabUpdate}
             />
           )}
         </div>

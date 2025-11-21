@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../../assets/logo_skillup.png";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
 import { clearGuestCart } from "@/utils/guestCart";
 import { courseAPI } from "@/api/courseAPI";
+import avatar from "../../assets/logo_skillup.png";
+import { Bell, Search, ShoppingCart } from "lucide-react";
 
 const useDebounce = (value, delay = 300) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -73,7 +74,6 @@ function Header() {
 
     fetchProfile();
 
-    // Listen to storage event (khi login thành công)
     const handleStorageChange = () => {
       const cachedUser = localStorage.getItem("user");
       if (cachedUser && cachedUser !== "null") {
@@ -151,20 +151,14 @@ function Header() {
 
   const handleLogout = async () => {
     try {
-      // Gọi API logout để revoke RefreshToken
-      // Backend lấy userId từ JWT token qua [Authorize]
       await axiosInstance.post(API_ENDPOINTS.LOGOUT);
     } catch {
       // Ignore error
     } finally {
-      // Xóa token ở client
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
-
-      // Clear guest cart khi logout
       clearGuestCart();
-
       setUser(null);
       setShowDropdown(false);
       toast.success("Đăng xuất thành công!");
@@ -183,260 +177,177 @@ function Header() {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-            <img src={logo} alt="SkillUp Logo" className="h-8 w-auto" />
+    <header className="border-b border-[#272343]/15 bg-[#fffffe]/80 backdrop-blur-xl sticky top-0 z-50">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex h-18 w-18 items-center justify-center rounded-lg bg-[#e3f6f5] ring-1 ring-[#272343]/10">
+            <span className="text-xs font-semibold tracking-tight text-[#272343]">
+              <img src={avatar} alt="SkillUp" />
+            </span>
+          </div>
+          {/* <div className="hidden sm:block">
+            <span className="text-lg font-semibold tracking-tight text-[#272343]">
+              SkillUp
+            </span>
+          </div> */}
+        </Link>
+
+        {/* Search Bar */}
+        <div className="flex-1 max-w-2xl mx-2 sm:mx-4">
+          <form onSubmit={handleSearch} className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm kiếm khóa học..."
+              className="w-full pl-10 pr-4 py-2 border border-[#272343]/15 rounded-full focus:outline-none focus:ring-2 focus:ring-[#FFD54F] focus:border-transparent bg-[#fffffe] text-sm"
+            />
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <Search className="w-4 h-4 text-[#2d334a]" />
+            </div>
+          </form>
+        </div>
+
+        {/* Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1">
+          <Link
+            to="/"
+            className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-3 py-1.5 rounded-full transition-all text-sm tracking-tight"
+          >
+            Trang chủ
+          </Link>
+          <Link
+            to="/forum"
+            className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-3 py-1.5 rounded-full transition-all text-sm tracking-tight"
+          >
+            Diễn đàn
+          </Link>
+          {isAuthenticated && user?.role === "Student" && (
+            <Link
+              to="/student/dashboard"
+              className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-3 py-1.5 rounded-full transition-all text-sm tracking-tight"
+            >
+              Dashboard
+            </Link>
+          )}
+          {isAuthenticated && (
+            <Link
+              to="/ticket"
+              className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-3 py-1.5 rounded-full transition-all text-sm tracking-tight"
+            >
+              Phiếu hỗ trợ
+            </Link>
+          )}
+        </nav>
+
+        {/* Right Menu */}
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+          {/* News Link */}
+          <Link
+            to="/news"
+            className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-3 py-1.5 rounded-full transition-all text-sm tracking-tight"
+          >
+            Tin tức
           </Link>
 
-          {/* Search Bar - Responsive */}
-          <div
-            className="flex-1 max-w-2xl mx-2 sm:mx-4"
-            ref={searchWrapperRef}
+          {/* Cart */}
+          <Link
+            to="/cart"
+            className="text-[#2d334a] hover:text-[#272343] transition-colors p-2 relative"
           >
-            <form onSubmit={handleSearch} className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => {
-                  if (searchResults.length > 0) setShowSuggestions(true);
+            <ShoppingCart className="w-5 h-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#FFD54F] text-[#272343] text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Auth Buttons */}
+          {isAuthenticated ? (
+            <div className="relative flex items-center space-x-3">
+              {/* Notification Bell */}
+              <button className="text-[#2d334a] hover:text-[#272343] transition-colors p-2 relative">
+                <Bell className="w-5 h-5" />
+              </button>
+
+              {/* User Avatar with Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => {
+                  if (window.dropdownHideTimeout)
+                    clearTimeout(window.dropdownHideTimeout);
+                  setShowDropdown(true);
                 }}
-                placeholder="Tìm kiếm khóa học..."
-                className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-gray-50 text-sm sm:text-base"
-              />
-              <div className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2">
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
-              {showSuggestions && (
-                <div className="absolute mt-2 left-0 right-0 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 p-3">
-                  {isSearching ? (
-                    <p className="text-center text-sm text-gray-500 py-3">
-                      Đang tìm khóa học...
-                    </p>
-                  ) : searchResults.length === 0 ? (
-                    <p className="text-center text-sm text-gray-500 py-3">
-                      Không tìm thấy khóa học phù hợp
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {searchResults.map((course) => (
-                        <Link
-                          key={course.id}
-                          to={`/course/${course.id}`}
-                          className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-50"
-                          onClick={() => setShowSuggestions(false)}
-                        >
-                          <img
-                            src={course.image}
-                            alt={course.title}
-                            className="w-12 h-12 rounded-lg object-cover border border-gray-100"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">
-                              {course.title}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {course.lecturerName || "SkillUp Instructor"}
-                            </p>
-                          </div>
-                          <span className="text-xs font-medium text-gray-700">
-                            {formatCoursePrice(course.price)}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                onMouseLeave={() => {
+                  window.dropdownHideTimeout = setTimeout(() => {
+                    setShowDropdown(false);
+                  }, 80);
+                }}
+              >
+                <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-[#e3f6f5] to-[#bae8e8] rounded-full flex items-center justify-center overflow-hidden ring-2 ring-[#272343]/10">
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.fullname}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-[#272343] font-semibold text-sm">
+                        {user?.fullname?.charAt(0).toUpperCase() || "U"}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )}
-            </form>
-          </div>
 
-          {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center space-x-1">
-            <Link
-              to="/"
-              className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
-            >
-              Trang chủ
-            </Link>
-            <Link
-              to="/forum"
-              className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
-            >
-              Diễn đàn
-            </Link>
+                {/* Dropdown Menu */}
+                {showDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 bg-[#fffffe] rounded-2xl shadow-[0_18px_60px_rgba(39,35,67,0.18)] border border-[#272343]/15 py-2 z-50 transition-all duration-200">
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-[#2d334a] hover:bg-[#e3f6f5] hover:text-[#272343] font-medium tracking-tight"
+                      >
+                        Hồ sơ của tôi
+                      </Link>
+                      <Link
+                        to="/my-courses"
+                        className="block px-4 py-2 text-sm text-[#2d334a] hover:bg-[#e3f6f5] hover:text-[#272343] font-medium tracking-tight"
+                      >
+                        Khóa học của tôi
+                      </Link>
+                    </div>
 
-            {isAuthenticated && (
-              <Link
-                to="/ticket"
-                className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
-              >
-                Phiếu hỗ trợ
-              </Link>
-            )}
-          </nav>
-
-          {/* Right Menu - Responsive */}
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-            {/* Business Link - Hidden on small screens */}
-            <Link
-              to="/news"
-              className="hidden md:block text-gray-700 hover:text-[#FFD54F] font-medium transition-colors text-sm"
-            >
-              Tin tức
-            </Link>
-            {isAuthenticated && user?.role === "Student" && (
-              <Link
-                to="/student/dashboard"
-                className="text-gray-700 hover:text-[#FFD54F] font-medium px-4 py-2 transition-colors text-sm"
-              >
-                Trang điều khiển
-              </Link>
-            )}
-            {/* Teach Link - Hidden on mobile */}
-            <Link
-              to="/teach"
-              className="hidden lg:block text-gray-700 hover:text-[#FFD500] font-medium transition-colors text-sm"
-            ></Link>
-
-
-            {/* Cart - Cho phép guest truy cập */}
-            <Link
-              to="/cart"
-              className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2 relative"
-            >
-              <svg
-                className="w-5 h-5 sm:w-6 sm:h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 8M7 13l2.5 8M13 13v8"
-                />
-              </svg>
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-
-            {/* Auth Buttons */}
-            {isAuthenticated ? (
-              <div className="relative flex items-center space-x-3">
-                {/* Notification Bell */}
-                <button className="text-gray-700 hover:text-[#FFD54F] transition-colors p-2 relative">
-                  <svg
-                    className="w-5 h-5 sm:w-6 sm:h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                    />
-                  </svg>
-                </button>
-
-                {/* User Avatar with Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => {
-                    if (window.dropdownHideTimeout)
-                      clearTimeout(window.dropdownHideTimeout);
-                    setShowDropdown(true);
-                  }}
-                  onMouseLeave={() => {
-                    window.dropdownHideTimeout = setTimeout(() => {
-                      setShowDropdown(false);
-                    }, 80);
-                  }}
-                >
-                  <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center overflow-hidden border-2 border-white shadow-md">
-                      {user?.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.fullname}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-white font-semibold text-sm sm:text-base">
-                          {user?.fullname?.charAt(0).toUpperCase() || "U"}
-                        </span>
-                      )}
+                    <div className="border-t border-[#272343]/15 pt-1">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium tracking-tight"
+                      >
+                        Đăng xuất
+                      </button>
                     </div>
                   </div>
-
-                  {/* Dropdown Menu */}
-                  {showDropdown && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 transition-all duration-200">
-                      <div className="py-1">
-                        <Link
-                          to="/profile"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Hồ sơ của tôi
-                        </Link>
-                        <Link
-                          to="/my-courses"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Khóa học của tôi
-                        </Link>
-                      </div>
-
-                      <div className="border-t border-gray-200 pt-1">
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium"
-                        >
-                          Đăng xuất
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="text-gray-700 hover:text-[#FFD500] font-medium transition-colors border border-gray-900 px-3 py-1.5 sm:px-4 sm:py-2 hover:bg-gray-50 text-sm"
-                >
-                  Đăng nhập
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-gray-900 text-white px-3 py-1.5 sm:px-4 sm:py-2 hover:bg-gray-800 transition-colors font-medium text-sm"
-                >
-                  Đăng ký
-                </Link>
-              </>
-            )}
-          </div>
+            </div>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="text-[#272343] hover:text-[#272343] font-medium transition-colors border border-[#272343]/15 px-3 py-1.5 rounded-full hover:bg-[#e3f6f5] text-sm tracking-tight"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/register"
+                className="bg-[#FFD54F] text-[#272343] px-4 py-1.5 rounded-full hover:bg-[#F4C430] transition-colors font-semibold text-sm tracking-tight shadow-sm"
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
