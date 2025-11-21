@@ -189,7 +189,6 @@ function LecturerDashboard() {
             </CardContent>
           </Card>
 
-          {/* Quick Links */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Thao tác nhanh</CardTitle>
@@ -210,44 +209,6 @@ function LecturerDashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Upcoming Section */}
-      <div className="mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sắp diễn ra</CardTitle>
-            <CardDescription>Các sự kiện sắp tới của bạn</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Upcoming Item */}
-              {[1, 2].map((item) => (
-                <div
-                  key={item}
-                  className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        Live Q&A Session
-                      </p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Thứ 5, 15:00 - 16:00
-                      </p>
-                    </div>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                      Sắp diễn ra
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Buổi hỏi đáp trực tiếp với 45 học viên
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-
 // src/components/HeroCarousel.jsx
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
@@ -8,77 +7,165 @@ import "swiper/css/pagination";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { PlayCircle, ArrowRight } from "lucide-react";
 
 export default function HeroCarousel() {
   const slides = [
     {
-      title: "Master tomorrow's skills today",
+      title: "Quản lý việc học của bạn hiệu quả hơn",
       subtitle:
-        "Power up your AI, career, and life skills with the most up-to-date, expert-led learning.",
+        "SkillUp giúp bạn nâng cao kỹ năng AI, sự nghiệp và cuộc sống với những khóa học được cập nhật và hướng dẫn bởi chuyên gia.",
       image:
         "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=1600&q=80",
-      button1: "Get started",
-      
+      stats: [
+        { label: "Học viên đang hoạt động", value: "12k+" },
+        { label: "Tỷ lệ hoàn thành", value: "89%" },
+        { label: "Khóa học được quản lý", value: "3.5k" },
+      ],
     },
     {
-      title: "Boost your career with tech skills",
-      subtitle: "Learn coding, design, marketing, and more from top mentors.",
+      title: "Nâng cao sự nghiệp với kỹ năng công nghệ",
+      subtitle:
+        "Học lập trình, thiết kế, marketing và nhiều hơn nữa từ các chuyên gia hàng đầu.",
       image:
         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80",
-      button1: "Explore Courses",
-      
+      stats: [
+        { label: "Khóa học chất lượng", value: "500+" },
+        { label: "Giảng viên", value: "200+" },
+        { label: "Đánh giá 5 sao", value: "95%" },
+      ],
     },
   ];
 
   return (
-    <section id="hero-section" className="w-full">
+    <section className="w-full border-b border-[#272343]/10 bg-gradient-to-b from-[#e3f6f5]/60 via-[#fffffe] to-[#bae8e8]/40">
       <Swiper
         modules={[Navigation, Pagination, Autoplay]}
         navigation
         pagination={{ clickable: true }}
-        autoplay={{ delay: 4000 }}
+        autoplay={{ delay: 5000 }}
         loop
-        className="rounded-3xl overflow-hidden"
+        className="hero-swiper"
       >
         {slides.map((slide, index) => (
           <SwiperSlide key={index}>
-            <div
-              className="relative h-[500px] flex items-center justify-center text-white"
-              style={{
-                backgroundImage: `url(${slide.image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {/* Dark gradient overlay for better readability */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
-
+            <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6 lg:flex-row lg:items-center lg:py-20">
+              {/* Left Content */}
               <motion.div
-                className="relative z-10 text-center max-w-2xl px-4"
+                className="flex-1 space-y-6"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
               >
-                <h1 className="text-4xl md:text-5xl font-extrabold mb-4 drop-shadow-lg">
-                  {slide.title}
-                </h1>
-                <p className="text-lg mb-6 opacity-90">{slide.subtitle}</p>
-
-                <div className="flex flex-wrap justify-center gap-4">
-                  <Button
-                    size="lg"
-                    className="bg-[#FFD500] hover:bg-[#E5C100] text-black px-6 py-3 rounded-xl font-medium shadow-md"
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#272343]/10 bg-[#fffffe]/80 px-3 py-1 text-xs font-medium tracking-tight text-[#2d334a]">
+                  <svg
+                    className="h-3.5 w-3.5 text-[#FFD54F]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <Link to="/login">{slide.button1}</Link>
-                    
+                    <path d="M12 3l1.9 4.6L19 9.5l-4.1 1.9L12 16l-2.9-4.6L5 9.5l5.1-1.9L12 3z"></path>
+                    <path d="M5 19l.5-1.5L7 17l-1.5-.5L5 15l-.5 1.5L3 17l1.5.5z"></path>
+                    <path d="M19 19l.5-1.5L21 17l-1.5-.5L19 15l-.5 1.5L17 17l1.5.5z"></path>
+                  </svg>
+                  <span>Lộ trình học tập rõ ràng, dễ theo dõi</span>
+                </div>
+
+                <h1 className="text-3xl font-semibold leading-tight tracking-tight text-[#272343] sm:text-4xl lg:text-5xl">
+                  {slide.title.split("hiệu quả hơn")[0]}
+                  <span className="relative inline-block">
+                    hiệu quả hơn
+                    <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-[#FFD54F]/80"></span>
+                  </span>
+                </h1>
+
+                <p className="max-w-xl text-base leading-relaxed text-[#2d334a]">
+                  {slide.subtitle}
+                </p>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Link to="/login">
+                    <Button
+                      size="lg"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FFD54F] px-5 py-2 text-sm font-semibold tracking-tight text-[#272343] shadow-sm hover:bg-[#F4C430]"
+                    >
+                      Bắt đầu học ngay
+                      <PlayCircle className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[#272343]/15 bg-[#fffffe] px-4 py-2 text-sm font-medium tracking-tight text-[#272343] hover:bg-[#e3f6f5]"
+                  >
+                    Xem bản demo
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
-                  
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4 pt-4 sm:flex sm:flex-wrap sm:gap-6">
+                  {slide.stats.map((stat, i) => (
+                    <div key={i} className="space-y-1">
+                      <div className="text-xs font-medium uppercase tracking-tight text-[#2d334a]">
+                        {stat.label}
+                      </div>
+                      <div className="text-2xl font-semibold tracking-tight text-[#272343]">
+                        {stat.value}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
+
+              {/* Right Image/Illustration */}
+              <div className="flex-1">
+                <div
+                  className="relative mx-auto max-w-md h-96 rounded-3xl border border-[#272343]/15 bg-cover bg-center shadow-[0_18px_60px_rgba(39,35,67,0.18)]"
+                  style={{
+                    backgroundImage: `url(${slide.image})`,
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#272343]/60 to-transparent rounded-3xl" />
+                  <div className="absolute -top-3 -left-3 h-16 w-16 rounded-3xl bg-[#FFD54F]/40 blur-2xl"></div>
+                  <div className="absolute -bottom-4 -right-4 h-20 w-20 rounded-full bg-[#e3f6f5] blur-3xl"></div>
+                </div>
+              </div>
             </div>
           </SwiperSlide>
         ))}
       </Swiper>
+
+      <style jsx>{`
+        .hero-swiper :global(.swiper-button-next),
+        .hero-swiper :global(.swiper-button-prev) {
+          color: #ffd54f;
+          background: rgba(255, 255, 255, 0.9);
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-swiper :global(.swiper-button-next:after),
+        .hero-swiper :global(.swiper-button-prev:after) {
+          font-size: 16px;
+          font-weight: bold;
+        }
+
+        .hero-swiper :global(.swiper-pagination-bullet) {
+          background: #272343;
+          opacity: 0.3;
+        }
+
+        .hero-swiper :global(.swiper-pagination-bullet-active) {
+          background: #ffd54f;
+          opacity: 1;
+        }
+      `}</style>
     </section>
   );
 }

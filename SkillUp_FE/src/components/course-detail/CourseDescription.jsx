@@ -1,23 +1,44 @@
 // src/components/course-detail/CourseDescriptionSection.jsx
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText } from "lucide-react";
+import { FileText, Rocket, Layers } from "lucide-react";
 
 export default function CourseDescriptionSection({ description }) {
   return (
-    <Card className="border-2 border-[#FFD54F]/20">
-      <CardContent className="p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-[#FFD54F]/20 rounded-lg flex items-center justify-center">
-            <FileText className="w-6 h-6 text-[#FFD54F]" />
+    <section aria-labelledby="course-description">
+      <h2 id="course-description" className="text-xl sm:text-2xl font-semibold tracking-tight text-[#272343]">
+        Mô tả khóa học
+      </h2>
+      <div className="mt-3 space-y-3 text-base text-[#2d334a]">
+        <p className="leading-relaxed whitespace-pre-wrap">
+          {description || "Khóa học này được thiết kế cho người mới bắt đầu đến những bạn muốn hệ thống lại kiến thức. Bạn sẽ đi từ những khái niệm nền tảng cho tới cách tổ chức dự án thực tế, tối ưu hiệu năng và trải nghiệm người dùng."}
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="flex items-start gap-3 rounded-2xl border border-[#e5e7eb] bg-[#fdfaf1] p-3">
+          <Rocket className="mt-0.5 h-4 w-4 text-[#272343] flex-shrink-0" />
+          <div>
+            <div className="text-sm font-medium text-[#272343]">
+              Kết quả sau khóa học
+            </div>
+            <p className="mt-1 text-sm text-[#4b5563]">
+              Tự xây dựng và triển khai các dự án thực tế, sẵn sàng cho công việc.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Mô tả khóa học</h2>
         </div>
-        <div className="prose prose-lg max-w-none">
-          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-            {description}
-          </p>
+
+        <div className="flex items-start gap-3 rounded-2xl border border-[#e5e7eb] bg-[#e3f6f5] p-3">
+          <Layers className="mt-0.5 h-4 w-4 text-[#272343] flex-shrink-0" />
+          <div>
+            <div className="text-sm font-medium text-[#272343]">
+              Học qua dự án thực tế
+            </div>
+            <p className="mt-1 text-sm text-[#4b5563]">
+              Nhiều bài tập thực hành và dự án đầy đủ quy trình.
+            </p>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

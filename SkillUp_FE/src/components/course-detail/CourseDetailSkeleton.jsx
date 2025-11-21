@@ -3,24 +3,38 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CourseDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-4">
-              <Skeleton className="h-8 w-48 bg-gray-700" />
-              <Skeleton className="h-16 w-full bg-gray-700" />
-              <Skeleton className="h-8 w-3/4 bg-gray-700" />
-              <Skeleton className="h-12 w-64 bg-gray-700" />
+    <div className="min-h-screen bg-[#fffffe]">
+      {/* Hero Skeleton */}
+      <section className="border-b border-[#272343]/10 bg-gradient-to-b from-[#fff8e1] via-[#fffffe] to-[#e3f6f5]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="space-y-5">
+              <Skeleton className="h-6 w-48 bg-[#e3f6f5]" />
+              <Skeleton className="h-16 w-full bg-[#e3f6f5]" />
+              <Skeleton className="h-12 w-3/4 bg-[#e3f6f5]" />
+              <Skeleton className="h-8 w-64 bg-[#e3f6f5]" />
+            </div>
+            <Skeleton className="h-96 w-full bg-[#e3f6f5] rounded-2xl" />
+          </div>
+        </div>
+      </section>
+
+      {/* Content Skeleton */}
+      <section className="bg-[#fffffe]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="space-y-10">
+              <Skeleton className="h-64 w-full bg-[#e3f6f5] rounded-2xl" />
+              <Skeleton className="h-96 w-full bg-[#e3f6f5] rounded-2xl" />
+              <Skeleton className="h-48 w-full bg-[#e3f6f5] rounded-2xl" />
+            </div>
+            <div className="space-y-8">
+              <Skeleton className="h-64 w-full bg-[#e3f6f5] rounded-2xl" />
+              <Skeleton className="h-32 w-full bg-[#e3f6f5] rounded-2xl" />
             </div>
           </div>
         </div>
-      </div>
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-        <Skeleton className="h-96 w-full" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-48 w-full" />
-      </div>
+      </section>
     </div>
   );
 }

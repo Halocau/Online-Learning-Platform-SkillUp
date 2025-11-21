@@ -1,8 +1,16 @@
+// src/pages/CoursesByCategory.jsx
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { axiosInstance } from "@/config/api";
 import { toast } from "react-toastify";
-import { Star, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Star,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  X,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { categoryAPI } from "@/api/categoryAPI";
@@ -29,7 +37,13 @@ function CoursesByCategory() {
     ratings: true,
     subcategory: true,
   });
-
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, [location.pathname]);
   useEffect(() => {
     fetchCategoryPage();
   }, [categoryId]);
@@ -42,7 +56,6 @@ function CoursesByCategory() {
     try {
       setLoading(true);
 
-      // Fetch category page data
       const pageResponse = await axiosInstance.get(
         `/CategoryPage/${categoryId}/page`
       );
@@ -59,7 +72,6 @@ function CoursesByCategory() {
         setAllCourses(pageData.courses || []);
       }
 
-      // Fetch subcategories using categoryAPI
       const subResponse = await categoryAPI.getCategoryWithSubcategories(
         categoryId
       );
@@ -81,31 +93,26 @@ function CoursesByCategory() {
   const filterCourses = () => {
     let filtered = [...allCourses];
 
-    // Filter by URL subcategory parameter
     if (subcategoryId) {
       const subId = parseInt(subcategoryId);
       filtered = filtered.filter((course) => course.subCategoryId === subId);
     }
 
-    // Filter by selected subcategory from sidebar
     if (selectedSubcategory) {
       filtered = filtered.filter(
         (course) => course.subCategoryId === selectedSubcategory
       );
     }
 
-    // Filter by rating
     if (selectedRating) {
       filtered = filtered.filter((course) => course.rating >= selectedRating);
     }
 
-    // Sort courses
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case "rating":
           return b.rating - a.rating;
         case "newest":
-          // If you have createdAt field, use it. Otherwise, sort by ID
           return b.id - a.id;
         case "popular":
         default:
@@ -150,10 +157,12 @@ function CoursesByCategory() {
 
   if (loading && !category) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#fffffe]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#FFD54F] border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Đang tải...</p>
+          <p className="mt-4 text-[#2d334a] font-medium tracking-tight">
+            Đang tải...
+          </p>
         </div>
       </div>
     );
@@ -161,15 +170,16 @@ function CoursesByCategory() {
 
   if (!category) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#fffffe]">
         <div className="text-center">
-          <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+          <BookOpen className="w-16 h-16 text-[#e3f6f5] mx-auto mb-4" />
+          <h3 className="text-2xl font-semibold tracking-tight text-[#272343] mb-2">
             Không tìm thấy danh mục
           </h3>
           <Link to="/">
-            <Button className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold">
+            <Button className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#FFD54F] hover:bg-[#ffca28] text-[#272343] font-semibold tracking-tight px-5 py-2 shadow-sm">
               Về trang chủ
+              <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
         </div>
@@ -178,202 +188,295 @@ function CoursesByCategory() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header - Improved spacing */}
-      <div className="border-b bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-30 py-30 lg:py-12">
-          <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-            {category.name}
-          </h1>
-          <h2 className="text-xl lg:text-2xl font-semibold text-gray-800 mb-3">
-            Bắt đầu ngay với các khóa học trong danh mục {category.name}
-          </h2>
-          <p className="text-gray-600 text-base lg:text-lg max-w-3xl">
-            {category.description ||
-              "Tìm các khóa học chất lượng cao để nâng cao kỹ năng của bạn."}
-          </p>
+    <div className="min-h-screen bg-[#fffffe]">
+      {/* Category Header */}
+      <section className="border-b border-[#272343]/10 bg-gradient-to-b from-[#fff8e1] via-[#fffffe] to-[#e3f6f5]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
+          <div className="space-y-4 max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#272343]/10 bg-[#fffffe]/80 px-3 py-1 text-xs font-medium tracking-tight text-[#2d334a]">
+              <BookOpen className="h-3.5 w-3.5 text-[#FFD54F]" />
+              <span>Lộ trình theo danh mục</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight text-[#272343]">
+              <span className="relative inline-block">
+                {category.name}
+                <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-[#FFD54F]/80"></span>
+              </span>
+            </h1>
+
+            <p className="text-base lg:text-lg leading-relaxed text-[#2d334a]">
+              {category.description ||
+                `Khám phá các khóa học ${category.name} chất lượng cao để nâng cao kỹ năng của bạn.`}
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-30 sm:px-30 lg:px-30 py-20 lg:py-12">
-        <div className="flex gap-8 lg:gap-20">
-          <aside className="w-72 flex-shrink-0 hidden lg:block">
-            <div className="sticky top-6">
-              {hasActiveFilters && (
-                <Button
-                  onClick={clearAllFilters}
-                  variant="outline"
-                  className="w-full mb-6 text-sm font-medium"
-                >
-                  Đặt lại bộ lọc
-                </Button>
-              )}
-
-              {/* Ratings Filter */}
-              <div className="border-b pb-6 mb-6">
-                <button
-                  onClick={() => toggleSection("ratings")}
-                  className="w-full flex items-center justify-between py-2 font-semibold text-gray-900 hover:text-gray-600 transition-colors"
-                >
-                  <span className="text-base">Đánh giá</span>
-                  {openSections.ratings ? (
-                    <ChevronUp className="w-5 h-5" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5" />
-                  )}
-                </button>
-
-                {openSections.ratings && (
-                  <div className="mt-4 space-y-3">
-                    {[4.5, 4.0, 3.5, 3.0].map((rating) => (
-                      <label
-                        key={rating}
-                        className="flex items-center gap-3 cursor-pointer hover:text-purple-600 transition-colors py-1"
-                      >
-                        <input
-                          type="radio"
-                          name="rating"
-                          checked={selectedRating === rating}
-                          onChange={() => handleRatingFilter(rating)}
-                          className="w-4 h-4 accent-purple-600"
-                        />
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-3.5 h-3.5 ${
-                                  i < Math.floor(rating)
-                                    ? "fill-orange-400 text-orange-400"
-                                    : "fill-gray-300 text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-gray-700 font-medium">
-                            {rating} và cao hơn
-                          </span>
-                          <span className="text-gray-500">
-                            (
-                            {
-                              allCourses.filter((c) => c.rating >= rating)
-                                .length
-                            }
-                            )
-                          </span>
-                        </div>
-                      </label>
-                    ))}
+      {/* Main Content */}
+      <section className="bg-[#fffffe]">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
+          <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+            {/* Sidebar Filters */}
+            <aside className="w-full lg:w-72 lg:flex-shrink-0">
+              <div className="lg:sticky lg:top-6 space-y-6 rounded-2xl border border-[#272343]/10 bg-[#fdfaf1] p-5">
+                {/* Filter Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-tight text-[#2d334a] mb-1">
+                      Bộ lọc
+                    </div>
                   </div>
-                )}
-              </div>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearAllFilters}
+                      className="inline-flex items-center justify-center rounded-full border border-[#272343]/15 bg-[#fffffe] px-3 py-1.5 text-xs font-medium tracking-tight text-[#272343] hover:bg-[#FFF3CD] transition-colors whitespace-nowrap"
+                    >
+                      Đặt lại
+                    </button>
+                  )}
+                </div>
 
-              {/* Subcategory Filter */}
-              {subcategories.length > 0 && (
-                <div className="border-b pb-6 mb-6">
+                {/* Rating Filter */}
+                <div className="rounded-2xl border border-[#272343]/10 bg-[#fffffe] overflow-hidden">
                   <button
-                    onClick={() => toggleSection("subcategory")}
-                    className="w-full flex items-center justify-between py-2 font-semibold text-gray-900 hover:text-gray-600 transition-colors"
+                    onClick={() => toggleSection("ratings")}
+                    className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold tracking-tight text-[#272343] hover:text-[#FFD54F] transition-colors"
                   >
-                    <span className="text-base">Danh mục con</span>
-                    {openSections.subcategory ? (
-                      <ChevronUp className="w-5 h-5" />
+                    <span>Đánh giá</span>
+                    {openSections.ratings ? (
+                      <ChevronUp className="h-4 w-4 flex-shrink-0" />
                     ) : (
-                      <ChevronDown className="w-5 h-5" />
+                      <ChevronDown className="h-4 w-4 flex-shrink-0" />
                     )}
                   </button>
 
-                  {openSections.subcategory && (
-                    <div className="mt-4 space-y-3">
-                      {subcategories.map((subcat) => (
+                  {openSections.ratings && (
+                    <div className="border-t border-[#272343]/10 px-3 py-3 space-y-1">
+                      {[4.5, 4.0, 3.5, 3.0].map((rating) => (
                         <label
-                          key={subcat.id}
-                          className="flex items-center gap-3 cursor-pointer hover:text-purple-600 transition-colors py-1"
+                          key={rating}
+                          className="flex items-center gap-3 cursor-pointer rounded-xl px-2 py-2.5 hover:bg-[#FFF8E1] transition-colors group"
                         >
                           <input
-                            type="checkbox"
-                            checked={selectedSubcategory === subcat.id}
-                            onChange={() => handleSubcategoryFilter(subcat.id)}
-                            className="w-4 h-4 accent-purple-600"
+                            type="radio"
+                            name="rating"
+                            checked={selectedRating === rating}
+                            onChange={() => handleRatingFilter(rating)}
+                            className="sr-only"
                           />
-                          <span className="text-sm text-gray-700 font-medium flex-1">
-                            {subcat.name}
+                          <span className="relative flex h-5 w-5 items-center justify-center flex-shrink-0">
+                            <span
+                              className={`h-5 w-5 rounded-full border-2 transition-colors ${
+                                selectedRating === rating
+                                  ? "border-[#FFD54F] bg-[#FFD54F]/10"
+                                  : "border-[#272343]/30 bg-[#fffffe] group-hover:border-[#FFD54F]/50"
+                              }`}
+                            ></span>
+                            {selectedRating === rating && (
+                              <span className="absolute h-2.5 w-2.5 rounded-full bg-[#FFD54F]"></span>
+                            )}
                           </span>
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                            {
-                              allCourses.filter(
-                                (c) => c.subCategoryId === subcat.id
-                              ).length
-                            }
-                          </span>
+
+                          <div className="flex flex-col gap-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-0.5">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-3.5 w-3.5 flex-shrink-0 ${
+                                      i < Math.floor(rating)
+                                        ? "fill-[#FFD54F] text-[#FFD54F]"
+                                        : "fill-[#e5e7eb] text-[#e5e7eb]"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-[#272343] font-medium">
+                                {rating} trở lên
+                              </span>
+                              <span className="text-xs text-[#6b7280]">
+                                (
+                                {
+                                  allCourses.filter((c) => c.rating >= rating)
+                                    .length
+                                }
+                                )
+                              </span>
+                            </div>
+                          </div>
                         </label>
                       ))}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </aside>
 
-          {/* Right Content - Courses with better spacing */}
-          <main className="flex-1 min-w-0">
-            {/* Results count and sort - Improved */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between flex-wrap gap-4">
+                {/* Subcategory Filter */}
+                {subcategories.length > 0 && (
+                  <div className="rounded-2xl border border-[#272343]/10 bg-[#fffffe] overflow-hidden">
+                    <button
+                      onClick={() => toggleSection("subcategory")}
+                      className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold tracking-tight text-[#272343] hover:text-[#FFD54F] transition-colors"
+                    >
+                      <span>Danh mục con</span>
+                      {openSections.subcategory ? (
+                        <ChevronUp className="h-4 w-4 flex-shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                      )}
+                    </button>
+
+                    {openSections.subcategory && (
+                      <div className="border-t border-[#272343]/10 px-3 py-3 space-y-1">
+                        {subcategories.map((subcat) => (
+                          <label
+                            key={subcat.id}
+                            className="flex items-center gap-3 cursor-pointer rounded-xl px-2 py-2.5 hover:bg-[#FFF8E1] transition-colors group"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedSubcategory === subcat.id}
+                              onChange={() =>
+                                handleSubcategoryFilter(subcat.id)
+                              }
+                              className="sr-only"
+                            />
+                            <span className="relative flex h-5 w-5 items-center justify-center flex-shrink-0">
+                              <span
+                                className={`h-5 w-5 rounded-md border-2 transition-colors ${
+                                  selectedSubcategory === subcat.id
+                                    ? "border-[#FFD54F] bg-[#FFD54F]/10"
+                                    : "border-[#272343]/30 bg-[#fffffe] group-hover:border-[#FFD54F]/50"
+                                }`}
+                              ></span>
+                              {selectedSubcategory === subcat.id && (
+                                <span className="absolute h-3 w-3 rounded-[4px] bg-[#FFD54F]"></span>
+                              )}
+                            </span>
+                            <span className="text-sm font-medium text-[#272343] flex-1 min-w-0 truncate">
+                              {subcat.name}
+                            </span>
+                            <span className="text-xs rounded-full bg-[#f3f4f6] px-2.5 py-0.5 text-[#4b5563] flex-shrink-0">
+                              {
+                                allCourses.filter(
+                                  (c) => c.subCategoryId === subcat.id
+                                ).length
+                              }
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </aside>
+
+            {/* Main Content - Courses */}
+            <div className="flex-1 min-w-0 space-y-6">
+              {/* Sort + Result Info */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-[#272343]">
+                    {displayedCourses.length} khóa học được tìm thấy
+                  </p>
+                </div>
+
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600 font-medium">
-                    Sắp xếp theo:
+                  <span className="text-sm font-medium text-[#4b5563]">
+                    Sắp xếp theo
                   </span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FFD54F]/50 transition-colors"
-                  >
-                    <option value="popular">Nổi bật nhất</option>
-                    <option value="rating">Đánh giá cao nhất</option>
-                    <option value="newest">Mới nhất</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="appearance-none rounded-full border border-[#272343]/15 bg-[#fffffe] pl-4 pr-9 py-2 text-sm font-medium text-[#272343] focus:outline-none focus:ring-2 focus:ring-[#FFD54F]/60 hover:border-[#FFD54F]/50 transition-colors cursor-pointer"
+                    >
+                      <option value="popular">Nổi bật nhất</option>
+                      <option value="rating">Đánh giá cao nhất</option>
+                      <option value="newest">Mới nhất</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#6b7280]" />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Course Grid - Better spacing */}
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                  <div key={n} className="animate-pulse">
-                    <div className="w-full h-40 bg-gray-200 rounded-lg mb-3"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                ))}
-              </div>
-            ) : displayedCourses.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {displayedCourses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-              </div>
-            ) : (
-              <Card className="p-16 text-center border-2 border-dashed">
-                <BookOpen className="w-20 h-20 text-gray-300 mx-auto mb-6" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-3">
-                  Không tìm thấy khóa học
-                </h3>
-                <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                  Thử điều chỉnh bộ lọc của bạn để xem thêm kết quả
-                </p>
-                <Button
-                  onClick={clearAllFilters}
-                  className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold px-6"
-                >
-                  Đặt lại bộ lọc
-                </Button>
-              </Card>
-            )}
-          </main>
+              {/* Active Filters Display */}
+              {hasActiveFilters && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-[#4b5563]">
+                    Lọc đang áp dụng:
+                  </span>
+                  {selectedRating && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFD54F]/10 px-3 py-1.5 text-xs font-medium text-[#272343] border border-[#FFD54F]/20">
+                      <Star className="h-3 w-3 fill-[#FFD54F] text-[#FFD54F]" />
+                      {selectedRating}+ sao
+                      <button
+                        onClick={() => setSelectedRating(null)}
+                        className="hover:text-[#272343]/70 ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {selectedSubcategory && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e3f6f5] px-3 py-1.5 text-xs font-medium text-[#272343]">
+                      {
+                        subcategories.find((s) => s.id === selectedSubcategory)
+                          ?.name
+                      }
+                      <button
+                        onClick={() => setSelectedSubcategory(null)}
+                        className="hover:text-[#272343]/70 ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Course Grid */}
+              {loading ? (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                    <div key={n} className="animate-pulse">
+                      <div className="aspect-video w-full bg-[#e3f6f5] rounded-2xl mb-3"></div>
+                      <div className="h-4 bg-[#e3f6f5] rounded-lg mb-2"></div>
+                      <div className="h-3 bg-[#e3f6f5] rounded-lg w-3/4"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : displayedCourses.length > 0 ? (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {displayedCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))}
+                </div>
+              ) : (
+                <Card className="rounded-2xl border-2 border-dashed border-[#272343]/15 bg-[#fffffe] p-16 text-center">
+                  <BookOpen className="w-20 h-20 text-[#e3f6f5] mx-auto mb-6" />
+                  <h3 className="text-xl font-semibold tracking-tight text-[#272343] mb-3">
+                    Không tìm thấy khóa học
+                  </h3>
+                  <p className="text-[#2d334a] mb-8 max-w-md mx-auto">
+                    Thử điều chỉnh bộ lọc của bạn để xem thêm kết quả
+                  </p>
+                  <Button
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#FFD54F] hover:bg-[#ffca28] text-[#272343] font-semibold tracking-tight px-6 shadow-sm"
+                  >
+                    Đặt lại bộ lọc
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

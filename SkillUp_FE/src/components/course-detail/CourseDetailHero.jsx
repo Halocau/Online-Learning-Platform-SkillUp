@@ -1,87 +1,139 @@
 // src/components/course-detail/CourseDetailHero.jsx
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Calendar, Globe } from "lucide-react";
+import { Users, Globe, BookOpen, Calendar } from "lucide-react";
 import StarRating from "@/components/ui/StarRating";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function CourseDetailHero({ course }) {
   return (
-    <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden">
-
-      <div className="relative max-w-7xl mx-auto px-4 py-12 lg:py-16">
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="px-3 py-1 bg-[#FFD54F]/20 text-[#FFD54F] rounded-full font-medium">
-                {course.categoryName}
-              </span>
-              <span className="text-gray-400">›</span>
-              <span className="text-gray-300">{course.subCategoryName}</span>
+    <section className="border-b border-[#272343]/10 bg-gradient-to-b from-[#fff8e1] via-[#fffffe] to-[#e3f6f5]">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:py-14">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+          {/* Left: title, meta */}
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#272343]/10 bg-[#fffffe]/80 px-3 py-1 text-xs font-medium tracking-tight text-[#2d334a]">
+              <BookOpen className="h-3.5 w-3.5 text-[#FFD54F]" />
+              <span>Khóa học · {course.categoryName}</span>
             </div>
 
-            <h1 className="text-4xl lg:text-5xl font-bold leading-tight bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight text-[#272343]">
               {course.title}
             </h1>
 
-            <p className="text-lg text-gray-300 leading-relaxed">
-              {course.description}
+            <p className="text-base lg:text-lg leading-relaxed text-[#2d334a]">
+              {course.description ||
+                "Làm chủ kiến thức, tối ưu trải nghiệm người dùng và sẵn sàng đi làm."}
             </p>
 
-            {/* Stats with modern cards */}
-            <div className="flex flex-wrap items-center gap-6">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-                <span className="font-bold text-2xl text-[#FFD54F]">
-                  {course.rating.toFixed(1)}
-                </span>
-                <div className="flex gap-0.5">
-                  <StarRating rating={course.rating} />
-                </div>
-                <span className="text-gray-300 text-sm">
-                  ({course.enrollmentCount} đánh giá)
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-                <Users className="w-5 h-5 text-[#FFD54F]" />
-                <span className="font-semibold">
-                  {course.enrollmentCount.toLocaleString()}
-                </span>
-                <span className="text-gray-300 text-sm">học viên</span>
-              </div>
-            </div>
-
-            {/* Instructor Card */}
-            <div className="flex items-center gap-4 bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-              <Avatar className="w-14 h-14 border-2 border-[#FFD54F]">
-                <AvatarImage src={course.lecturer.avartar} />
-                <AvatarFallback className="bg-[#FFD54F] text-gray-900">
-                  {course.lecturer.fullName.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm text-gray-400">Giảng viên</p>
-                <p className="font-semibold text-lg">
-                  {course.lecturer.fullName}
-                </p>
-                <p className="text-sm text-gray-300">
-                  {course.lecturer.profession}
-                </p>
-              </div>
-            </div>
-
-            
-            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-400">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-[#2d334a]">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+                <div className="flex items-center gap-1 text-xs sm:text-xs">
+                  <span className="text-sm font-semibold text-[#272343]">
+                    {course.rating.toFixed(1)}
+                  </span>
+                  <div className="flex gap-0.5">
+                    <StarRating rating={course.rating} size="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[#6b7280]">
+                    ({course.enrollmentCount} đánh giá)
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-4 w-px bg-[#cbd5e1]"></div>
+
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <Users className="h-4 w-4 text-[#272343]" />
+                <span>{course.enrollmentCount.toLocaleString()} học viên</span>
+              </div>
+
+              <div className="h-4 w-px bg-[#cbd5e1]"></div>
+            </div>
+
+            {/* Lecturer Information */}
+            {course.lecturer && (
+              <div className="flex items-center gap-3 text-sm text-[#2d334a]">
+                <span>Tạo bởi</span>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6 border border-[#FFD54F]/50">
+                    <AvatarImage src={course.lecturer.avartar} />
+                    <AvatarFallback className="bg-[#FFD54F]/20 text-[#272343] text-xs font-semibold">
+                      {course.lecturer.fullName.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-[#272343] hover:text-[#FFD54F] transition-colors cursor-pointer">
+                    {course.lecturer.fullName}
+                  </span>
+                  {course.lecturer.profession && (
+                    <>
+                      <span className="text-[#6b7280]">·</span>
+                      <span className="text-[#6b7280]">
+                        {course.lecturer.profession}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Last Updated & Language Info */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[#6b7280]">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5" />
                 <span>
-                  Cập nhật{" "}
+                  Cập nhật lần cuối{" "}
                   {new Date(course.updatedAt).toLocaleDateString("vi-VN")}
                 </span>
               </div>
+              <div className="h-3 w-px bg-[#cbd5e1]"></div>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#e3f6f5] px-3 py-1 text-xs font-medium tracking-tight text-[#272343]">
+                  <svg
+                    className="h-3.5 w-3.5 text-[#272343]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="6"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                  </svg>
+                  Trình độ: {course.level || "Beginner → Intermediate"}
+                </span>
+              </div>
+              {course.subtitles && course.subtitles.length > 0 && (
+                <>
+                  <div className="h-3 w-px bg-[#cbd5e1]"></div>
+                  <span>Phụ đề: {course.subtitles.join(", ")}</span>
+                </>
+              )}
             </div>
+
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+              {course.isTopSeller && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#272343] px-3 py-1 text-xs font-medium tracking-tight text-[#fffffe]">
+                  <svg
+                    className="h-3.5 w-3.5 text-[#FFD54F]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <path d="M8 14c0 2.2 1.8 4 4 4s4-1.8 4-4c0-1.9-1.3-3.2-2.6-4.6C12.6 8 12 7.3 12 6c-1 1.2-2 2.4-2 4 0 1 .4 1.7 1 2.4"></path>
+                  </svg>
+                  Bán chạy
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Enrollment Card Placeholder - This will be rendered separately */}
+          <div className="w-full lg:max-w-sm">
+            {/* Enrollment card will be placed here in parent component */}
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

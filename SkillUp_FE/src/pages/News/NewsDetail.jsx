@@ -16,7 +16,13 @@ export default function NewsDetail() {
   const [news, setNews] = useState(null);
   const [recommendedNews, setRecommendedNews] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, [location.pathname]);
   useEffect(() => {
     const fetchData = async () => {
       try {
