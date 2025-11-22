@@ -13,6 +13,7 @@ import NewsDetailMod from "@/pages/contentmoderator/NewsFeature/DetailNewsMod";
 import CourseManage from "@/pages/contentmoderator/CourseManage";
 import CategoryManage from "@/pages/contentmoderator/CategoryManage";
 import ForumManage from "@/pages/contentmoderator/ForumManage";
+import BannerManage from "@/pages/contentmoderator/BannerManage";
 
 const ContentModeratorRoutes = () => {
   return (
@@ -35,6 +36,7 @@ const ContentModeratorRoutes = () => {
         <Route path="rpcmt" element={<CommentReport />} />
         <Route path="category" element={<CategoryManage />} />
         <Route path="forum" element={<ForumManage />} />
+        <Route path="banner" element={<BannerManage />} />
       </Route>
     </Routes>
   );

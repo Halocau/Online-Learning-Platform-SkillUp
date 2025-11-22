@@ -196,7 +196,7 @@ namespace SkillUp.Controllers
 			}
 		}
 
-		[HttpGet("toggle-banner")]
+		[HttpPut("toggle-banner")]
 		public async Task<IActionResult> ToggleBanner(bool isActive, int bannerId)
 		{
 			try
