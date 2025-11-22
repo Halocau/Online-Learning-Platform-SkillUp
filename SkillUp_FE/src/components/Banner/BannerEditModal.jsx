@@ -68,7 +68,7 @@ const BannerEditModal = ({ visible, onCancel, onUpdate, editingBanner }) => {
             open={visible}
             centered
             destroyOnHidden={true}
-            title="Edit Banner"
+            title="Chỉnh sửa banner"
             okText="Save Changes"
             cancelText="Cancel"
             onCancel={onCancel}
@@ -85,7 +85,7 @@ const BannerEditModal = ({ visible, onCancel, onUpdate, editingBanner }) => {
                 {/* Title */}
                 <Form.Item
                     name="title"
-                    label="Title"
+                    label="Tiêu đề"
                     rules={[{ required: true, message: 'Please enter a title!' }]}
                 >
                     <Input.TextArea
@@ -95,7 +95,11 @@ const BannerEditModal = ({ visible, onCancel, onUpdate, editingBanner }) => {
                 </Form.Item>
 
                 {/* Description */}
-                <Form.Item name="description" label="Description">
+                <Form.Item
+                    name="description"
+                    label="Mô tả ngắn"
+                    rules={[{ required: true, message: 'Please enter a title!' }]}
+                >
                     <Input.TextArea
                         maxLength={255}
                         autoSize={{ minRows: 3 }}
@@ -108,16 +112,16 @@ const BannerEditModal = ({ visible, onCancel, onUpdate, editingBanner }) => {
                 </Form.Item>
 
                 {/* Is Active Switch */}
-                <Form.Item name="isActive" label="Active Status" valuePropName="checked" hidden={true}>
+                <Form.Item name="isActive" label="Trạng thái" valuePropName="checked" hidden={true}>
                     <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
                 </Form.Item>
 
                 <Form.Item
                     name="file"
-                    label="Banner Image"
+                    label="Hình ảnh"
                     valuePropName="fileList"
                     getValueFromEvent={normFile}
-                    extra="Selecting a new file will replace the current image."
+                    extra="Tải lên ảnh mới sẽ thay thế ảnh hiện tại."
                 >
                     <Upload
                         name="image"
@@ -135,7 +139,7 @@ const BannerEditModal = ({ visible, onCancel, onUpdate, editingBanner }) => {
                         <div>
                             <UploadOutlined />
                             <div style={{ marginTop: 8 }}>
-                                Change
+                                Ảnh khác
                             </div>
                         </div>
                     </Upload>

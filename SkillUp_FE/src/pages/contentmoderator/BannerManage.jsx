@@ -20,7 +20,7 @@ const BannerManage = () => {
       const response = await axiosInstance.get('http://localhost:5120/api/Banner/all-banners');
       setData(response.data.data.flat());
     } catch (error) {
-      console.error('Error fetching banners:', error);
+      console.error('Không thể lấy banners:', error);
     }
   };
 
@@ -43,10 +43,9 @@ const BannerManage = () => {
           }
         })
       setData(newData);
-      message.info(`Banner status updated to ${checked ? 'Active' : 'Inactive'}`);
-      toast.success('Banner status updated successfully');
+      toast.success('Trạng thái banner đã được cập nhật.');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error updating banner status');
+      toast.error(error.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
     }
   };
 
@@ -58,9 +57,9 @@ const BannerManage = () => {
         },
       });
 
-      toast.success('Banner updated successfully');
+      toast.success('Banner đã được cập nhật thành công.');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error updating banner');
+      toast.error(error.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
     } finally {
       setEditOpen(false);
       fetchBanners();
@@ -75,9 +74,9 @@ const BannerManage = () => {
         },
       });
 
-      toast.success('Banner created successfully');
+      toast.success('Tạo banner thành công.');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error creating banner');
+      toast.error(error.response?.data?.message || 'Đã xảy ra lỗi. Vui lòng thử lại.');
     } finally {
       setCreateOpen(false);
       fetchBanners();

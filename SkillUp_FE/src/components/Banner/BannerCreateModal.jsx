@@ -25,13 +25,12 @@ const BannerCreateModal = ({ visible, onCancel, onCreate }) => {
 
       // Send to Parent and Await response
       await onCreate(formData);
-      
+
       // Cleanup only on success
       form.resetFields();
-      
+
     } catch (error) {
       console.log('Validation or API Failed:', error);
-      // Do NOT close modal here, so user can fix errors
     } finally {
       setLoading(false);
     }
@@ -46,62 +45,65 @@ const BannerCreateModal = ({ visible, onCancel, onCreate }) => {
   return (
     <Modal
       open={visible}
-      title="Create New Banner"
-      okText="Create Banner"
-      cancelText="Cancel"
+      title="Tạo banner mới"
+      okText="Lưu"
+      cancelText="Huỷ"
       onCancel={() => {
         form.resetFields(); // Clear form when canceling
         onCancel();
       }}
       onOk={handleOk}
-      confirmLoading={loading} // Adds the spinner to the OK button
-      centered // Keeps modal in center of screen
-      destroyOnHidden // Ensures a fresh form every time it opens
+      confirmLoading={loading}
+      centered
+      destroyOnHidden
     >
-      <Form 
-        form={form} 
-        layout="vertical" 
+      <Form
+        form={form}
+        layout="vertical"
         name="banner_create_form"
-        initialValues={{ isActive: true }} // Default to Active for new items
+        initialValues={{ isActive: true }}
       >
-        
+
         {/* Title */}
         <Form.Item
           name="title"
-          label="Title"
+          label="Tiêu đề"
           rules={[{ required: true, message: 'Please enter a title!' }]}
         >
-          <Input.TextArea 
-            maxLength={255} 
-            showCount 
-            autoSize={{ minRows: 1, maxRows: 3 }} 
-            placeholder="Enter banner title" 
+          <Input.TextArea
+            maxLength={255}
+            autoSize={{ minRows: 1, maxRows: 3 }}
+            placeholder="Nhập tiêu đề..."
           />
         </Form.Item>
 
         {/* Description */}
-        <Form.Item name="description" label="Description">
-          <Input.TextArea rows={3} placeholder="Enter a short description" />
+        <Form.Item
+          name="description"
+          label="Mô tả ngắn"
+          rules={[{ required: true, message: 'Please enter a title!' }]}
+        >
+          <Input.TextArea rows={3} placeholder="Nhập mô tả ngắn..." />
         </Form.Item>
 
         {/* Hyperlink */}
-        <Form.Item 
-            name="hyperlink" 
-            label="Hyperlink"
-            rules={[{ type: 'url', warningOnly: true, message: 'This field usually takes a valid URL' }]}
+        <Form.Item
+          name="hyperlink"
+          label="Hyperlink"
+          rules={[{ type: 'url', warningOnly: true, message: 'This field usually takes a valid URL' }]}
         >
           <Input placeholder="www.example.com" />
         </Form.Item>
 
         {/* Is Active Switch */}
-        <Form.Item name="isActive" label="Active Status" valuePropName="checked">
+        <Form.Item name="isActive" label="Trạng thái" valuePropName="checked">
           <Switch checkedChildren="Bật" unCheckedChildren="Tắt" />
         </Form.Item>
 
         {/* FILE UPLOAD (Required for Create) */}
         <Form.Item
           name="file"
-          label="Banner Image"
+          label="Hình ảnh"
           valuePropName="fileList"
           getValueFromEvent={normFile}
           rules={[{ required: true, message: 'Please upload an image!' }]} // <--- Required here
@@ -114,12 +116,12 @@ const BannerCreateModal = ({ visible, onCancel, onCreate }) => {
             accept="image/*"
             showUploadList={{ showRemoveIcon: true }} // Allow removing selection before submit
             onPreview={(file) => {
-                window.open(file.url || file.thumbUrl, '_blank');
+              window.open(file.url || file.thumbUrl, '_blank');
             }}
           >
             <div>
               <PlusOutlined />
-              <div style={{ marginTop: 8 }}>Upload</div>
+              <div style={{ marginTop: 8 }}>Ảnh</div>
             </div>
           </Upload>
         </Form.Item>
