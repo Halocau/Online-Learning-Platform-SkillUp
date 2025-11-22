@@ -23,7 +23,6 @@ import {
   UsersIcon,
   CurrencyDollarIcon,
   XMarkIcon,
-  ClockIcon,
   TagIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -689,66 +688,66 @@ export default function CourseManagement() {
         )}
       </div>
 
-      {/* Course Review Modal */}
+      {/* Course Review Modal - Compact Version */}
       {reviewModal.open && reviewModal.courseData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-white-70 ">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 p-4 backdrop-blur">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full">
             {/* Header */}
             <div
-              className={`relative p-6 ${
+              className={`relative px-6 py-4 ${
                 reviewModal.decision
-                  ? "bg-gradient-to-r from-green-500 to-emerald-600"
-                  : "bg-gradient-to-r from-red-500 to-rose-600"
-              } text-white rounded-t-2xl`}
+                  ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                  : "bg-gradient-to-r from-orange-500 to-red-500"
+              } text-white rounded-t-xl`}
             >
               <button
                 onClick={closeReviewModal}
-                className="absolute top-4 right-4 p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition"
+                className="absolute top-3 right-3 p-1.5 hover:bg-white hover:bg-opacity-20 rounded-lg transition"
               >
-                <XMarkIcon className="h-6 w-6" />
+                <XMarkIcon className="h-5 w-5" />
               </button>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div
-                  className={`p-4 rounded-full ${
+                  className={`p-2.5 rounded-lg ${
                     reviewModal.decision
-                      ? "bg-green-400 bg-opacity-30"
-                      : "bg-red-400 bg-opacity-30"
+                      ? "bg-blue-400 bg-opacity-30"
+                      : "bg-orange-400 bg-opacity-30"
                   }`}
                 >
                   {reviewModal.decision ? (
-                    <CheckCircleIcon className="h-12 w-12" />
+                    <CheckCircleIcon className="h-7 w-7" />
                   ) : (
-                    <XCircleIcon className="h-12 w-12" />
+                    <XCircleIcon className="h-7 w-7" />
                   )}
                 </div>
                 <div>
-                  <h2 className="text-3xl font-bold mb-1">
+                  <h2 className="text-xl font-bold">
                     {reviewModal.decision
                       ? "Duyệt khóa học"
                       : "Từ chối khóa học"}
                   </h2>
-                  <p className="text-green-50 text-sm">
+                  <p className="text-blue-50 text-xs mt-0.5">
                     {reviewModal.decision
-                      ? "Xác nhận phê duyệt và xuất bản khóa học này"
-                      : "Cung cấp lý do từ chối để giảng viên có thể cải thiện"}
+                      ? "Xác nhận phê duyệt và xuất bản"
+                      : "Cung cấp lý do để giảng viên cải thiện"}
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Course Information */}
-            <div className="p-6 space-y-6">
-              {/* Course Title & Description */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
-                <div className="flex items-start gap-3 mb-3">
-                  <BookOpenIcon className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              {/* Course Title */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <div className="flex items-start gap-2">
+                  <BookOpenIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-base mb-1">
                       {reviewModal.courseData.title}
                     </h3>
                     {reviewModal.courseData.description && (
-                      <p className="text-gray-600 text-sm leading-relaxed">
+                      <p className="text-gray-600 text-xs line-clamp-2">
                         {reviewModal.courseData.description}
                       </p>
                     )}
@@ -756,102 +755,102 @@ export default function CourseManagement() {
                 </div>
               </div>
 
-              {/* Lecturer Information */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <AcademicCapIcon className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+              {/* Info Grid - More Compact */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Lecturer */}
+                <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AcademicCapIcon className="h-4 w-4 text-purple-600" />
+                    <p className="text-xs text-gray-500 font-medium">
                       Giảng viên
                     </p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {reviewModal.courseData.lecturerName ||
-                        "Chưa có thông tin"}
-                    </p>
                   </div>
+                  <p className="font-bold text-sm text-gray-900 truncate">
+                    {reviewModal.courseData.lecturerName || "N/A"}
+                  </p>
                 </div>
-              </div>
 
-              {/* Course Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* Category */}
-                <div className="bg-white p-4 rounded-xl border-2 border-gray-100 hover:border-blue-200 transition">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TagIcon className="h-5 w-5 text-blue-500" />
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-1">
+                    <TagIcon className="h-4 w-4 text-gray-600" />
                     <p className="text-xs text-gray-500 font-medium">
                       Danh mục
                     </p>
                   </div>
-                  <p className="font-bold text-gray-900 truncate">
+                  <p className="font-bold text-sm text-gray-900 truncate">
                     {reviewModal.courseData.subCategoryName || "N/A"}
                   </p>
                 </div>
 
                 {/* Price */}
-                <div className="bg-white p-4 rounded-xl border-2 border-gray-100 hover:border-green-200 transition">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CurrencyDollarIcon className="h-5 w-5 text-green-500" />
+                <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CurrencyDollarIcon className="h-4 w-4 text-green-600" />
                     <p className="text-xs text-gray-500 font-medium">Giá</p>
                   </div>
-                  <p className="font-bold text-green-600">
+                  <p className="font-bold text-sm text-green-600">
                     {reviewModal.courseData.price === 0
                       ? "Miễn phí"
                       : `${reviewModal.courseData.price.toLocaleString()} VND`}
                   </p>
                 </div>
 
-                {/* Status */}
-                <div className="bg-white p-4 rounded-xl border-2 border-gray-100 hover:border-purple-200 transition">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ClockIcon className="h-5 w-5 text-purple-500" />
+                {/* Enrollments */}
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <UsersIcon className="h-4 w-4 text-amber-600" />
                     <p className="text-xs text-gray-500 font-medium">
-                      Trạng thái
+                      Học viên
                     </p>
                   </div>
-                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
-                    {getPublishStatusText(reviewModal.courseData.status)}
-                  </span>
+                  <p className="font-bold text-sm text-gray-900">
+                    {reviewModal.courseData.enrollmentCount || 0}
+                  </p>
                 </div>
               </div>
 
               {/* Feedback Form */}
-              <div className="bg-gray-50 p-6 rounded-xl border-2 border-gray-200">
-                <label className="block mb-3">
+              <div className="space-y-2">
+                <label className="block">
                   <div className="flex items-center gap-2 mb-2">
-                    <InformationCircleIcon className="h-5 w-5 text-gray-600" />
+                    <InformationCircleIcon className="h-4 w-4 text-gray-600" />
                     <span className="text-sm font-semibold text-gray-700">
                       {reviewModal.decision
-                        ? "Phản hồi cho giảng viên"
+                        ? "Phản hồi (Không bắt buộc)"
                         : "Lý do từ chối (Bắt buộc) *"}
                     </span>
                   </div>
                   <Textarea
                     placeholder={
                       reviewModal.decision
-                        ? "Nhận xét phê duyệt,... "
-                        : "Lí do từ chối phê duyệt"
+                        ? "Nhập lời nhận xét hoặc gợi ý cho giảng viên..."
+                        : "Mô tả lý do từ chối để giảng viên cải thiện..."
                     }
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    rows={6}
+                    rows={4}
                     className={`resize-none text-sm ${
                       !reviewModal.decision && !feedback.trim()
                         ? "border-red-300 focus:border-red-500"
                         : ""
                     }`}
                   />
+                  {!reviewModal.decision && !feedback.trim() && (
+                    <p className="text-xs text-red-600 mt-1">
+                      * Bắt buộc khi từ chối khóa học
+                    </p>
+                  )}
                 </label>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 <Button
                   variant="outline"
                   onClick={closeReviewModal}
                   disabled={isSubmitting}
-                  className="flex-1 h-12 text-base font-semibold"
+                  className="flex-1 h-11 font-medium"
                 >
                   Hủy bỏ
                 </Button>
@@ -860,15 +859,15 @@ export default function CourseManagement() {
                   disabled={
                     isSubmitting || (!reviewModal.decision && !feedback.trim())
                   }
-                  className={`flex-1 h-12 text-base font-semibold ${
+                  className={`flex-1 h-11 font-semibold ${
                     reviewModal.decision
-                      ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                      : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      : "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
                   }`}
                 >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
-                      <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>Đang xử lý...</span>
                     </div>
                   ) : (
