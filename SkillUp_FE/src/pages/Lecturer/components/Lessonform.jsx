@@ -3,6 +3,7 @@ import { useRef, useEffect } from "react";
 import { Check, X, Upload, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Editor } from "@tinymce/tinymce-react";
+import { TINYMCE_API_KEY } from "@/config/api";
 
 function LessonForm({ lessonForm, setLessonForm, onSave, onCancel, loading }) {
   const editorRef = useRef(null);
@@ -67,7 +68,7 @@ function LessonForm({ lessonForm, setLessonForm, onSave, onCancel, loading }) {
         {lessonForm.type === "Text" && (
           <div className="border rounded-lg overflow-hidden">
             <Editor
-              apiKey="your-tinymce-api-key" // Replace with your TinyMCE API key
+              apiKey={TINYMCE_API_KEY}
               onInit={(evt, editor) => (editorRef.current = editor)}
               value={lessonForm.content}
               onEditorChange={handleEditorChange}
