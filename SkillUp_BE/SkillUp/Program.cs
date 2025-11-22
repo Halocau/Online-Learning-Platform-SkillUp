@@ -118,6 +118,7 @@ builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IBannerService, BannerService>();
 
 
 // POST

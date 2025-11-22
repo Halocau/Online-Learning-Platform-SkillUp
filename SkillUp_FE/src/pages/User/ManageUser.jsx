@@ -66,6 +66,7 @@ const ManageUser = () => {
       title: "Ảnh đại diện",
       dataIndex: "avatar",
       key: "avatar",
+      width: 90,
       render: (avatar, record) =>
         avatar ? (
           <Avatar src={avatar} />
@@ -77,17 +78,22 @@ const ManageUser = () => {
       title: "Họ Tên",
       dataIndex: "fullname",
       key: "fullname",
+      width: 180,
+      ellipsis: true,
       sorter: (a, b) => a.fullname.localeCompare(b.fullname),
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
+      width: 220,
+      ellipsis: true,
     },
     {
       title: "Vai trò",
       dataIndex: "roleName",
       key: "roleName",
+      width: 120,
       filters: [
         { text: "Học sinh", value: "Student" },
         { text: "Giảng viên", value: "Lecturer" },
@@ -103,7 +109,7 @@ const ManageUser = () => {
             displayRole = "Giảng viên";
             break;
           default:
-            displayRole = role; // fallback if unknown
+            displayRole = role;
         }
         return <Tag color="blue">{displayRole}</Tag>;
       },
@@ -112,6 +118,7 @@ const ManageUser = () => {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
+      width: 150,
       filters: [
         { text: "Đang hoạt động", value: "Active" },
         { text: "Không hoạt động", value: "InActive" },
@@ -137,13 +144,18 @@ const ManageUser = () => {
     {
       title: "Hành động",
       key: "action",
+      width: 180,
       render: (_, record) => (
         <Space>
           <Button
             type={record.status === "Active" ? "default" : "primary"}
             danger={record.status === "Active"}
             disabled={record.status === "InActive" || record.status === "Pending"}
-            onClick={() => handleToggleBan(record)}
+            onClick={() => {
+              if (window.confirm(`Bạn có chắc chắn muốn đổi trạng thái tài khoản ${record.email}?`)) {
+                handleToggleBan(record);
+              }
+            }}
             style={{ width: 150 }}
           >
             {record.status === "Active"
@@ -156,6 +168,7 @@ const ManageUser = () => {
       ),
     },
   ];
+
 
   return (
     <div style={{ padding: 20 }}>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Table, Button, Space, Tag, Input, Segmented, Tooltip, Select } from 'antd';
-import { ReloadOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
@@ -100,33 +100,40 @@ export default function ManageQuestionBank() {
         fetchCourses();
     }, [fetchCourses]);
 
-    // This effect runs when 'fetchSections' (or courseId) changes
     useEffect(() => {
         if (courseId) {
             fetchSections();
+        } else {
+            setSections([]);
         }
-    }, [fetchSections, courseId]);
+    }, [courseId, fetchSections]);
+
 
     // This effect runs when 'fetchQuestionBank' (or sectionId/courseId) changes
     useEffect(() => {
         if (selectedSectionId) {
             fetchQuestionBank();
+        } else {
+            setQuestionBanks([]);
         }
     }, [fetchQuestionBank, selectedSectionId]);
 
     useEffect(() => {
-        // Auto-select the first course if not already selected
-        if (!courseId && courses.length > 0) {
+        if (courses.length > 0 && !courseId) {
             setCourseId(courses[0].id);
         }
-    }, [courses, courseId]);
+    }, [courses]);
 
-    // Add this hook after your component definition
+
     useEffect(() => {
         if (sections.length > 0) {
             setSelectedSectionId(sections[0].id);
+        } else {
+            setSelectedSectionId(null);
         }
-    }, [sections, courseId]);
+    }, [sections]);
+
+
 
     // Tìm kiếm phía client
     const displayed = useMemo(() => {
@@ -350,7 +357,14 @@ export default function ManageQuestionBank() {
                         ))}
                     </ul>
                 ) : (
-                    <div className="text-gray-500 text-sm">Không có chương nào</div>
+                    <Button
+                        type="dashed"
+                        icon={<PlusOutlined />}
+                        onClick={() => navigate(`/lecturer/courses/${courseId}`)}
+                        style={{ marginTop: "8px", width: "100%" }}
+                    >
+                        Thêm chương mới
+                    </Button>
                 )}
             </div>
 
@@ -370,13 +384,18 @@ export default function ManageQuestionBank() {
 
                         <Space>
                             {selectedSectionId ? (
-                                <Button type="primary" onClick={() => setCreateOpen(true)}>
-                                    Tạo câu hỏi mới
-                                </Button>
+                                <>
+                                    <Button type="primary" onClick={() => setCreateOpen(true)}>
+                                        Tạo câu hỏi mới
+                                    </Button>
+
+                                    <Button onClick={() => setImportOpen(true)}>
+                                        Nhập từ Excel
+                                    </Button>
+                                </>
                             ) : (
                                 <div></div>
                             )}
-                            <Button onClick={() => setImportOpen(true)}>Nhập từ Excel</Button>
                         </Space>
                     </div>
 
