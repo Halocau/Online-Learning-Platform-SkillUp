@@ -63,6 +63,10 @@ export const API_ENDPOINTS = {
 
     //Section endpoints
     GET_BY_COURSE: '/Sections/ByCourse/{courseId}',
+
+    //Notification endpoints
+    GET_MY_NOTIFICATIONS: '/Notify/GetMyNotifications',
+    GET_NOTIFICATIONS_BY_ACCOUNT: '/Notify/GetByAccount/{accountId}',
 };
 
 
