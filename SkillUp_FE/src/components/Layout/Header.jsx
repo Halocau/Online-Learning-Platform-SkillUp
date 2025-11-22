@@ -5,8 +5,9 @@ import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
 import { clearGuestCart } from "@/utils/guestCart";
 import SearchEngine from "@/components/common/SearchEngine";
+import NotificationBell from "@/components/common/NotificationBell";
 import avatar from "../../assets/logo_skillup.png";
-import { Bell, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
 function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -163,9 +164,7 @@ function Header() {
           {isAuthenticated ? (
             <div className="relative flex items-center space-x-3">
               {/* Notification Bell */}
-              <button className="text-[#2d334a] hover:text-[#272343] transition-colors p-2 relative">
-                <Bell className="w-5 h-5" />
-              </button>
+              <NotificationBell />
 
               {/* User Avatar with Dropdown */}
               <div

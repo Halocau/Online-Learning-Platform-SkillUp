@@ -350,17 +350,27 @@ namespace SkillUp.Services.Implementations
 				// Only include active quizzes
 				var quizItems = section.Quizzes
 					.Where(q => q.IsActive)
-					.Select(q => new SectionItemDto
+					.Select(q =>
 					{
-						Kind = "Quiz",
-						Id = q.Id,
-						Orders = (double)q.Orders,
-						Title = q.Title,
-						Description = q.Description,
-						PassPercent = q.PassPercent,
-						Timer = q.Timer,
-						CreatedAt = q.CreatedAt,
-						UpdatedAt = q.UpdatedAt
+						// Tìm Submission có EndedAt gần nhất
+						var latestSubmission = q.QuizSubmissions
+							.Where(s => s.EndedAt != null)
+							.OrderByDescending(s => s.EndedAt)
+							.FirstOrDefault();
+
+						return new SectionItemDto
+						{
+							Kind = "Quiz",
+							Id = q.Id,
+							Orders = (double)q.Orders,
+							Title = q.Title,
+							Description = q.Description,
+							PassPercent = q.PassPercent,
+							Timer = q.Timer,
+                            QuizSubmissionId = latestSubmission?.Id,
+							CreatedAt = q.CreatedAt,
+							UpdatedAt = q.UpdatedAt
+						};
 					});
 
 				// Gộp & sort tăng dần theo Orders
