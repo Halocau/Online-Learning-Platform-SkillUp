@@ -327,16 +327,26 @@ export default function ManageQuestionBank() {
             {/* SIDEBAR */}
             <div className="w-64 bg-gray-50 border border-gray-200 rounded-xl p-4 h-[80vh] overflow-y-auto">
                 <h3 className="text-lg font-semibold mb-3 mt-6">Chọn khóa học</h3>
+
                 <Select
+                    showSearch
                     placeholder="Chọn khóa học"
                     value={courseId || undefined}
                     onChange={(value) => setCourseId(value)}
                     style={{ width: 220 }}
+                    filterOption={(input, option) => {
+                        const children = option?.children ? String(option.children) : '';
+                        // Remove accents for comparison
+                        const normalize = (str) =>
+                            str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                        return normalize(children).includes(normalize(input));
+                    }}
                 >
                     {courses.map((course) => (
-                        <Option key={course.id} value={course.id}>
+                        <Select.Option key={course.id} value={course.id}>
                             {course.title}
-                        </Option>
+                        </Select.Option>
                     ))}
                 </Select>
 
