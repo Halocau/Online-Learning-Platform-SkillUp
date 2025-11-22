@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import { modPostAPI } from '@/api/modPostAPI';
 import { categoryApi } from '@/api/forumCategory';
+import ForumCategoryModal from '@/components/Forum/ForumCategoryModal';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -34,6 +35,8 @@ const ForumManage = () => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
 
+  const [open, setOpen] = useState(false);
+  
   // Filters
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -109,6 +112,18 @@ const ForumManage = () => {
       console.error('Error banning post:', error);
       message.error('Không thể vô hiệu hóa bài viết');
     }
+  };
+
+  const handleAddCategory = () => {
+    console.log("Add item");
+  };
+
+  const handleEditCategory = (item) => {
+    console.log("Edit: ", item);
+  };
+
+  const handleDeleteCategory = (id) => {
+    setCategories(prev => prev.filter(x => x.id !== id));
   };
 
   // Filter posts
@@ -272,6 +287,8 @@ const ForumManage = () => {
             ))}
           </Select>
 
+          <Button type="primary" onClick={() => setOpen(true)}>Quản lý danh mục</Button>
+          
           <Button onClick={fetchPosts}>Làm mới</Button>
         </Space>
 
@@ -421,6 +438,15 @@ const ForumManage = () => {
           </div>
         )}
       </Modal>
+
+      <ForumCategoryModal
+        open={open}
+        onClose={() => setOpen(false)}
+        data={categories}
+        onAdd={handleAddCategory}
+        onEdit={handleEditCategory}
+        onDelete={handleDeleteCategory}
+      />
     </div>
   );
 };

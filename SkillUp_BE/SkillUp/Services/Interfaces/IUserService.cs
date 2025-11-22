@@ -11,5 +11,8 @@ namespace SkillUp.Services.Interfaces
         Task<List<UserSummaryDTO>> GetAllUsersAsync();
 
         Task<bool> ToggleStatusUser(Guid userId , string newStatus);
-    }
+
+        Task<List<UserSummaryDTO>> GetAllModerators();
+
+	}
 }

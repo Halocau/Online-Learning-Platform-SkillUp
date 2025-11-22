@@ -8,5 +8,6 @@ namespace SkillUp.Services.Interfaces
         Task<ApiResponse> UpdateAsync(int id, ForumCategoryDto dto);
         Task<ApiResponse> DeleteAsync(int id);
         Task<ApiResponse> GetAllAsync();
-    }
+        Task<ApiResponse> GetByIdAsync(int id);
+	}
 }
