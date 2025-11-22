@@ -136,3 +136,13 @@ export const deleteQuiz = async (quizId) => {
     return handleAPIError(err, "Không thể xóa quiz!");
   }
 };
+
+// Get quiz result by submission ID
+export const getQuizResult = async (submissionId) => {
+  try {
+    const res = await axiosInstance.get(`${API_URL}/results/${submissionId}`);
+    return handleAPIResponse(res, "", false);
+  } catch (err) {
+    return handleAPIError(err, "Không thể tải kết quả quiz!");
+  }
+};

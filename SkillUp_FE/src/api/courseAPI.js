@@ -113,13 +113,16 @@ export const courseAPI = {
   },
 
   // Approve or reject course
-  approveCourse: async (courseId, decision) => {
+  approveCourse: async (courseId, decision, reason = "") => {
     try {
       const response = await axiosInstance.put(
         `${API_BASE_URL}/Approve-Course/${courseId}`,
         null,
         {
-          params: { decision },
+          params: {
+            decision,
+            reason: reason || undefined, // Only include if provided
+          },
         }
       );
       return response;

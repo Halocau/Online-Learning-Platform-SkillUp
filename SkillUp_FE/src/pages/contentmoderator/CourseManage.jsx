@@ -9,12 +9,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
   ArrowsUpDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  AcademicCapIcon,
+  BookOpenIcon,
+  UsersIcon,
+  CurrencyDollarIcon,
+  XMarkIcon,
+  ClockIcon,
+  TagIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 
 import { toast } from "react-toastify";
@@ -28,6 +39,16 @@ export default function CourseManagement() {
   const [publishTab, setPublishTab] = useState("public");
   const [sortColumn, setSortColumn] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
+
+  // Feedback modal states
+  const [reviewModal, setReviewModal] = useState({
+    open: false,
+    courseId: null,
+    decision: null,
+    courseData: null,
+  });
+  const [feedback, setFeedback] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initial page
   const [currentPage, setCurrentPage] = useState(1);
@@ -79,10 +100,43 @@ export default function CourseManagement() {
     }
   };
 
-  // Handle approve/reject course
-  const handleApproveCourse = async (courseId, decision) => {
+  // Open review modal
+  const openReviewModal = (courseId, decision, courseData) => {
+    setReviewModal({
+      open: true,
+      courseId,
+      decision,
+      courseData,
+    });
+    setFeedback("");
+  };
+
+  // Close review modal
+  const closeReviewModal = () => {
+    setReviewModal({
+      open: false,
+      courseId: null,
+      decision: null,
+      courseData: null,
+    });
+    setFeedback("");
+    setIsSubmitting(false);
+  };
+
+  // Handle approve/reject course with feedback
+  const handleSubmitReview = async () => {
+    const { courseId, decision } = reviewModal;
+
+    // Validate feedback for rejection
+    if (!decision && !feedback.trim()) {
+      toast.error("Vui lòng nhập lý do từ chối khóa học");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      await courseAPI.approveCourse(courseId, decision);
+      await courseAPI.approveCourse(courseId, decision, feedback);
 
       if (decision) {
         toast.success("Duyệt khóa học thành công!");
@@ -90,11 +144,14 @@ export default function CourseManagement() {
         toast.success("Từ chối khóa học thành công!");
       }
 
+      closeReviewModal();
       // Refresh courses list
       await fetchCourses();
     } catch (error) {
       toast.error("Đã xảy ra lỗi. Vui lòng thử lại.");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -169,7 +226,6 @@ export default function CourseManagement() {
   const pendingCount = courses.filter((c) => c.status === "Pending").length;
   const unpublishCount = courses.filter((c) => c.status === "Unpublish").length;
 
-  // Table columns with sort functionality
   const getColumns = () => {
     const baseColumns = [
       {
@@ -236,7 +292,7 @@ export default function CourseManagement() {
         title: "Giá",
         render: (value) => (
           <span className="font-semibold text-green-600">
-            {value === 0 ? "Miễn phí" : `${value} VND`}
+            {value === 0 ? "Miễn phí" : `${value.toLocaleString()} VND`}
           </span>
         ),
       },
@@ -314,7 +370,7 @@ export default function CourseManagement() {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleApproveCourse(course.id, true);
+                  openReviewModal(course.id, true, course);
                 }}
                 className="min-w-[70px] bg-green-600 hover:bg-green-700"
               >
@@ -325,7 +381,7 @@ export default function CourseManagement() {
                 size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleApproveCourse(course.id, false);
+                  openReviewModal(course.id, false, course);
                 }}
                 className="min-w-[70px] border-red-300 text-red-600 hover:bg-red-50"
               >
@@ -336,11 +392,6 @@ export default function CourseManagement() {
         },
       ];
     } else {
-      // Unpublish tab columns (view-only, no actions)
-      // Possible actions to add later:
-      // - Delete button to permanently remove unpublished courses
-      // - Ban/Unban to prevent courses from being published
-      // - Force Publish to directly publish without approval
       return [
         ...baseColumns,
         {
@@ -637,6 +688,210 @@ export default function CourseManagement() {
           </div>
         )}
       </div>
+
+      {/* Course Review Modal */}
+      {reviewModal.open && reviewModal.courseData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-white-70 ">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div
+              className={`relative p-6 ${
+                reviewModal.decision
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600"
+                  : "bg-gradient-to-r from-red-500 to-rose-600"
+              } text-white rounded-t-2xl`}
+            >
+              <button
+                onClick={closeReviewModal}
+                className="absolute top-4 right-4 p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+
+              <div className="flex items-center gap-4">
+                <div
+                  className={`p-4 rounded-full ${
+                    reviewModal.decision
+                      ? "bg-green-400 bg-opacity-30"
+                      : "bg-red-400 bg-opacity-30"
+                  }`}
+                >
+                  {reviewModal.decision ? (
+                    <CheckCircleIcon className="h-12 w-12" />
+                  ) : (
+                    <XCircleIcon className="h-12 w-12" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold mb-1">
+                    {reviewModal.decision
+                      ? "Duyệt khóa học"
+                      : "Từ chối khóa học"}
+                  </h2>
+                  <p className="text-green-50 text-sm">
+                    {reviewModal.decision
+                      ? "Xác nhận phê duyệt và xuất bản khóa học này"
+                      : "Cung cấp lý do từ chối để giảng viên có thể cải thiện"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Course Information */}
+            <div className="p-6 space-y-6">
+              {/* Course Title & Description */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+                <div className="flex items-start gap-3 mb-3">
+                  <BookOpenIcon className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {reviewModal.courseData.title}
+                    </h3>
+                    {reviewModal.courseData.description && (
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        {reviewModal.courseData.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Lecturer Information */}
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-100">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <AcademicCapIcon className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
+                      Giảng viên
+                    </p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {reviewModal.courseData.lecturerName ||
+                        "Chưa có thông tin"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Course Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* Category */}
+                <div className="bg-white p-4 rounded-xl border-2 border-gray-100 hover:border-blue-200 transition">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TagIcon className="h-5 w-5 text-blue-500" />
+                    <p className="text-xs text-gray-500 font-medium">
+                      Danh mục
+                    </p>
+                  </div>
+                  <p className="font-bold text-gray-900 truncate">
+                    {reviewModal.courseData.subCategoryName || "N/A"}
+                  </p>
+                </div>
+
+                {/* Price */}
+                <div className="bg-white p-4 rounded-xl border-2 border-gray-100 hover:border-green-200 transition">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CurrencyDollarIcon className="h-5 w-5 text-green-500" />
+                    <p className="text-xs text-gray-500 font-medium">Giá</p>
+                  </div>
+                  <p className="font-bold text-green-600">
+                    {reviewModal.courseData.price === 0
+                      ? "Miễn phí"
+                      : `${reviewModal.courseData.price.toLocaleString()} VND`}
+                  </p>
+                </div>
+
+                {/* Status */}
+                <div className="bg-white p-4 rounded-xl border-2 border-gray-100 hover:border-purple-200 transition">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ClockIcon className="h-5 w-5 text-purple-500" />
+                    <p className="text-xs text-gray-500 font-medium">
+                      Trạng thái
+                    </p>
+                  </div>
+                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                    {getPublishStatusText(reviewModal.courseData.status)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Feedback Form */}
+              <div className="bg-gray-50 p-6 rounded-xl border-2 border-gray-200">
+                <label className="block mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <InformationCircleIcon className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm font-semibold text-gray-700">
+                      {reviewModal.decision
+                        ? "Phản hồi cho giảng viên"
+                        : "Lý do từ chối (Bắt buộc) *"}
+                    </span>
+                  </div>
+                  <Textarea
+                    placeholder={
+                      reviewModal.decision
+                        ? "Nhận xét phê duyệt,... "
+                        : "Lí do từ chối phê duyệt"
+                    }
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    rows={6}
+                    className={`resize-none text-sm ${
+                      !reviewModal.decision && !feedback.trim()
+                        ? "border-red-300 focus:border-red-500"
+                        : ""
+                    }`}
+                  />
+                </label>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={closeReviewModal}
+                  disabled={isSubmitting}
+                  className="flex-1 h-12 text-base font-semibold"
+                >
+                  Hủy bỏ
+                </Button>
+                <Button
+                  onClick={handleSubmitReview}
+                  disabled={
+                    isSubmitting || (!reviewModal.decision && !feedback.trim())
+                  }
+                  className={`flex-1 h-12 text-base font-semibold ${
+                    reviewModal.decision
+                      ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                      : "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700"
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Đang xử lý...</span>
+                    </div>
+                  ) : (
+                    <>
+                      {reviewModal.decision ? (
+                        <>
+                          <CheckCircleIcon className="h-5 w-5 mr-2" />
+                          Xác nhận duyệt
+                        </>
+                      ) : (
+                        <>
+                          <XCircleIcon className="h-5 w-5 mr-2" />
+                          Xác nhận từ chối
+                        </>
+                      )}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

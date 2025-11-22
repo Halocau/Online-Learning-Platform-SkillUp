@@ -62,7 +62,7 @@ const CourseLearning = () => {
     } catch (error) {
       toast.error("Không thể tải khóa học");
     } finally {
-      setTimeout(() => setLoading(false), 500);
+      setTimeout(() => setLoading(false), 150);
     }
   };
 
@@ -76,7 +76,7 @@ const CourseLearning = () => {
         { replace: true }
       );
       setTransitioning(false);
-    }, 550);
+    }, 150);
   };
 
   const handleNext = () => {
@@ -102,7 +102,7 @@ const CourseLearning = () => {
         }
       }
       setTransitioning(false);
-    }, 550);
+    }, 150);
   };
 
   const handlePrev = () => {
@@ -131,7 +131,7 @@ const CourseLearning = () => {
         }
       }
       setTransitioning(false);
-    }, 550);
+    }, 150);
   };
 
   const hasNext = () => {
