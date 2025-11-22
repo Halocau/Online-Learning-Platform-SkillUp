@@ -24,6 +24,8 @@ import {
 import { modPostAPI } from '@/api/modPostAPI';
 import { categoryApi } from '@/api/forumCategory';
 import ForumCategoryModal from '@/components/Forum/ForumCategoryModal';
+import { toast } from 'react-toastify';
+import axiosInstance from '@/lib/axios';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -36,7 +38,7 @@ const ForumManage = () => {
   const [detailVisible, setDetailVisible] = useState(false);
 
   const [open, setOpen] = useState(false);
-  
+
   // Filters
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -114,16 +116,35 @@ const ForumManage = () => {
     }
   };
 
-  const handleAddCategory = () => {
-    console.log("Add item");
-  };
-
   const handleEditCategory = (item) => {
-    console.log("Edit: ", item);
+    fetchCategories();
   };
 
-  const handleDeleteCategory = (id) => {
-    setCategories(prev => prev.filter(x => x.id !== id));
+  const handleToggleCategory = async (item) => {
+    try {
+      const updatedStatus = !item.isActive;
+
+      await axiosInstance.put(
+        `http://localhost:5120/api/ForumCategory/update/${item.id}`,
+        {
+          id: item.id,
+          name: item.name,
+          isActive: updatedStatus
+        }
+      );
+
+      if (updatedStatus) {
+        toast.success("Đã kích hoạt danh mục.");
+      } else {
+        toast.success("Đã vô hiệu hóa danh mục.");
+      }
+
+    } catch (error) {
+      console.error("Error updating category status:", error);
+      toast.error("Đã xảy ra lỗi khi cập nhật!");
+    } finally {
+      fetchCategories();
+    }
   };
 
   // Filter posts
@@ -288,7 +309,7 @@ const ForumManage = () => {
           </Select>
 
           <Button type="primary" onClick={() => setOpen(true)}>Quản lý danh mục</Button>
-          
+
           <Button onClick={fetchPosts}>Làm mới</Button>
         </Space>
 
@@ -443,9 +464,8 @@ const ForumManage = () => {
         open={open}
         onClose={() => setOpen(false)}
         data={categories}
-        onAdd={handleAddCategory}
         onEdit={handleEditCategory}
-        onDelete={handleDeleteCategory}
+        onToggle={handleToggleCategory}
       />
     </div>
   );
