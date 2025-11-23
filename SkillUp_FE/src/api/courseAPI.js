@@ -155,4 +155,17 @@ export const courseAPI = {
       throw error;
     }
   },
+
+  // Get resume item (lấy vị trí học tiếp)
+  getResumeItem: async (courseId) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_BASE_URL}/${courseId}/resume`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching resume item:", error);
+      throw error;
+    }
+  },
 };

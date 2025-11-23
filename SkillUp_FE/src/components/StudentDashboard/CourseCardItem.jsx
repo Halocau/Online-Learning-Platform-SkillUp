@@ -1,14 +1,54 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { courseAPI } from "@/api/courseAPI";
 
 const CourseCardItem = memo(({ course, index }) => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
 
-    const handleLearnClick = useCallback((e) => {
+    const handleLearnClick = useCallback(async (e) => {
         e.preventDefault();
-        navigate(`/student/learn/${course.id}`);
+        setLoading(true);
+        
+        try {
+            // Gọi API lấy vị trí học tiếp
+            const response = await courseAPI.getResumeItem(course.id);
+            
+            if (response.data?.code === 200 && response.data?.data?.[0]) {
+                const resumeData = response.data.data[0];
+                const { itemId, type } = resumeData;
+                
+                // Lấy thông tin course detail để tìm sectionId
+                const courseDetail = await courseAPI.getCourseDetail(course.id);
+                const courseData = courseDetail.data.data[0];
+                
+                // Tìm section chứa item này
+                let sectionId = null;
+                for (const section of courseData.sections) {
+                    const item = section.items?.find(i => i.id === itemId);
+                    if (item) {
+                        sectionId = section.id;
+                        break;
+                    }
+                }
+                
+                if (sectionId) {
+                    navigate(`/student/learn/${course.id}/section/${sectionId}/lesson/${itemId}`);
+                } else {
+                    navigate(`/student/learn/${course.id}`);
+                }
+            } else {
+                navigate(`/student/learn/${course.id}`);
+            }
+        } catch (error) {
+            console.error("Error getting resume item:", error);
+            // Fallback: vào trang overview
+            navigate(`/student/learn/${course.id}`);
+        } finally {
+            setLoading(false);
+        }
     }, [navigate, course.id]);
 
     return (
@@ -64,9 +104,16 @@ const CourseCardItem = memo(({ course, index }) => {
                             size="sm"
                             className="h-6 px-2 text-xs hover:bg-[#FFD54F]/10 hover:text-[#FFD54F] flex-shrink-0"
                             onClick={handleLearnClick}
+                            disabled={loading}
                         >
-                            {course.progressPercentage > 0 ? 'Tiếp tục' : 'Học ngay'}
-                            <ArrowRight className="w-3 h-3 ml-1" />
+                            {loading ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                                <>
+                                    {course.progressPercentage > 0 ? 'Tiếp tục' : 'Học ngay'}
+                                    <ArrowRight className="w-3 h-3 ml-1" />
+                                </>
+                            )}
                         </Button>
                     </div>
                 </div>
