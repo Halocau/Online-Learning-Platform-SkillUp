@@ -15,6 +15,8 @@ public partial class AnswerBank
 
     public bool IsActive { get; set; }
 
+    public string? Image { get; set; }
+
     public virtual QuestionBank QuestionBank { get; set; } = null!;
 
     public virtual ICollection<StudentSelectedAnswer> StudentSelectedAnswers { get; set; } = new List<StudentSelectedAnswer>();
