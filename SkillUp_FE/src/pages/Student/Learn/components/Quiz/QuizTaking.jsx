@@ -9,7 +9,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { startQuiz, submitQuiz } from "@/api/quizAPI";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import DOMPurify from "dompurify";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ const QuizTakingPage = () => {
         const quizInfo = data[0];
         setQuizData(quizInfo);
         setSubmissionId(quizInfo.submissionId);
-        setTimeRemaining(quizInfo.timer * 60); // Convert to seconds
+        setTimeRemaining(quizInfo.timer * 60);
       } else {
         toast.error("Không thể tải câu hỏi");
         navigate(-1);
@@ -179,7 +179,6 @@ const QuizTakingPage = () => {
 
   const currentQuestion = quizData.questions[currentQuestionIndex];
 
-  // Safety check: if no current question, return null
   if (!currentQuestion) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fffffe]">
@@ -248,26 +247,10 @@ const QuizTakingPage = () => {
           {/* Navigation buttons */}
           <div className="space-y-2 mb-6">
             <button
-              onClick={handlePrev}
-              disabled={currentQuestionIndex === 0}
-              className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 hover:bg-[#e3f6f5] disabled:bg-[#fffffe] disabled:border-[#272343]/20 disabled:text-[#2d334a]/50 text-[#272343] rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              ← Câu trước
-            </button>
-
-            <button
               onClick={() => fetchQuizQuestions()}
               className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 hover:bg-[#e3f6f5] text-[#272343] rounded-lg font-medium transition-colors"
             >
               🔄 Tải lại
-            </button>
-
-            <button
-              onClick={handleNext}
-              disabled={currentQuestionIndex === quizData.questions.length - 1}
-              className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 hover:bg-[#e3f6f5] disabled:bg-[#fffffe] disabled:border-[#272343]/20 disabled:text-[#2d334a]/50 text-[#272343] rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              Câu sau →
             </button>
           </div>
 
@@ -403,6 +386,26 @@ const QuizTakingPage = () => {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Navigation buttons - OUTSIDE the box, aligned with it */}
+            <div className="mt-6 flex items-center gap-2">
+              <button
+                onClick={handlePrev}
+                disabled={currentQuestionIndex === 0}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#272343] bg-[#ffd803] px-4 py-2 text-sm font-medium text-[#272343] shadow-sm hover:bg-[#ffd803]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Câu trước
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={
+                  currentQuestionIndex === quizData.questions.length - 1
+                }
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#272343] bg-[#ffd803] px-4 py-2 text-sm font-medium text-[#272343] shadow-sm hover:bg-[#ffd803]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Câu sau →
+              </button>
             </div>
           </div>
         </div>
