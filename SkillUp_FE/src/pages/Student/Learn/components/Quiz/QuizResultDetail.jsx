@@ -124,12 +124,12 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                     </div>
                   </div>
 
-                  <button
+                  {/* <button
                     onClick={handleClose}
                     className="p-2 hover:bg-[#e3f6f5] rounded-lg transition-colors border border-[#272343]/20"
                   >
                     <X className="w-5 h-5 text-[#272343]" />
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </header>
@@ -296,7 +296,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                     </div>
 
                     {/* Body */}
-                    <div className="px-4 sm:px-6 py-4 sm:py-6 flex-1 overflow-y-auto">
+                    <div className="px-4 sm:px-6 py-4 sm:py-6 flex-1">
                       {selectedQuestion !== null &&
                         resultData.questions[selectedQuestion] && (
                           <div className="border border-[#272343]/10 rounded-2xl overflow-hidden">

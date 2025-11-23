@@ -79,19 +79,19 @@ function QuestionBankSelector({
   const handleSelectAll = () => {
     const allIds = filteredQuestions.map((q) => q.id);
     setSelectedQuestions(allIds);
-    toast.success(`Đã chọn ${allIds.length} câu hỏi`);
+    // toast.success(`Đã chọn ${allIds.length} câu hỏi`);
   };
 
   // Deselect all
   const handleDeselectAll = () => {
     setSelectedQuestions([]);
-    toast.info("Đã bỏ chọn tất cả");
+    // toast.info("Đã bỏ chọn tất cả");
   };
 
   // Random selection
   const handleRandomSelect = () => {
     if (filteredQuestions.length === 0) {
-      toast.warning("Không có câu hỏi nào để chọn");
+      // toast.warning("Không có câu hỏi nào để chọn");
       return;
     }
 
@@ -100,13 +100,13 @@ function QuestionBankSelector({
     const randomIds = shuffled.slice(0, count).map((q) => q.id);
 
     setSelectedQuestions(randomIds);
-    toast.success(`Đã chọn ngẫu nhiên ${count} câu hỏi`);
+    // toast.success(`Đã chọn ngẫu nhiên ${count} câu hỏi`);
   };
 
   // Select first N questions
   const handleSelectCount = () => {
     if (filteredQuestions.length === 0) {
-      toast.warning("Không có câu hỏi nào để chọn");
+      // toast.warning("Không có câu hỏi nào để chọn");
       return;
     }
 
@@ -114,15 +114,15 @@ function QuestionBankSelector({
     const firstNIds = filteredQuestions.slice(0, count).map((q) => q.id);
 
     setSelectedQuestions(firstNIds);
-    toast.success(`Đã chọn ${count} câu hỏi đầu tiên`);
+    // toast.success(`Đã chọn ${count} câu hỏi đầu tiên`);
   };
 
   const handleAddSelected = () => {
     if (selectedQuestions.length === 0) {
-      toast.warning("Vui lòng chọn ít nhất 1 câu hỏi");
+      // toast.warning("Vui lòng chọn ít nhất 1 câu hỏi");
       return;
     }
-    console.log("➕ Adding selected questions:", selectedQuestions);
+
     onAddFromBank(selectedQuestions);
   };
 
