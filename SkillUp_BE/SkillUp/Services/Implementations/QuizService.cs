@@ -194,11 +194,13 @@ namespace SkillUp.Services.Implementations
             {
                 throw new Exception("Bài quiz không tồn tại hoặc không hoạt động.");
             }
+
             var student = await _studentRepository.GetByAccountIdAsync(accountId);
             if (student == null)
             {
                 throw new Exception("Không tìm thấy hồ sơ sinh viên cho tài khoản này.");
             }
+
             var newSubmission = new QuizSubmission
             {
                 Id = Guid.NewGuid(),
@@ -210,6 +212,27 @@ namespace SkillUp.Services.Implementations
             };
 
             await _quizSubmissionRepository.AddAsync(newSubmission);
+
+            var progress = await _studentProgressRepository.GetByStudentAndQuizAsync(student.Id, quizId);
+
+            if (progress == null)
+            {
+                var newProgress = new StudentProgress
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    QuizId = quizId,
+                    CourseId = quiz.Section.CourseId,
+                    LessonId = null,
+                    IsCompleted = false,
+                    LastViewedAt = DateTime.Now
+                };
+                await _studentProgressRepository.AddAsync(newProgress);
+            }
+            else
+            {
+                progress.LastViewedAt = DateTime.Now;
+            }
 
             var questionDtos = quiz.QuestionQuizzes
                 .Where(qq => qq.IsActive == true)
@@ -342,10 +365,14 @@ namespace SkillUp.Services.Implementations
                 if (quizFull != null && quizFull.Section != null)
                 {
                     var courseId = quizFull.Section.CourseId;
-
                     var existingProgress = await _studentProgressRepository.GetByStudentAndQuizAsync(studentId, quiz.Id);
 
-                    if (existingProgress == null)
+                    if (existingProgress != null)
+                    {
+                        existingProgress.IsCompleted = true;
+                        existingProgress.LastViewedAt = DateTime.Now;
+                    }
+                    else
                     {
                         var newProgress = new StudentProgress
                         {
@@ -353,7 +380,9 @@ namespace SkillUp.Services.Implementations
                             StudentId = studentId,
                             CourseId = courseId,
                             QuizId = quiz.Id,
-                            LessonId = null 
+                            LessonId = null,
+                            IsCompleted = true, 
+                            LastViewedAt = DateTime.Now
                         };
                         await _studentProgressRepository.AddAsync(newProgress);
                     }

@@ -30,8 +30,16 @@ namespace SkillUp.Repositories.Implementations
         public async Task<int> CountCompletedItemsAsync(Guid courseId, Guid studentId)
         {
             return await _context.StudentProgresses
+        .Where(sp => sp.CourseId == courseId && sp.StudentId == studentId)
+        .Where(sp => sp.IsCompleted == true)
+        .CountAsync();
+        }
+        public async Task<StudentProgress?> GetLastViewedItemAsync(Guid courseId, Guid studentId)
+        {
+            return await _context.StudentProgresses
                 .Where(sp => sp.CourseId == courseId && sp.StudentId == studentId)
-                .CountAsync();
+                .OrderByDescending(sp => sp.LastViewedAt)
+                .FirstOrDefaultAsync();
         }
         public async Task<bool> SaveChangesAsync()
         {

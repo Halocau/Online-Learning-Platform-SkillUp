@@ -347,30 +347,32 @@ namespace SkillUp.Services.Implementations
             if (student == null) throw new Exception("Không tìm thấy sinh viên.");
 
             var lesson = await _lessonRepository.GetByIdAsync(lessonId);
-
             if (lesson == null) throw new Exception("Không tìm thấy bài học.");
-
 
             if (lesson.Section == null)
                 throw new Exception("Lỗi dữ liệu: Bài học không thuộc Section nào.");
-
             var existingProgress = await _studentProgressRepository.GetByStudentAndLessonAsync(student.Id, lessonId);
 
             if (existingProgress != null)
             {
-                return true;
+                existingProgress.IsCompleted = true;
+                existingProgress.LastViewedAt = DateTime.Now;
             }
-
-            var newProgress = new StudentProgress
+            else
             {
-                Id = Guid.NewGuid(),
-                StudentId = student.Id,
-                LessonId = lessonId,
-                CourseId = lesson.Section.CourseId, 
-                QuizId = null
-            };
+                var newProgress = new StudentProgress
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    LessonId = lessonId,
+                    CourseId = lesson.Section.CourseId,
+                    QuizId = null,
+                    IsCompleted = true,
+                    LastViewedAt = DateTime.Now
+                };
 
-            await _studentProgressRepository.AddAsync(newProgress);
+                await _studentProgressRepository.AddAsync(newProgress);
+            }
             await _studentProgressRepository.SaveChangesAsync();
 
             return true;
