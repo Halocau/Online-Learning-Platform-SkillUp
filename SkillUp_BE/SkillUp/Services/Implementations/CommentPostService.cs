@@ -94,23 +94,22 @@ namespace SkillUp.Services.Implementations
             var commenter = await _accountRepo.GetByIdAsync(accountId);
             var accountName = commenter?.Fullname ?? "Một người dùng";
 
-            // 2. LOGIC THÔNG BÁO (Đã cập nhật)
+            
             try
             {
-                // Lấy post (để thông báo cho chủ post)
+              
                 var post = await _postRepo.GetByIdAsync(dto.PostId);
 
-                // --- PHẦN BẠN HỎI (THÔNG BÁO REPLY) ---
+               
                 CommentPost? parentComment = null;
                 if (dto.ParentCommentId.HasValue)
                 {
-                    // Lấy comment cha để biết ai là người nhận
+                   
                     parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
                 }
                 // ----------------------------------------
 
-                // 2.1. Thông báo cho Chủ Post (Logic cũ)
-                // Chỉ báo nếu (tìm thấy post) VÀ (người comment KHÔNG PHẢI chủ post)
+               
                 if (post != null && post.AccountId != accountId)
                 {
                     await _notifyService.CreateNotificationAsync(
@@ -120,17 +119,13 @@ namespace SkillUp.Services.Implementations
                     );
                 }
 
-                // 2.2. Thông báo cho Chủ Comment Bị Trả Lời (Logic mới)
-                // Kiểm tra:
-                // 1. Có comment cha
-                // 2. Người trả lời KHÔNG PHẢI là chủ comment cha (tự trả lời mình)
-                // 3. Chủ comment cha KHÔNG PHẢI là chủ post (tránh 2 thông báo trùng lặp)
+              
                 if (parentComment != null &&
                     parentComment.AccountId != accountId &&
                     (post == null || parentComment.AccountId != post.AccountId))
                 {
                     await _notifyService.CreateNotificationAsync(
-                        parentComment.AccountId, // Gửi cho chủ comment cha
+                        parentComment.AccountId, 
                         "Trả lời bình luận",
                         $"{accountName} đã trả lời bình luận của bạn."
                     );
@@ -141,7 +136,7 @@ namespace SkillUp.Services.Implementations
                 Console.WriteLine($"Lỗi gửi thông báo: {ex.Message}");
             }
 
-            // 3. Trả về DTO (Logic cũ của bạn)
+           
             return new CommentPostDto
             {
                 Id = savedComment.Id,
@@ -169,7 +164,7 @@ namespace SkillUp.Services.Implementations
 
             await _repo.UpdateAsync(comment);
 
-            // Đếm like
+           
             var likeCount = await _likeRepo.CountLikesAsync(comment.Id);
 
             return new CommentPostDto
