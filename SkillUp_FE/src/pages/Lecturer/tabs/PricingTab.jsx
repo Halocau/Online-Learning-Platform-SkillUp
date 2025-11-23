@@ -3,7 +3,7 @@ import { DollarSign, RefreshCw, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { axiosInstance } from "@/config/api";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { courseAPI } from "@/api/courseAPI";
 
 function PricingTab({ course, courseId, onUpdate }) {

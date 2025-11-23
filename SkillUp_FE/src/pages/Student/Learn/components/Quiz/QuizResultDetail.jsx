@@ -1,5 +1,19 @@
 import { useState, useEffect } from "react";
-import { X, CheckCircle2, XCircle, Loader2, Award, Timer, Clock3, RefreshCw, PlayCircle, Share2, Shield, Info, AlertTriangle } from "lucide-react";
+import {
+  X,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Award,
+  Timer,
+  Clock3,
+  RefreshCw,
+  PlayCircle,
+  Share2,
+  Shield,
+  Info,
+  AlertTriangle,
+} from "lucide-react";
 import { getQuizResult } from "@/api/quizAPI";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -24,7 +38,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
     try {
       setLoading(true);
       const data = await getQuizResult(submissionId);
-      
+
       if (data && data.length > 0) {
         setResultData(data[0]);
         setSelectedQuestion(0); // Select first question by default
@@ -49,7 +63,8 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
     return { __html: DOMPurify.sanitize(html) };
   };
 
-  const correctCount = resultData?.questions.filter((q) => q.isQuestionCorrect).length || 0;
+  const correctCount =
+    resultData?.questions.filter((q) => q.isQuestionCorrect).length || 0;
   const totalQuestions = resultData?.questions.length || 0;
   const scorePercent = resultData?.score || 0;
 
@@ -99,9 +114,12 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                       <Award className="w-4 h-4" />
                     </div>
                     <div className="flex flex-col leading-tight">
-                      <span className="text-xs text-[#272343]">Điểm số của bạn</span>
+                      <span className="text-xs text-[#272343]">
+                        Điểm số của bạn
+                      </span>
                       <span className="text-sm font-semibold tracking-tight text-[#272343]">
-                        {correctCount} / {totalQuestions} · {scorePercent.toFixed(0)}%
+                        {correctCount} / {totalQuestions} ·{" "}
+                        {scorePercent.toFixed(0)}%
                       </span>
                     </div>
                   </div>
@@ -130,10 +148,14 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                             {scorePercent.toFixed(0)}%
                           </span>
                         </div>
-                        <div className={cn(
-                          "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-[#272343] flex items-center justify-center",
-                          resultData.isPassed ? "bg-[#ffd803]" : "bg-[#bae8e8]"
-                        )}>
+                        <div
+                          className={cn(
+                            "absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-[#272343] flex items-center justify-center",
+                            resultData.isPassed
+                              ? "bg-[#ffd803]"
+                              : "bg-[#bae8e8]"
+                          )}
+                        >
                           {resultData.isPassed ? (
                             <CheckCircle2 className="w-3 h-3 text-[#272343]" />
                           ) : (
@@ -143,7 +165,9 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                       </div>
                       <div className="flex flex-col">
                         <span className="text-base font-semibold tracking-tight text-[#272343]">
-                          {resultData.isPassed ? "Bạn đã vượt qua bài kiểm tra" : "Chưa vượt qua bài kiểm tra"}
+                          {resultData.isPassed
+                            ? "Bạn đã vượt qua bài kiểm tra"
+                            : "Chưa vượt qua bài kiểm tra"}
                         </span>
                         <span className="text-sm text-[#2d334a]">
                           Trạng thái: {resultData.isPassed ? "Đạt" : "Chưa đạt"}
@@ -155,16 +179,22 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                     <div className="px-4 sm:px-5 pt-4 pb-5 border-b border-[#272343]/10">
                       <div className="grid grid-cols-2 gap-3">
                         <div className="rounded-xl border border-[#272343]/20 bg-[#e3f6f5]/60 px-3 py-3">
-                          <span className="text-xs text-[#2d334a]">Trả lời đúng</span>
+                          <span className="text-xs text-[#2d334a]">
+                            Trả lời đúng
+                          </span>
                           <div className="mt-1 flex items-baseline gap-1">
                             <span className="text-lg font-semibold tracking-tight text-[#272343]">
                               {correctCount}
                             </span>
-                            <span className="text-xs text-[#2d334a]">/ {totalQuestions}</span>
+                            <span className="text-xs text-[#2d334a]">
+                              / {totalQuestions}
+                            </span>
                           </div>
                         </div>
                         <div className="rounded-xl border border-[#272343]/20 bg-[#fffffe] px-3 py-3">
-                          <span className="text-xs text-[#2d334a]">Câu sai</span>
+                          <span className="text-xs text-[#2d334a]">
+                            Câu sai
+                          </span>
                           <div className="mt-1 flex items-baseline gap-1">
                             <span className="text-lg font-semibold tracking-tight text-[#272343]">
                               {totalQuestions - correctCount}
@@ -173,7 +203,9 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                           </div>
                         </div>
                         <div className="rounded-xl border border-[#272343]/20 bg-[#fffffe] px-3 py-3">
-                          <span className="text-xs text-[#2d334a]">Điểm số</span>
+                          <span className="text-xs text-[#2d334a]">
+                            Điểm số
+                          </span>
                           <div className="mt-1 flex items-baseline gap-1">
                             <span className="text-lg font-semibold tracking-tight text-[#272343]">
                               {scorePercent.toFixed(1)}%
@@ -181,7 +213,9 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                           </div>
                         </div>
                         <div className="rounded-xl border border-[#272343]/20 bg-[#fffffe] px-3 py-3">
-                          <span className="text-xs text-[#2d334a]">Tổng câu</span>
+                          <span className="text-xs text-[#2d334a]">
+                            Tổng câu
+                          </span>
                           <div className="mt-1 flex items-baseline gap-1">
                             <span className="text-lg font-semibold tracking-tight text-[#272343]">
                               {totalQuestions}
@@ -194,7 +228,9 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
 
                     {/* Legend */}
                     <div className="px-4 sm:px-5 pt-4 pb-3">
-                      <span className="text-xs font-medium text-[#2d334a]">Chú thích câu hỏi</span>
+                      <span className="text-xs font-medium text-[#2d334a]">
+                        Chú thích câu hỏi
+                      </span>
                       <div className="mt-2 flex flex-wrap gap-3 text-xs text-[#2d334a]">
                         <span className="inline-flex items-center gap-1.5">
                           <span className="w-2.5 h-2.5 rounded-full border border-green-500 bg-green-100"></span>
@@ -261,152 +297,231 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
 
                     {/* Body */}
                     <div className="px-4 sm:px-6 py-4 sm:py-6 flex-1 overflow-y-auto">
-                      {selectedQuestion !== null && resultData.questions[selectedQuestion] && (
-                        <div className="border border-[#272343]/10 rounded-2xl overflow-hidden">
-                          {(() => {
-                            const question = resultData.questions[selectedQuestion];
-                            const isCorrect = question.isQuestionCorrect;
-                            const selectedAnswers = question.allAnswers.filter((a) => a.wasSelected);
-                            const correctAnswers = question.allAnswers.filter((a) => a.isCorrect);
+                      {selectedQuestion !== null &&
+                        resultData.questions[selectedQuestion] && (
+                          <div className="border border-[#272343]/10 rounded-2xl overflow-hidden">
+                            {(() => {
+                              const question =
+                                resultData.questions[selectedQuestion];
+                              const isCorrect = question.isQuestionCorrect;
+                              const selectedAnswers =
+                                question.allAnswers.filter(
+                                  (a) => a.wasSelected
+                                );
+                              const correctAnswers = question.allAnswers.filter(
+                                (a) => a.isCorrect
+                              );
 
-                            return (
-                              <>
-                                <div className={cn(
-                                  "px-4 sm:px-5 py-3 border-b border-[#272343]/10 flex flex-wrap items-center justify-between gap-3",
-                                  isCorrect ? "bg-green-50" : "bg-red-50"
-                                )}>
-                                  <div className="flex items-center gap-2">
-                                    <span className={cn(
-                                      "inline-flex items-center justify-center w-6 h-6 rounded-full border-2 text-xs font-medium",
-                                      isCorrect
-                                        ? "border-green-500 bg-green-100 text-green-800"
-                                        : "border-red-500 bg-red-100 text-red-800"
-                                    )}>
-                                      {selectedQuestion + 1}
-                                    </span>
-                                    <div className="flex flex-col">
-                                      <span className="text-sm font-semibold tracking-tight text-[#272343]">
-                                        Câu hỏi {selectedQuestion + 1}
-                                      </span>
-                                      <span className="text-xs text-[#2d334a]">
-                                        Loại: {question.type === "MultiChoice" ? "Nhiều đáp án" : "Một đáp án"} · 
-                                        Trạng thái: {isCorrect ? "Đúng" : "Sai"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="px-4 sm:px-5 py-4 space-y-4">
-                                  {/* Question text */}
+                              return (
+                                <>
                                   <div
-                                    className="text-sm text-[#2d334a] leading-relaxed prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={createMarkup(question.title)}
-                                  />
-
-                                  {/* Question image */}
-                                  {question.image && (
-                                    <img
-                                      src={question.image}
-                                      alt="Question"
-                                      className="w-full max-w-md rounded-lg"
-                                    />
-                                  )}
-
-                                  {/* Answers */}
-                                  <div className="space-y-2">
-                                    {question.allAnswers.map((answer) => {
-                                      const isSelected = answer.wasSelected;
-                                      const isCorrectAnswer = answer.isCorrect;
-                                      
-                                      let borderColor = "border-[#272343]/20";
-                                      let bgColor = "bg-[#fffffe]";
-                                      let textColor = "text-[#272343]";
-                                      let labelColor = "text-gray-600";
-                                      let icon = null;
-
-                                      if (isCorrectAnswer) {
-                                        // Emerald green for correct answers
-                                        borderColor = "border-emerald-500";
-                                        bgColor = "bg-emerald-50";
-                                        textColor = "text-emerald-900";
-                                        labelColor = "text-emerald-700";
-                                        icon = <CheckCircle2 className="w-4 h-4 text-emerald-600" />;
-                                      } else if (isSelected && !isCorrect) {
-                                        // Red for wrong selected answers
-                                        borderColor = "border-red-500";
-                                        bgColor = "bg-red-50";
-                                        textColor = "text-red-900";
-                                        labelColor = "text-red-700";
-                                        icon = <XCircle className="w-4 h-4 text-red-600" />;
-                                      }
-
-                                      return (
-                                        <div
-                                          key={answer.answerId}
-                                          className={cn(
-                                            "rounded-xl border-2 px-3 py-2 flex items-start gap-2",
-                                            borderColor,
-                                            bgColor
-                                          )}
-                                        >
-                                          {icon && (
-                                            <div className="flex-shrink-0 mt-0.5">{icon}</div>
-                                          )}
-                                          <div className="flex-1">
-                                            <p className={cn("text-sm font-medium", textColor)}>
-                                              {answer.answerName}
-                                            </p>
-                                            {isSelected && (
-                                              <p className={cn("text-xs mt-1", labelColor)}>
-                                                (Bạn đã chọn)
-                                              </p>
-                                            )}
-                                            {isCorrectAnswer && (
-                                              <p className="text-xs text-emerald-700 mt-1 font-semibold">
-                                                ✓ Đáp án đúng
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-
-                                  {/* Show explanation for wrong answers */}
-                                  {!isCorrect && (
-                                    <div className="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-3">
-                                      <div className="flex items-start gap-2">
-                                        <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                                        <div>
-                                          <p className="text-sm font-semibold text-amber-900">
-                                            Đáp án đúng
-                                          </p>
-                                          <p className="mt-1 text-sm text-amber-800 leading-relaxed">
-                                            <span className="font-semibold">{correctAnswers.map(a => a.answerName).join(", ")}</span>
-                                          </p>
-                                        </div>
+                                    className={cn(
+                                      "px-4 sm:px-5 py-3 border-b border-[#272343]/10 flex flex-wrap items-center justify-between gap-3",
+                                      isCorrect ? "bg-green-50" : "bg-red-50"
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className={cn(
+                                          "inline-flex items-center justify-center w-6 h-6 rounded-full border-2 text-xs font-medium",
+                                          isCorrect
+                                            ? "border-green-500 bg-green-100 text-green-800"
+                                            : "border-red-500 bg-red-100 text-red-800"
+                                        )}
+                                      >
+                                        {selectedQuestion + 1}
+                                      </span>
+                                      <div className="flex flex-col">
+                                        <span className="text-sm font-semibold tracking-tight text-[#272343]">
+                                          Câu hỏi {selectedQuestion + 1}
+                                        </span>
+                                        <span className="text-xs text-[#2d334a]">
+                                          Loại:{" "}
+                                          {question.type === "MultiChoice"
+                                            ? "Nhiều đáp án"
+                                            : "Một đáp án"}{" "}
+                                          · Trạng thái:{" "}
+                                          {isCorrect ? "Đúng" : "Sai"}
+                                        </span>
                                       </div>
                                     </div>
-                                  )}
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      )}
+                                  </div>
+
+                                  <div className="px-4 sm:px-5 py-4 space-y-4">
+                                    {/* Question text */}
+                                    <div
+                                      className="text-sm text-[#2d334a] leading-relaxed prose prose-sm max-w-none"
+                                      dangerouslySetInnerHTML={createMarkup(
+                                        question.title
+                                      )}
+                                    />
+
+                                    {/* Question image */}
+                                    {question.image && (
+                                      <img
+                                        src={question.image}
+                                        alt="Question"
+                                        className="w-full max-w-md rounded-lg"
+                                      />
+                                    )}
+
+                                    {/* Answers with 4 states */}
+                                    <div className="space-y-2">
+                                      {question.allAnswers.map((answer) => {
+                                        const isSelected = answer.wasSelected;
+                                        const isCorrectAnswer =
+                                          answer.isCorrect;
+
+                                        let borderColor = "border-[#272343]/20";
+                                        let bgColor = "bg-[#fffffe]";
+                                        let textColor = "text-[#272343]";
+                                        let labelColor = "text-gray-600";
+                                        let icon = null;
+                                        let showMissedLabel = false;
+
+                                        if (isCorrectAnswer && isSelected) {
+                                          // Case 1: Correct answer AND you selected it - GREEN FILLED
+                                          borderColor = "border-emerald-500";
+                                          bgColor = "bg-emerald-50";
+                                          textColor = "text-emerald-900";
+                                          labelColor = "text-emerald-700";
+                                          icon = (
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                          );
+                                        } else if (
+                                          isCorrectAnswer &&
+                                          !isSelected
+                                        ) {
+                                          // Case 2: Correct answer BUT you didn't select it - GREEN BORDER DASHED
+                                          borderColor =
+                                            "border-emerald-500 border-dashed";
+                                          bgColor = "bg-emerald-50/30";
+                                          textColor = "text-emerald-800";
+                                          labelColor = "text-emerald-600";
+                                          icon = (
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                          );
+                                          showMissedLabel = true;
+                                        } else if (
+                                          !isCorrectAnswer &&
+                                          isSelected
+                                        ) {
+                                          // Case 3: Wrong answer AND you selected it - RED
+                                          borderColor = "border-red-500";
+                                          bgColor = "bg-red-50";
+                                          textColor = "text-red-900";
+                                          labelColor = "text-red-700";
+                                          icon = (
+                                            <XCircle className="w-4 h-4 text-red-600" />
+                                          );
+                                        }
+                                        // Case 4: Wrong answer and NOT selected - stays neutral (default styling)
+
+                                        return (
+                                          <div
+                                            key={answer.answerId}
+                                            className={cn(
+                                              "rounded-xl border-2 px-3 py-2 flex items-start gap-2",
+                                              borderColor,
+                                              bgColor
+                                            )}
+                                          >
+                                            {icon && (
+                                              <div className="flex-shrink-0 mt-0.5">
+                                                {icon}
+                                              </div>
+                                            )}
+                                            <div className="flex-1">
+                                              <p
+                                                className={cn(
+                                                  "text-sm font-medium",
+                                                  textColor
+                                                )}
+                                              >
+                                                {answer.answerName}
+                                              </p>
+                                              {isSelected && (
+                                                <p
+                                                  className={cn(
+                                                    "text-xs mt-1 font-medium",
+                                                    labelColor
+                                                  )}
+                                                >
+                                                  {isCorrectAnswer
+                                                    ? "✓ Bạn đã chọn đúng"
+                                                    : "✗ Bạn chọn sai"}
+                                                </p>
+                                              )}
+                                              {showMissedLabel && (
+                                                <p className="text-xs text-amber-600 mt-1 font-medium">
+                                                  ⚠ Đáp án đúng (bạn đã bỏ lỡ)
+                                                </p>
+                                              )}
+                                              {isCorrectAnswer &&
+                                                !isSelected &&
+                                                !showMissedLabel && (
+                                                  <p className="text-xs text-emerald-700 mt-1 font-semibold">
+                                                    ✓ Đáp án đúng
+                                                  </p>
+                                                )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+
+                                    {/* Show explanation for wrong answers
+                                    {!isCorrect && (
+                                      <div className="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-3">
+                                        <div className="flex items-start gap-2">
+                                          <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                          <div>
+                                            <p className="text-sm font-semibold text-amber-900">
+                                              {question.type === "MultiChoice"
+                                                ? "Các đáp án đúng"
+                                                : "Đáp án đúng"}
+                                            </p>
+                                            <p className="mt-1 text-sm text-amber-800 leading-relaxed">
+                                              <span className="font-semibold">
+                                                {correctAnswers
+                                                  .map((a) => a.answerName)
+                                                  .join(", ")}
+                                              </span>
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )} */}
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        )}
 
                       {/* Navigation */}
                       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                         <div className="flex flex-wrap gap-2">
                           <button
-                            onClick={() => setSelectedQuestion(Math.max(0, selectedQuestion - 1))}
+                            onClick={() =>
+                              setSelectedQuestion(
+                                Math.max(0, selectedQuestion - 1)
+                              )
+                            }
                             disabled={selectedQuestion === 0}
                             className="inline-flex items-center gap-1.5 rounded-full border border-[#272343] bg-[#ffd803] px-4 py-2 text-sm font-medium text-[#272343] shadow-sm hover:bg-[#ffd803]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
                             ← Câu trước
                           </button>
                           <button
-                            onClick={() => setSelectedQuestion(Math.min(totalQuestions - 1, selectedQuestion + 1))}
+                            onClick={() =>
+                              setSelectedQuestion(
+                                Math.min(
+                                  totalQuestions - 1,
+                                  selectedQuestion + 1
+                                )
+                              )
+                            }
                             disabled={selectedQuestion === totalQuestions - 1}
                             className="inline-flex items-center gap-1.5 rounded-full border border-[#272343] bg-[#ffd803] px-4 py-2 text-sm font-medium text-[#272343] shadow-sm hover:bg-[#ffd803]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
@@ -423,7 +538,10 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                     <div className="px-4 sm:px-6 py-3 border-t border-[#272343]/10 flex flex-wrap items-center justify-between gap-3 bg-[#fffffe]/80">
                       <div className="flex items-center gap-2 text-xs text-[#2d334a]">
                         <Shield className="w-4 h-4 text-[#272343]" />
-                        <span>Kết quả được lưu an toàn. Bạn có thể xem lại bất cứ lúc nào.</span>
+                        <span>
+                          Kết quả được lưu an toàn. Bạn có thể xem lại bất cứ
+                          lúc nào.
+                        </span>
                       </div>
                     </div>
                   </section>
