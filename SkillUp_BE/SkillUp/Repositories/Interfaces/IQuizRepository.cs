@@ -11,6 +11,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<Quiz?> GetQuizWithSectionAndCourseAsync(Guid quizId);
 
         Task<Quiz?> GetQuizWithQuestionsAsync(Guid quizId);
+		Task<List<Quiz>> GetQuizzesByIdsAndSectionAsync(IEnumerable<Guid> ids, Guid sectionId);
 
-    }
+	}
 }

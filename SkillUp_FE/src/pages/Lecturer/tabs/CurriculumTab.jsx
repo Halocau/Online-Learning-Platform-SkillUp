@@ -9,6 +9,8 @@ import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
 import SectionCard from "../components/SectionCard";
 import ConfirmModal from "../components/ConfirmModal";
+import { DragDropContext } from "@hello-pangea/dnd";
+import axiosInstance from "@/lib/axios";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
   const [expandedSections, setExpandedSections] = useState({});
@@ -221,10 +223,10 @@ function CurriculumTab({ course, courseId, onUpdate }) {
           newCourse.sections = newCourse.sections.map((section) =>
             section.id === sectionId
               ? {
-                  ...section,
-                  title: sectionForm.title,
-                  description: sectionForm.description,
-                }
+                ...section,
+                title: sectionForm.title,
+                description: sectionForm.description,
+              }
               : section
           );
           return newCourse;
@@ -483,12 +485,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === lessonId
                 ? {
-                    ...item,
-                    title: lessonForm.title,
-                    description: lessonForm.description,
-                    isFree: lessonForm.isFree,
-                    orders: lessonForm.lessonOrder,
-                  }
+                  ...item,
+                  title: lessonForm.title,
+                  description: lessonForm.description,
+                  isFree: lessonForm.isFree,
+                  orders: lessonForm.lessonOrder,
+                }
                 : item
             ),
           }));
@@ -708,12 +710,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === quizId
                 ? {
-                    ...item,
-                    title: quizForm.title,
-                    description: quizForm.description,
-                    passPercent,
-                    timer,
-                  }
+                  ...item,
+                  title: quizForm.title,
+                  description: quizForm.description,
+                  passPercent,
+                  timer,
+                }
                 : item
             ),
           }));
@@ -772,8 +774,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   const sortedSections = displayCourse?.sections
     ? [...displayCourse.sections].sort(
-        (a, b) => (a.orders || 0) - (b.orders || 0)
-      )
+      (a, b) => (a.orders || 0) - (b.orders || 0)
+    )
     : [];
 
   return (
@@ -845,6 +847,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         setEditingQuizId={setEditingQuizId}
         courseId={courseId}
         onAddSectionClick={handleAddSectionClick}
+        onUpdate={onUpdate}
       />
     </div>
   );
@@ -974,52 +977,114 @@ function SectionsList(props) {
     setEditingQuizId,
     courseId,
     onAddSectionClick,
+    onUpdate,
   } = props;
 
   if (!sections.length) {
     return <EmptySectionsState onAddSectionClick={onAddSectionClick} />;
   }
 
+  const onDragEnd = async (result) => {
+    const { source, destination } = result;
+
+    if (!destination) return;
+
+    if (source.droppableId !== destination.droppableId) {
+      return;
+    }
+
+    if (source.index === destination.index) {
+      return;
+    }
+
+    // Create backup for rollback
+    const originalSections = structuredClone(sections);
+
+    // Find the active section
+    const sectionIndex = sections.findIndex(
+      (s) => s.id.toString() === source.droppableId
+    );
+    if (sectionIndex === -1) return;
+
+    // Create mutable copy
+    const newSections = structuredClone(sections);
+    const activeSection = newSections[sectionIndex];
+
+    // Perform the move
+    const [movedItem] = activeSection.items.splice(source.index, 1);
+    activeSection.items.splice(destination.index, 0, movedItem);
+
+    // Recalculate orders
+    activeSection.items.forEach((item, index) => {
+      item.orders = index + 1;
+    });
+
+    try {
+      const payload = activeSection.items.map((item) => ({
+        id: item.id,
+        orders: item.orders,
+        type: item.kind
+      }));
+      console.log("Reordering items:", payload);
+      // API call to save the new order
+      await axiosInstance.put(`http://localhost:5120/api/Sections/${activeSection.id}/reorder`, payload);
+
+      if (typeof onUpdate === "function") {
+        await onUpdate({ showSuccess: false });
+      } else {
+        console.warn("onUpdate not provided");
+      }
+    } catch (error) {
+      console.error("Failed to reorder:", error);
+      // Rollback on error - refetch original data
+      if (typeof onUpdate === "function") {
+        await onUpdate({ showSuccess: false });
+      }
+    }
+  };
+
   return (
     <div className="space-y-3">
-      {sections.map((section, index) => (
-        <SectionCard
-          key={section.id}
-          section={section}
-          index={index}
-          isExpanded={expandedSections[section.id]}
-          onToggle={() => onToggleSection(section.id)}
-          onEdit={onEditSection}
-          onDelete={onDeleteSection}
-          onAddContent={onAddContent}
-          onSaveLesson={onSaveLesson}
-          onSaveQuiz={onSaveQuiz}
-          onEditLesson={onEditLesson}
-          onUpdateLesson={onUpdateLesson}
-          onDeleteLesson={onDeleteLesson}
-          onEditQuiz={onEditQuiz}
-          onUpdateQuiz={onUpdateQuiz}
-          onDeleteQuiz={onDeleteQuiz}
-          loading={loading}
-          editingSectionId={editingSectionId}
-          sectionForm={sectionForm}
-          setSectionForm={setSectionForm}
-          onUpdateSection={onUpdateSection}
-          onCancelEditSection={onCancelEditSection}
-          addingItemToSection={addingItemToSection}
-          onSelectContentType={onSelectContentType}
-          onCancelAddContent={onCancelAddContent}
-          lessonForm={lessonForm}
-          setLessonForm={setLessonForm}
-          quizForm={quizForm}
-          setQuizForm={setQuizForm}
-          editingLessonId={editingLessonId}
-          setEditingLessonId={setEditingLessonId}
-          editingQuizId={editingQuizId}
-          setEditingQuizId={setEditingQuizId}
-          courseId={courseId}
-        />
-      ))}
+      <DragDropContext onDragEnd={onDragEnd}>
+        {sections.map((section, index) => (
+          <SectionCard
+            key={section.id}
+            section={section}
+            index={index}
+            isExpanded={expandedSections[section.id]}
+            onToggle={() => onToggleSection(section.id)}
+            onEdit={onEditSection}
+            onDelete={onDeleteSection}
+            onAddContent={onAddContent}
+            onSaveLesson={onSaveLesson}
+            onSaveQuiz={onSaveQuiz}
+            onEditLesson={onEditLesson}
+            onUpdateLesson={onUpdateLesson}
+            onDeleteLesson={onDeleteLesson}
+            onEditQuiz={onEditQuiz}
+            onUpdateQuiz={onUpdateQuiz}
+            onDeleteQuiz={onDeleteQuiz}
+            loading={loading}
+            editingSectionId={editingSectionId}
+            sectionForm={sectionForm}
+            setSectionForm={setSectionForm}
+            onUpdateSection={onUpdateSection}
+            onCancelEditSection={onCancelEditSection}
+            addingItemToSection={addingItemToSection}
+            onSelectContentType={onSelectContentType}
+            onCancelAddContent={onCancelAddContent}
+            lessonForm={lessonForm}
+            setLessonForm={setLessonForm}
+            quizForm={quizForm}
+            setQuizForm={setQuizForm}
+            editingLessonId={editingLessonId}
+            setEditingLessonId={setEditingLessonId}
+            editingQuizId={editingQuizId}
+            setEditingQuizId={setEditingQuizId}
+            courseId={courseId}
+          />
+        ))}
+      </DragDropContext>
     </div>
   );
 }

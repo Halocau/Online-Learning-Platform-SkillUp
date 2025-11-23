@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SkillUp.Bussiness.Services;
 using SkillUp.BussinessObjects.Dtos.Section;
+using SkillUp.BussinessObjects.DTOs.Section;
 using SkillUp.ExceptionHandling;
 using System;
 using System.Collections.Generic;
@@ -146,5 +147,29 @@ namespace SkillUp.Api.Controllers
                 new List<object> { restoredSection }
             ));
         }
-    }
+
+		[HttpPut("{sectionId}/reorder")]
+		public async Task<IActionResult> ReorderContent(Guid sectionId, [FromBody] List<ReorderItemDTO> updates)
+		{
+			if (updates == null || !updates.Any())
+			{
+				return BadRequest(new APIReturn(
+                    400,
+                    "Yêu cầu không hợp lệ: danh sách cập nhật trống.",
+                    new List<object>()
+					));
+			}
+
+			try
+			{
+				await _sectionService.ReorderSectionContentAsync(sectionId, updates);
+				return Ok(new { message = "Order updated successfully" });
+			}
+			catch (Exception ex)
+			{
+				// Log the error
+				return StatusCode(500, "An error occurred while reordering content.");
+			}
+		}
+	}
 }

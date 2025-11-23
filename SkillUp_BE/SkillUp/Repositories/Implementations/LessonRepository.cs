@@ -93,5 +93,12 @@ namespace SkillUp.Repositories.Implementations
                         .ThenInclude(c => c.Lecturer) // Từ Course, tải Lecturer
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
-    }
+
+		public async Task<List<Lesson>> GetLessonsByIdsAndSectionAsync(IEnumerable<Guid> ids, Guid sectionId)
+		{
+			return await _context.Lessons
+				.Where(l => l.SectionId == sectionId && ids.Contains(l.Id))
+				.ToListAsync();
+		}
+	}
 }
