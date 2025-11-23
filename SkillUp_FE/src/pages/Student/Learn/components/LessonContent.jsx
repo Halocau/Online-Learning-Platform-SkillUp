@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import VideoPlayer from "./VideoPlayer";
 import TextLesson from "./TextLesson";
-import QuizView from "./QuizView";
+import QuizView from "./Quiz/QuizView";
 import CommentSection from "./CommentSection";
 
 const LessonContent = ({
@@ -22,6 +22,7 @@ const LessonContent = ({
   hasNext,
   hasPrev,
   lessonId,
+  onQuizComplete,
 }) => {
   const [videoProgress, setVideoProgress] = useState(0);
 
@@ -66,7 +67,6 @@ const LessonContent = ({
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {item.title}
               </h1>
-
 
               {/* PDF Downloads */}
               {pdfAssets.length > 0 && (
@@ -129,7 +129,13 @@ const LessonContent = ({
 
                     {/* PDF Document */}
                     {item.assets[0].fileUrl && (
-                      <div className={item.description ? "pt-4 border-t border-gray-200" : ""}>
+                      <div
+                        className={
+                          item.description
+                            ? "pt-4 border-t border-gray-200"
+                            : ""
+                        }
+                      >
                         <h3 className="text-lg font-semibold text-gray-900 mb-3">
                           Tài liệu
                         </h3>
@@ -172,6 +178,7 @@ const LessonContent = ({
               quiz={item}
               isCompleted={isCompleted}
               onComplete={(passed) => passed && onComplete(item.id)}
+              onQuizComplete={onQuizComplete}
             />
           </div>
         )}

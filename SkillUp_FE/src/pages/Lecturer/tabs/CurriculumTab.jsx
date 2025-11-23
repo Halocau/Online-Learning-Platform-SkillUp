@@ -173,7 +173,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       if (result) {
         setShowAddSection(false);
         setSectionForm({ title: "", description: "" });
-        toast.success(`✅ Chương đã được tạo (Thứ tự: ${nextOrder})!`);
 
         try {
           await onUpdate({ showSuccess: false });
@@ -424,8 +423,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         pdfFile: null,
       });
 
-      toast.success(`✅ Bài học đã được tạo (Thứ tự: ${nextOrder})`);
-
       try {
         await onUpdate({ showSuccess: false });
       } catch (updateError) {
@@ -642,8 +639,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         passPercent: 70,
         timer: 15,
       });
-
-      toast.success(`✅ Quiz đã được tạo (Thứ tự: ${nextOrder})`);
 
       try {
         await onUpdate({ showSuccess: false });

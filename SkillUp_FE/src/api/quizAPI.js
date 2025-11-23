@@ -137,12 +137,42 @@ export const deleteQuiz = async (quizId) => {
   }
 };
 
-// Get quiz result by submission ID
+// Get quiz result by submission ID - NO TOAST for read operations
 export const getQuizResult = async (submissionId) => {
   try {
     const res = await axiosInstance.get(`${API_URL}/results/${submissionId}`);
-    return handleAPIResponse(res, "", false);
+    return handleAPIResponse(res, "", false); // No toast for read operations
   } catch (err) {
     return handleAPIError(err, "Không thể tải kết quả quiz!");
+  }
+};
+
+// Start quiz
+export const startQuiz = async (quizId) => {
+  try {
+    const res = await axiosInstance.post(`${API_URL}/${quizId}/start`);
+    return handleAPIResponse(res, "", false);
+  } catch (err) {
+    return handleAPIError(err, "Không thể bắt đầu quiz!");
+  }
+};
+
+// Submit quiz answers
+export const submitQuiz = async (submissionId, answers) => {
+  try {
+    const payload = {
+      answers: answers.map(answer => ({
+        questionId: answer.questionId,
+        selectedAnswerIds: answer.selectedAnswerIds
+      }))
+    };
+    
+    const res = await axiosInstance.post(
+      `${API_URL}/submit/${submissionId}`,
+      payload
+    );
+    return handleAPIResponse(res, "Nộp bài thành công!");
+  } catch (err) {
+    return handleAPIError(err, "Không thể nộp bài!");
   }
 };
