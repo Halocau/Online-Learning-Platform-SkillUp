@@ -3,6 +3,7 @@ import { CheckCircle2, Clock } from "lucide-react";
 
 const TextLesson = ({ content, onComplete, isCompleted }) => {
   const [readTime, setReadTime] = useState(0);
+  const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     const words = content.split(/\s+/).length;
@@ -10,9 +11,14 @@ const TextLesson = ({ content, onComplete, isCompleted }) => {
     setReadTime(minutes);
   }, [content]);
 
-  const handleMarkComplete = () => {
-    if (!isCompleted) {
-      onComplete();
+  const handleMarkComplete = async () => {
+    if (isCompleted || marking) return;
+    
+    setMarking(true);
+    try {
+      await onComplete();
+    } finally {
+      setMarking(false);
     }
   };
 
@@ -28,10 +34,20 @@ const TextLesson = ({ content, onComplete, isCompleted }) => {
         <div className="mt-12 pt-6 border-t border-gray-200 flex justify-center">
           <button
             onClick={handleMarkComplete}
-            className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-all transform hover:scale-105"
+            disabled={marking}
+            className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            <CheckCircle2 className="w-5 h-5" />
-            Đánh dấu hoàn thành
+            {marking ? (
+              <>
+                <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                Đánh dấu hoàn thành
+              </>
+            )}
           </button>
         </div>
       )}

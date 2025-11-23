@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { courseAPI } from "@/api/courseAPI";
+import { markLessonComplete } from "@/api/lessonAPI";
 import { toast } from "sonner";
 import { BookOpen, Loader2 } from "lucide-react";
 import CourseSidebar from "./components/CourseSidebar";
@@ -153,9 +154,16 @@ const CourseLearning = () => {
     );
   };
 
-  const handleItemComplete = (itemId) => {
-    setCompletedItems((prev) => new Set([...prev, itemId]));
-    checkCourseCompletion();
+  const handleItemComplete = async (itemId) => {
+    try {
+      await markLessonComplete(itemId);
+      setCompletedItems((prev) => new Set([...prev, itemId]));
+      checkCourseCompletion();
+    } catch (error) {
+      console.error("Error marking lesson complete:", error);
+      // Vẫn cập nhật local state nếu API lỗi
+      setCompletedItems((prev) => new Set([...prev, itemId]));
+    }
   };
 
   const checkCourseCompletion = () => {

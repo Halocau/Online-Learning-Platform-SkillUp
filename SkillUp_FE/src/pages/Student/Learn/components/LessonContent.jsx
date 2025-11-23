@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   AlertCircle,
   FileDown,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -24,9 +25,23 @@ const LessonContent = ({
   lessonId,
 }) => {
   const [videoProgress, setVideoProgress] = useState(0);
+  const [marking, setMarking] = useState(false);
 
   const handleVideoComplete = () => {
-    if (!isCompleted && videoProgress > 90) onComplete(item.id);
+    if (!isCompleted && videoProgress > 90) {
+      handleMarkComplete();
+    }
+  };
+
+  const handleMarkComplete = async () => {
+    if (isCompleted || marking) return;
+    
+    setMarking(true);
+    try {
+      await onComplete(item.id);
+    } finally {
+      setMarking(false);
+    }
   };
 
   const pdfAssets =
@@ -151,13 +166,36 @@ const LessonContent = ({
             <ChevronLeft className="w-5 h-5" /> Bài trước
           </button>
 
-          <button
-            onClick={onNext}
-            disabled={!hasNext}
-            className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-          >
-            Tiếp theo <ChevronRight className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Mark Complete Button - Only for Video Lessons */}
+            {item.kind === "Lesson" && item.lessonType === "Video" && !isCompleted && (
+              <button
+                onClick={handleMarkComplete}
+                disabled={marking}
+                className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+              >
+                {marking ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-5 h-5" />
+                    Đánh dấu hoàn thành
+                  </>
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={onNext}
+              disabled={!hasNext}
+              className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+            >
+              Tiếp theo <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {item.kind === "Lesson" && item.lessonType === "Video" && (
