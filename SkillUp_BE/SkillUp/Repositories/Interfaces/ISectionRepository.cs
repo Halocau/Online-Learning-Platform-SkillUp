@@ -11,5 +11,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<IEnumerable<Section>> GetByCourseIdAsync(Guid courseId); // Lấy DS section theo Course
         Task<Section> UpdateAsync(Section section);
         Task<Section?> FindByIdAsync(Guid id);
-    }
+
+		Task<List<Section>> GetSectionsByIdsAndCourseAsync(IEnumerable<Guid> ids, Guid courseId);
+	}
 }

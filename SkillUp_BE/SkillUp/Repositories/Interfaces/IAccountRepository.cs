@@ -14,5 +14,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<bool> UpdateStatusAsync(Guid accountId, string newStatus);
 
         Task<List<Account>> GetAllAccountsAsync();
-    }
+        Task<List<Account>> GetAllModeratorsAsync();
+
+	}
 }

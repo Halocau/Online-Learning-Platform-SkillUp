@@ -363,7 +363,7 @@ namespace SkillUp.Services.Implementations
 	string courseName,
 	string courseId)
 		{
-			var courseLink = $"{_frontendUrl}/course/{courseId}";
+			var courseLink = $"{_frontendUrl}/lecturer/courses";
 
 			var message = new MimeMessage();
 			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));

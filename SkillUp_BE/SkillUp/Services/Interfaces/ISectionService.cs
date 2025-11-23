@@ -1,4 +1,5 @@
 ﻿using SkillUp.BussinessObjects.Dtos.Section;
+using SkillUp.BussinessObjects.DTOs.Section;
 
 namespace SkillUp.Bussiness.Services
 {
@@ -10,6 +11,8 @@ namespace SkillUp.Bussiness.Services
         Task<SectionDto?> UpdateSectionAsync(Guid id, SectionUpdateDto updateDto);
         Task<bool> DeleteSectionAsync(Guid id);
 
-        Task<SectionDto?> RestoreSectionAsync(Guid id); 
-    }
+        Task<SectionDto?> RestoreSectionAsync(Guid id);
+		Task ReorderSectionContentAsync(Guid sectionId, List<ReorderItemDTO> updates);
+		Task ReorderSectionsAsync(Guid courseId, List<ReorderSectionDTO> updates);
+	}
 }

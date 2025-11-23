@@ -82,5 +82,14 @@ namespace SkillUp.Repositories.Implementations
                 .OrderBy(a => a.Fullname)
                 .ToListAsync();
         }
-    }
+
+        public async Task<List<Account>> GetAllModeratorsAsync()
+        {
+            return await _context.Accounts
+                .Where(a => a.RoleId == 2 || a.RoleId == 3) 
+                .Include(a => a.Role) 
+                .OrderBy(a => a.Fullname)
+                .ToListAsync();
+		}
+	}
 }

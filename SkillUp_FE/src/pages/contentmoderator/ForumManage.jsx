@@ -23,6 +23,9 @@ import {
 } from '@ant-design/icons';
 import { modPostAPI } from '@/api/modPostAPI';
 import { categoryApi } from '@/api/forumCategory';
+import ForumCategoryModal from '@/components/Forum/ForumCategoryModal';
+import { toast } from 'react-toastify';
+import axiosInstance from '@/lib/axios';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -33,6 +36,8 @@ const ForumManage = () => {
   const [loading, setLoading] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
+
+  const [open, setOpen] = useState(false);
 
   // Filters
   const [searchText, setSearchText] = useState('');
@@ -108,6 +113,37 @@ const ForumManage = () => {
     } catch (error) {
       console.error('Error banning post:', error);
       message.error('Không thể vô hiệu hóa bài viết');
+    }
+  };
+
+  const handleEditCategory = (item) => {
+    fetchCategories();
+  };
+
+  const handleToggleCategory = async (item) => {
+    try {
+      const updatedStatus = !item.isActive;
+
+      await axiosInstance.put(
+        `http://localhost:5120/api/ForumCategory/update/${item.id}`,
+        {
+          id: item.id,
+          name: item.name,
+          isActive: updatedStatus
+        }
+      );
+
+      if (updatedStatus) {
+        toast.success("Đã kích hoạt danh mục.");
+      } else {
+        toast.success("Đã vô hiệu hóa danh mục.");
+      }
+
+    } catch (error) {
+      console.error("Error updating category status:", error);
+      toast.error("Đã xảy ra lỗi khi cập nhật!");
+    } finally {
+      fetchCategories();
     }
   };
 
@@ -272,6 +308,8 @@ const ForumManage = () => {
             ))}
           </Select>
 
+          <Button type="primary" onClick={() => setOpen(true)}>Quản lý danh mục</Button>
+
           <Button onClick={fetchPosts}>Làm mới</Button>
         </Space>
 
@@ -421,6 +459,14 @@ const ForumManage = () => {
           </div>
         )}
       </Modal>
+
+      <ForumCategoryModal
+        open={open}
+        onClose={() => setOpen(false)}
+        data={categories}
+        onEdit={handleEditCategory}
+        onToggle={handleToggleCategory}
+      />
     </div>
   );
 };

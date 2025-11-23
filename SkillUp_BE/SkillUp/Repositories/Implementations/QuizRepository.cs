@@ -53,6 +53,12 @@ namespace SkillUp.Repositories.Implementations
         {
             _context.Quizzes.Update(quiz);
         }
-      
-    }
+
+		public async Task<List<Quiz>> GetQuizzesByIdsAndSectionAsync(IEnumerable<Guid> ids, Guid sectionId)
+		{
+			return await _context.Quizzes
+				.Where(q => q.SectionId == sectionId && ids.Contains(q.Id))
+				.ToListAsync();
+		}
+	}
 }
