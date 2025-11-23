@@ -171,5 +171,23 @@ namespace SkillUp.Api.Controllers
 				return StatusCode(500, "An error occurred while reordering content.");
 			}
 		}
+
+		[HttpPut("{courseId}/reorder-sections")]
+		public async Task<IActionResult> ReorderSections(Guid courseId, [FromBody] List<ReorderSectionDTO> updates)
+		{
+			if (updates == null || !updates.Any())
+				return BadRequest("No data provided");
+
+			try
+			{
+				await _sectionService.ReorderSectionsAsync(courseId, updates);
+				return Ok(new { message = "Sections reordered successfully" });
+			}
+			catch (Exception ex)
+			{
+				// _logger.LogError(ex, "Failed to reorder sections");
+				return StatusCode(500, "Internal server error");
+			}
+		}
 	}
 }

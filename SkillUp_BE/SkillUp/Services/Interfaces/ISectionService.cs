@@ -13,5 +13,6 @@ namespace SkillUp.Bussiness.Services
 
         Task<SectionDto?> RestoreSectionAsync(Guid id);
 		Task ReorderSectionContentAsync(Guid sectionId, List<ReorderItemDTO> updates);
+		Task ReorderSectionsAsync(Guid courseId, List<ReorderSectionDTO> updates);
 	}
 }

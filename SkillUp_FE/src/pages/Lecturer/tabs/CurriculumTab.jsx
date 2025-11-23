@@ -9,7 +9,7 @@ import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
 import SectionCard from "../components/SectionCard";
 import ConfirmModal from "../components/ConfirmModal";
-import { DragDropContext } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import axiosInstance from "@/lib/axios";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
@@ -985,105 +985,178 @@ function SectionsList(props) {
   }
 
   const onDragEnd = async (result) => {
-    const { source, destination } = result;
-
+    const { source, destination, type } = result;
     if (!destination) return;
-
     if (source.droppableId !== destination.droppableId) {
       return;
     }
-
     if (source.index === destination.index) {
       return;
     }
 
-    // Create backup for rollback
-    const originalSections = structuredClone(sections);
+    if (type === "SECTION") {
+      // 1. Create backup for rollback
+      const originalSections = structuredClone(sections);
+      // 2. Create mutable copy
+      const newSections = structuredClone(sections);
+      // 3. Perform the move (Swap elements in the main array)
+      const [movedSection] = newSections.splice(source.index, 1);
+      newSections.splice(destination.index, 0, movedSection);
+      // 4. Recalculate orders for ALL sections
+      newSections.forEach((section, index) => {
+        section.orders = index + 1;
+      });
+      // 5. Optimistic UI Update
+      await onUpdate({ showSuccess: false });
 
-    // Find the active section
-    const sectionIndex = sections.findIndex(
-      (s) => s.id.toString() === source.droppableId
-    );
-    if (sectionIndex === -1) return;
+      try {
+        // 6. Prepare Payload
+        const payload = newSections.map((s) => ({
+          id: s.id,
+          orders: s.orders, // Matches your DTO
+        }));
 
-    // Create mutable copy
-    const newSections = structuredClone(sections);
-    const activeSection = newSections[sectionIndex];
+        await axiosInstance.put(
+          `http://localhost:5120/api/Sections/${courseId}/reorder-sections`,
+          payload
+        );
 
-    // Perform the move
-    const [movedItem] = activeSection.items.splice(source.index, 1);
-    activeSection.items.splice(destination.index, 0, movedItem);
+        // 8. Success Callback
+        if (typeof onUpdate === "function") {
+          await onUpdate({ showSuccess: false });
+        }
+      } catch (error) {
+        console.error("Failed to reorder sections:", error);
 
-    // Recalculate orders
-    activeSection.items.forEach((item, index) => {
-      item.orders = index + 1;
-    });
-
-    try {
-      const payload = activeSection.items.map((item) => ({
-        id: item.id,
-        orders: item.orders,
-        type: item.kind
-      }));
-      console.log("Reordering items:", payload);
-      // API call to save the new order
-      await axiosInstance.put(`http://localhost:5120/api/Sections/${activeSection.id}/reorder`, payload);
-
-      if (typeof onUpdate === "function") {
-        await onUpdate({ showSuccess: false });
-      } else {
-        console.warn("onUpdate not provided");
+        // 9. Rollback on error - refetch original data
+        if (typeof onUpdate === "function") {
+          await onUpdate({ showSuccess: false });
+        }
       }
-    } catch (error) {
-      console.error("Failed to reorder:", error);
-      // Rollback on error - refetch original data
-      if (typeof onUpdate === "function") {
-        await onUpdate({ showSuccess: false });
+      return; // Exit function
+    }
+
+    if (type === "SECTION_ITEM") {
+      // Create backup for rollback
+      const originalSections = structuredClone(sections);
+      // Find the active section
+      const sectionIndex = sections.findIndex(
+        (s) => s.id.toString() === source.droppableId
+      );
+      if (sectionIndex === -1) return;
+      // Create mutable copy
+      const newSections = structuredClone(sections);
+      const activeSection = newSections[sectionIndex];
+      // Perform the move
+      const [movedItem] = activeSection.items.splice(source.index, 1);
+      activeSection.items.splice(destination.index, 0, movedItem);
+      // Recalculate orders
+      activeSection.items.forEach((item, index) => {
+        item.orders = index + 1;
+      });
+
+      try {
+        const payload = activeSection.items.map((item) => ({
+          id: item.id,
+          orders: item.orders,
+          type: item.kind
+        }));
+        // API call to save the new order
+        await axiosInstance.put(`http://localhost:5120/api/Sections/${activeSection.id}/reorder`, payload);
+
+        if (typeof onUpdate === "function") {
+          await onUpdate({ showSuccess: false });
+        } else {
+          console.warn("onUpdate not provided");
+        }
+      } catch (error) {
+        console.error("Failed to reorder:", error);
+        // Rollback on error - refetch original data
+        if (typeof onUpdate === "function") {
+          await onUpdate({ showSuccess: false });
+        }
       }
     }
   };
 
   return (
-    <div className="space-y-3">
+    <div className="max-w-4xl mx-auto p-4"> {/* Container */}
       <DragDropContext onDragEnd={onDragEnd}>
-        {sections.map((section, index) => (
-          <SectionCard
-            key={section.id}
-            section={section}
-            index={index}
-            isExpanded={expandedSections[section.id]}
-            onToggle={() => onToggleSection(section.id)}
-            onEdit={onEditSection}
-            onDelete={onDeleteSection}
-            onAddContent={onAddContent}
-            onSaveLesson={onSaveLesson}
-            onSaveQuiz={onSaveQuiz}
-            onEditLesson={onEditLesson}
-            onUpdateLesson={onUpdateLesson}
-            onDeleteLesson={onDeleteLesson}
-            onEditQuiz={onEditQuiz}
-            onUpdateQuiz={onUpdateQuiz}
-            onDeleteQuiz={onDeleteQuiz}
-            loading={loading}
-            editingSectionId={editingSectionId}
-            sectionForm={sectionForm}
-            setSectionForm={setSectionForm}
-            onUpdateSection={onUpdateSection}
-            onCancelEditSection={onCancelEditSection}
-            addingItemToSection={addingItemToSection}
-            onSelectContentType={onSelectContentType}
-            onCancelAddContent={onCancelAddContent}
-            lessonForm={lessonForm}
-            setLessonForm={setLessonForm}
-            quizForm={quizForm}
-            setQuizForm={setQuizForm}
-            editingLessonId={editingLessonId}
-            setEditingLessonId={setEditingLessonId}
-            editingQuizId={editingQuizId}
-            setEditingQuizId={setEditingQuizId}
-            courseId={courseId}
-          />
-        ))}
+
+        {/* 1. OUTER DROPPABLE: For the list of Sections */}
+        <Droppable droppableId="all-sections" type="SECTION">
+          {(provided) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="space-y-3" // Move your spacing class here
+            >
+              {sections.map((section, index) => (
+
+                /* 2. OUTER DRAGGABLE: Each Section Card */
+                <Draggable
+                  key={section.id}
+                  draggableId={section.id.toString()}
+                  index={index}
+                >
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      // We apply the drag handle to the whole card wrapper
+                      // Or you can pass dragHandleProps down into SectionCard 
+                      // if you only want a specific "grip" icon to work.
+                      {...provided.dragHandleProps}
+                      style={{
+                        ...provided.draggableProps.style,
+                        opacity: snapshot.isDragging ? 0.5 : 1,
+                      }}
+                    >
+                      <SectionCard
+                        section={section}
+                        index={index}
+                        // ... pass all your existing props ...
+                        isExpanded={expandedSections[section.id]}
+                        onToggle={() => onToggleSection(section.id)}
+                        onEdit={onEditSection}
+                        onDelete={onDeleteSection}
+                        onAddContent={onAddContent}
+                        onSaveLesson={onSaveLesson}
+                        onSaveQuiz={onSaveQuiz}
+                        onEditLesson={onEditLesson}
+                        onUpdateLesson={onUpdateLesson}
+                        onDeleteLesson={onDeleteLesson}
+                        onEditQuiz={onEditQuiz}
+                        onUpdateQuiz={onUpdateQuiz}
+                        onDeleteQuiz={onDeleteQuiz}
+                        loading={loading}
+                        editingSectionId={editingSectionId}
+                        sectionForm={sectionForm}
+                        setSectionForm={setSectionForm}
+                        onUpdateSection={onUpdateSection}
+                        onCancelEditSection={onCancelEditSection}
+                        addingItemToSection={addingItemToSection}
+                        onSelectContentType={onSelectContentType}
+                        onCancelAddContent={onCancelAddContent}
+                        lessonForm={lessonForm}
+                        setLessonForm={setLessonForm}
+                        quizForm={quizForm}
+                        setQuizForm={setQuizForm}
+                        editingLessonId={editingLessonId}
+                        setEditingLessonId={setEditingLessonId}
+                        editingQuizId={editingQuizId}
+                        setEditingQuizId={setEditingQuizId}
+                        courseId={courseId}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+
       </DragDropContext>
     </div>
   );

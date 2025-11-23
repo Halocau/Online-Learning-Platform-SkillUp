@@ -191,5 +191,38 @@ namespace SkillUp.Bussiness.Services
 				throw; // Re-throw to let Controller handle the error response
 			}
 		}
+
+		public async Task ReorderSectionsAsync(Guid courseId, List<ReorderSectionDTO> updates)
+		{
+			using var transaction = _context.Database.BeginTransaction();
+			try
+			{
+				// 1. Extract IDs
+				var ids = updates.Select(u => u.Id).ToList();
+
+				// 2. Fetch Entities securely
+				var sectionsDb = await _sectionRepository.GetSectionsByIdsAndCourseAsync(ids, courseId);
+
+				// 3. Update Loop
+				foreach (var update in updates)
+				{
+					var section = sectionsDb.FirstOrDefault(s => s.Id == update.Id);
+					if (section != null)
+					{
+						// Update the integer. EF Core tracks this automatically.
+						section.Orders = update.Orders;
+					}
+				}
+
+				// 4. Save & Commit
+				await _context.SaveChangesAsync();
+				await transaction.CommitAsync();
+			}
+			catch (Exception)
+			{
+				await transaction.RollbackAsync();
+				throw;
+			}
+		}
 	}
 }

@@ -53,5 +53,12 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Sections
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
-    }
+
+		public async Task<List<Section>> GetSectionsByIdsAndCourseAsync(IEnumerable<Guid> ids, Guid courseId)
+		{
+			return await _context.Sections
+				.Where(s => s.CourseId == courseId && ids.Contains(s.Id))
+				.ToListAsync();
+		}
+	}
 }
