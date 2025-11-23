@@ -854,6 +854,7 @@ public partial class SkillUpContext : DbContext
             entity.ToTable("StudentProgress");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.LastViewedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Course).WithMany(p => p.StudentProgresses)
                 .HasForeignKey(d => d.CourseId)
