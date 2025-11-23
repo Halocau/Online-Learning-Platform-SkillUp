@@ -190,7 +190,9 @@ const CourseLearning = () => {
     );
     return total > 0 ? (completedItems.size / total) * 100 : 0;
   };
-
+  const handleQuizComplete = async () => {
+    await fetchCourseDetail();
+  };
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
@@ -295,6 +297,7 @@ const CourseLearning = () => {
             hasNext={hasNext()}
             hasPrev={hasPrev()}
             lessonId={lessonId}
+            onQuizComplete={handleQuizComplete}
           />
         </div>
 

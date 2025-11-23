@@ -730,7 +730,7 @@ export default function CourseManagement() {
                   <p className="text-blue-50 text-xs mt-0.5">
                     {reviewModal.decision
                       ? "Xác nhận phê duyệt và xuất bản"
-                      : "Cung cấp lý do để giảng viên cải thiện"}
+                      : "Cung cấp lý do từ chối khóa học"}
                   </p>
                 </div>
               </div>
@@ -795,19 +795,6 @@ export default function CourseManagement() {
                       : `${reviewModal.courseData.price.toLocaleString()} VND`}
                   </p>
                 </div>
-
-                {/* Enrollments */}
-                <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <UsersIcon className="h-4 w-4 text-amber-600" />
-                    <p className="text-xs text-gray-500 font-medium">
-                      Học viên
-                    </p>
-                  </div>
-                  <p className="font-bold text-sm text-gray-900">
-                    {reviewModal.courseData.enrollmentCount || 0}
-                  </p>
-                </div>
               </div>
 
               {/* Feedback Form */}
@@ -824,8 +811,8 @@ export default function CourseManagement() {
                   <Textarea
                     placeholder={
                       reviewModal.decision
-                        ? "Nhập lời nhận xét hoặc gợi ý cho giảng viên..."
-                        : "Mô tả lý do từ chối để giảng viên cải thiện..."
+                        ? "Nhận xét phê duyệt khóa học..."
+                        : "Lí do từ chối phê duyệt"
                     }
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
