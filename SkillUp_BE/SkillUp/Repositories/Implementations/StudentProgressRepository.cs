@@ -18,10 +18,18 @@ namespace SkillUp.Repositories.Implementations
             return await _context.StudentProgresses
                 .FirstOrDefaultAsync(sp => sp.StudentId == studentId && sp.QuizId == quizId);
         }
-
+        public async Task<StudentProgress?> GetByStudentAndLessonAsync(Guid studentId, Guid lessonId)
+        {
+            return await _context.StudentProgresses
+                .FirstOrDefaultAsync(sp => sp.StudentId == studentId && sp.LessonId == lessonId);
+        }
         public async Task AddAsync(StudentProgress progress)
         {
             await _context.StudentProgresses.AddAsync(progress);
+        }
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

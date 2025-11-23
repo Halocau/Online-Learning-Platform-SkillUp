@@ -166,6 +166,50 @@ namespace SkillUp.Controllers
                 return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
             }
         }
+
+        [HttpPost("{lessonId}/complete")]
+        [Authorize]
+        public async Task<IActionResult> MarkLessonComplete(Guid lessonId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                var isCompleted = await _lessonService.MarkLessonAsCompletedAsync(lessonId, accountId.Value);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Đã đánh dấu hoàn thành bài học",
+                    data = new List<object> { new { isCompleted = true } }
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }
 
