@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Table, 
-  Button, 
-  Space, 
-  Tag, 
-  Modal, 
-  message, 
-  Input, 
+import {
+  Table,
+  Button,
+  Space,
+  Tag,
+  Modal,
+  message,
+  Input,
   Select,
   Card,
   Tooltip,
@@ -15,13 +15,14 @@ import {
   Typography,
   Divider
 } from 'antd';
-import { 
-  EyeOutlined, 
-  CheckCircleOutlined, 
+import {
+  EyeOutlined,
+  CheckCircleOutlined,
   CloseCircleOutlined,
-  SearchOutlined 
+  SearchOutlined
 } from '@ant-design/icons';
 import { modPostAPI } from '@/api/modPostAPI';
+import { categoryApi } from '@/api/forumCategory';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -32,11 +33,12 @@ const ForumManage = () => {
   const [loading, setLoading] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
-  
+
   // Filters
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categories, setCategories] = useState([]);
 
   // Fetch forum posts
   const fetchPosts = async () => {
@@ -54,8 +56,25 @@ const ForumManage = () => {
     }
   };
 
+  // Fetch forum categories
+  const fetchCategories = async () => {
+    try {
+      const response = await categoryApi.getAll();
+      if (response.data.code === 200) {
+        // Handle both array and object response
+        const data = response.data.data;
+        const categoriesList = Array.isArray(data) ? data : (data || []);
+        setCategories(categoriesList);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      message.error('Không thể tải danh sách danh mục');
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
+    fetchCategories();
   }, []);
 
   // View post detail
@@ -95,10 +114,10 @@ const ForumManage = () => {
   // Filter posts
   const filteredPosts = posts.filter(post => {
     const matchSearch = post.title?.toLowerCase().includes(searchText.toLowerCase()) ||
-                       post.contents?.toLowerCase().includes(searchText.toLowerCase());
+      post.contents?.toLowerCase().includes(searchText.toLowerCase());
     const matchStatus = statusFilter === 'all' || post.status?.toLowerCase() === statusFilter.toLowerCase();
     const matchCategory = categoryFilter === 'all' || post.categoryName === categoryFilter;
-    
+
     return matchSearch && matchStatus && matchCategory;
   });
 
@@ -162,18 +181,18 @@ const ForumManage = () => {
       width: '16%',
       render: (_, record) => {
         const isActive = record.status?.toLowerCase() === 'active';
-        
+
         return (
           <Space size="small">
             <Tooltip title="Xem chi tiết">
-              <Button 
-                type="primary" 
-                icon={<EyeOutlined />} 
+              <Button
+                type="primary"
+                icon={<EyeOutlined />}
                 size="small"
                 onClick={() => handleViewDetail(record)}
               />
             </Tooltip>
-            
+
             {isActive ? (
               <Tooltip title="Vô hiệu hóa">
                 <Popconfirm
@@ -183,9 +202,9 @@ const ForumManage = () => {
                   okText="Có"
                   cancelText="Không"
                 >
-                  <Button 
+                  <Button
                     danger
-                    icon={<CloseCircleOutlined />} 
+                    icon={<CloseCircleOutlined />}
                     size="small"
                   />
                 </Popconfirm>
@@ -198,9 +217,9 @@ const ForumManage = () => {
                   okText="Có"
                   cancelText="Không"
                 >
-                  <Button 
-                    type="primary" 
-                    icon={<CheckCircleOutlined />} 
+                  <Button
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
                     size="small"
                     style={{ backgroundColor: '#52c41a' }}
                   />
@@ -217,7 +236,7 @@ const ForumManage = () => {
     <div style={{ padding: '24px' }}>
       <Card>
         <h2 style={{ marginBottom: '24px' }}>Quản lý Forum</h2>
-        
+
         {/* Filters */}
         <Space style={{ marginBottom: '16px' }} wrap>
           <Search
@@ -227,7 +246,7 @@ const ForumManage = () => {
             onChange={(e) => setSearchText(e.target.value)}
             prefix={<SearchOutlined />}
           />
-          
+
           <Select
             style={{ width: 150 }}
             value={statusFilter}
@@ -238,19 +257,21 @@ const ForumManage = () => {
             <Option value="active">Hoạt động</Option>
             <Option value="inactive">Vô hiệu hóa</Option>
           </Select>
-          
+
           <Select
             style={{ width: 200 }}
             value={categoryFilter}
             onChange={setCategoryFilter}
-            placeholder="Danh mục"
+            placeholder="Tất cả danh mục"
           >
             <Option value="all">Tất cả danh mục</Option>
-            {Array.from(new Set(posts.map(p => p.categoryName))).filter(Boolean).map(cat => (
-              <Option key={cat} value={cat}>{cat}</Option>
+            {categories.map(category => (
+              <Option key={category.id || category.name} value={category.name || category.id}>
+                {category.name || category.id}
+              </Option>
             ))}
           </Select>
-          
+
           <Button onClick={fetchPosts}>Làm mới</Button>
         </Space>
 
@@ -289,9 +310,9 @@ const ForumManage = () => {
                 {selectedPost.title}
               </Title>
             </div>
-            
+
             <Divider style={{ margin: '16px 0' }} />
-            
+
             {/* Category & Author & Status */}
             <Space size="large" wrap style={{ marginBottom: '20px', width: '100%' }}>
               <div>
@@ -302,18 +323,18 @@ const ForumManage = () => {
                   </Tag>
                 </div>
               </div>
-              
+
               <div>
                 <Text type="secondary" strong>Tác giả</Text>
                 <div style={{ marginTop: '8px' }}>
                   <Text strong>{selectedPost.accountName}</Text>
                 </div>
               </div>
-              
+
               <div>
                 <Text type="secondary" strong>Trạng thái</Text>
                 <div style={{ marginTop: '8px' }}>
-                  <Tag 
+                  <Tag
                     color={selectedPost.status?.toLowerCase() === 'active' ? 'green' : 'red'}
                     style={{ fontSize: '14px', padding: '4px 12px' }}
                   >
@@ -322,9 +343,9 @@ const ForumManage = () => {
                 </div>
               </div>
             </Space>
-            
+
             <Divider style={{ margin: '16px 0' }} />
-            
+
             {/* Images with preview */}
             {selectedPost.imageUrls && selectedPost.imageUrls.length > 0 && (
               <>
@@ -334,13 +355,13 @@ const ForumManage = () => {
                     <Image.PreviewGroup>
                       <Space size="middle" wrap>
                         {selectedPost.imageUrls.map((url, index) => (
-                          <Image 
-                            key={index} 
-                            src={url} 
+                          <Image
+                            key={index}
+                            src={url}
                             alt={`Post ${index + 1}`}
                             width={150}
                             height={150}
-                            style={{ 
+                            style={{
                               objectFit: 'cover',
                               borderRadius: '8px',
                               border: '1px solid #f0f0f0'
@@ -351,18 +372,18 @@ const ForumManage = () => {
                     </Image.PreviewGroup>
                   </div>
                 </div>
-                
+
                 <Divider style={{ margin: '16px 0' }} />
               </>
             )}
-            
+
             {/* Content */}
             <div style={{ marginBottom: '20px' }}>
               <Text type="secondary" strong>Nội dung</Text>
               <Paragraph
-                style={{ 
-                  marginTop: '12px', 
-                  padding: '16px', 
+                style={{
+                  marginTop: '12px',
+                  padding: '16px',
                   backgroundColor: '#fafafa',
                   borderRadius: '8px',
                   border: '1px solid #f0f0f0',
@@ -376,9 +397,9 @@ const ForumManage = () => {
                 {selectedPost.contents}
               </Paragraph>
             </div>
-            
+
             <Divider style={{ margin: '16px 0' }} />
-            
+
             {/* Dates */}
             <Space size="large" wrap>
               <div>
@@ -387,7 +408,7 @@ const ForumManage = () => {
                   <Text>{new Date(selectedPost.createdAt).toLocaleString('vi-VN')}</Text>
                 </div>
               </div>
-              
+
               {selectedPost.updatedAt && (
                 <div>
                   <Text type="secondary" strong>Ngày cập nhật</Text>

@@ -1,34 +1,15 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { toast } from "react-toastify";
 import { useCart } from "@/context/CartContext";
 import { clearGuestCart } from "@/utils/guestCart";
-import { courseAPI } from "@/api/courseAPI";
+import SearchEngine from "@/components/common/SearchEngine";
+import NotificationBell from "@/components/common/NotificationBell";
 import avatar from "../../assets/logo_skillup.png";
-import { Bell, Search, ShoppingCart } from "lucide-react";
-
-const useDebounce = (value, delay = 300) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
-const formatCoursePrice = (price) => {
-  if (price === 0) return "Miễn phí";
-  if (typeof price === "number") {
-    return `₫${price.toLocaleString("vi-VN")}`;
-  }
-  return "Đang cập nhật";
-};
+import { ShoppingCart } from "lucide-react";
 
 function Header() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [user, setUser] = useState(() => {
     const cachedUser = localStorage.getItem("user");
@@ -38,11 +19,6 @@ function Header() {
   const { cartCount } = useCart();
   const accessToken = localStorage.getItem("accessToken");
   const isAuthenticated = !!accessToken;
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchWrapperRef = useRef(null);
-  const debouncedQuery = useDebounce(searchQuery);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -90,64 +66,6 @@ function Header() {
     };
   }, [accessToken]);
 
-  useEffect(() => {
-    if (!debouncedQuery.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      setShowSuggestions(false);
-      return;
-    }
-
-    let isCancelled = false;
-
-    const fetchCourses = async () => {
-      try {
-        setIsSearching(true);
-        const response = await courseAPI.searchCourses(debouncedQuery, 5);
-        if (isCancelled) return;
-        const payload = Array.isArray(response.data?.data)
-          ? response.data.data
-          : [];
-        setSearchResults(payload);
-        setShowSuggestions(true);
-      } catch (error) {
-        if (!isCancelled) {
-          console.error("Search suggestion error:", error);
-          setSearchResults([]);
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsSearching(false);
-        }
-      }
-    };
-
-    fetchCourses();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [debouncedQuery]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        searchWrapperRef.current &&
-        !searchWrapperRef.current.contains(event.target)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setShowSuggestions(false);
-    }
-  }, [searchQuery]);
 
   const handleLogout = async () => {
     try {
@@ -166,15 +84,6 @@ function Header() {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    if (searchResults.length > 0) {
-      navigate(`/course/${searchResults[0].id}`);
-      setShowSuggestions(false);
-    }
-  };
 
   return (
     <header className="border-b border-[#272343]/15 bg-[#fffffe]/80 backdrop-blur-xl sticky top-0 z-50">
@@ -194,20 +103,7 @@ function Header() {
         </Link>
 
         {/* Search Bar */}
-        <div className="flex-1 max-w-2xl mx-2 sm:mx-4">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm khóa học..."
-              className="w-full pl-10 pr-4 py-2 border border-[#272343]/15 rounded-full focus:outline-none focus:ring-2 focus:ring-[#FFD54F] focus:border-transparent bg-[#fffffe] text-sm"
-            />
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-              <Search className="w-4 h-4 text-[#2d334a]" />
-            </div>
-          </form>
-        </div>
+        <SearchEngine />
 
         {/* Navigation Links */}
         <nav className="hidden lg:flex items-center gap-1">
@@ -268,9 +164,7 @@ function Header() {
           {isAuthenticated ? (
             <div className="relative flex items-center space-x-3">
               {/* Notification Bell */}
-              <button className="text-[#2d334a] hover:text-[#272343] transition-colors p-2 relative">
-                <Bell className="w-5 h-5" />
-              </button>
+              <NotificationBell />
 
               {/* User Avatar with Dropdown */}
               <div

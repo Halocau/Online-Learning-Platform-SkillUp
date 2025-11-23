@@ -1,6 +1,9 @@
 // API Configuration - Central place for all API endpoints
 export const API_BASE_URL = 'http://localhost:5120/api';
 
+// TinyMCE API Key
+export const TINYMCE_API_KEY = 'tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i';
+
 export const API_ENDPOINTS = {
     // Auth endpoints
     LOGIN: '/auth/login',
@@ -60,6 +63,10 @@ export const API_ENDPOINTS = {
 
     //Section endpoints
     GET_BY_COURSE: '/Sections/ByCourse/{courseId}',
+
+    //Notification endpoints
+    GET_MY_NOTIFICATIONS: '/Notify/GetMyNotifications',
+    GET_NOTIFICATIONS_BY_ACCOUNT: '/Notify/GetByAccount/{accountId}',
 };
 
 
