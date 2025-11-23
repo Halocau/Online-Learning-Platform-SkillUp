@@ -128,15 +128,15 @@ export const courseAPI = {
       throw error;
     }
   },
-  // Get student enrolled courses
+  // Get my courses (enrolled courses with progress)
   getStudentEnrolledCourses: async () => {
     try {
       const response = await axiosInstance.get(
-        `${API_BASE_URL}/student-enrolled-courses`
+        `${API_BASE_URL}/my-courses`
       );
       return response;
     } catch (error) {
-      console.error("Error fetching enrolled courses:", error);
+      console.error("Error fetching my courses:", error);
       throw error;
     }
   },

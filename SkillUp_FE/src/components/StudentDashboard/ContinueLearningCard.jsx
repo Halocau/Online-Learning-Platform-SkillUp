@@ -30,10 +30,15 @@ const ContinueLearningCard = memo(({ course }) => {
                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div
                             className="bg-[#FFD54F] h-1.5 rounded-full"
-                            style={{ width: "30%" }}
+                            style={{ width: `${course.progressPercentage || 0}%` }}
                         ></div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">30% hoàn thành</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                        {course.progressPercentage?.toFixed(0) || 0}% hoàn thành
+                        {course.completedItems !== undefined && course.totalItems !== undefined && (
+                            <span className="ml-1">({course.completedItems}/{course.totalItems})</span>
+                        )}
+                    </p>
                 </div>
             </div>
             <PlayCircle className="w-5 h-5 text-[#FFD54F] flex-shrink-0 opacity-80 group-hover:opacity-100" />

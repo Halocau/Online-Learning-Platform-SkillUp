@@ -39,9 +39,25 @@ const CourseCardItem = memo(({ course, index }) => {
                     <p className="text-xs text-gray-600 mb-2 line-clamp-1 h-5 flex items-center">
                         {course.lecturerName}
                     </p>
-                    <div className="flex items-center justify-between text-xs">
+                    {course.progressPercentage !== undefined && (
+                        <div className="mb-2">
+                            <div className="w-full bg-gray-200 rounded-full h-1">
+                                <div
+                                    className="bg-[#FFD54F] h-1 rounded-full transition-all"
+                                    style={{ width: `${course.progressPercentage || 0}%` }}
+                                ></div>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {course.progressPercentage?.toFixed(0) || 0}% hoàn thành
+                            </p>
+                        </div>
+                    )}
+                    <div className="flex items-center justify-between text-xs mt-auto">
                         <span className="text-gray-500">
-                            {course.enrollmentCount || 0} học viên
+                            {course.completedItems !== undefined && course.totalItems !== undefined 
+                                ? `${course.completedItems}/${course.totalItems} bài học`
+                                : `${course.enrollmentCount || 0} học viên`
+                            }
                         </span>
                         <Button
                             variant="ghost"
@@ -49,7 +65,7 @@ const CourseCardItem = memo(({ course, index }) => {
                             className="h-6 px-2 text-xs hover:bg-[#FFD54F]/10 hover:text-[#FFD54F] flex-shrink-0"
                             onClick={handleLearnClick}
                         >
-                            Học ngay
+                            {course.progressPercentage > 0 ? 'Tiếp tục' : 'Học ngay'}
                             <ArrowRight className="w-3 h-3 ml-1" />
                         </Button>
                     </div>
