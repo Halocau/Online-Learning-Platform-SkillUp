@@ -145,3 +145,15 @@ export const markLessonComplete = async (lessonId) => {
     throw err;
   }
 };
+
+// Track lesson view (ghi nhận thời gian xem)
+export const trackLessonView = async (lessonId) => {
+  try {
+    const res = await axiosInstance.post(`${API_URL}/${lessonId}/track-view`);
+    return res.data;
+  } catch (err) {
+    // Silent fail - không hiển thị lỗi cho user
+    console.error("Error tracking lesson view:", err);
+    return null;
+  }
+};

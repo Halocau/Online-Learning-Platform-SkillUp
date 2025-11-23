@@ -25,6 +25,7 @@ namespace SkillUp.Services.Interfaces
 
         Task<List<CourseSummaryDTO>> SearchCoursesAsync(string keyword, int limit);
         Task<List<StudentCourseDto>> GetMyCoursesAsync(Guid accountId);
+        Task<dynamic> GetResumeItemAsync(Guid courseId, Guid accountId);
 
     }
 }

@@ -596,5 +596,48 @@ namespace SkillUp.Services.Implementations
 
             return result;
         }
+
+        public async Task<dynamic> GetResumeItemAsync(Guid courseId, Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null) throw new Exception("Không tìm thấy sinh viên.");
+
+            var lastViewed = await _studentProgressRepository.GetLastViewedItemAsync(courseId, student.Id);
+
+            if (lastViewed != null)
+            {
+                return new
+                {
+                    itemId = lastViewed.LessonId ?? lastViewed.QuizId,
+                    type = lastViewed.LessonId.HasValue ? "Lesson" : "Quiz"
+                };
+            }
+            var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+            if (course == null) throw new Exception("Không tìm thấy khóa học.");
+            var firstSection = course.Sections
+                .Where(s => s.IsActive)
+                .OrderBy(s => s.Orders)
+                .FirstOrDefault();
+
+            if (firstSection != null)
+            {
+                var firstLesson = firstSection.Lessons
+                    .Where(l => l.IsActive)
+                    .OrderBy(l => l.Orders)
+                    .FirstOrDefault();
+
+                if (firstLesson != null)
+                    return new { itemId = firstLesson.Id, type = "Lesson" };
+                var firstQuiz = firstSection.Quizzes
+                    .Where(q => q.IsActive)
+                    .OrderBy(q => q.Orders)
+                    .FirstOrDefault();
+
+                if (firstQuiz != null)
+                    return new { itemId = firstQuiz.Id, type = "Quiz" };
+            }
+
+            throw new Exception("Khóa học này chưa có nội dung nào.");
+        }
     }
 }

@@ -741,5 +741,49 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpGet("{courseId}/resume")]
+        [Authorize]
+        public async Task<IActionResult> GetResumeItem(Guid courseId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                var resumeData = await _courseService.GetResumeItemAsync(courseId, accountId.Value);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy vị trí học tiếp thành công",
+                    data = new List<object> { resumeData }
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy") || ex.Message.Contains("chưa có nội dung"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }

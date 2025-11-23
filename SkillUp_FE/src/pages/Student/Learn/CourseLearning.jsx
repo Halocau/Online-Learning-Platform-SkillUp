@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { courseAPI } from "@/api/courseAPI";
-import { markLessonComplete } from "@/api/lessonAPI";
+import { markLessonComplete, trackLessonView } from "@/api/lessonAPI";
 import { toast } from "sonner";
 import { BookOpen, Loader2 } from "lucide-react";
 import CourseSidebar from "./components/CourseSidebar";
@@ -34,6 +34,13 @@ const CourseLearning = () => {
   useEffect(() => {
     fetchCourseDetail();
   }, [courseId, sectionId, lessonId]);
+
+  // Track lesson view khi vào lesson
+  useEffect(() => {
+    if (lessonId && currentItem?.kind === "Lesson") {
+      trackLessonView(lessonId);
+    }
+  }, [lessonId, currentItem]);
 
   const fetchCourseDetail = async () => {
     try {
