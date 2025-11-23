@@ -1,0 +1,32 @@
+﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Interfaces;
+
+namespace SkillUp.Repositories.Implementations
+{
+    public class EnrollmentRepository : IEnrollmentRepository
+    {
+        private readonly SkillUpContext _context;
+
+        public EnrollmentRepository(SkillUpContext context)
+        {
+            _context = context;
+        }
+        public async Task<List<Enrollment>> GetEnrolledCoursesWithDetailsAsync(Guid studentId)
+        {
+            return await _context.Enrollments
+                .Where(e => e.StudentId == studentId)
+                .Include(e => e.Course)
+                    .ThenInclude(c => c.Lecturer)
+                        .ThenInclude(l => l.Account)
+                .Include(e => e.Course)
+                    .ThenInclude(c => c.Sections)
+                        .ThenInclude(s => s.Lessons)
+                .Include(e => e.Course)
+                    .ThenInclude(c => c.Sections)
+                        .ThenInclude(s => s.Quizzes)
+                .OrderByDescending(e => e.EnrolledAt) 
+                .ToListAsync();
+        }
+    }
+}

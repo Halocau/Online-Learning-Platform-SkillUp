@@ -27,6 +27,12 @@ namespace SkillUp.Repositories.Implementations
         {
             await _context.StudentProgresses.AddAsync(progress);
         }
+        public async Task<int> CountCompletedItemsAsync(Guid courseId, Guid studentId)
+        {
+            return await _context.StudentProgresses
+                .Where(sp => sp.CourseId == courseId && sp.StudentId == studentId)
+                .CountAsync();
+        }
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

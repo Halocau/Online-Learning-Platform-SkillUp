@@ -8,6 +8,7 @@ using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.Lesson;
 using SkillUp.BussinessObjects.DTOs.Quiz;
 using SkillUp.BussinessObjects.DTOs.Section;
+using SkillUp.BussinessObjects.DTOs.StudentCourse;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
@@ -25,7 +26,10 @@ namespace SkillUp.Services.Implementations
 		private readonly ICategoryRepository _categoryRepository;
 		private readonly IEmailService _emailService;
 		private readonly INotifyService _notifyService;
-		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService)
+		private readonly IEnrollmentRepository _enrollmentRepository;
+		private readonly IStudentRepository _studentRepository;
+		private readonly IStudentProgressRepository _studentProgressRepository;
+		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository)
 		{
 			_courseRepository = courseRepository;
 			_lecturerRepository = lecturerRepository;
@@ -34,6 +38,9 @@ namespace SkillUp.Services.Implementations
 			_categoryRepository = categoryRepository;
 			_emailService = emailService;
 			_notifyService = notifyService;
+			_enrollmentRepository = enrollmentRepository;
+			_studentRepository = studentRepository;
+			_studentProgressRepository = studentProgressRepository;
 		}
 
 		public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
@@ -553,6 +560,47 @@ namespace SkillUp.Services.Implementations
 			var enrolledCourses = await _courseRepository.GetEnrolledCoursesByAccountIdAsync(accountId);
 			return enrolledCourses;
 		}
+        public async Task<List<StudentCourseDto>> GetMyCoursesAsync(Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null) throw new Exception("Không tìm thấy sinh viên.");
 
-	}
+            var enrollments = await _enrollmentRepository.GetEnrolledCoursesWithDetailsAsync(student.Id);
+
+            var result = new List<StudentCourseDto>();
+            foreach (var enrollment in enrollments)
+            {
+                var course = enrollment.Course;
+                int totalItems = course.Sections
+                    .Where(s => s.IsActive)
+                    .Sum(s =>
+                        s.Lessons.Count(l => l.IsActive) +
+                        s.Quizzes.Count(q => q.IsActive)
+                    );
+
+                int completedItems = await _studentProgressRepository.CountCompletedItemsAsync(course.Id, student.Id);
+
+                double percentage = 0;
+                if (totalItems > 0)
+                {
+                    percentage = Math.Round(((double)completedItems / totalItems) * 100, 0);
+                }
+                percentage = Math.Min(percentage, 100);
+
+                result.Add(new StudentCourseDto
+                {
+                    CourseId = course.Id,
+                    Title = course.Title,
+                    Image = course.Image,
+                    LecturerName = course.Lecturer?.Account?.Fullname ?? "Unknown",
+                    TotalItems = totalItems,
+                    CompletedItems = completedItems,
+                    ProgressPercentage = percentage,
+                    EnrolledAt = enrollment.EnrolledAt
+                });
+            }
+
+            return result;
+        }
+    }
 }

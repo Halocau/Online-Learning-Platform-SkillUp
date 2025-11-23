@@ -1,5 +1,6 @@
 ﻿using SkillUp.BussinessObjects.DTOs.Course;
 using SkillUp.BussinessObjects.DTOs.CourseByCategoryPage;
+using SkillUp.BussinessObjects.DTOs.StudentCourse;
 using SkillUp.BussinessObjects.Models;
 using System.Threading.Tasks;
 
@@ -23,6 +24,7 @@ namespace SkillUp.Services.Interfaces
         Task<List<CourseStudentEnrollDTO>> GetEnrolledCoursesByAccountIdAsync(Guid accountId);
 
         Task<List<CourseSummaryDTO>> SearchCoursesAsync(string keyword, int limit);
+        Task<List<StudentCourseDto>> GetMyCoursesAsync(Guid accountId);
 
     }
 }

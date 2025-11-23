@@ -96,6 +96,7 @@ builder.Services.AddScoped<IStudentSelectedAnswersRepository, StudentSelectedAns
 builder.Services.AddScoped<IQuizAnswerSubmissionRepository, QuizAnswerSubmissionRepository>();
 builder.Services.AddScoped<IAnswerBankRepository, AnswerBankRepository>();
 builder.Services.AddScoped<IStudentProgressRepository, StudentProgressRepository>();
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
