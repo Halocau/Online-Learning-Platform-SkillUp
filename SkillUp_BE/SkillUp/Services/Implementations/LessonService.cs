@@ -377,5 +377,37 @@ namespace SkillUp.Services.Implementations
 
             return true;
         }
+        public async Task TrackLessonViewAsync(Guid lessonId, Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null) throw new Exception("Không tìm thấy sinh viên.");
+
+            var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+            if (lesson == null) throw new Exception("Không tìm thấy bài học.");
+            if (lesson.Section == null) throw new Exception("Lỗi dữ liệu: Bài học không thuộc Section nào.");
+
+            var progress = await _studentProgressRepository.GetByStudentAndLessonAsync(student.Id, lessonId);
+
+            if (progress == null)
+            {
+                var newProgress = new StudentProgress
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    LessonId = lessonId,
+                    CourseId = lesson.Section.CourseId,
+                    QuizId = null,
+                    IsCompleted = false, 
+                    LastViewedAt = DateTime.Now 
+                };
+                await _studentProgressRepository.AddAsync(newProgress);
+            }
+            else
+            {
+                progress.LastViewedAt = DateTime.Now;
+            }
+
+            await _studentProgressRepository.SaveChangesAsync();
+        }
     }
 }

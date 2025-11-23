@@ -210,6 +210,49 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpPost("{lessonId}/track-view")]
+        [Authorize]
+        public async Task<IActionResult> TrackLessonView(Guid lessonId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                await _lessonService.TrackLessonViewAsync(lessonId, accountId.Value);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Đã ghi nhận thời gian học",
+                    data = null 
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }
 

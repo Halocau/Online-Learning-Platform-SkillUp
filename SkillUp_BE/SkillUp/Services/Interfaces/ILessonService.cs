@@ -12,5 +12,6 @@ namespace SkillUp.Services.Interfaces
         Task<LessonResponseDto> UpdateLessonAsync(Guid id, UpdateLessonDto dto, Guid accountId);
         Task<bool> DeleteLessonAsync(Guid id, Guid accountId);
         Task<bool> MarkLessonAsCompletedAsync(Guid lessonId, Guid accountId);
+        Task TrackLessonViewAsync(Guid lessonId, Guid accountId);
     }
 }
