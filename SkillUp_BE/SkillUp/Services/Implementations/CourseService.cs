@@ -119,47 +119,62 @@ namespace SkillUp.Services.Implementations
 
 
 
-		public async Task<CourseResponseDto?> UpdateCourseAsync(CreateUpdateCourseDto request, Guid courseId, Guid accountId)
-		{
-			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
-			if (lecturer == null)
-			{
-				throw new Exception("Không tìm thấy giảng viên cho tài khoản này!");
-			}
-			var course = await _courseRepository.GetCourseByIdAsync(courseId);
-			if (course == null)
-			{
-				throw new Exception("Không tìm thấy khoá học!");
-			}
-			if (course.LecturerId != lecturer.Id)
-			{
-				throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa khoá học này!");
-			}
-			string? newImageUrl = course.Image;
-			if (request.Image != null)
-			{
-				newImageUrl = await _cloudinaryService.UploadImageAsync(request.Image, "skillup/courses");
-			}
-			course.Title = request.Title;
-			course.Description = request.Description;
-			course.SubCategoryId = request.SubCategoryId;
-			course.Image = newImageUrl;
-			course.UpdatedAt = DateTime.Now;
-			_courseRepository.UpdateCourse(course);
-			var saved = await _courseRepository.SaveChangesAsync();
-			if (!saved) return null;
+        public async Task<CourseResponseDto?> UpdateCourseAsync(UpdateCourseDto request, Guid courseId, Guid accountId)
+        {
+            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+            if (lecturer == null)
+            {
+                throw new Exception("Không tìm thấy giảng viên cho tài khoản này!");
+            }
 
-			return new CourseResponseDto
-			{
-				Id = course.Id,
-				Title = course.Title,
-				Description = course.Description,
-				Image = course.Image,
-				Status = course.Status,
-				LecturerId = lecturer.Id
-			};
-		}
-		public async Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId)
+            var course = await _courseRepository.GetCourseByIdAsync(courseId);
+            if (course == null)
+            {
+                throw new Exception("Không tìm thấy khoá học!");
+            }
+
+            if (course.LecturerId != lecturer.Id)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa khoá học này!");
+            }
+
+            if (request.Image != null)
+            {
+                string newImageUrl = await _cloudinaryService.UploadImageAsync(request.Image, "skillup/courses");
+                course.Image = newImageUrl;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Title))
+            {
+                course.Title = request.Title;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Description))
+            {
+                course.Description = request.Description;
+            }
+
+            if (request.SubCategoryId.HasValue && request.SubCategoryId.Value > 0)
+            {
+                course.SubCategoryId = request.SubCategoryId.Value;
+            }
+
+            course.UpdatedAt = DateTime.Now;
+
+            _courseRepository.UpdateCourse(course);
+            await _courseRepository.SaveChangesAsync();
+
+            return new CourseResponseDto
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                Image = course.Image,
+                Status = course.Status,
+                LecturerId = lecturer.Id
+            };
+        }
+        public async Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId)
 		{
 
 			var adminAccount = await _accountRepository.GetByIdAsync(adminAccountId);

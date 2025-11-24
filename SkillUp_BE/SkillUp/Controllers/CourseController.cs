@@ -99,7 +99,7 @@ namespace SkillUp.Controllers
         [HttpPut("Update-Course/{courseId}")]
         [Consumes("multipart/form-data")]
         [Authorize]
-        public async Task<IActionResult> UpdateCourse(Guid courseId, [FromForm] CreateUpdateCourseDto request)
+        public async Task<IActionResult> UpdateCourse(Guid courseId, [FromForm] UpdateCourseDto request)
         {
             try
             {
@@ -114,7 +114,19 @@ namespace SkillUp.Controllers
                     });
                 }
 
+                // (Nên thêm check ModelState để trả về lỗi Validation đúng format)
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
                 var result = await _courseService.UpdateCourseAsync(request, courseId, accountId.Value);
+
                 if (result == null)
                 {
                     return BadRequest(new APIReturn
@@ -134,10 +146,24 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
                 return StatusCode(500, new APIReturn
                 {
                     code = 500,
@@ -182,7 +208,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -235,7 +266,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -477,7 +513,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -537,7 +578,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -605,7 +651,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid("Bạn không có quyền này!");
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
