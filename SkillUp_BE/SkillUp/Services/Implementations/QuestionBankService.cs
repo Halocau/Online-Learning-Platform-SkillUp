@@ -253,6 +253,7 @@ namespace SkillUp.Services.Implementations
 							AnswerName = a.AnswerName,
 							IsCorrect = a.IsCorrect,
 							IsActive = a.IsActive,
+							Image = a.Image
 						}).ToList()
 					}).ToList()
 			}).ToList();
