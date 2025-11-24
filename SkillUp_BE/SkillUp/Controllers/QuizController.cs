@@ -267,14 +267,21 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("Bài quiz không tồn tại"))
+                if (ex.Message.Contains("không tồn tại") ||
+                    ex.Message.Contains("Không tìm thấy"))
                 {
                     return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
                 }
+
                 return StatusCode(500, new APIReturn
                 {
                     code = 500,

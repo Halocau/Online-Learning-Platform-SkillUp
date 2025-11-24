@@ -28,5 +28,10 @@ namespace SkillUp.Repositories.Implementations
                 .OrderByDescending(e => e.EnrolledAt) 
                 .ToListAsync();
         }
+        public async Task<bool> IsStudentEnrolledInCourseAsync(Guid studentId, Guid courseId)
+        {
+            return await _context.Enrollments
+                .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+        }
     }
 }
