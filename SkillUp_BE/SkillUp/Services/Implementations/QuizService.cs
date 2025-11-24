@@ -423,7 +423,6 @@ namespace SkillUp.Services.Implementations
             }
 
             var answerSubmissions = await _quizAnswerSubmissionRepository.GetBySubmissionIdAsync(submissionId);
-
             var allSelectedAnswers = await _studentSelectedAnswersRepository.GetSelectedAnswersBySubmissionIdAsync(submissionId);
 
             var studentChoiceSet = allSelectedAnswers.Select(sa => sa.AnswerBankId).ToHashSet();
@@ -439,7 +438,7 @@ namespace SkillUp.Services.Implementations
                 if (question == null) continue;
 
                 var answerDtos = question.AnswerBanks.Select(a =>
-                {                 
+                {
                     bool isSelected = studentChoiceSet.Contains(a.Id);
 
                     return new AnswerResultDetailDto
@@ -447,7 +446,7 @@ namespace SkillUp.Services.Implementations
                         AnswerId = a.Id,
                         AnswerName = a.AnswerName,
                         WasSelected = isSelected,
-                        IsCorrect = isSelected && a.IsCorrect
+                        IsCorrect = a.IsCorrect
                     };
                 }).ToList();
 
