@@ -69,9 +69,19 @@ export default function PostDetail() {
     );
 
   const images = post.imageUrls ?? [];
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const currentUserId = localStorage.getItem("userId");
+  const currentUserFromStorage = localStorage.getItem("user");
+  const currentUser = currentUserFromStorage
+    ? JSON.parse(currentUserFromStorage)
+    : null;
+
+  const postAccountId = String(post.accountId ?? post.AccountId ?? "");
+
   const isOwner =
-    String(currentUser.id ?? currentUser.Id) === String(post.accountId);
+    (currentUserId && String(currentUserId) === postAccountId) ||
+    (currentUser?.id && String(currentUser.id) === postAccountId) ||
+    (currentUser?.Id && String(currentUser.Id) === postAccountId);
 
   const handleDelete = async () => {
     try {
@@ -170,8 +180,8 @@ export default function PostDetail() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              {isOwner && (
+              {/* Action Buttons - NOW WITH DEBUG INFO */}
+              {isOwner ? (
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Button
                     type="default"
@@ -190,6 +200,11 @@ export default function PostDetail() {
                   >
                     Xóa
                   </Button>
+                </div>
+              ) : (
+                // TEMPORARY DEBUG DISPLAY - Remove after fixing
+                <div className="text-xs text-gray-400 p-2 bg-gray-50 rounded">
+                  Not owner (check console)
                 </div>
               )}
             </div>
