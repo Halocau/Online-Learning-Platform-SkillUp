@@ -29,7 +29,8 @@ namespace SkillUp.Services.Implementations
 		private readonly IEnrollmentRepository _enrollmentRepository;
 		private readonly IStudentRepository _studentRepository;
 		private readonly IStudentProgressRepository _studentProgressRepository;
-		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository)
+		private readonly ICurrentUserService _currentUserService;
+		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService)
 		{
 			_courseRepository = courseRepository;
 			_lecturerRepository = lecturerRepository;
@@ -41,6 +42,7 @@ namespace SkillUp.Services.Implementations
 			_enrollmentRepository = enrollmentRepository;
 			_studentRepository = studentRepository;
 			_studentProgressRepository = studentProgressRepository;
+			_currentUserService = currentUserService;
 		}
 
 		public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
@@ -299,6 +301,18 @@ namespace SkillUp.Services.Implementations
 			var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
 			if (course == null) return null;
 
+			// Lấy StudentId từ current user (nếu có)
+			Guid? studentId = null;
+			var accountId = _currentUserService.UserId;
+			if (accountId.HasValue)
+			{
+				var student = await _studentRepository.GetByAccountIdAsync(accountId.Value);
+				if (student != null)
+				{
+					studentId = student.Id;
+				}
+			}
+
 			var detail = new CourseDetailDto
 			{
 				Id = course.Id,
@@ -359,11 +373,16 @@ namespace SkillUp.Services.Implementations
 					.Where(q => q.IsActive)
 					.Select(q =>
 					{
-						// Tìm Submission có EndedAt gần nhất
-						var latestSubmission = q.QuizSubmissions
-							.Where(s => s.EndedAt != null)
-							.OrderByDescending(s => s.EndedAt)
-							.FirstOrDefault();
+						// Tìm Submission có EndedAt gần nhất của student hiện tại (nếu có)
+						Guid? quizSubmissionId = null;
+						if (studentId.HasValue)
+						{
+							var latestSubmission = q.QuizSubmissions
+								.Where(s => s.StudentId == studentId.Value && s.EndedAt != null)
+								.OrderByDescending(s => s.EndedAt)
+								.FirstOrDefault();
+							quizSubmissionId = latestSubmission?.Id;
+						}
 
 						return new SectionItemDto
 						{
@@ -374,7 +393,7 @@ namespace SkillUp.Services.Implementations
 							Description = q.Description,
 							PassPercent = q.PassPercent,
 							Timer = q.Timer,
-                            QuizSubmissionId = latestSubmission?.Id,
+                            QuizSubmissionId = quizSubmissionId,
 							CreatedAt = q.CreatedAt,
 							UpdatedAt = q.UpdatedAt
 						};
