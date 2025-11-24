@@ -45,7 +45,7 @@ const CourseLearning = () => {
   const fetchCourseDetail = async () => {
     try {
       setLoading(true);
-      const response = await courseAPI.getCourseLearningDetail(courseId);
+      const response = await courseAPI.getCourseDetail(courseId);
       const course = response.data.data[0];
       setCourseData(course);
 
@@ -68,15 +68,7 @@ const CourseLearning = () => {
         setCurrentItem(null);
       }
     } catch (error) {
-      if (error.response?.status === 403) {
-        toast.error("Bạn cần đăng ký khóa học trước khi học.");
-        navigate(`/course/${courseId}`);
-      } else if (error.response?.status === 401) {
-        toast.error("Vui lòng đăng nhập để tiếp tục học.");
-        navigate("/login");
-      } else {
-        toast.error("Không thể tải khóa học");
-      }
+       toast.error("Không thể tải khóa học");
     } finally {
       setTimeout(() => setLoading(false), 150);
     }
