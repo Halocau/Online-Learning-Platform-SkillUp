@@ -99,7 +99,7 @@ namespace SkillUp.Controllers
         [HttpPut("Update-Course/{courseId}")]
         [Consumes("multipart/form-data")]
         [Authorize]
-        public async Task<IActionResult> UpdateCourse(Guid courseId, [FromForm] CreateUpdateCourseDto request)
+        public async Task<IActionResult> UpdateCourse(Guid courseId, [FromForm] UpdateCourseDto request)
         {
             try
             {
@@ -114,7 +114,19 @@ namespace SkillUp.Controllers
                     });
                 }
 
+                // (Nên thêm check ModelState để trả về lỗi Validation đúng format)
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
                 var result = await _courseService.UpdateCourseAsync(request, courseId, accountId.Value);
+
                 if (result == null)
                 {
                     return BadRequest(new APIReturn
@@ -134,10 +146,24 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
                 return StatusCode(500, new APIReturn
                 {
                     code = 500,
@@ -182,7 +208,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -235,7 +266,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -477,7 +513,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -537,7 +578,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -692,6 +738,91 @@ namespace SkillUp.Controllers
             }
             catch (Exception ex)
             {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+        [HttpGet("my-courses")]
+        [Authorize] 
+        public async Task<IActionResult> GetMyCourses()
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var myCourses = await _courseService.GetMyCoursesAsync(accountId.Value);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy danh sách khóa học của tôi thành công",
+                    data = new List<object> { myCourses }
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy sinh viên"))
+                {
+                    return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
+                }
+
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+        [HttpGet("{courseId}/resume")]
+        [Authorize]
+        public async Task<IActionResult> GetResumeItem(Guid courseId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                var resumeData = await _courseService.GetResumeItemAsync(courseId, accountId.Value);
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy vị trí học tiếp thành công",
+                    data = new List<object> { resumeData }
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy") || ex.Message.Contains("chưa có nội dung"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+
                 return StatusCode(500, new APIReturn
                 {
                     code = 500,

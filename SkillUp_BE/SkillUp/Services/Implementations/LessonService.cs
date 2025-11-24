@@ -1,6 +1,7 @@
 ﻿using SkillUp.BussinessObjects.DTOs.Asset;
 using SkillUp.BussinessObjects.DTOs.Lesson;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
@@ -16,14 +17,17 @@ namespace SkillUp.Services.Implementations
         private readonly ILecturerRepository _lecturerRepository;
         private readonly FtpVideoUploadService _ftpVideoUploadService;
         private readonly CloudinaryService _cloudinaryService;
-
+        private readonly IStudentRepository _studentRepository;
+        private readonly IStudentProgressRepository _studentProgressRepository;
         public LessonService(
             ILessonRepository lessonRepository,
             ISectionRepository sectionRepository,
             ICourseRepository courseRepository,
             ILecturerRepository lecturerRepository,
             FtpVideoUploadService ftpVideoUploadService,
-            CloudinaryService cloudinaryService)
+            CloudinaryService cloudinaryService,
+            IStudentRepository studentRepository,
+            IStudentProgressRepository studentProgressRepository)
         {
             _lessonRepository = lessonRepository;
             _sectionRepository = sectionRepository;
@@ -31,6 +35,8 @@ namespace SkillUp.Services.Implementations
             _lecturerRepository = lecturerRepository;
             _ftpVideoUploadService = ftpVideoUploadService;
             _cloudinaryService = cloudinaryService;
+            _studentRepository = studentRepository;
+            _studentProgressRepository = studentProgressRepository;
         }
 
         public async Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync()
@@ -333,6 +339,75 @@ namespace SkillUp.Services.Implementations
                 TextContent = lesson.Type == "Text" ? asset?.Contents : null,
                 FileUrl = asset?.FileUrl // Tài liệu khóa học
             };
+        }
+
+        public async Task<bool> MarkLessonAsCompletedAsync(Guid lessonId, Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null) throw new Exception("Không tìm thấy sinh viên.");
+
+            var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+            if (lesson == null) throw new Exception("Không tìm thấy bài học.");
+
+            if (lesson.Section == null)
+                throw new Exception("Lỗi dữ liệu: Bài học không thuộc Section nào.");
+            var existingProgress = await _studentProgressRepository.GetByStudentAndLessonAsync(student.Id, lessonId);
+
+            if (existingProgress != null)
+            {
+                existingProgress.IsCompleted = true;
+                existingProgress.LastViewedAt = DateTime.Now;
+            }
+            else
+            {
+                var newProgress = new StudentProgress
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    LessonId = lessonId,
+                    CourseId = lesson.Section.CourseId,
+                    QuizId = null,
+                    IsCompleted = true,
+                    LastViewedAt = DateTime.Now
+                };
+
+                await _studentProgressRepository.AddAsync(newProgress);
+            }
+            await _studentProgressRepository.SaveChangesAsync();
+
+            return true;
+        }
+        public async Task TrackLessonViewAsync(Guid lessonId, Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null) throw new Exception("Không tìm thấy sinh viên.");
+
+            var lesson = await _lessonRepository.GetByIdAsync(lessonId);
+            if (lesson == null) throw new Exception("Không tìm thấy bài học.");
+            if (lesson.Section == null) throw new Exception("Lỗi dữ liệu: Bài học không thuộc Section nào.");
+
+            var progress = await _studentProgressRepository.GetByStudentAndLessonAsync(student.Id, lessonId);
+
+            if (progress == null)
+            {
+                var newProgress = new StudentProgress
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    LessonId = lessonId,
+                    CourseId = lesson.Section.CourseId,
+                    QuizId = null,
+                    IsCompleted = false, 
+                    LastViewedAt = DateTime.Now 
+                };
+                await _studentProgressRepository.AddAsync(newProgress);
+            }
+            else
+            {
+                progress.LastViewedAt = DateTime.Now;
+            }
+
+            await _studentProgressRepository.SaveChangesAsync();
         }
     }
 }

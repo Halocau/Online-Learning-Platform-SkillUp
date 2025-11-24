@@ -4,5 +4,6 @@
     {
         public Guid AnswerId { get; set; }
         public string AnswerName { get; set; }
+        public string? Image { get; set; }
     }
 }

@@ -8,5 +8,9 @@ namespace SkillUp.Repositories.Interfaces
         Task<IEnumerable<Notify>> GetByAccountIdAsync(Guid accountId);
 
         Task<IEnumerable<Notify>> GetAllAsync();
+        Task<Notify?> GetByIdAsync(Guid id);
+        Task UpdateAsync(Notify notification);
+        Task<IEnumerable<Notify>> GetUnreadByAccountIdAsync(Guid accountId);
+        Task UpdateRangeAsync(IEnumerable<Notify> notifications);
     }
 }

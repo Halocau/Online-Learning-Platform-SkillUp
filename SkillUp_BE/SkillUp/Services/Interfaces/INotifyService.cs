@@ -10,5 +10,7 @@ namespace SkillUp.Services.Interfaces
 
         Task<IEnumerable<NotifyDto>> GetNotificationsByAccountIdAsync(Guid accountId);
         Task<IEnumerable<NotifyDto>> GetAllNotificationsAsync();
+        Task<bool> MarkAsReadAsync(Guid notificationId, Guid accountId);
+        Task<bool> MarkAllAsReadAsync(Guid accountId);
     }
 }

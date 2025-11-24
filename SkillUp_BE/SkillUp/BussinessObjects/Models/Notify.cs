@@ -17,5 +17,7 @@ public partial class Notify
 
     public DateTime CreatedAt { get; set; }
 
+    public string? Hyperlink { get; set; }
+
     public virtual Account Account { get; set; } = null!;
 }

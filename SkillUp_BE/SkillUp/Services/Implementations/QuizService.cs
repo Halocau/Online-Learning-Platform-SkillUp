@@ -22,7 +22,8 @@ namespace SkillUp.Services.Implementations
         private readonly IStudentSelectedAnswersRepository _studentSelectedAnswersRepository;
         private readonly IQuestionBankRepository _questionBankRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
-        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository, IAnswerBankRepository answerBankRepository, IQuizAnswerSubmissionRepository quizAnswerSubmissionRepository, IStudentSelectedAnswersRepository studentSelectedAnswersRepository, IQuestionBankRepository questionBankRepository, IStudentProgressRepository studentProgressRepository)
+        private readonly IEnrollmentRepository _enrollmentRepository;
+        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository, IAnswerBankRepository answerBankRepository, IQuizAnswerSubmissionRepository quizAnswerSubmissionRepository, IStudentSelectedAnswersRepository studentSelectedAnswersRepository, IQuestionBankRepository questionBankRepository, IStudentProgressRepository studentProgressRepository, IEnrollmentRepository enrollmentRepository)
         {
             _quizRepository = quizRepository;
             _lecturerRepository = lecturerRepository;
@@ -34,6 +35,7 @@ namespace SkillUp.Services.Implementations
             _studentSelectedAnswersRepository = studentSelectedAnswersRepository;
             _questionBankRepository = questionBankRepository;
             _studentProgressRepository = studentProgressRepository;
+            _enrollmentRepository = enrollmentRepository;
         }
 
         public async Task<Guid> CreateQuizAsync(CreateQuizDTO dto, Guid accId)
@@ -194,11 +196,21 @@ namespace SkillUp.Services.Implementations
             {
                 throw new Exception("Bài quiz không tồn tại hoặc không hoạt động.");
             }
+
             var student = await _studentRepository.GetByAccountIdAsync(accountId);
             if (student == null)
             {
                 throw new Exception("Không tìm thấy hồ sơ sinh viên cho tài khoản này.");
             }
+
+            if (quiz.Section == null) throw new Exception("Lỗi dữ liệu: Quiz không thuộc chương nào.");
+
+            var isEnrolled = await _enrollmentRepository.IsStudentEnrolledInCourseAsync(student.Id, quiz.Section.CourseId);
+            if (!isEnrolled)
+            {
+                throw new UnauthorizedAccessException("Bạn chưa đăng ký khóa học này, vui lòng mua khóa học để làm bài.");
+            }
+
             var newSubmission = new QuizSubmission
             {
                 Id = Guid.NewGuid(),
@@ -208,8 +220,27 @@ namespace SkillUp.Services.Implementations
                 Score = null,
                 EndedAt = null
             };
-
             await _quizSubmissionRepository.AddAsync(newSubmission);
+
+            var progress = await _studentProgressRepository.GetByStudentAndQuizAsync(student.Id, quizId);
+            if (progress == null)
+            {
+                var newProgress = new StudentProgress
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id,
+                    QuizId = quizId,
+                    CourseId = quiz.Section.CourseId,
+                    LessonId = null,
+                    IsCompleted = false,
+                    LastViewedAt = DateTime.Now
+                };
+                await _studentProgressRepository.AddAsync(newProgress);
+            }
+            else
+            {
+                progress.LastViewedAt = DateTime.Now;
+            }
 
             var questionDtos = quiz.QuestionQuizzes
                 .Where(qq => qq.IsActive == true)
@@ -227,7 +258,8 @@ namespace SkillUp.Services.Implementations
                         .Select(a => new AnswerStudentDto
                         {
                             AnswerId = a.Id,
-                            AnswerName = a.AnswerName
+                            AnswerName = a.AnswerName,
+                            Image = a.Image
                         }).ToList()
                 }).ToList();
 
@@ -342,10 +374,14 @@ namespace SkillUp.Services.Implementations
                 if (quizFull != null && quizFull.Section != null)
                 {
                     var courseId = quizFull.Section.CourseId;
-
                     var existingProgress = await _studentProgressRepository.GetByStudentAndQuizAsync(studentId, quiz.Id);
 
-                    if (existingProgress == null)
+                    if (existingProgress != null)
+                    {
+                        existingProgress.IsCompleted = true;
+                        existingProgress.LastViewedAt = DateTime.Now;
+                    }
+                    else
                     {
                         var newProgress = new StudentProgress
                         {
@@ -353,7 +389,9 @@ namespace SkillUp.Services.Implementations
                             StudentId = studentId,
                             CourseId = courseId,
                             QuizId = quiz.Id,
-                            LessonId = null 
+                            LessonId = null,
+                            IsCompleted = true, 
+                            LastViewedAt = DateTime.Now
                         };
                         await _studentProgressRepository.AddAsync(newProgress);
                     }
@@ -385,7 +423,6 @@ namespace SkillUp.Services.Implementations
             }
 
             var answerSubmissions = await _quizAnswerSubmissionRepository.GetBySubmissionIdAsync(submissionId);
-
             var allSelectedAnswers = await _studentSelectedAnswersRepository.GetSelectedAnswersBySubmissionIdAsync(submissionId);
 
             var studentChoiceSet = allSelectedAnswers.Select(sa => sa.AnswerBankId).ToHashSet();
@@ -401,7 +438,7 @@ namespace SkillUp.Services.Implementations
                 if (question == null) continue;
 
                 var answerDtos = question.AnswerBanks.Select(a =>
-                {                 
+                {
                     bool isSelected = studentChoiceSet.Contains(a.Id);
 
                     return new AnswerResultDetailDto
@@ -409,7 +446,7 @@ namespace SkillUp.Services.Implementations
                         AnswerId = a.Id,
                         AnswerName = a.AnswerName,
                         WasSelected = isSelected,
-                        IsCorrect = isSelected && a.IsCorrect
+                        IsCorrect = a.IsCorrect
                     };
                 }).ToList();
 

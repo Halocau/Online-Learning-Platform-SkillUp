@@ -95,5 +95,40 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = n.CreatedAt
             });
         }
+        public async Task<bool> MarkAsReadAsync(Guid notificationId, Guid accountId)
+        {
+            // 1. Tìm thông báo
+            var notification = await _notifyRepo.GetByIdAsync(notificationId);
+
+            // 2. Kiểm tra
+            if (notification == null) return false;
+            if (notification.AccountId != accountId)
+                throw new UnauthorizedAccessException("Bạn không sở hữu thông báo này.");
+
+            // 3. Cập nhật Status
+            notification.Status = "Read"; // Sửa status thành Read
+
+            // 4. Lưu
+            await _notifyRepo.UpdateAsync(notification);
+            return true;
+        }
+
+        public async Task<bool> MarkAllAsReadAsync(Guid accountId)
+        {
+            // 1. Lấy danh sách chưa đọc
+            var unreadNotifications = await _notifyRepo.GetUnreadByAccountIdAsync(accountId);
+
+            if (!unreadNotifications.Any()) return false;
+
+            // 2. Duyệt và sửa status
+            foreach (var noti in unreadNotifications)
+            {
+                noti.Status = "Read";
+            }
+
+            // 3. Cập nhật hàng loạt
+            await _notifyRepo.UpdateRangeAsync(unreadNotifications);
+            return true;
+        }
     }
 }

@@ -15,6 +15,10 @@ public partial class StudentProgress
 
     public Guid StudentId { get; set; }
 
+    public bool? IsCompleted { get; set; }
+
+    public DateTime? LastViewedAt { get; set; }
+
     public virtual Course Course { get; set; } = null!;
 
     public virtual Lesson? Lesson { get; set; }

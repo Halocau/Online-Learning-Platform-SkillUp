@@ -131,3 +131,29 @@ export const getLessonsBySection = async (sectionId) => {
     return handleAPIError(err, "Không thể tải danh sách bài học!");
   }
 };
+
+// Mark lesson as completed
+export const markLessonComplete = async (lessonId) => {
+  try {
+    const res = await axiosInstance.post(`${API_URL}/${lessonId}/complete`);
+    if (res.data?.code === 200) {     
+      return res.data;
+    }
+    throw new Error(res.data?.message);
+  } catch (err) {
+    handleAPIError(err, "Không thể đánh dấu hoàn thành bài học!");
+    throw err;
+  }
+};
+
+// Track lesson view (ghi nhận thời gian xem)
+export const trackLessonView = async (lessonId) => {
+  try {
+    const res = await axiosInstance.post(`${API_URL}/${lessonId}/track-view`);
+    return res.data;
+  } catch (err) {
+    // Silent fail - không hiển thị lỗi cho user
+    console.error("Error tracking lesson view:", err);
+    return null;
+  }
+};

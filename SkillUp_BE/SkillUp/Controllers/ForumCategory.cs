@@ -42,5 +42,12 @@ namespace SkillUp.Controllers
             var result = await _forumCategoryService.GetAllAsync();
             return StatusCode(result.Code, result);
         }
-    }
+
+        [HttpGet("get-by-id/{id}")]
+        public async Task<IActionResult> GetForumCategoryById(int id)
+        {
+            var result = await _forumCategoryService.GetByIdAsync(id);
+            return StatusCode(result.Code, result);
+		}
+	}
 }

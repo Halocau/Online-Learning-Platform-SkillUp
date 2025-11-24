@@ -15,6 +15,7 @@ import ItemCard from "./ItemCard";
 import ContentTypeSelector from "./ContentTypeSelector";
 import LessonForm from "./LessonForm";
 import QuizForm from "./QuizForm";
+import { Droppable, Draggable } from "@hello-pangea/dnd";
 
 function SectionCard({
   section,
@@ -150,41 +151,81 @@ function SectionCard({
 
           {/* Items List */}
           <div className="space-y-2 mb-3">
-            {section.items && section.items.length > 0 ? (
-              section.items.map((item, itemIndex) => (
-                <ItemCard
-                  key={item.id || `item-${section.id}-${itemIndex}`}
-                  item={item}
-                  onEdit={item.kind === "Lesson" ? onEditLesson : onEditQuiz}
-                  onDelete={
-                    item.kind === "Lesson" ? onDeleteLesson : onDeleteQuiz
-                  }
-                  isEditing={
-                    item.kind === "Lesson"
-                      ? editingLessonId === item.id
-                      : editingQuizId === item.id
-                  }
-                  editForm={item.kind === "Lesson" ? lessonForm : quizForm}
-                  setEditForm={
-                    item.kind === "Lesson" ? setLessonForm : setQuizForm
-                  }
-                  onUpdate={
-                    item.kind === "Lesson" ? onUpdateLesson : onUpdateQuiz
-                  }
-                  onCancelEdit={() =>
-                    item.kind === "Lesson"
-                      ? setEditingLessonId(null)
-                      : setEditingQuizId(null)
-                  }
-                  courseId={courseId}
-                  sectionId={section.id}
-                />
-              ))
-            ) : (
-              <div className="text-center py-6 text-gray-400">
-                <p className="text-sm">Chưa có nội dung</p>
-              </div>
-            )}
+            {/* 2. Wrap the list in a Droppable. Use section.id as the unique ID */}
+            <Droppable droppableId={section.id.toString()} type="SECTION_ITEM">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  // Optional: Add a min-height so you can drop into an empty section
+                  className="min-h-[10px]"
+                >
+                  {section.items && section.items.length > 0 ? (
+                    section.items.map((item, itemIndex) => (
+                      // 3. Wrap each ItemCard in a Draggable
+                      <Draggable
+                        key={item.id}
+                        draggableId={item.id.toString()}
+                        index={itemIndex}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={{
+                              ...provided.draggableProps.style,
+                              // Optional: Visual feedback when dragging
+                              opacity: snapshot.isDragging ? 0.5 : 1,
+                            }}
+                            className="mb-2" // Add spacing between dragged items
+                          >
+                            <ItemCard
+                              item={item}
+                              // Pass existing props...
+                              onEdit={item.kind === "Lesson" ? onEditLesson : onEditQuiz}
+                              onDelete={item.kind === "Lesson" ? onDeleteLesson : onDeleteQuiz}
+                              isEditing={
+                                item.kind === "Lesson"
+                                  ? editingLessonId === item.id
+                                  : editingQuizId === item.id
+                              }
+                              editForm={item.kind === "Lesson" ? lessonForm : quizForm}
+                              setEditForm={
+                                item.kind === "Lesson" ? setLessonForm : setQuizForm
+                              }
+                              onUpdate={
+                                item.kind === "Lesson" ? onUpdateLesson : onUpdateQuiz
+                              }
+                              onCancelEdit={() =>
+                                item.kind === "Lesson"
+                                  ? setEditingLessonId(null)
+                                  : setEditingQuizId(null)
+                              }
+                              courseId={courseId}
+                              sectionId={section.id}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))
+                  ) : (
+                    // 4. Handle Empty State (Empty sections should still be droppable!)
+                    // If you want empty sections to be droppable, you usually render the 
+                    // 'No Content' div OUTSIDE or differently, but for now we keep your logic.
+                    // Note: If this div is rendered, the Droppable might collapse to 0 height.
+                    // Ensure the Droppable container (div above) has min-height.
+                    !provided.placeholder && (
+                      <div className="text-center py-6 text-gray-400">
+                        <p className="text-sm">Chưa có nội dung</p>
+                      </div>
+                    )
+                  )}
+                  {/* 5. Essential Placeholder for layout calculation */}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
 
             {/* Add Content UI */}
             {addingItemToSection?.sectionId === section.id &&

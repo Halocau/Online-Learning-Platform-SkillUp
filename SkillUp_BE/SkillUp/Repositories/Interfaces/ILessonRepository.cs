@@ -14,5 +14,7 @@ namespace SkillUp.Repositories.Interfaces
         void UpdateLesson(Lesson lesson);
         Task<bool> SaveChangesAsync();
         Task<bool> DeleteLessonAsync(Guid id);
-    }
+
+		Task<List<Lesson>> GetLessonsByIdsAndSectionAsync(IEnumerable<Guid> ids, Guid sectionId);
+	}
 }

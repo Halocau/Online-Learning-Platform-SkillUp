@@ -41,7 +41,14 @@ export default function MyCourses() {
                 const payload = Array.isArray(response.data.data[0])
                     ? response.data.data[0]
                     : response.data.data;
-                setCourses(payload || []);
+                
+                // Map courseId to id for compatibility
+                const mappedCourses = (payload || []).map(course => ({
+                    ...course,
+                    id: course.courseId || course.id,
+                }));
+                
+                setCourses(mappedCourses);
             } else {
                 throw new Error(response.data?.message || "Không thể tải danh sách khóa học");
             }
@@ -58,8 +65,8 @@ export default function MyCourses() {
 
     const stats = useMemo(() => {
         const total = courses.length;
-        const inProgress = total;
-        const completed = 0;
+        const completed = courses.filter(c => c.progressPercentage >= 100).length;
+        const inProgress = total - completed;
         const hours = total * 10;
         return {
             totalCourses: total,
@@ -67,7 +74,7 @@ export default function MyCourses() {
             completed,
             totalHours: hours,
         };
-    }, [courses.length]);
+    }, [courses]);
 
     const sortedCourses = useMemo(() => {
         return courses

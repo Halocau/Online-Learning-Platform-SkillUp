@@ -91,5 +91,19 @@ namespace SkillUp.Services.Implementations
 
             return ApiResponse.Ok("Lấy danh sách thành công.", data);
         }
-    }
+
+        public async Task<ApiResponse> GetByIdAsync(int id)
+        {
+            var category = await _repository.GetByIdAsync(id);
+            if (category == null)
+                return ApiResponse.NotFound("Không tìm thấy danh mục.");
+            var dto = new ForumCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                IsActive = category.IsActive
+            };
+            return ApiResponse.Ok("Lấy danh mục thành công.", dto);
+		}
+	}
 }
