@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { courseAPI } from "@/api/courseAPI";
 import { markLessonComplete, trackLessonView } from "@/api/lessonAPI";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { BookOpen, Loader2 } from "lucide-react";
 import CourseSidebar from "./components/CourseSidebar";
 import LessonContent from "./components/LessonContent";
@@ -45,7 +45,7 @@ const CourseLearning = () => {
   const fetchCourseDetail = async () => {
     try {
       setLoading(true);
-      const response = await courseAPI.getCourseDetail(courseId);
+      const response = await courseAPI.getCourseLearningDetail(courseId);
       const course = response.data.data[0];
       setCourseData(course);
 
@@ -68,7 +68,15 @@ const CourseLearning = () => {
         setCurrentItem(null);
       }
     } catch (error) {
-      toast.error("Không thể tải khóa học");
+      if (error.response?.status === 403) {
+        toast.error("Bạn cần đăng ký khóa học trước khi học.");
+        navigate(`/course/${courseId}`);
+      } else if (error.response?.status === 401) {
+        toast.error("Vui lòng đăng nhập để tiếp tục học.");
+        navigate("/login");
+      } else {
+        toast.error("Không thể tải khóa học");
+      }
     } finally {
       setTimeout(() => setLoading(false), 150);
     }
@@ -148,7 +156,7 @@ const CourseLearning = () => {
     return (
       idx < currentSection.items.length - 1 ||
       courseData.sections.findIndex((s) => s.id === currentSection.id) <
-        courseData.sections.length - 1
+      courseData.sections.length - 1
     );
   };
 
@@ -239,7 +247,7 @@ const CourseLearning = () => {
         {showRatingModal && (
           <RatingModal
             courseName={courseData.title}
-            onSubmit={() => {}}
+            onSubmit={() => { }}
             onClose={() => setShowRatingModal(false)}
           />
         )}
@@ -261,7 +269,7 @@ const CourseLearning = () => {
         {showRatingModal && (
           <RatingModal
             courseName={courseData.title}
-            onSubmit={() => {}}
+            onSubmit={() => { }}
             onClose={() => setShowRatingModal(false)}
           />
         )}
@@ -304,7 +312,7 @@ const CourseLearning = () => {
         {showRatingModal && (
           <RatingModal
             courseName={courseData.title}
-            onSubmit={() => {}}
+            onSubmit={() => { }}
             onClose={() => setShowRatingModal(false)}
           />
         )}

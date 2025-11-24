@@ -663,5 +663,28 @@ namespace SkillUp.Services.Implementations
 
             throw new Exception("Khóa học này chưa có nội dung nào.");
         }
+
+        public async Task<CourseDetailDto?> GetCourseLearningContentAsync(Guid courseId, Guid accountId)
+        {
+            var student = await _studentRepository.GetByAccountIdAsync(accountId);
+            if (student == null)
+            {
+                throw new Exception("Không tìm thấy sinh viên.");
+            }
+
+            var isEnrolled = await _enrollmentRepository.IsStudentEnrolledInCourseAsync(student.Id, courseId);
+            if (!isEnrolled)
+            {
+                throw new UnauthorizedAccessException("Bạn chưa đăng ký khóa học này.");
+            }
+
+            var detail = await GetCourseDetailsAsync(courseId);
+            if (detail == null)
+            {
+                throw new Exception("Không tìm thấy khóa học.");
+            }
+
+            return detail;
+        }
     }
 }
