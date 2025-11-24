@@ -651,12 +651,7 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return StatusCode(403, new APIReturn
-                {
-                    code = 403,
-                    message = ex.Message,
-                    data = new List<object>()
-                });
+                return Forbid("Bạn không có quyền này!");
             }
             catch (Exception ex)
             {
