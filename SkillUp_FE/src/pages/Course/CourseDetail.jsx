@@ -20,6 +20,8 @@ export default function CourseDetail() {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -47,6 +49,62 @@ export default function CourseDetail() {
     if (courseId) {
       fetchCourseDetail();
     }
+  }, [courseId]);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+
+    if (!courseId || !userStr || userStr === "null") {
+      setIsEnrolled(false);
+      setCheckingEnrollment(false);
+      return;
+    }
+
+    let isSubscribed = true;
+
+    const checkEnrollmentStatus = async () => {
+      try {
+        setCheckingEnrollment(true);
+        const response = await courseAPI.getStudentEnrolledCourses();
+        if (!isSubscribed) return;
+
+        if (response.data?.code === 200) {
+          const enrolledCourses = response.data?.data?.[0] || [];
+          const targetId = courseId.toString().toLowerCase();
+
+          const alreadyEnrolled = enrolledCourses.some((enrollment) => {
+            const candidateId =
+              enrollment.courseId ||
+              enrollment.id ||
+              enrollment.course?.id;
+
+            return (
+              candidateId &&
+              candidateId.toString().toLowerCase() === targetId
+            );
+          });
+
+          setIsEnrolled(alreadyEnrolled);
+        } else {
+          setIsEnrolled(false);
+        }
+      } catch (err) {
+        console.error("Error checking enrollment:", err);
+        if (isSubscribed) {
+          setIsEnrolled(false);
+        }
+      } finally {
+        if (isSubscribed) {
+          setCheckingEnrollment(false);
+        }
+      }
+    };
+
+    checkEnrollmentStatus();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [courseId]);
 
   if (loading) return <CourseDetailSkeleton />;
@@ -91,7 +149,7 @@ export default function CourseDetail() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <CourseDetailHero course={course} />
 
-      <MobileStickyBar course={course} />
+      <MobileStickyBar course={course} isEnrolled={isEnrolled} checkingEnrollment={checkingEnrollment} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12 lg:pb-12 pb-28">
@@ -124,7 +182,7 @@ export default function CourseDetail() {
           </div>
 
           <div className="hidden lg:block">
-            <CourseEnrollmentCard course={course} />
+            <CourseEnrollmentCard course={course} isEnrolled={isEnrolled} checkingEnrollment={checkingEnrollment} />
           </div>
         </div>
       </div>

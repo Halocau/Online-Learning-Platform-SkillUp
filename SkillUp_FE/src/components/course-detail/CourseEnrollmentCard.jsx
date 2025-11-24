@@ -1,15 +1,19 @@
 // src/components/course-detail/CourseEnrollmentCard.jsx
-import { ShoppingCart,Play, Percent, Coins } from "lucide-react";
+import { ShoppingCart, Play, Percent, Coins } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { paymentAPI } from "@/api/paymentAPI";
 import { useState } from "react";
 
-export default function CourseEnrollmentCard({ course }) {
+export default function CourseEnrollmentCard({ course, isEnrolled, checkingEnrollment }) {
   const { addToCart, loading } = useCart();
   const [paymentLoading, setPaymentLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleLearnNow = () => {
+    navigate(`/student/learn/${course.id}`);
+  };
 
   const handleAddToCart = async () => {
     const result = await addToCart(course.id, course.price);
@@ -56,6 +60,7 @@ export default function CourseEnrollmentCard({ course }) {
 
   const originalPrice = course.price > 0 ? Math.round(course.price * 1.5) : 0;
   const discount = course.price > 0 ? Math.round(((originalPrice - course.price) / originalPrice) * 100) : 0;
+  const showLearnNow = isEnrolled && !checkingEnrollment;
 
   return (
     <div className="sticky top-6 w-full lg:max-w-sm">
@@ -95,23 +100,33 @@ export default function CourseEnrollmentCard({ course }) {
             )}
           </div>
 
-          
+
           <button
-            onClick={handleBuyNow}
-            disabled={loading || paymentLoading}
+            onClick={showLearnNow ? handleLearnNow : handleBuyNow}
+            disabled={!showLearnNow && (loading || paymentLoading)}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFD54F] px-4 py-2.5 text-sm font-semibold tracking-tight text-[#272343] shadow-sm hover:bg-[#ffca28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {paymentLoading ? "Đang xử lý..." : course.price === 0 ? "Đăng ký miễn phí" : "Mua ngay"}
-            <Coins className="h-4 w-4 text-[#272343]" />
+            {showLearnNow
+              ? "Học ngay"
+              : paymentLoading
+                ? "Đang xử lý..."
+                : course.price === 0
+                  ? "Đăng ký miễn phí"
+                  : "Mua ngay"}
+            {showLearnNow ? (
+              <Play className="h-4 w-4 text-[#272343]" />
+            ) : (
+              <Coins className="h-4 w-4 text-[#272343]" />
+            )}
           </button>
 
-          
+
           <button
             onClick={handleAddToCart}
-            disabled={loading || paymentLoading}
+            disabled={loading || paymentLoading || showLearnNow}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#272343]/15 bg-[#fffffe] px-4 py-2 text-xs font-medium tracking-tight text-[#272343] hover:bg-[#FFF8E1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Thêm vào giỏ hàng
+            {showLearnNow ? "Bạn đã sở hữu khóa học" : "Thêm vào giỏ hàng"}
             <ShoppingCart className="h-4 w-4 text-[#272343]" />
           </button>
         </div>

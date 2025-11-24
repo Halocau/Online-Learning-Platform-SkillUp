@@ -7,10 +7,11 @@ import { toast } from "react-toastify";
 import { paymentAPI } from "@/api/paymentAPI";
 import { useState } from "react";
 
-export default function MobileStickyBar({ course }) {
+export default function MobileStickyBar({ course, isEnrolled, checkingEnrollment }) {
   const { addToCart, loading } = useCart();
   const [paymentLoading, setPaymentLoading] = useState(false);
   const navigate = useNavigate();
+  const showLearnNow = isEnrolled && !checkingEnrollment;
 
   const handleAddToCart = async () => {
     const result = await addToCart(course.id, course.price);
@@ -55,6 +56,10 @@ export default function MobileStickyBar({ course }) {
     }
   };
 
+  const handleLearnNow = () => {
+    navigate(`/student/learn/${course.id}`);
+  };
+
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#fffffe]/95 backdrop-blur-sm border-t border-[#272343]/15 p-4 z-50 shadow-2xl">
       <div className="flex items-center gap-3">
@@ -72,7 +77,7 @@ export default function MobileStickyBar({ course }) {
         </div>
         <Button
           onClick={handleAddToCart}
-          disabled={loading || paymentLoading}
+          disabled={loading || paymentLoading || showLearnNow}
           variant="outline"
           className="rounded-full border-[#272343]/15 bg-[#fffffe] px-3 py-1.5 hover:bg-[#e3f6f5] flex-shrink-0"
           size="sm"
@@ -80,11 +85,11 @@ export default function MobileStickyBar({ course }) {
           <ShoppingCart className="w-4 h-4" />
         </Button>
         <Button
-          onClick={handleBuyNow}
-          disabled={loading || paymentLoading}
+          onClick={showLearnNow ? handleLearnNow : handleBuyNow}
+          disabled={!showLearnNow && (loading || paymentLoading)}
           className="inline-flex items-center gap-2 rounded-full bg-[#FFD54F] hover:bg-[#ffca28] text-[#272343] font-semibold tracking-tight px-4 py-1.5 text-xs shadow-sm flex-shrink-0"
         >
-          {paymentLoading ? "..." : "Đăng ký ngay"}
+          {showLearnNow ? "Học ngay" : paymentLoading ? "..." : "Đăng ký ngay"}
           <ArrowRight className="w-3.5 h-3.5" />
         </Button>
       </div>
