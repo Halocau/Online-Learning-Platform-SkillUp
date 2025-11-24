@@ -41,6 +41,26 @@ namespace SkillUp.Repositories.Implementations
                 .OrderByDescending(sp => sp.LastViewedAt)
                 .FirstOrDefaultAsync();
         }
+        public async Task<Dictionary<Guid, bool?>> GetProgressByCourseAndStudentAsync(Guid courseId, Guid studentId)
+        {
+            var progresses = await _context.StudentProgresses
+                .Where(sp => sp.CourseId == courseId && sp.StudentId == studentId)
+                .ToListAsync();
+
+            var progressDict = new Dictionary<Guid, bool?>();
+            foreach (var progress in progresses)
+            {
+                if (progress.LessonId.HasValue)
+                {
+                    progressDict[progress.LessonId.Value] = progress.IsCompleted;
+                }
+                if (progress.QuizId.HasValue)
+                {
+                    progressDict[progress.QuizId.Value] = progress.IsCompleted;
+                }
+            }
+            return progressDict;
+        }
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

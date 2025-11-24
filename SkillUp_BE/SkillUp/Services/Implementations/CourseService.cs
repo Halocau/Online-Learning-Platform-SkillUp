@@ -303,6 +303,7 @@ namespace SkillUp.Services.Implementations
 
 			// Lấy StudentId từ current user (nếu có)
 			Guid? studentId = null;
+			Dictionary<Guid, bool?> progressDict = new Dictionary<Guid, bool?>();
 			var accountId = _currentUserService.UserId;
 			if (accountId.HasValue)
 			{
@@ -310,6 +311,8 @@ namespace SkillUp.Services.Implementations
 				if (student != null)
 				{
 					studentId = student.Id;
+					// Lấy tất cả progress của student cho course này
+					progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
 				}
 			}
 
@@ -354,6 +357,7 @@ namespace SkillUp.Services.Implementations
                         Description = l.Description,
                         LessonType = l.Type,                 // "Video" | "Text"
                         IsFree = l.IsFree ?? false,
+                        IsCompleted = progressDict.ContainsKey(l.Id) ? progressDict[l.Id] : null,
                         Assets = l.Assets?
                             .Where(a => a.IsActive)
                             .Select(a => new AssetCourseDetailDto
@@ -394,6 +398,7 @@ namespace SkillUp.Services.Implementations
 							PassPercent = q.PassPercent,
 							Timer = q.Timer,
                             QuizSubmissionId = quizSubmissionId,
+							IsCompleted = progressDict.ContainsKey(q.Id) ? progressDict[q.Id] : null,
 							CreatedAt = q.CreatedAt,
 							UpdatedAt = q.UpdatedAt
 						};
