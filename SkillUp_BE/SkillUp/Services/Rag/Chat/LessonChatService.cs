@@ -81,6 +81,7 @@ namespace SkillUp.Services.Rag.Chat
                     Message = answer,
                     Sources = sortedHits.Select(h => new ChatSourceDto
                     {
+                        LessonId = h.Payload.LessonId,
                         ChunkIndex = h.Payload.ChunkIndex,
                         Text = h.Payload.Text,
                         Score = h.Score
