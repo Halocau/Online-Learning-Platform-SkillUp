@@ -6,9 +6,9 @@
     {
         public class NotifyRepository : INotifyRepository
         {
-            private readonly SkillUpContext _context;
+            private readonly SkillUp1Context _context;
 
-            public NotifyRepository(SkillUpContext context)
+            public NotifyRepository(SkillUp1Context context)
             {
                 _context = context;
             }

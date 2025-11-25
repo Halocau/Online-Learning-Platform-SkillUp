@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class SectionRepository : ISectionRepository
     {
-        private readonly SkillUpContext _context;
+        private readonly SkillUp1Context _context;
 
-        public SectionRepository(SkillUpContext context)
+        public SectionRepository(SkillUp1Context context)
         {
             _context = context;
         }

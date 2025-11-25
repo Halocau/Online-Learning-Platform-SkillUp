@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class OtpRepository : IOtpRepository
     {
-        private readonly SkillUpContext _context;
+        private readonly SkillUp1Context _context;
 
-        public OtpRepository(SkillUpContext context)
+        public OtpRepository(SkillUp1Context context)
         {
             _context = context;
         }

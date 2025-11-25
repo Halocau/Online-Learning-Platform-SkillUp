@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class EnrollmentRepository : IEnrollmentRepository
     {
-        private readonly SkillUpContext _context;
+        private readonly SkillUp1Context _context;
 
-        public EnrollmentRepository(SkillUpContext context)
+        public EnrollmentRepository(SkillUp1Context context)
         {
             _context = context;
         }

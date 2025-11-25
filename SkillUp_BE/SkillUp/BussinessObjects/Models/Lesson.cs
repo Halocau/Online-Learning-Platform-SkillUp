@@ -25,8 +25,6 @@ public partial class Lesson
 
     public bool? IsFree { get; set; }
 
-    public bool? IsAiEnabled { get; set; }
-
     public virtual ICollection<Asset> Assets { get; set; } = new List<Asset>();
 
     public virtual ICollection<CommentLesson> CommentLessons { get; set; } = new List<CommentLesson>();

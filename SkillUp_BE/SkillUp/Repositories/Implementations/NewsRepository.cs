@@ -7,8 +7,8 @@ namespace SkillUp.Repositories.Implementations
 {
 	public class NewsRepository : INewsRepository
 	{
-		private readonly SkillUpContext _context;
-		public NewsRepository(SkillUpContext context)
+		private readonly SkillUp1Context _context;
+		public NewsRepository(SkillUp1Context context)
 		{
 			_context = context;
 		}

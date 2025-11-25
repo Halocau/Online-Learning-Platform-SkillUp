@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class RefreshTokenRepository : IRefreshTokenRepository
     {
-        private readonly SkillUpContext _context;
+        private readonly SkillUp1Context _context;
 
-        public RefreshTokenRepository(SkillUpContext context)
+        public RefreshTokenRepository(SkillUp1Context context)
         {
             _context = context;
         }

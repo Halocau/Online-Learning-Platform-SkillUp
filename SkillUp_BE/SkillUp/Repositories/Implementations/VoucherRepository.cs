@@ -6,8 +6,8 @@ namespace SkillUp.Repositories.Implementations
 {
 	public class VoucherRepository : IVoucherRepository
 	{
-		private readonly SkillUpContext _context;
-		public VoucherRepository(SkillUpContext context)
+		private readonly SkillUp1Context _context;
+		public VoucherRepository(SkillUp1Context context)
 		{
 			_context = context;
 		}

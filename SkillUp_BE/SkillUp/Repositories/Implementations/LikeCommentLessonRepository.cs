@@ -9,8 +9,8 @@ namespace SkillUp.Repositories.Implementations
 {
     public class LikeCommentLessonRepository : ILikeCommentLessonRepository
     {
-        private readonly SkillUpContext _context;
-        public LikeCommentLessonRepository(SkillUpContext context) { _context = context; }
+        private readonly SkillUp1Context _context;
+        public LikeCommentLessonRepository(SkillUp1Context context) { _context = context; }
 
         public async Task<int> CountLikesAsync(Guid commentId)
         {

@@ -13,9 +13,9 @@ namespace SkillUp.Bussiness.Services
 		private readonly ISectionRepository _sectionRepository;
 		private readonly ILessonRepository _lessonRepository;
 		private readonly IQuizRepository _quizRepository;
-		private readonly SkillUpContext _context;
+		private readonly SkillUp1Context _context;
 
-		public SectionService(ISectionRepository sectionRepository, ILessonRepository lessonRepository, IQuizRepository quizRepository, SkillUpContext context)
+		public SectionService(ISectionRepository sectionRepository, ILessonRepository lessonRepository, IQuizRepository quizRepository, SkillUp1Context context)
 		{
 			_sectionRepository = sectionRepository;
 			_lessonRepository = lessonRepository;

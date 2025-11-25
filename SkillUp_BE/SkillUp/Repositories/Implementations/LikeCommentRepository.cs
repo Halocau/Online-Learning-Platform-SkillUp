@@ -9,9 +9,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class LikeCommentPostRepository : ILikeCommentPostRepository
     {
-        private readonly SkillUpContext _context;
+        private readonly SkillUp1Context _context;
 
-        public LikeCommentPostRepository(SkillUpContext context)
+        public LikeCommentPostRepository(SkillUp1Context context)
         {
             _context = context;
         }

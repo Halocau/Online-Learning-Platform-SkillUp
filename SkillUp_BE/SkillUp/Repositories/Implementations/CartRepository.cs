@@ -6,8 +6,8 @@ namespace SkillUp.Repositories.Implementations
 {
     public class CartRepository : ICartRepository
     {
-        private readonly SkillUpContext _context;
-        public CartRepository(SkillUpContext context)
+        private readonly SkillUp1Context _context;
+        public CartRepository(SkillUp1Context context)
         {
             _context = context;
         }

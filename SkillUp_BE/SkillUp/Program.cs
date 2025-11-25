@@ -60,7 +60,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Add DbContext
-builder.Services.AddDbContext<SkillUpContext>(options =>
+builder.Services.AddDbContext<SkillUp1Context>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });

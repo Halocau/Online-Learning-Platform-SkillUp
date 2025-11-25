@@ -10,9 +10,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class ReportPostRepository : IReportPostRepository
     {
-        private readonly SkillUpContext _context;
+        private readonly SkillUp1Context _context;
 
-        public ReportPostRepository(SkillUpContext context)
+        public ReportPostRepository(SkillUp1Context context)
         {
             _context = context;
         }

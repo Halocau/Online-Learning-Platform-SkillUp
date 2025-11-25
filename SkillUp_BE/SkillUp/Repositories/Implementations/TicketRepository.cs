@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
 	public class TicketRepository : ITicketRepository
 	{
-		private readonly SkillUpContext _context;
+		private readonly SkillUp1Context _context;
         private const string CI_AI = "SQL_Latin1_General_CP1_CI_AI";// case-insensitive + accent-insensitive
-        public TicketRepository(SkillUpContext context)
+        public TicketRepository(SkillUp1Context context)
 		{
 			_context = context;
 		}

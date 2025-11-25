@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class AccountRepository : IAccountRepository
     {
-        private readonly SkillUpContext _context;
+        private readonly SkillUp1Context _context;
 
-        public AccountRepository(SkillUpContext context)
+        public AccountRepository(SkillUp1Context context)
         {
             _context = context;
         }

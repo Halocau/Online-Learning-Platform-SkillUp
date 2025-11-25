@@ -7,8 +7,8 @@ namespace SkillUp.Repositories.Implementations
 {
     public class CommentReportLessonRepository : ICommentReportLessonRepository
     {
-        private readonly SkillUpContext _context;
-        public CommentReportLessonRepository(SkillUpContext context) { _context = context; }
+        private readonly SkillUp1Context _context;
+        public CommentReportLessonRepository(SkillUp1Context context) { _context = context; }
 
         public async Task<CommentReportLesson> CreateAsync(CommentReportLesson report)
         {
