@@ -62,6 +62,7 @@ namespace SkillUp.Services.Implementations
 				Image = imageUrl,
 				SubCategoryId = request.SubCategoryId,
 				LecturerId = lecturer.Id,
+				IsAiSupport = request.IsAiSupport ?? false,
 				Price = 0,
 				EnrollmentCount = 0,
 				Rating = 0,
@@ -84,7 +85,8 @@ namespace SkillUp.Services.Implementations
 				Description = course.Description,
 				Image = course.Image,
 				Status = course.Status,
-				LecturerId = lecturer.Id
+				LecturerId = lecturer.Id,
+				IsAiSupport = course.IsAiSupport
 			};
 		}
 		//giảng viên xóa khóa học
@@ -159,6 +161,11 @@ namespace SkillUp.Services.Implementations
                 course.SubCategoryId = request.SubCategoryId.Value;
             }
 
+            if (request.IsAiSupport.HasValue)
+            {
+                course.IsAiSupport = request.IsAiSupport.Value;
+            }
+
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.UpdateCourse(course);
@@ -171,7 +178,8 @@ namespace SkillUp.Services.Implementations
                 Description = course.Description,
                 Image = course.Image,
                 Status = course.Status,
-                LecturerId = lecturer.Id
+                LecturerId = lecturer.Id,
+                IsAiSupport = course.IsAiSupport
             };
         }
         public async Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId)
