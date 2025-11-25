@@ -13,6 +13,7 @@ using SkillUp.Services.Implementations;
 using SkillUp.Services.Interfaces;
 using SkillUp.Services.Rag.Embedding;
 using SkillUp.Services.Rag.Subtitle;
+using SkillUp.Services.Rag.Chat;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
@@ -135,6 +136,9 @@ builder.Services.AddScoped<IEmbeddingProvider, GeminiEmbeddingProvider>();
 builder.Services.AddScoped<ISubtitleLessonJobService, SubtitleLessonJobService>();
 builder.Services.AddScoped<ISubtitleCourseJobService, SubtitleCourseJobService>();
 builder.Services.AddScoped<IAiSupportBackgroundJobService, AiSupportBackgroundJobService>();
+builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
+builder.Services.AddScoped<ILessonChatService, LessonChatService>();
+builder.Services.AddScoped<ICourseChatService, CourseChatService>();
 
 
 // POST
