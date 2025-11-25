@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select, Alert } from "antd";
+import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select, Alert, Tooltip } from "antd";
 import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axios";
@@ -90,6 +90,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   };
 
   const handleSave = async () => {
+    // 1. Validation
     if (!questionData.title?.trim()) {
       toast.error("Vui lòng nhập câu hỏi!");
       return;
@@ -103,19 +104,37 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
     setLoading(true);
 
     try {
-      const currentData = { ...questionData };
-      let imageUrl = currentData.image;
-      console.log("Saved Data:", currentData);
-
-      if (currentData.image instanceof File) {
-        imageUrl = await uploadImage(currentData.image);
+      let mainQuestionImageUrl = questionData.image;
+      if (questionData.image instanceof File) {
+        mainQuestionImageUrl = await uploadImage(questionData.image);
       }
-      currentData.image = imageUrl;
 
-      if (onSave) onSave(currentData);
+      const processedAnswers = await Promise.all(questionData.answers.map(async (ans) => {
+        let finalUrl = ans.imageUrl || ans.image || null;
+        if (ans.imageFile instanceof File) {
+          finalUrl = await uploadImage(ans.imageFile);
+        }
+        return {
+          ...ans,
+          image: finalUrl,       
+
+          // Cleanup: Remove frontend-only fields so they don't get sent to API
+          imageFile: undefined,
+          previewUrl: undefined,
+          imageUrl: undefined    
+        };
+      }));
+
+      const finalData = {
+        ...questionData,
+        image: mainQuestionImageUrl, 
+        answers: processedAnswers    
+      };
+      if (onSave) await onSave(finalData);
+
       toast.success("Lưu thành công!");
-      console.log("Lưu thành công:", currentData);
       onClose();
+
     } catch (error) {
       console.error("Lưu thất bại:", error);
       toast.error(error.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
@@ -153,6 +172,47 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
 
     setQuestionData(updatedData);
   }
+
+  const handleAnswerImageChange = (answerId, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Optional: Validate size/type here
+
+    setQuestionData((prev) => {
+      const newAnswers = prev.answers.map((ans) => {
+        if (ans.answerId === answerId) {
+          return {
+            ...ans,
+            imageFile: file, // File to be uploaded
+            previewUrl: URL.createObjectURL(file), // Local preview
+            // We do NOT clear imageUrl here yet, so we know what to replace/delete on backend if needed,
+            // but the UI will prioritize showing previewUrl.
+          };
+        }
+        return ans;
+      });
+      return { ...prev, answers: newAnswers };
+    });
+  };
+
+  // Handle removing the image (both new preview or existing URL)
+  const handleRemoveAnswerImage = (answerId) => {
+    setQuestionData((prev) => {
+      const newAnswers = prev.answers.map((ans) => {
+        if (ans.answerId === answerId) {
+          return {
+            ...ans,
+            imageFile: null,
+            previewUrl: null,
+            image: null, // Mark as removed so backend knows to delete it
+          };
+        }
+        return ans;
+      });
+      return { ...prev, answers: newAnswers };
+    });
+  };
 
 
   return (
@@ -227,42 +287,116 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
                     <li
                       key={answer.answerId}
                       style={{
-                        marginBottom: "10px",
+                        marginBottom: "15px",
                         display: "flex",
-                        alignItems: "center",
+                        alignItems: "flex-start", // Important: Aligns items to top as height grows
                         gap: "10px",
                       }}
                     >
+                      {/* --- COLUMN 1: CHECKBOX/RADIO --- */}
+                      <div style={{ paddingTop: "5px" }}>
+                        {questionData.type === "MultiChoice" ? (
+                          <Checkbox
+                            checked={answer.isCorrect}
+                            onChange={() => handleCheckboxChange(answer.answerId)}
+                          />
+                        ) : (
+                          <Radio
+                            checked={answer.isCorrect}
+                            onChange={() => handleRadioChange(answer.answerId)}
+                          />
+                        )}
+                      </div>
 
-                      {questionData.type === "MultiChoice" ? (
-                        <Checkbox
-                          checked={answer.isCorrect}
-                          onChange={() => handleCheckboxChange(answer.answerId)}
+                      {/* --- COLUMN 2: INPUT TEXT & IMAGE PREVIEW --- */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Input.TextArea
+                          value={answer.answerName}
+                          onChange={(e) =>
+                            handleAnswerNameChange(answer.answerId, e.target.value)
+                          }
+                          placeholder="Nhập nội dung đáp án"
+                          maxLength={255}
+                          autoSize={{ minRows: 1, maxRows: 4 }}
                         />
-                      ) : (
-                        <Radio
-                          checked={answer.isCorrect}
-                          onChange={() => handleRadioChange(answer.answerId)}
+
+                        {/* IMAGE DISPLAY LOGIC */}
+                        {/* Show if we have a new local preview OR an existing server URL */}
+                        {(answer.previewUrl || answer.image) && (
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              position: "relative",
+                              display: "inline-block",
+                            }}
+                          >
+                            <img
+                              // Prioritize local preview if a new file was just picked
+                              src={answer.previewUrl || answer.image}
+                              alt="Answer"
+                              style={{
+                                height: "80px",
+                                borderRadius: "8px",
+                                border: "1px solid #d9d9d9",
+                                objectFit: "cover",
+                              }}
+                            />
+                            <Button
+                              type="primary"
+                              danger
+                              shape="circle"
+                              size="small"
+                              icon={<MinusCircleOutlined />}
+                              onClick={() => handleRemoveAnswerImage(answer.answerId)}
+                              style={{
+                                position: "absolute",
+                                top: "-5px",
+                                right: "-5px",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* --- COLUMN 3: ACTIONS (UPLOAD + DELETE) --- */}
+                      <div style={{ display: "flex", gap: "5px" }}>
+                        {/* File Input (Hidden) */}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id={`edit-file-upload-${answer.answerId}`}
+                          style={{ display: "none" }}
+                          onChange={(e) => handleAnswerImageChange(answer.answerId, e)}
                         />
-                      )}
 
-                      <Input.TextArea
-                        value={answer.answerName}
-                        onChange={(e) =>
-                          handleAnswerNameChange(answer.answerId, e.target.value)
-                        }
-                        placeholder="Nhập nội dung đáp án"
-                        maxLength={255}
-                        autoSize={{ minRows: 1, maxRows: 4 }}
-                        style={{ flex: 1, minWidth: 0 }}
-                      />
+                        {/* Trigger Button */}
+                        <label htmlFor={`edit-file-upload-${answer.answerId}`}>
+                          <Tooltip title="Thêm/Sửa ảnh minh họa">
+                            <span
+                              className="ant-btn ant-btn-default ant-btn-icon-only"
+                              style={{
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "32px",
+                                height: "32px",
+                                border: "1px solid #d9d9d9",
+                                borderRadius: "6px",
+                              }}
+                            >
+                              <UploadOutlined />
+                            </span>
+                          </Tooltip>
+                        </label>
 
-                      <Button
-                        type="text"
-                        danger
-                        icon={<MinusCircleOutlined />}
-                        onClick={() => handleDeleteAnswer(answer.answerId)}
-                      />
+                        <Button
+                          type="text"
+                          danger
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => handleDeleteAnswer(answer.answerId)}
+                        />
+                      </div>
                     </li>
                   ))}
               </ul>
@@ -277,19 +411,24 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
               </Button>
             </>
           ) : (
+            // --- EMPTY STATE ---
             <>
-              <span>Không có đáp án nào</span>
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={handleAddAnswer}
-                style={{ marginTop: "8px", width: "100%" }}
-              >
-                Thêm đáp án
-              </Button>
+              <div style={{ textAlign: "center", padding: "10px 0" }}>
+                <span style={{ display: "block", marginBottom: "10px", color: "#888" }}>
+                  Không có đáp án nào
+                </span>
+                <Button
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddAnswer}
+                  style={{ width: "100%" }}
+                >
+                  Thêm đáp án
+                </Button>
+              </div>
 
               {questionData.answers.length > 0 &&
-                !questionData.answers.some(ans => ans.isCorrect) && (
+                !questionData.answers.some((ans) => ans.isCorrect) && (
                   <Alert
                     message="Vui lòng chọn ít nhất một đáp án đúng."
                     type="warning"

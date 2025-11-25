@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select } from "antd";
+import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select, Tooltip } from "antd";
 import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axios";
@@ -78,18 +78,34 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
         setLoading(true);
 
         try {
-            const currentData = { ...questionData };
-            let imageUrl = null;
+            let mainImageUrl = questionData.questionImage; // Default to existing value (if it's a string URL) or null
 
             if (questionData.questionImage instanceof File) {
-                imageUrl = await uploadImage(questionData.questionImage);
+                mainImageUrl = await uploadImage(questionData.questionImage);
             }
+            const processedAnswers = await Promise.all(questionData.answers.map(async (ans) => {
+                let finalAnswerUrl = ans.imageUrl; // Default to whatever is there (null or existing string)
 
-            currentData.questionImage = imageUrl;
-            await onCreate(currentData);
+                if (ans.imageFile instanceof File) {
+                    finalAnswerUrl = await uploadImage(ans.imageFile);
+                }
+
+                return {
+                    answerName: ans.answerName,
+                    isCorrect: ans.isCorrect,
+                    image: finalAnswerUrl // The string URL (or null)
+                };
+            }));
+
+            const payload = {
+                ...questionData,
+                questionImage: mainImageUrl, 
+                answers: processedAnswers,   
+            };
+
+            await onCreate(payload);
             toast.success("Lưu thành công!");
 
-            // Reset form và đóng modal
             setQuestionData({
                 title: "",
                 description: "description",
@@ -104,7 +120,6 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
         } catch (error) {
             console.error("Lưu thất bại:", error);
             toast.error(error.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
-
         } finally {
             setLoading(false);
         }
@@ -162,6 +177,52 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
             ...prev,
             questionImage: file,
         }));
+    };
+
+    // Handle selecting an image for a specific answer
+    const handleAnswerImageChange = (answerId, e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Check file type/size if needed
+        const isLt2M = file.size / 1024 / 1024 < 2;
+        if (!isLt2M) {
+            // Assuming you have message or toast
+            // message.error('Image must be smaller than 2MB!'); 
+            return;
+        }
+
+        setQuestionData((prev) => {
+            const newAnswers = prev.answers.map((ans) => {
+                if (ans.answerId === answerId) {
+                    return {
+                        ...ans,
+                        imageFile: file, // Store file for upload later
+                        previewUrl: URL.createObjectURL(file), // Create local preview
+                    };
+                }
+                return ans;
+            });
+            return { ...prev, answers: newAnswers };
+        });
+    };
+
+    // Handle removing the image from an answer
+    const handleRemoveAnswerImage = (answerId) => {
+        setQuestionData((prev) => {
+            const newAnswers = prev.answers.map((ans) => {
+                if (ans.answerId === answerId) {
+                    return {
+                        ...ans,
+                        imageFile: null,
+                        previewUrl: null, // Clear preview
+                        imageUrl: null,   // Clear existing server URL if any
+                    };
+                }
+                return ans;
+            });
+            return { ...prev, answers: newAnswers };
+        });
     };
 
 
@@ -237,46 +298,117 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                                         <li
                                             key={answer.answerId}
                                             style={{
-                                                marginBottom: "10px",
+                                                marginBottom: "15px",
                                                 display: "flex",
-                                                alignItems: "center",
+                                                alignItems: "flex-start",
                                                 gap: "10px",
                                             }}
                                         >
+                                            {/* 1. Checkbox/Radio */}
+                                            <div style={{ paddingTop: "5px" }}>
+                                                {questionData.Type === "MultiChoice" ? (
+                                                    <Checkbox
+                                                        checked={answer.isCorrect}
+                                                        onChange={() => handleCheckboxChange(answer.answerId)}
+                                                    />
+                                                ) : (
+                                                    <Radio
+                                                        checked={answer.isCorrect}
+                                                        onChange={() => handleRadioChange(answer.answerId)}
+                                                    />
+                                                )}
+                                            </div>
 
-                                            {questionData.Type === "MultiChoice" ? (
-                                                <Checkbox
-                                                    checked={answer.isCorrect}
-                                                    onChange={() => handleCheckboxChange(answer.answerId)}
+                                            {/* 2. Content (Input + Image) */}
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <Input.TextArea
+                                                    value={answer.answerName}
+                                                    onChange={(e) =>
+                                                        handleAnswerNameChange(answer.answerId, e.target.value)
+                                                    }
+                                                    placeholder="Nhập nội dung đáp án"
+                                                    maxLength={255}
+                                                    autoSize={{ minRows: 1, maxRows: 4 }}
                                                 />
-                                            ) : (
-                                                <Radio
-                                                    checked={answer.isCorrect}
-                                                    onChange={() => handleRadioChange(answer.answerId)}
+
+                                                {/* Image Preview */}
+                                                {(answer.previewUrl || answer.imageUrl) && (
+                                                    <div
+                                                        style={{
+                                                            marginTop: "10px",
+                                                            position: "relative",
+                                                            display: "inline-block",
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={answer.previewUrl || answer.imageUrl}
+                                                            alt="Answer"
+                                                            style={{
+                                                                height: "80px",
+                                                                borderRadius: "8px",
+                                                                border: "1px solid #d9d9d9",
+                                                                objectFit: "cover",
+                                                            }}
+                                                        />
+                                                        <Button
+                                                            type="primary"
+                                                            danger
+                                                            shape="circle"
+                                                            size="small"
+                                                            icon={<MinusCircleOutlined />}
+                                                            onClick={() => handleRemoveAnswerImage(answer.answerId)}
+                                                            style={{
+                                                                position: "absolute",
+                                                                top: "-5px",
+                                                                right: "-5px",
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 3. Actions (Upload + Delete) */}
+                                            <div style={{ display: "flex", gap: "5px" }}>
+                                                {/* Upload Button */}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    id={`file-upload-${answer.answerId}`}
+                                                    style={{ display: "none" }}
+                                                    onChange={(e) => handleAnswerImageChange(answer.answerId, e)}
                                                 />
-                                            )}
+                                                <label htmlFor={`file-upload-${answer.answerId}`}>
+                                                    <Tooltip title="Thêm ảnh minh họa">
+                                                        <span
+                                                            className="ant-btn ant-btn-default ant-btn-icon-only"
+                                                            style={{
+                                                                cursor: "pointer",
+                                                                display: "inline-flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "center",
+                                                                width: "32px",
+                                                                height: "32px",
+                                                                border: "1px solid #d9d9d9",
+                                                                borderRadius: "6px",
+                                                            }}
+                                                        >
+                                                            <UploadOutlined />
+                                                        </span>
+                                                    </Tooltip>
+                                                </label>
 
-                                            <Input.TextArea
-                                                value={answer.answerName}
-                                                onChange={(e) =>
-                                                    handleAnswerNameChange(answer.answerId, e.target.value)
-                                                }
-                                                placeholder="Nhập nội dung đáp án"
-                                                maxLength={255}
-                                                autoSize={{ minRows: 1, maxRows: 4 }}
-                                                style={{ flex: 1, minWidth: 0 }}
-                                            />
-
-                                            <Button
-                                                type="text"
-                                                danger
-                                                icon={<MinusCircleOutlined />}
-                                                onClick={() => handleDeleteAnswer(answer.answerId)}
-                                            />
+                                                <Button
+                                                    type="text"
+                                                    danger
+                                                    icon={<MinusCircleOutlined />}
+                                                    onClick={() => handleDeleteAnswer(answer.answerId)}
+                                                />
+                                            </div>
                                         </li>
                                     ))}
                             </ul>
 
+                            {/* Button when list is NOT empty */}
                             <Button
                                 type="dashed"
                                 icon={<PlusOutlined />}
@@ -287,27 +419,21 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                             </Button>
                         </>
                     ) : (
-                        <>
-                            <span>Không có đáp án nào</span>
+                        /* --- THIS WAS THE MISSING PART --- */
+                        /* Button when list IS empty */
+                        <div style={{ textAlign: "center", padding: "10px 0" }}>
+                            <span style={{ display: "block", marginBottom: "10px", color: "#888" }}>
+                                Chưa có đáp án nào
+                            </span>
                             <Button
                                 type="dashed"
                                 icon={<PlusOutlined />}
                                 onClick={handleAddAnswer}
-                                style={{ marginTop: "8px", width: "100%" }}
+                                style={{ width: "100%" }}
                             >
                                 Thêm đáp án
                             </Button>
-
-                            {questionData.answers.length > 0 &&
-                                !questionData.answers.some(ans => ans.isCorrect) && (
-                                    <Alert
-                                        message="Vui lòng chọn ít nhất một đáp án đúng."
-                                        type="warning"
-                                        showIcon
-                                        style={{ marginTop: "10px" }}
-                                    />
-                                )}
-                        </>
+                        </div>
                     )}
                 </Descriptions.Item>
 

@@ -284,7 +284,7 @@ export default function ManageQuestionBank() {
             dataIndex: 'updatedAt',
             key: 'updatedAt',
             width: 180,
-            sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+            sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
             sortOrder: sortedInfo.columnKey === 'updatedAt' ? sortedInfo.order : null,
             render: (v) => <span>{formatDateTime(v)}</span>,
         },
