@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.DTOs.Lecturer;
+﻿using SkillUp.BussinessObjects.DTOs;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
@@ -8,10 +9,12 @@ namespace SkillUp.Services.Implementations
     public class LecturerService : ILecturerService
     {
         private readonly ILecturerRepository _lecturerRepository;
+        private readonly ILecturerRepository _repository;
 
-        public LecturerService(ILecturerRepository lecturerRepository)
+        public LecturerService(ILecturerRepository lecturerRepository, ILecturerRepository repository)
         {
             _lecturerRepository = lecturerRepository;
+            _repository = repository;
         }
         public async Task<bool> CreateLecturerAsync(Lecturer newLecturer)
         {
@@ -108,6 +111,27 @@ namespace SkillUp.Services.Implementations
             // Lưu thay đổi vào cơ sở dữ liệu
             await _lecturerRepository.UpdateAsync(lecturer);
             return await _lecturerRepository.SaveChangesAsync();
+        }
+
+        public async Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId)
+        {
+            var lecturer = await _repository.GetLecturerByIdAsync(lecturerId);
+
+            if (lecturer == null)
+            {
+                throw new Exception("Lecturer not found"); // Hoặc sử dụng Custom Exception
+            }
+
+            // Mapping thủ công từ Entity sang DTO
+            // (Có thể dùng AutoMapper nếu project có cài đặt)
+            return new LecturerProfileResponse
+            {
+                Title = lecturer.Title,
+                Profession = lecturer.Profession,
+                BankNumber = lecturer.BankNumber,
+                BankName = lecturer.BankName,
+                ReceiverName = lecturer.ReceiverName
+            };
         }
     }
 }

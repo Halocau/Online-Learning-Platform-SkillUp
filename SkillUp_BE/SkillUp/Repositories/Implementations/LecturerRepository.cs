@@ -53,5 +53,13 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Lecturers
                  .FirstOrDefaultAsync(l => l.AccountId == accountId);
         }
+
+        public async Task<Lecturer?> GetLecturerByIdAsync(Guid lecturerId)
+        {
+            // Sử dụng AsNoTracking để tối ưu hiệu suất vì chỉ đọc dữ liệu
+            return await _context.Lecturers
+                                 .AsNoTracking()
+                                 .FirstOrDefaultAsync(x => x.Id == lecturerId);
+        }
     }
 }
