@@ -54,7 +54,12 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid();
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
@@ -63,11 +68,9 @@ namespace SkillUp.Controllers
                 {
                     return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
                 }
-                if (ex.Message.Contains("Lỗi: Không thể lưu") ||
-                    ex.Message.Contains("Loại câu hỏi (Type) không được để trống") ||
-                    ex.Message.Contains("phải có 1 đáp án đúng") ||
-                    ex.Message.Contains("chỉ được có 1 đáp án đúng") ||
-                    ex.Message.Contains("phải có ít nhất 1 đáp án đúng") ||
+                if (ex.Message.Contains("Lỗi:") || 
+                    ex.Message.Contains("Loại câu hỏi") ||
+                    ex.Message.Contains("đáp án đúng") ||
                     ex.Message.Contains("không hợp lệ"))
                 {
                     return BadRequest(new APIReturn { code = 400, message = ex.Message, data = new List<object>() });

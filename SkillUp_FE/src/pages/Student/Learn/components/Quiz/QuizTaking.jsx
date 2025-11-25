@@ -9,8 +9,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { startQuiz, submitQuiz } from "@/api/quizAPI";
-import { toast } from "sonner";
-import DOMPurify from "dompurify";
+import { toast } from "react-toastify";
+import { extractCleanText } from "@/utils/htmlUtils";
 import { cn } from "@/lib/utils";
 
 const QuizTakingPage = () => {
@@ -56,7 +56,7 @@ const QuizTakingPage = () => {
         const quizInfo = data[0];
         setQuizData(quizInfo);
         setSubmissionId(quizInfo.submissionId);
-        setTimeRemaining(quizInfo.timer * 60); // Convert to seconds
+        setTimeRemaining(quizInfo.timer * 60);
       } else {
         toast.error("Không thể tải câu hỏi");
         navigate(-1);
@@ -124,10 +124,6 @@ const QuizTakingPage = () => {
     return quizData.questions.filter((q) => !answers[q.questionId]).length;
   };
 
-  const createMarkup = (html) => {
-    return { __html: DOMPurify.sanitize(html) };
-  };
-
   const goToQuestion = (index) => {
     setCurrentQuestionIndex(index);
   };
@@ -179,7 +175,6 @@ const QuizTakingPage = () => {
 
   const currentQuestion = quizData.questions[currentQuestionIndex];
 
-  // Safety check: if no current question, return null
   if (!currentQuestion) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#fffffe]">
@@ -192,6 +187,9 @@ const QuizTakingPage = () => {
 
   const isMultiple = currentQuestion.type === "MultiChoice";
   const selectedAnswers = answers[currentQuestion.questionId] || [];
+
+  // Clean the question title and answers
+  const cleanQuestionTitle = extractCleanText(currentQuestion.title, 500);
 
   return (
     <div className="min-h-screen bg-[#fffffe]">
@@ -248,26 +246,10 @@ const QuizTakingPage = () => {
           {/* Navigation buttons */}
           <div className="space-y-2 mb-6">
             <button
-              onClick={handlePrev}
-              disabled={currentQuestionIndex === 0}
-              className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 hover:bg-[#e3f6f5] disabled:bg-[#fffffe] disabled:border-[#272343]/20 disabled:text-[#2d334a]/50 text-[#272343] rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              ← Câu trước
-            </button>
-
-            <button
               onClick={() => fetchQuizQuestions()}
               className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 hover:bg-[#e3f6f5] text-[#272343] rounded-lg font-medium transition-colors"
             >
               🔄 Tải lại
-            </button>
-
-            <button
-              onClick={handleNext}
-              disabled={currentQuestionIndex === quizData.questions.length - 1}
-              className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 hover:bg-[#e3f6f5] disabled:bg-[#fffffe] disabled:border-[#272343]/20 disabled:text-[#2d334a]/50 text-[#272343] rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-            >
-              Câu sau →
             </button>
           </div>
 
@@ -342,11 +324,12 @@ const QuizTakingPage = () => {
                 <div className="h-1 w-20 bg-[#ffd803] rounded"></div>
               </div>
 
-              {/* Question content */}
-              <div
-                className="prose prose-lg max-w-none mb-6 text-[#272343]"
-                dangerouslySetInnerHTML={createMarkup(currentQuestion.title)}
-              />
+              {/* Question content - NOW USING CLEAN TEXT */}
+              <div className="mb-6">
+                <p className="text-lg text-[#272343] leading-relaxed">
+                  {cleanQuestionTitle}
+                </p>
+              </div>
 
               {/* Question image */}
               {currentQuestion.image && (
@@ -357,10 +340,14 @@ const QuizTakingPage = () => {
                 />
               )}
 
-              {/* Answers */}
+              {/* Answers - NOW USING CLEAN TEXT */}
               <div className="space-y-3">
                 {currentQuestion.answers.map((answer) => {
                   const isSelected = selectedAnswers.includes(answer.answerId);
+                  const cleanAnswerText = extractCleanText(
+                    answer.answerName,
+                    300
+                  );
 
                   return (
                     <button
@@ -394,15 +381,35 @@ const QuizTakingPage = () => {
                           )}
                         </div>
 
-                        {/* Answer text */}
+                        {/* Answer text - CLEAN TEXT */}
                         <span className="text-[#272343] flex-1 font-medium">
-                          {answer.answerName}
+                          {cleanAnswerText}
                         </span>
                       </div>
                     </button>
                   );
                 })}
               </div>
+            </div>
+
+            {/* Navigation buttons - OUTSIDE the box, aligned with it */}
+            <div className="mt-6 flex items-center gap-2">
+              <button
+                onClick={handlePrev}
+                disabled={currentQuestionIndex === 0}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#272343] bg-[#ffd803] px-4 py-2 text-sm font-medium text-[#272343] shadow-sm hover:bg-[#ffd803]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Câu trước
+              </button>
+              <button
+                onClick={handleNext}
+                disabled={
+                  currentQuestionIndex === quizData.questions.length - 1
+                }
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#272343] bg-[#ffd803] px-4 py-2 text-sm font-medium text-[#272343] shadow-sm hover:bg-[#ffd803]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Câu sau →
+              </button>
             </div>
           </div>
         </div>

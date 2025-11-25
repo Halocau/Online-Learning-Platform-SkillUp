@@ -3,6 +3,7 @@
 using SkillUp.BussinessObjects.DTOs.NotifyDto;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Hubs;
+using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
 using System.Security.Authentication;
@@ -14,15 +15,18 @@ namespace SkillUp.Services.Implementations
         private readonly INotifyRepository _notifyRepo;
         private readonly IHubContext<NotificationHub> _notifyHubContext;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAccountRepository _accountRepository;
 
         public NotifyService(
             INotifyRepository notifyRepo,
             IHubContext<NotificationHub> notifyHubContext,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService ,
+            IAccountRepository accountRepository)
         {
             _notifyRepo = notifyRepo;
             _notifyHubContext = notifyHubContext;
             _currentUserService = currentUserService;
+            _accountRepository = accountRepository;
         }
 
         public async Task CreateNotificationAsync(Guid recipientAccountId, string title, string contents, string? hyperlink = null)
@@ -118,20 +122,45 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> MarkAllAsReadAsync(Guid accountId)
         {
-            // 1. Lấy danh sách chưa đọc
+
             var unreadNotifications = await _notifyRepo.GetUnreadByAccountIdAsync(accountId);
 
             if (!unreadNotifications.Any()) return false;
 
-            // 2. Duyệt và sửa status
             foreach (var noti in unreadNotifications)
             {
                 noti.Status = "Read";
             }
 
-            // 3. Cập nhật hàng loạt
             await _notifyRepo.UpdateRangeAsync(unreadNotifications);
             return true;
+        }
+        public async Task<int> CreateSystemNotificationAsync(CreateSystemNotificationDto dto)
+        {
+
+            var userIds = await _accountRepository.GetAllActiveAccountIdsAsync();
+
+            if (!userIds.Any()) return 0;
+
+            var notificationList = new List<Notify>();
+            var now = DateTime.Now;
+
+            foreach (var userId in userIds)
+            {
+                notificationList.Add(new Notify
+                {
+                    Id = Guid.NewGuid(),
+                    AccountId = userId,
+                    Title = dto.Title,
+                    Contents = dto.Contents,
+                    Status = "Unread",
+                    CreatedAt = now
+                });
+            }
+
+            await _notifyRepo.AddRangeAsync(notificationList);
+            await _notifyRepo.SaveChangesAsync();
+            return notificationList.Count; 
         }
     }
 }

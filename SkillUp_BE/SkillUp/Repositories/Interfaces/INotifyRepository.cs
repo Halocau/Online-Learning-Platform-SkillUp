@@ -12,5 +12,8 @@ namespace SkillUp.Repositories.Interfaces
         Task UpdateAsync(Notify notification);
         Task<IEnumerable<Notify>> GetUnreadByAccountIdAsync(Guid accountId);
         Task UpdateRangeAsync(IEnumerable<Notify> notifications);
+
+        Task AddRangeAsync(IEnumerable<Notify> notifications);
+        Task<bool> SaveChangesAsync();
     }
 }

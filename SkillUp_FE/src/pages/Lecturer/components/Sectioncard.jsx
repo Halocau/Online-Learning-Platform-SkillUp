@@ -210,11 +210,6 @@ function SectionCard({
                       </Draggable>
                     ))
                   ) : (
-                    // 4. Handle Empty State (Empty sections should still be droppable!)
-                    // If you want empty sections to be droppable, you usually render the 
-                    // 'No Content' div OUTSIDE or differently, but for now we keep your logic.
-                    // Note: If this div is rendered, the Droppable might collapse to 0 height.
-                    // Ensure the Droppable container (div above) has min-height.
                     !provided.placeholder && (
                       <div className="text-center py-6 text-gray-400">
                         <p className="text-sm">Chưa có nội dung</p>

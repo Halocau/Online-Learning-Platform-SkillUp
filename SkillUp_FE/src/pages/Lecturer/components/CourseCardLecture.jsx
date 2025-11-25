@@ -1,4 +1,4 @@
-import { Edit2, Calendar, RefreshCw, EyeOff } from "lucide-react";
+import { Edit2, Calendar, RefreshCw, EyeOff, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 
@@ -10,6 +10,9 @@ function CourseCardLecture({
   isDeleting = false,
 }) {
   const [imageError, setImageError] = useState(false);
+
+  // Check if course is pending and should be locked from editing
+  const isPendingStatus = course.status === "Pending";
 
   // Format date to DD/MM/YYYY
   const formatDate = (dateString) => {
@@ -65,21 +68,6 @@ function CourseCardLecture({
 
   const progress = calculateProgress();
 
-  // Determine progress bar color based on completion
-  // const getProgressColor = () => {
-  //   if (progress === 100) return "from-green-500 to-green-600";
-  //   if (progress >= 75) return "from-blue-500 to-blue-600";
-  //   if (progress >= 50) return "from-yellow-500 to-yellow-600";
-  //   return "from-orange-500 to-orange-600";
-  // };
-
-  // const getProgressTextColor = () => {
-  //   if (progress === 100) return "text-green-600";
-  //   if (progress >= 75) return "text-blue-600";
-  //   if (progress >= 50) return "text-yellow-600";
-  //   return "text-orange-600";
-  // };
-
   return (
     <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 border-l-blue-500 border-r-4 border-r-blue-500">
       <CardContent className="p-0">
@@ -102,20 +90,61 @@ function CourseCardLecture({
                 </span>
               </div>
             )}
+
+            {/* Pending Status Badge on Image */}
+            {isPendingStatus && (
+              <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-md flex items-center gap-1 shadow-md">
+                <Lock className="w-3 h-3" />
+                <span className="text-xs font-semibold">Chờ duyệt</span>
+              </div>
+            )}
           </div>
 
           {/* Content Section */}
           <div className="flex-1 p-5 md:p-6 flex flex-col justify-between relative">
             {/* Action Buttons - Top Right */}
             <div className="absolute top-4 right-4 flex gap-2 bg-white rounded-lg p-1.5 shadow-md border border-gray-200">
-              <button
-                onClick={() => onEdit(course.id)}
-                className="p-2 hover:bg-yellow-50 rounded-md text-yellow-600 transition-all duration-200 transform hover:scale-110"
-                title="Chỉnh sửa"
-                disabled={isDeleting}
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
+              {/* Edit Button - Disabled for Pending status */}
+              <div className="relative group">
+                <button
+                  onClick={() => !isPendingStatus && onEdit(course.id)}
+                  className={`p-2 rounded-md transition-all duration-200 ${
+                    isPendingStatus
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "hover:bg-yellow-50 text-yellow-600 transform hover:scale-110"
+                  }`}
+                  title={
+                    isPendingStatus
+                      ? "Không thể chỉnh sửa khóa học đang chờ duyệt"
+                      : "Chỉnh sửa"
+                  }
+                  disabled={isPendingStatus || isDeleting}
+                >
+                  {isPendingStatus ? (
+                    <Lock className="w-4 h-4" />
+                  ) : (
+                    <Edit2 className="w-4 h-4" />
+                  )}
+                </button>
+
+                {/* Tooltip for disabled edit button */}
+                {isPendingStatus && (
+                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-10">
+                    <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-3 h-3" />
+                        <span>Không thể chỉnh sửa khi đang chờ duyệt</span>
+                      </div>
+                      <div className="text-gray-300 mt-1">
+                        Vui lòng chờ admin phê duyệt
+                      </div>
+                      {/* Arrow */}
+                      <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => onDelete(course.id)}
                 className="p-2 hover:bg-red-50 rounded-md text-red-600 transition-all duration-200 transform hover:scale-110 disabled:opacity-50"
@@ -143,7 +172,7 @@ function CourseCardLecture({
                           : course.status === "Unpublish"
                           ? "bg-orange-100 text-orange-800 border border-orange-200"
                           : course.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800 border border-purple-200"
+                          ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                           : "bg-gray-100 text-gray-800 border border-gray-200"
                       }`}
                     >
@@ -176,6 +205,22 @@ function CourseCardLecture({
               <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-3">
                 {course.description || "Chưa có mô tả cho khóa học này."}
               </p>
+
+              {/* Pending Status Warning Message */}
+              {isPendingStatus && (
+                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+                  <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-yellow-800 mb-1">
+                      Khóa học đang chờ duyệt
+                    </p>
+                    <p className="text-xs text-yellow-700">
+                      Bạn không thể chỉnh sửa khóa học trong khi đang chờ admin
+                      phê duyệt. Vui lòng chờ kết quả phê duyệt.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Progress Bar - Bottom of Card */}
               {/* <div className="pt-3 border-t border-gray-100">
