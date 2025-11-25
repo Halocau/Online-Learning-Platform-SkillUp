@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SkillUp.Configuration;
 
@@ -13,10 +14,12 @@ namespace SkillUp.Services.Rag.Chat
         private readonly HttpClient _httpClient;
         private readonly GeminiOptions _options;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly ILogger<GeminiChatCompletionProvider> _logger;
 
         public GeminiChatCompletionProvider(
             IHttpClientFactory httpClientFactory,
-            IOptions<GeminiOptions> options)
+            IOptions<GeminiOptions> options,
+            ILogger<GeminiChatCompletionProvider> logger)
         {
             _options = options.Value ?? new GeminiOptions();
             if (string.IsNullOrWhiteSpace(_options.ApiKey))
@@ -27,6 +30,7 @@ namespace SkillUp.Services.Rag.Chat
             _httpClient = httpClientFactory.CreateClient(nameof(GeminiChatCompletionProvider));
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add(ApiKeyHeader, _options.ApiKey);
+            _logger = logger;
 
             _jsonOptions = new JsonSerializerOptions
             {
@@ -132,32 +136,76 @@ Lưu ý:
             return $"Gemini API returned {statusCode}: {payload}";
         }
 
-        private static string ParseResponse(string payload)
+        private string ParseResponse(string payload)
         {
-            using var doc = JsonDocument.Parse(payload);
-            var root = doc.RootElement;
-
-            if (root.TryGetProperty("candidates", out var candidates)
-                && candidates.ValueKind == JsonValueKind.Array
-                && candidates.GetArrayLength() > 0)
+            try
             {
-                var candidate = candidates[0];
-                if (candidate.TryGetProperty("content", out var content))
+                using var doc = JsonDocument.Parse(payload);
+                var root = doc.RootElement;
+
+                // Check for error in response
+                if (root.TryGetProperty("error", out var error))
                 {
-                    if (content.TryGetProperty("parts", out var parts)
-                        && parts.ValueKind == JsonValueKind.Array
-                        && parts.GetArrayLength() > 0)
+                    var errorMessage = error.TryGetProperty("message", out var msg) 
+                        ? msg.GetString() 
+                        : "Unknown error from Gemini API";
+                    _logger.LogError("Gemini API error: {ErrorMessage}", errorMessage);
+                    throw new HttpRequestException($"Gemini API error: {errorMessage}");
+                }
+
+                if (root.TryGetProperty("candidates", out var candidates)
+                    && candidates.ValueKind == JsonValueKind.Array
+                    && candidates.GetArrayLength() > 0)
+                {
+                    var candidate = candidates[0];
+                    
+                    // Check finishReason
+                    if (candidate.TryGetProperty("finishReason", out var finishReason))
                     {
-                        var firstPart = parts[0];
-                        if (firstPart.TryGetProperty("text", out var textElement))
+                        var reason = finishReason.GetString();
+                        if (reason != "STOP" && reason != null)
                         {
-                            return textElement.GetString() ?? "Không thể tạo phản hồi.";
+                            _logger.LogWarning("Gemini response blocked or incomplete. FinishReason: {FinishReason}", reason);
+                            if (reason == "SAFETY")
+                            {
+                                return "Xin lỗi, câu hỏi của bạn có thể vi phạm chính sách nội dung. Vui lòng thử lại với câu hỏi khác.";
+                            }
+                            if (reason == "MAX_TOKENS")
+                            {
+                                return "Câu trả lời quá dài. Vui lòng hỏi câu hỏi cụ thể hơn.";
+                            }
+                            return "Không thể tạo phản hồi đầy đủ. Vui lòng thử lại.";
+                        }
+                    }
+
+                    if (candidate.TryGetProperty("content", out var content))
+                    {
+                        if (content.TryGetProperty("parts", out var parts)
+                            && parts.ValueKind == JsonValueKind.Array
+                            && parts.GetArrayLength() > 0)
+                        {
+                            var firstPart = parts[0];
+                            if (firstPart.TryGetProperty("text", out var textElement))
+                            {
+                                var text = textElement.GetString();
+                                if (!string.IsNullOrWhiteSpace(text))
+                                {
+                                    return text;
+                                }
+                            }
                         }
                     }
                 }
-            }
 
-            throw new JsonException("Gemini response missing text content.");
+                // Log the actual response for debugging
+                _logger.LogWarning("Gemini response missing text content. Response: {Response}", payload);
+                return "Không thể tạo phản hồi từ AI. Vui lòng thử lại sau.";
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to parse Gemini response. Payload: {Payload}", payload);
+                throw new JsonException($"Gemini response parsing failed: {ex.Message}", ex);
+            }
         }
     }
 }

@@ -22,7 +22,19 @@ JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// Configure request size limits for file uploads (up to 100MB)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100MB
+    options.ValueLengthLimit = int.MaxValue;
+    options.ValueCountLimit = int.MaxValue;
+});
+
+builder.Services.AddControllers(options =>
+{
+    // Increase request body size limit to 100MB
+    options.MaxModelBindingCollectionSize = int.MaxValue;
+});
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddHttpClient();
@@ -291,6 +303,12 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod()
                   .AllowCredentials();
         });
+});
+
+// Configure Kestrel server options for large file uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
 });
 
 var app = builder.Build();
