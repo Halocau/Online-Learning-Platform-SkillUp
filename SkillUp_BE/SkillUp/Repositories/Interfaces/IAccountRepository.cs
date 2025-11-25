@@ -15,6 +15,7 @@ namespace SkillUp.Repositories.Interfaces
 
         Task<List<Account>> GetAllAccountsAsync();
         Task<List<Account>> GetAllModeratorsAsync();
+        Task<List<Guid>> GetAllActiveAccountIdsAsync();
 
-	}
+    }
 }

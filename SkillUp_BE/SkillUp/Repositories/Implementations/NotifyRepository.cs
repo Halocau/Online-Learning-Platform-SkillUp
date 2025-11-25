@@ -1,39 +1,39 @@
-﻿    using Microsoft.EntityFrameworkCore;
-    using SkillUp.BussinessObjects.Models;
-    using SkillUp.Repositories.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Interfaces;
 
-    namespace SkillUp.Repositories.Implementations
+namespace SkillUp.Repositories.Implementations
+{
+    public class NotifyRepository : INotifyRepository
     {
-        public class NotifyRepository : INotifyRepository
+        private readonly SkillUpContext _context;
+
+        public NotifyRepository(SkillUpContext context)
         {
-            private readonly SkillUpContext _context;
+            _context = context;
+        }
 
-            public NotifyRepository(SkillUpContext context)
-            {
-                _context = context;
-            }
+        public async Task<Notify> CreateAsync(Notify notification)
+        {
+            _context.Notifies.Add(notification);
+            await _context.SaveChangesAsync();
+            return notification;
+        }
 
-            public async Task<Notify> CreateAsync(Notify notification)
-            {
-                _context.Notifies.Add(notification);
-                await _context.SaveChangesAsync();
-                return notification;
-            }
+        public async Task<IEnumerable<Notify>> GetByAccountIdAsync(Guid accountId)
+        {
+            return await _context.Notifies
+                .Where(n => n.AccountId == accountId)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+        }
 
-            public async Task<IEnumerable<Notify>> GetByAccountIdAsync(Guid accountId)
-            {
-                return await _context.Notifies
-                    .Where(n => n.AccountId == accountId)
-                    .OrderByDescending(n => n.CreatedAt)
-                    .ToListAsync();
-            }
-
-            public async Task<IEnumerable<Notify>> GetAllAsync()
-            {
-                return await _context.Notifies
-                    .OrderByDescending(n => n.CreatedAt)
-                    .ToListAsync();
-            }
+        public async Task<IEnumerable<Notify>> GetAllAsync()
+        {
+            return await _context.Notifies
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+        }
         public async Task<Notify?> GetByIdAsync(Guid id)
         {
             return await _context.Notifies.FindAsync(id);
@@ -58,6 +58,13 @@
             _context.Notifies.UpdateRange(notifications);
             await _context.SaveChangesAsync();
         }
-
+        public async Task AddRangeAsync(IEnumerable<Notify> notifications)
+        {
+            await _context.Notifies.AddRangeAsync(notifications);
+        }
+        public async Task<bool> SaveChangesAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
-    }
+}

@@ -91,5 +91,12 @@ namespace SkillUp.Repositories.Implementations
                 .OrderBy(a => a.Fullname)
                 .ToListAsync();
 		}
-	}
+        public async Task<List<Guid>> GetAllActiveAccountIdsAsync()
+        {
+            return await _context.Accounts
+                .Where(a => a.Status == "Active")
+                .Select(a => a.Id)
+                .ToListAsync();
+        }
+    }
 }
