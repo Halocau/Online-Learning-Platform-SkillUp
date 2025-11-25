@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { startQuiz, submitQuiz } from "@/api/quizAPI";
 import { toast } from "react-toastify";
-import DOMPurify from "dompurify";
+import { extractCleanText } from "@/utils/htmlUtils";
 import { cn } from "@/lib/utils";
 
 const QuizTakingPage = () => {
@@ -124,10 +124,6 @@ const QuizTakingPage = () => {
     return quizData.questions.filter((q) => !answers[q.questionId]).length;
   };
 
-  const createMarkup = (html) => {
-    return { __html: DOMPurify.sanitize(html) };
-  };
-
   const goToQuestion = (index) => {
     setCurrentQuestionIndex(index);
   };
@@ -191,6 +187,9 @@ const QuizTakingPage = () => {
 
   const isMultiple = currentQuestion.type === "MultiChoice";
   const selectedAnswers = answers[currentQuestion.questionId] || [];
+
+  // Clean the question title and answers
+  const cleanQuestionTitle = extractCleanText(currentQuestion.title, 500);
 
   return (
     <div className="min-h-screen bg-[#fffffe]">
@@ -325,11 +324,12 @@ const QuizTakingPage = () => {
                 <div className="h-1 w-20 bg-[#ffd803] rounded"></div>
               </div>
 
-              {/* Question content */}
-              <div
-                className="prose prose-lg max-w-none mb-6 text-[#272343]"
-                dangerouslySetInnerHTML={createMarkup(currentQuestion.title)}
-              />
+              {/* Question content - NOW USING CLEAN TEXT */}
+              <div className="mb-6">
+                <p className="text-lg text-[#272343] leading-relaxed">
+                  {cleanQuestionTitle}
+                </p>
+              </div>
 
               {/* Question image */}
               {currentQuestion.image && (
@@ -340,10 +340,14 @@ const QuizTakingPage = () => {
                 />
               )}
 
-              {/* Answers */}
+              {/* Answers - NOW USING CLEAN TEXT */}
               <div className="space-y-3">
                 {currentQuestion.answers.map((answer) => {
                   const isSelected = selectedAnswers.includes(answer.answerId);
+                  const cleanAnswerText = extractCleanText(
+                    answer.answerName,
+                    300
+                  );
 
                   return (
                     <button
@@ -377,9 +381,9 @@ const QuizTakingPage = () => {
                           )}
                         </div>
 
-                        {/* Answer text */}
+                        {/* Answer text - CLEAN TEXT */}
                         <span className="text-[#272343] flex-1 font-medium">
-                          {answer.answerName}
+                          {cleanAnswerText}
                         </span>
                       </div>
                     </button>

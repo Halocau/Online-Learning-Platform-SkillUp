@@ -9,12 +9,15 @@ import {
   Shuffle,
   CheckSquare,
   Square,
+  ChevronRight,
+  ChevronLeft,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getQuestionsBySection } from "@/api/questionBankAPI";
 import { toast } from "react-toastify";
 import { extractCleanText } from "@/utils/htmlUtils";
+import axiosInstance from "@/lib/axios";
 
 function QuestionBankSelector({
   courseId,
@@ -24,47 +27,75 @@ function QuestionBankSelector({
   onCancel,
   loading,
 }) {
+  const [sections, setSections] = useState([]);
+  const [selectedSection, setSelectedSection] = useState(null);
   const [bankQuestions, setBankQuestions] = useState([]);
   const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [loadingBank, setLoadingBank] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState(null);
   const [randomCount, setRandomCount] = useState(5);
 
   useEffect(() => {
-    loadBankQuestions();
-  }, [sectionId, courseId]);
+    loadSections();
+  }, [courseId]);
 
-  const loadBankQuestions = async () => {
+  const loadSections = async () => {
     try {
-      setLoadingBank(true);
+      setLoadingData(true);
       setError(null);
 
-      if (!courseId || !sectionId) {
-        setError("Missing courseId or sectionId");
-        setBankQuestions([]);
-        setLoadingBank(false);
+      if (!courseId) {
+        setError("Missing courseId");
+        setSections([]);
+        setLoadingData(false);
         return;
       }
 
-      const data = await getQuestionsBySection(sectionId, courseId);
+      const response = await axiosInstance.get(
+        `http://localhost:5120/api/QuestionBank/getByCourseId/${courseId}`
+      );
 
-      if (data && Array.isArray(data)) {
-        setBankQuestions(data);
+      let sectionsData = [];
 
-        if (data.length === 0) {
-          setError("Không có câu hỏi nào trong ngân hàng cho chương này");
+      if (response.data?.data) {
+        // Handle nested array structure [[sections...]]
+        if (Array.isArray(response.data.data)) {
+          if (response.data.data.length > 0 && Array.isArray(response.data.data[0])) {
+            sectionsData = response.data.data[0];
+          } else {
+            sectionsData = response.data.data;
+          }
         }
+      }
+
+      if (sectionsData && sectionsData.length > 0) {
+        setSections(sectionsData);
       } else {
-        setBankQuestions([]);
-        setError("Dữ liệu không hợp lệ từ API");
+        setSections([]);
+        setError("Không có chương nào có ngân hàng câu hỏi");
       }
     } catch (error) {
-      setError(error.message || "Không thể tải câu hỏi");
-      setBankQuestions([]);
+      console.error("Error loading sections:", error);
+      setError(error.message || "Không thể tải danh sách chương");
+      setSections([]);
     } finally {
-      setLoadingBank(false);
+      setLoadingData(false);
     }
+  };
+
+  const handleSelectSection = (section) => {
+    setSelectedSection(section);
+    setBankQuestions(section.questionBanks || []);
+    setSelectedQuestions([]);
+    setSearchTerm("");
+  };
+
+  const handleBackToSections = () => {
+    setSelectedSection(null);
+    setBankQuestions([]);
+    setSelectedQuestions([]);
+    setSearchTerm("");
   };
 
   const toggleQuestion = (questionId) => {
@@ -79,19 +110,16 @@ function QuestionBankSelector({
   const handleSelectAll = () => {
     const allIds = filteredQuestions.map((q) => q.id);
     setSelectedQuestions(allIds);
-    // toast.success(`Đã chọn ${allIds.length} câu hỏi`);
   };
 
   // Deselect all
   const handleDeselectAll = () => {
     setSelectedQuestions([]);
-    // toast.info("Đã bỏ chọn tất cả");
   };
 
   // Random selection
   const handleRandomSelect = () => {
     if (filteredQuestions.length === 0) {
-      // toast.warning("Không có câu hỏi nào để chọn");
       return;
     }
 
@@ -100,13 +128,11 @@ function QuestionBankSelector({
     const randomIds = shuffled.slice(0, count).map((q) => q.id);
 
     setSelectedQuestions(randomIds);
-    // toast.success(`Đã chọn ngẫu nhiên ${count} câu hỏi`);
   };
 
   // Select first N questions
   const handleSelectCount = () => {
     if (filteredQuestions.length === 0) {
-      // toast.warning("Không có câu hỏi nào để chọn");
       return;
     }
 
@@ -114,12 +140,10 @@ function QuestionBankSelector({
     const firstNIds = filteredQuestions.slice(0, count).map((q) => q.id);
 
     setSelectedQuestions(firstNIds);
-    // toast.success(`Đã chọn ${count} câu hỏi đầu tiên`);
   };
 
   const handleAddSelected = () => {
     if (selectedQuestions.length === 0) {
-      // toast.warning("Vui lòng chọn ít nhất 1 câu hỏi");
       return;
     }
 
@@ -139,17 +163,13 @@ function QuestionBankSelector({
   });
 
   // Loading State
-  if (loadingBank) {
+  if (loadingData) {
     return (
       <Card className="border-2 border-blue-200 bg-blue-50">
         <CardContent className="p-4 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
           <p className="text-sm text-gray-600 mt-2">
-            Đang tải ngân hàng câu hỏi...
-          </p>
-          <p className="text-xs text-gray-500 mt-1">
-            Course: {courseId?.substring(0, 8)}... | Section:{" "}
-            {sectionId?.substring(0, 8)}...
+            Đang tải danh sách chương...
           </p>
         </CardContent>
       </Card>
@@ -169,7 +189,7 @@ function QuestionBankSelector({
           </div>
           <div className="flex gap-2 mt-3">
             <Button
-              onClick={loadBankQuestions}
+              onClick={loadSections}
               size="sm"
               variant="outline"
               className="text-xs"
@@ -198,18 +218,124 @@ function QuestionBankSelector({
     );
   }
 
-  // Questions List - Table-like display
+  // LAYER 1: Section Selection
+  if (!selectedSection) {
+    return (
+      <Card className="border-2 border-blue-200 bg-blue-50">
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <Layers className="w-5 h-5" />
+                Chọn chương
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Bước 1/2: Chọn chương để xem ngân hàng câu hỏi
+              </p>
+            </div>
+            <Button
+              onClick={onCancel}
+              variant="ghost"
+              size="sm"
+              className="text-gray-500"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Section List */}
+          <div className="max-h-96 overflow-y-auto space-y-2">
+            {sections.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">Không có chương nào</p>
+              </div>
+            ) : (
+              sections.map((section) => {
+                const questionCount = section.questionBanks?.length || 0;
+                
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => handleSelectSection(section)}
+                    disabled={questionCount === 0}
+                    className={`w-full p-4 border-2 rounded-lg text-left transition-all ${
+                      questionCount === 0
+                        ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+                        : "border-blue-200 bg-white hover:border-blue-400 hover:shadow-md cursor-pointer"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">
+                          {section.title}
+                        </h4>
+                        {section.description && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            {section.description}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+                            {questionCount} câu hỏi
+                          </span>
+                          {section.orders && (
+                            <span className="text-xs text-gray-500">
+                              Thứ tự: {section.orders}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {questionCount > 0 && (
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2 border-t">
+            <Button
+              onClick={onSwitchToManual}
+              variant="outline"
+              className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Tạo mới
+            </Button>
+            <Button onClick={onCancel} variant="outline">
+              Hủy
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // LAYER 2: Question Selection
   return (
     <Card className="border-2 border-blue-200 bg-blue-50">
       <CardContent className="p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-gray-900">
-              Chọn từ ngân hàng câu hỏi
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">
-              {bankQuestions.length} câu hỏi có sẵn
-            </p>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleBackToSections}
+              variant="ghost"
+              size="sm"
+              className="text-blue-600 hover:bg-blue-100"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                {selectedSection.title}
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Bước 2/2: Chọn câu hỏi từ ngân hàng ({bankQuestions.length} câu hỏi)
+              </p>
+            </div>
           </div>
           <Button
             onClick={onCancel}
@@ -233,9 +359,8 @@ function QuestionBankSelector({
           />
         </div>
 
-        {/* Quick Selection Tools - Redesigned */}
+        {/* Quick Selection Tools */}
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-4 space-y-4">
-          {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-blue-200">
             <h4 className="text-sm font-semibold text-gray-800">
               Công cụ chọn nhanh
@@ -320,7 +445,7 @@ function QuestionBankSelector({
           </div>
         </div>
 
-        {/* Question List - Table Style */}
+        {/* Question List */}
         <div className="max-h-96 overflow-y-auto space-y-2 bg-white rounded-lg p-2">
           {filteredQuestions.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
@@ -328,7 +453,6 @@ function QuestionBankSelector({
             </div>
           ) : (
             filteredQuestions.map((question, index) => {
-              // Clean the title and description from HTML
               const cleanTitle =
                 extractCleanText(question.title, 200) || "Không có tiêu đề";
               const cleanDescription = question.description
@@ -361,19 +485,17 @@ function QuestionBankSelector({
                       </div>
                     </div>
 
-                    {/* Question Info - Table-like */}
+                    {/* Question Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2">
                         <span className="text-xs font-semibold text-gray-500 flex-shrink-0">
                           #{index + 1}
                         </span>
                         <div className="flex-1">
-                          {/* Display clean title without HTML tags */}
                           <p className="font-medium text-gray-900 text-sm leading-snug">
                             {cleanTitle}
                           </p>
 
-                          {/* Display clean description if available */}
                           {cleanDescription && (
                             <p className="text-xs text-gray-600 mt-1 line-clamp-2">
                               {cleanDescription}
@@ -381,17 +503,19 @@ function QuestionBankSelector({
                           )}
 
                           <div className="flex gap-2 mt-2 flex-wrap">
-                            {question.answers &&
-                              question.answers.length > 0 && (
-                                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                                  {question.answers.length} đáp án
-                                </span>
-                              )}
-                            {question.createdAt && (
+                            <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                              {question.type === "SingleChoice"
+                                ? "Một đáp án"
+                                : "Nhiều đáp án"}
+                            </span>
+                            {question.answers && question.answers.length > 0 && (
                               <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                                {new Date(
-                                  question.createdAt
-                                ).toLocaleDateString("vi-VN")}
+                                {question.answers.length} đáp án
+                              </span>
+                            )}
+                            {question.image && (
+                              <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded">
+                                Có ảnh
                               </span>
                             )}
                           </div>
