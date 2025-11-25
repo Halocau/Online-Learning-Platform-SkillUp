@@ -1,0 +1,59 @@
+/* src/components/common/RichTextEditor.css */
+
+/* Main wrapper styling */
+.rich-text-editor-wrapper {
+  width: 100%;
+}
+
+/* Make the editor content area taller and scrollable */
+.rich-text-editor-wrapper .ck-editor__editable {
+  min-height: var(--editor-min-height, 300px);
+  max-height: var(--editor-max-height, 600px);
+  overflow-y: auto;
+}
+
+/* Focus state styling */
+.rich-text-editor-wrapper .ck-editor__editable:focus {
+  border-color: #ffd54f;
+  box-shadow: 0 0 0 2px rgba(255, 213, 79, 0.2);
+}
+
+/* Custom scrollbar for better UX */
+.rich-text-editor-wrapper .ck-editor__editable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rich-text-editor-wrapper .ck-editor__editable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.rich-text-editor-wrapper .ck-editor__editable::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.rich-text-editor-wrapper .ck-editor__editable::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Ensure the editor has proper padding */
+.rich-text-editor-wrapper .ck-editor__editable {
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Better placeholder styling */
+.rich-text-editor-wrapper .ck-editor__editable.ck-placeholder::before {
+  color: #999;
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rich-text-editor-wrapper .ck-editor__editable {
+    min-height: 200px;
+    padding: 12px 16px;
+  }
+}

@@ -1,17 +1,10 @@
 // src/pages/Lecturer/components/QuestionForm.jsx
 import { useState, useEffect, useRef } from "react";
-import {
-  Plus,
-  Trash2,
-  X,
-  Check,
-  Upload,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Plus, Trash2, X, Check, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { uploadQuestionImage } from "@/api/questionAPI";
-import { Editor } from "@tinymce/tinymce-react";
+import RichTextEditor from "@/components/Editor/RichText";
 
 function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
   const editorRef = useRef(null);
@@ -52,11 +45,9 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
     }
   }, [initialData]);
 
-  // Handle question type change - properly reset answer states
   const handleTypeChange = (newType) => {
     const updatedAnswers = questionData.answers.map((answer) => {
       if (newType === "SingleChoice") {
-        // When switching to single choice, keep only first correct answer
         return { ...answer, isCorrect: false };
       }
       return answer;
@@ -73,8 +64,6 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
-
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -119,13 +108,11 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
     let newAnswers;
 
     if (isSingle) {
-      // Single choice: only one can be correct
       newAnswers = questionData.answers.map((answer, i) => ({
         ...answer,
         isCorrect: i === index,
       }));
     } else {
-      // Multiple choice: toggle the selected one
       newAnswers = questionData.answers.map((answer, i) =>
         i === index ? { ...answer, isCorrect: !answer.isCorrect } : answer
       );
@@ -135,12 +122,10 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
   };
 
   const handleSubmit = async () => {
-    // Get content from TinyMCE editor
     const editorContent = editorRef.current
-      ? editorRef.current.getContent()
+      ? editorRef.current.getData()
       : questionData.title;
 
-    // Validation
     if (!editorContent.trim() && !questionData.title.trim()) {
       alert("Vui lòng nhập câu hỏi");
       return;
@@ -156,7 +141,6 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
       return;
     }
 
-    // Validate answer type consistency
     const correctAnswersCount = questionData.answers.filter(
       (a) => a.isCorrect
     ).length;
@@ -202,54 +186,25 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
           </Button>
         </div>
 
-        {/* Question Title with TinyMCE */}
+        {/* Question Title with RichTextEditor */}
         <div>
           <label className="block text-sm font-medium mb-2 text-[#272343]">
             Câu hỏi <span className="text-red-500">*</span>
           </label>
           <div className="border border-[#272343]/15 rounded-lg overflow-hidden">
-            <Editor
-              apiKey="tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i" 
-              onInit={(evt, editor) => (editorRef.current = editor)}
-              initialValue={questionData.title}
-              init={{
-                height: 200,
-                menubar: false,
-                plugins: [
-                  "advlist",
-                  "autolink",
-                  "lists",
-                  "link",
-                  "image",
-                  "charmap",
-                  "anchor",
-                  "searchreplace",
-                  "visualblocks",
-                  "code",
-                  "fullscreen",
-                  "insertdatetime",
-                  "media",
-                  "table",
-                  "preview",
-                  "help",
-                  "wordcount",
-                ],
-                toolbar:
-                  "undo redo | blocks | " +
-                  "bold italic forecolor | alignleft aligncenter " +
-                  "alignright alignjustify | bullist numlist outdent indent | " +
-                  "removeformat | code | help",
-                content_style:
-                  "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-                skin: "oxide",
-                content_css: "default",
+            <RichTextEditor
+              value={questionData.title}
+              onChange={(data) =>
+                setQuestionData({ ...questionData, title: data })
+              }
+              onReady={(editor) => {
+                editorRef.current = editor;
               }}
+              placeholder="Nhập câu hỏi của bạn..."
+              minHeight={250}
+              maxHeight={500}
             />
           </div>
-          <p className="text-xs text-[#2d334a] mt-1">
-            Sử dụng trình soạn thảo để định dạng câu hỏi, thêm công thức, hình
-            ảnh, v.v.
-          </p>
         </div>
 
         {/* Question Description */}
