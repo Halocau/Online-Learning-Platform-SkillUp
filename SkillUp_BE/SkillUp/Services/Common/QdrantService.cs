@@ -9,11 +9,16 @@ namespace SkillUp.Services.Common
     {
         private readonly HttpClient _httpClient;
         private readonly QdrantOptions _options;
-        private string? _activeCollection;
+        private readonly string _collectionBaseName;
+        private string _collectionName;
 
         public QdrantService(IHttpClientFactory httpClientFactory, IOptions<QdrantOptions> options)
         {
             _options = options.Value ?? new QdrantOptions();
+            _collectionBaseName = string.IsNullOrWhiteSpace(_options.Collection)
+                ? "skillup_subtitles"
+                : _options.Collection;
+            _collectionName = _collectionBaseName;
             _httpClient = httpClientFactory.CreateClient(nameof(QdrantService));
             _httpClient.BaseAddress = new Uri(_options.Endpoint.TrimEnd('/') + "/");
         }
@@ -21,7 +26,7 @@ namespace SkillUp.Services.Common
         public async Task EnsureCollectionAsync(int vectorSize, CancellationToken ct = default)
         {
             var name = BuildCollectionName(vectorSize);
-            _activeCollection = name;
+            _collectionName = name;
 
             var check = await _httpClient.GetAsync($"collections/{name}", ct);
             if (check.IsSuccessStatusCode)
@@ -44,7 +49,7 @@ namespace SkillUp.Services.Common
 
         public async Task UpsertAsync(IEnumerable<QdrantVectorPoint> points, CancellationToken ct = default)
         {
-            var name = _activeCollection ?? _options.Collection;
+            var name = _collectionName;
             var payload = new
             {
                 points = points.Select(p => new
@@ -73,7 +78,7 @@ namespace SkillUp.Services.Common
             Guid? courseId = null,
             CancellationToken ct = default)
         {
-            var name = _activeCollection ?? _options.Collection;
+            var name = _collectionName;
             var body = new
             {
                 vector = query,
@@ -102,12 +107,26 @@ namespace SkillUp.Services.Common
                 .ToList();
         }
 
+        public async Task<bool> LessonHasVectorsAsync(Guid lessonId, CancellationToken ct = default)
+        {
+            var name = _collectionName;
+            var filter = BuildFilter(lessonId, null);
+            var body = new
+            {
+                filter,
+                exact = false
+            };
+
+            var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/count", body, ct);
+            resp.EnsureSuccessStatusCode();
+
+            var result = await resp.Content.ReadFromJsonAsync<QdrantCountResponse>(cancellationToken: ct);
+            return (result?.Result.Count ?? 0) > 0;
+        }
+
         private string BuildCollectionName(int vectorSize)
         {
-            var baseName = string.IsNullOrWhiteSpace(_options.Collection)
-                ? "skillup_subtitles"
-                : _options.Collection;
-            return $"{baseName}_{vectorSize}";
+            return $"{_collectionBaseName}_{vectorSize}";
         }
 
         private static object? BuildFilter(Guid? lessonId, Guid? courseId)
@@ -139,6 +158,16 @@ namespace SkillUp.Services.Common
 
             return new { must };
         }
+    }
+
+    internal class QdrantCountResponse
+    {
+        public QdrantCountResult Result { get; set; } = new();
+    }
+
+    internal class QdrantCountResult
+    {
+        public long Count { get; set; }
     }
 }
 

@@ -14,6 +14,7 @@ using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
+using SkillUp.Services.Rag.Subtitle;
 
 namespace SkillUp.Services.Implementations
 {
@@ -28,9 +29,10 @@ namespace SkillUp.Services.Implementations
 		private readonly INotifyService _notifyService;
 		private readonly IEnrollmentRepository _enrollmentRepository;
 		private readonly IStudentRepository _studentRepository;
-		private readonly IStudentProgressRepository _studentProgressRepository;
-		private readonly ICurrentUserService _currentUserService;
-		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService)
+        private readonly IStudentProgressRepository _studentProgressRepository;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
+        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IAiSupportBackgroundJobService aiSupportBackgroundJobService)
 		{
 			_courseRepository = courseRepository;
 			_lecturerRepository = lecturerRepository;
@@ -40,9 +42,10 @@ namespace SkillUp.Services.Implementations
 			_emailService = emailService;
 			_notifyService = notifyService;
 			_enrollmentRepository = enrollmentRepository;
-			_studentRepository = studentRepository;
-			_studentProgressRepository = studentProgressRepository;
-			_currentUserService = currentUserService;
+            _studentRepository = studentRepository;
+            _studentProgressRepository = studentProgressRepository;
+            _currentUserService = currentUserService;
+            _aiSupportBackgroundJobService = aiSupportBackgroundJobService;
 		}
 
 		public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
@@ -161,15 +164,24 @@ namespace SkillUp.Services.Implementations
                 course.SubCategoryId = request.SubCategoryId.Value;
             }
 
+            var previouslyEnabled = course.IsAiSupport ?? false;
+            var shouldTriggerSubtitleJob = false;
+
             if (request.IsAiSupport.HasValue)
             {
                 course.IsAiSupport = request.IsAiSupport.Value;
+                shouldTriggerSubtitleJob = !previouslyEnabled && course.IsAiSupport == true;
             }
 
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.UpdateCourse(course);
             await _courseRepository.SaveChangesAsync();
+
+            if (shouldTriggerSubtitleJob)
+            {
+                await _aiSupportBackgroundJobService.TriggerCourseSubtitleJobAsync(course.Id);
+            }
 
             return new CourseResponseDto
             {

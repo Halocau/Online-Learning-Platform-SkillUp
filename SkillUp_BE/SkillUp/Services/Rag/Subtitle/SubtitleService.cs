@@ -68,6 +68,19 @@ namespace SkillUp.Services.Rag.Subtitle
                 IndexedAt = DateTime.Now
             };
         }
+
+        public async Task<bool> HasSubtitlesAsync(Guid lessonId, CancellationToken ct = default)
+        {
+            // Use search with limit 1 to check if any vectors exist for this lesson
+            var dummyVector = new float[1]; // Placeholder vector for search
+            var results = await _qdrantService.SearchAsync(dummyVector, topK: 1, lessonId: lessonId, ct: ct);
+            return results.Count > 0;
+        }
+
+        public async Task<bool> LessonHasIndexedSubtitleAsync(Guid lessonId, CancellationToken ct = default)
+        {
+            return await HasSubtitlesAsync(lessonId, ct);
+        }
     }
 }
 

@@ -132,6 +132,9 @@ builder.Services.AddScoped<GenSubService>();
 builder.Services.AddScoped<QdrantService>();
 builder.Services.AddScoped<ISubtitleService, SubtitleService>();
 builder.Services.AddScoped<IEmbeddingProvider, GeminiEmbeddingProvider>();
+builder.Services.AddScoped<ISubtitleLessonJobService, SubtitleLessonJobService>();
+builder.Services.AddScoped<ISubtitleCourseJobService, SubtitleCourseJobService>();
+builder.Services.AddScoped<IAiSupportBackgroundJobService, AiSupportBackgroundJobService>();
 
 
 // POST
