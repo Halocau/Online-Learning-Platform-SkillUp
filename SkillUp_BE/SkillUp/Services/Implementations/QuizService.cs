@@ -446,7 +446,8 @@ namespace SkillUp.Services.Implementations
                         AnswerId = a.Id,
                         AnswerName = a.AnswerName,
                         WasSelected = isSelected,
-                        IsCorrect = a.IsCorrect
+                        IsCorrect = a.IsCorrect,
+                        Image = a.Image
                     };
                 }).ToList();
 
