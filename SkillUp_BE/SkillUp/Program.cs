@@ -11,6 +11,8 @@ using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Implementations;
 using SkillUp.Services.Interfaces;
+using SkillUp.Services.Rag.Embedding;
+using SkillUp.Services.Rag.Subtitle;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
@@ -24,6 +26,9 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddHttpClient();
 builder.Services.Configure<GenSubOptions>(builder.Configuration.GetSection("GenSub"));
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
+builder.Services.Configure<QdrantOptions>(builder.Configuration.GetSection("Qdrant"));
+builder.Services.Configure<RagOptions>(builder.Configuration.GetSection("Rag"));
 
 // Configure Swagger with JWT Authentication
 builder.Services.AddSwaggerGen(options =>
@@ -124,6 +129,9 @@ builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<GenSubService>();
+builder.Services.AddScoped<QdrantService>();
+builder.Services.AddScoped<ISubtitleService, SubtitleService>();
+builder.Services.AddScoped<IEmbeddingProvider, GeminiEmbeddingProvider>();
 
 
 // POST
