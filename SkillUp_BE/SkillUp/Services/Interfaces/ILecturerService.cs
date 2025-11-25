@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.DTOs.Lecturer;
+﻿using SkillUp.BussinessObjects.DTOs;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.Models;
 
 namespace SkillUp.Services.Interfaces
@@ -17,5 +18,7 @@ namespace SkillUp.Services.Interfaces
         // Lấy tất cả Lecturer
         Task<List<LecturerDto>> GetAllLecturersAsync();
         Task<bool> UpdateLecturerInfoAsync(Guid? accountId, string? title, string? profession);
+
+        Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId);
     }
 }

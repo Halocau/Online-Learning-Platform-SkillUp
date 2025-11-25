@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.ExceptionHandling;
+using SkillUp.Services.Implementations;
 using SkillUp.Services.Interfaces;
 
 namespace SkillUp.Controllers
@@ -13,13 +14,16 @@ namespace SkillUp.Controllers
     {
         private readonly ILecturerApplicationService _lecturerApplicationService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ILecturerService _lecturerService;
 
         public LecturerApplicationController(
             ILecturerApplicationService lecturerApplicationService,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            ILecturerService lecturerService)
         {
             _lecturerApplicationService = lecturerApplicationService;
             _currentUserService = currentUserService;
+            _lecturerService = lecturerService;
         }
 
         [HttpGet("manage-lecturer-applications")]
@@ -275,6 +279,21 @@ namespace SkillUp.Controllers
                     message = ex.Message,
                     data = new List<object>()
                 });
+            }
+        }
+
+        [HttpGet("ProfileLecturer/{id}")]
+        public async Task<IActionResult> GetProfile(Guid id)
+        {
+            try
+            {
+                var result = await _lecturerService.GetLecturerProfileAsync(id);
+                return Ok(result);
+            }
+            catch (Exception ex) // Bắt lỗi "Not found" từ Service
+            {
+                // Trong thực tế nên check type exception cụ thể hoặc dùng Middleware
+                return NotFound(new { message = ex.Message });
             }
         }
 
