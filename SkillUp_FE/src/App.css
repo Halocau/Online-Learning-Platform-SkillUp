@@ -224,3 +224,8 @@
 .animate-shimmer {
   animation: shimmer 2s infinite;
 }
+
+.short-editor-wrapper .ck-editor__editable {
+    min-height: 50px !important;
+    max-height: 150px !important;
+}

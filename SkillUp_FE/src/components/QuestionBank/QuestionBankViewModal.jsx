@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, Descriptions, Tag, Image } from "antd";
+import { extractCleanText } from "@/utils/htmlUtils";
 
 const QuestionBankViewModal = ({ open, onClose, questionBankObj }) => {
 
@@ -58,7 +59,7 @@ const QuestionBankViewModal = ({ open, onClose, questionBankObj }) => {
         labelStyle={{ fontWeight: 600, width: "30%" }}
         contentStyle={{ wordBreak: "break-word" }}
       >
-        <Descriptions.Item label="Câu hỏi">{questionBankObj.title}</Descriptions.Item>
+        <Descriptions.Item label="Câu hỏi">{extractCleanText(questionBankObj.title)}</Descriptions.Item>
 
         <Descriptions.Item label="Đáp án">
           {questionBankObj.answers && questionBankObj.answers.length > 0 ? (
@@ -75,7 +76,7 @@ const QuestionBankViewModal = ({ open, onClose, questionBankObj }) => {
                       }
                     >
                       <b>{String.fromCharCode(97 + index)}) </b>
-                      {answer.answerName}
+                      {extractCleanText(answer.answerName)}
                     </span>
 
                     {answer.isCorrect && (
