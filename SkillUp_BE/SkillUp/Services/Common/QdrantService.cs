@@ -1,4 +1,6 @@
+using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 using SkillUp.Configuration;
@@ -10,6 +12,7 @@ namespace SkillUp.Services.Common
         private readonly HttpClient _httpClient;
         private readonly QdrantOptions _options;
         private readonly string _collectionBaseName;
+        private readonly int _defaultVectorSize;
         private string _collectionName;
 
         public QdrantService(IHttpClientFactory httpClientFactory, IOptions<QdrantOptions> options)
@@ -18,7 +21,8 @@ namespace SkillUp.Services.Common
             _collectionBaseName = string.IsNullOrWhiteSpace(_options.Collection)
                 ? "skillup_subtitles"
                 : _options.Collection;
-            _collectionName = _collectionBaseName;
+            _defaultVectorSize = _options.DefaultVectorSize > 0 ? _options.DefaultVectorSize : 3072;
+            _collectionName = BuildCollectionName(_defaultVectorSize);
             _httpClient = httpClientFactory.CreateClient(nameof(QdrantService));
             _httpClient.BaseAddress = new Uri(_options.Endpoint.TrimEnd('/') + "/");
         }
@@ -107,10 +111,13 @@ namespace SkillUp.Services.Common
                 .ToList();
         }
 
-        public async Task<bool> LessonHasVectorsAsync(Guid lessonId, CancellationToken ct = default)
+        public async Task<long> CountVectorsAsync(
+            Guid? lessonId = null,
+            Guid? courseId = null,
+            CancellationToken ct = default)
         {
             var name = _collectionName;
-            var filter = BuildFilter(lessonId, null);
+            var filter = BuildFilter(lessonId, courseId);
             var body = new
             {
                 filter,
@@ -118,15 +125,64 @@ namespace SkillUp.Services.Common
             };
 
             var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/count", body, ct);
+            if (resp.StatusCode == HttpStatusCode.NotFound)
+            {
+                return 0;
+            }
             resp.EnsureSuccessStatusCode();
 
             var result = await resp.Content.ReadFromJsonAsync<QdrantCountResponse>(cancellationToken: ct);
-            return (result?.Result.Count ?? 0) > 0;
+            return result?.Result.Count ?? 0;
+        }
+
+        public async Task<bool> LessonHasVectorsAsync(Guid lessonId, CancellationToken ct = default)
+        {
+            var count = await CountVectorsAsync(lessonId, null, ct);
+            return count > 0;
+        }
+
+        public async Task<IReadOnlyList<QdrantVectorPayload>> GetPayloadSamplesAsync(
+            Guid? lessonId = null,
+            Guid? courseId = null,
+            int limit = 10,
+            CancellationToken ct = default)
+        {
+            var name = _collectionName;
+            var filter = BuildFilter(lessonId, courseId);
+            var clampedLimit = Math.Clamp(limit, 1, 50);
+            var body = new
+            {
+                filter,
+                limit = clampedLimit,
+                with_payload = true,
+                with_vectors = false
+            };
+
+            var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/scroll", body, ct);
+            if (resp.StatusCode == HttpStatusCode.NotFound)
+            {
+                return Array.Empty<QdrantVectorPayload>();
+            }
+            resp.EnsureSuccessStatusCode();
+
+            var result = await resp.Content.ReadFromJsonAsync<QdrantScrollResponse>(cancellationToken: ct)
+                         ?? new QdrantScrollResponse();
+
+            return result.Result.Points
+                .Select(p => new QdrantVectorPayload(
+                    p.Payload.LessonId,
+                    p.Payload.CourseId,
+                    p.Payload.ChunkIndex,
+                    p.Payload.Text,
+                    p.Payload.Source))
+                .OrderBy(p => p.ChunkIndex)
+                .ToList();
         }
 
         private string BuildCollectionName(int vectorSize)
         {
-            return $"{_collectionBaseName}_{vectorSize}";
+            var size = vectorSize > 0 ? vectorSize : _defaultVectorSize;
+            return $"{_collectionBaseName}_{size}";
         }
 
         private static object? BuildFilter(Guid? lessonId, Guid? courseId)
@@ -168,6 +224,24 @@ namespace SkillUp.Services.Common
     internal class QdrantCountResult
     {
         public long Count { get; set; }
+    }
+
+    internal sealed class QdrantScrollResponse
+    {
+        [JsonPropertyName("result")]
+        public QdrantScrollResult Result { get; set; } = new();
+    }
+
+    internal sealed class QdrantScrollResult
+    {
+        [JsonPropertyName("points")]
+        public List<QdrantScrollPoint> Points { get; set; } = new();
+    }
+
+    internal sealed class QdrantScrollPoint
+    {
+        [JsonPropertyName("payload")]
+        public QdrantPayloadDocument Payload { get; set; } = new();
     }
 }
 

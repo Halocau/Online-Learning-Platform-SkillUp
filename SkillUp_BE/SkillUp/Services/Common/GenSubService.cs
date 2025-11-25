@@ -41,6 +41,10 @@ namespace SkillUp.Services.Common
 
             var client = _httpClientFactory.CreateClient(nameof(GenSubService));
             client.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
+            var timeoutSeconds = _options.RequestTimeoutSeconds > 0
+                ? _options.RequestTimeoutSeconds
+                : 1800;
+            client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
             var query = new Dictionary<string, string?>
             {

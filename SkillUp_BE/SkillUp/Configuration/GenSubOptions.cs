@@ -20,6 +20,10 @@ namespace SkillUp.Configuration
         /// </summary>
         public bool AiCorrection { get; set; } = true;
 
+        /// <summary>
+        /// Timeout (in seconds) for GenSub HTTP requests.
+        /// </summary>
+        public int RequestTimeoutSeconds { get; set; } = 1800; // 30 minutes default
     }
 }
 
