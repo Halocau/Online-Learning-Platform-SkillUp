@@ -61,7 +61,34 @@ export const deleteQuestionBank = async (questionBankId) => {
   }
 };
 
-// Get questions by section - FIXED for nested array
+// Get sections with question banks by course ID - NEW API
+export const getSectionsByCourseId = async (courseId) => {
+  try {
+    const res = await axiosInstance.get(
+      `${API_URL}/getByCourseId/${courseId}`
+    );
+    
+    let sections = [];
+
+    if (res.data?.data) {
+      // Handle nested array structure [[sections...]]
+      if (Array.isArray(res.data.data)) {
+        if (res.data.data.length > 0 && Array.isArray(res.data.data[0])) {
+          sections = res.data.data[0];
+        } else {
+          sections = res.data.data;
+        }
+      }
+    }
+
+    return sections;
+  } catch (err) {
+    console.error("Error getting sections:", err);
+    return [];
+  }
+};
+
+// Get questions by section - DEPRECATED (use getSectionsByCourseId instead)
 export const getQuestionsBySection = async (sectionId, courseId) => {
   try {
     const res = await axiosInstance.get(

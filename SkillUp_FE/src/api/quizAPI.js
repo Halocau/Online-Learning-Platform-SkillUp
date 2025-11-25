@@ -161,12 +161,12 @@ export const startQuiz = async (quizId) => {
 export const submitQuiz = async (submissionId, answers) => {
   try {
     const payload = {
-      answers: answers.map(answer => ({
+      answers: answers.map((answer) => ({
         questionId: answer.questionId,
-        selectedAnswerIds: answer.selectedAnswerIds
-      }))
+        selectedAnswerIds: answer.selectedAnswerIds,
+      })),
     };
-    
+
     const res = await axiosInstance.post(
       `${API_URL}/submit/${submissionId}`,
       payload

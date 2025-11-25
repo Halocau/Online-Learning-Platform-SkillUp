@@ -4,7 +4,11 @@ import axiosInstance from "../lib/axios";
 const API_URL = "http://localhost:5120/api/Question";
 const UPLOAD_URL = "http://localhost:5120/api/Upload";
 
-const handleAPIResponse = (res, defaultSuccessMsg = "Thành công!", showToast = true) => {
+const handleAPIResponse = (
+  res,
+  defaultSuccessMsg = "Thành công!",
+  showToast = true
+) => {
   const apiRes = res.data;
   if (apiRes?.code >= 200 && apiRes?.code < 300) {
     if (showToast) {
@@ -27,16 +31,12 @@ const handleAPIError = (
   return null;
 };
 
-// ============================================
-// IMAGE UPLOAD
-// ============================================
-
 // Upload image and get URL
 export const uploadQuestionImage = async (imageFile) => {
   try {
     const formData = new FormData();
     formData.append("file", imageFile);
-    formData.append("image", imageFile); // Some backends use "image"
+    formData.append("image", imageFile);
 
     const res = await axiosInstance.post(`${UPLOAD_URL}/image`, formData, {
       headers: {
@@ -44,16 +44,12 @@ export const uploadQuestionImage = async (imageFile) => {
       },
     });
 
-    // Extract URL from various response formats
     let imageUrl = null;
 
     if (typeof res.data === "string") {
-      // Direct URL string
       imageUrl = res.data;
     } else if (res.data?.data) {
-      // Check if data is an array
       if (Array.isArray(res.data.data)) {
-        // Get first item from array
         if (res.data.data.length > 0) {
           if (typeof res.data.data[0] === "string") {
             imageUrl = res.data.data[0];
@@ -64,7 +60,6 @@ export const uploadQuestionImage = async (imageFile) => {
           }
         }
       } else {
-        // data is not an array
         if (typeof res.data.data === "string") {
           imageUrl = res.data.data;
         } else if (res.data.data.url) {
@@ -100,16 +95,24 @@ export const uploadQuestionImage = async (imageFile) => {
   }
 };
 
-// ============================================
-// QUESTION OPERATIONS
-// ============================================
-
-// Add question to quiz (with optional image)
+// Add question to quiz
 export const addQuestionToQuiz = async (questionData) => {
   try {
+    const formattedAnswers = questionData.answers.map((answer) => ({
+      answerName: answer.answerName,
+      isCorrect: answer.isCorrect,
+      imageUrl: answer.imageUrl || "",
+    }));
+
+    const payload = {
+      ...questionData,
+      answers: formattedAnswers,
+      imageUrl: questionData.imageUrl || "",
+    };
+
     const res = await axiosInstance.post(
       `${API_URL}/AddQuestionToQuiz`,
-      questionData
+      payload
     );
 
     return handleAPIResponse(res, "Thêm câu hỏi thành công!");
@@ -118,17 +121,47 @@ export const addQuestionToQuiz = async (questionData) => {
   }
 };
 
-// Update question
+// Update question - API requires answerId for each answer
 export const updateQuestion = async (questionId, questionData) => {
   try {
+    // Format answers with answerId (required by API)
+    const formattedAnswers = questionData.answers.map((answer) => ({
+      answerId: answer.answerId || answer.id, // Include answerId from original data
+      answerName: answer.answerName,
+      isCorrect: answer.isCorrect,
+      imageUrl: answer.imageUrl || "",
+    }));
+
+    const payload = {
+      quizId: questionData.quizId,
+      title: questionData.title,
+      description: questionData.description,
+      type: questionData.type,
+      imageUrl: questionData.imageUrl || "",
+      answers: formattedAnswers,
+    };
+
     const res = await axiosInstance.put(
       `${API_URL}/UpdateQuestionInQuiz/${questionId}`,
-      questionData
+      payload
     );
     handleAPIResponse(res, "Cập nhật câu hỏi thành công!");
     return res.data;
   } catch (err) {
     return handleAPIError(err, "Không thể cập nhật câu hỏi!");
+  }
+};
+
+// Delete question from quiz - NEW API CALL
+export const deleteQuestionFromQuiz = async (quizId, questionId) => {
+  try {
+    const res = await axiosInstance.delete(
+      `${API_URL}/RemoveQuestionFromQuiz/${quizId}/${questionId}`
+    );
+    handleAPIResponse(res, "Xóa câu hỏi thành công!");
+    return res.data;
+  } catch (err) {
+    return handleAPIError(err, "Không thể xóa câu hỏi!");
   }
 };
 
