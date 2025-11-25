@@ -96,7 +96,8 @@ namespace SkillUp.Services.Implementations
                     QuestionBankId = question.Id,
                     AnswerName = answerDto.AnswerName,
                     IsCorrect = answerDto.IsCorrect,
-                    IsActive = true
+                    IsActive = true,
+                    Image = answerDto.ImageUrl
                 };
                 question.AnswerBanks.Add(answer);
                 newAnswersForDto.Add(answer);
@@ -134,7 +135,8 @@ namespace SkillUp.Services.Implementations
                 {
                     Id = a.Id,
                     AnswerName = a.AnswerName,
-                    IsCorrect = a.IsCorrect
+                    IsCorrect = a.IsCorrect,
+                    Image = a.Image
                 }).ToList()
             };
 

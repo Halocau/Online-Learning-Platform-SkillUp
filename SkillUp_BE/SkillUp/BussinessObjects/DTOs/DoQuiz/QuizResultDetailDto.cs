@@ -26,5 +26,6 @@
         public string AnswerName { get; set; }
         public bool IsCorrect { get; set; }
         public bool WasSelected { get; set; }
+        public string? Image { get; set; }
     }
 }
