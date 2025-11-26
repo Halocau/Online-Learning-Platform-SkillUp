@@ -136,5 +136,25 @@ namespace SkillUp.Services.Implementations
               
             };
         }
+
+        public async Task<bool> UpdateLecturerProfileAsync(Guid accountId, UpdateLecturerProfileDto request)
+        {
+            // 1. Tìm Lecturer theo AccountId
+            var lecturer = await _repository.GetLecturerByAccountIdAsync(accountId);
+
+            if (lecturer == null)
+            {
+                return false; // Không tìm thấy (Tài khoản này chưa là Lecturer)
+            }
+          
+            lecturer.Title = request.Title;
+            lecturer.Profession = request.Profession;
+            lecturer.BankNumber = request.BankNumber;
+            lecturer.BankName = request.BankName;
+            lecturer.ReceiverName = request.ReceiverName;
+
+            await _repository.UpdateAsync(lecturer);
+            return await _repository.SaveChangesAsync();
+        }
     }
 }

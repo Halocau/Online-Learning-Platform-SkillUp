@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.ExceptionHandling;
 using SkillUp.Services.Implementations;
@@ -316,6 +317,63 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateLecturerProfileDto request)
+        {
+            try
+            {
+                // 1. Lấy User ID từ Token
+                var userId = _currentUserService.UserId;
+                if (userId == null)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Unauthorized - Bạn chưa đăng nhập",
+                        data = new List<object>()
+                    });
+                }
 
+                // 2. Validate dữ liệu đầu vào
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                // 3. Gọi Service xử lý
+                var result = await _lecturerService.UpdateLecturerProfileAsync(userId.Value, request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Cập nhật thất bại. Tài khoản này không phải là Giảng viên.",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Cập nhật hồ sơ giảng viên thành công!",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = "Lỗi hệ thống: " + ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }
