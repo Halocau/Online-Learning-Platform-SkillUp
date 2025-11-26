@@ -153,25 +153,6 @@ Lưu ý:
                     && candidates.GetArrayLength() > 0)
                 {
                     var candidate = candidates[0];
-                    
-                    // Check finishReason
-                    if (candidate.TryGetProperty("finishReason", out var finishReason))
-                    {
-                        var reason = finishReason.GetString();
-                        if (reason != "STOP" && reason != null)
-                        {
-                            _logger.LogWarning("Gemini response blocked or incomplete. FinishReason: {FinishReason}", reason);
-                            if (reason == "SAFETY")
-                            {
-                                return "Xin lỗi, câu hỏi của bạn có thể vi phạm chính sách nội dung. Vui lòng thử lại với câu hỏi khác.";
-                            }
-                            if (reason == "MAX_TOKENS")
-                            {
-                                return "Câu trả lời quá dài. Vui lòng hỏi câu hỏi cụ thể hơn.";
-                            }
-                            return "Không thể tạo phản hồi đầy đủ. Vui lòng thử lại.";
-                        }
-                    }
 
                     string? finishReasonText = null;
                     if (candidate.TryGetProperty("finishReason", out var finishReason))
@@ -196,17 +177,6 @@ Lưu ý:
                                 var text = textElement.GetString();
                                 if (!string.IsNullOrWhiteSpace(text))
                                 {
-                                    if (!string.IsNullOrEmpty(finishReasonText) && finishReasonText != "STOP")
-                                    {
-                                        if (finishReasonText == "MAX_TOKENS")
-                                        {
-                                            return $"{text.Trim()}\n\n_(Phản hồi đã được cắt ngắn do vượt giới hạn. Vui lòng hỏi cụ thể hơn nếu cần thêm thông tin.)_";
-                                        }
-
-                                        _logger.LogWarning("Gemini finishReason={FinishReason}", finishReasonText);
-                                        return text.Trim();
-                                    }
-
                                     return text;
                                 }
                             }
