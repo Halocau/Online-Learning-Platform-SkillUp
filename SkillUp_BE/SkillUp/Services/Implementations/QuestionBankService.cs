@@ -97,7 +97,7 @@ namespace SkillUp.Services.Implementations
 					AnswerName = answerDto.AnswerName,
 					IsCorrect = answerDto.IsCorrect,
 					IsActive = true,
-					Image = answerDto.Image
+					Image = answerDto.ImageUrl
 				};
 				questionBank.AnswerBanks.Add(answer);
 			}

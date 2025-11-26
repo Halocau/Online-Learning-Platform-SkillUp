@@ -95,7 +95,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                 return {
                     answerName: ans.answerName,
                     isCorrect: ans.isCorrect,
-                    image: finalAnswerUrl // The string URL (or null)
+                    imageUrl: finalAnswerUrl // The string URL (or null)
                 };
             }));
 
