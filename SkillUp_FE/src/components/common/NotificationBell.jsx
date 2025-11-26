@@ -39,6 +39,7 @@ function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
   const notificationRef = useRef(null);
   const showDropdownRef = useRef(false);
   const navigate = useNavigate();
@@ -48,12 +49,17 @@ function NotificationBell() {
     return notifications.filter((notification) => isNotificationUnread(notification)).length;
   }, [notifications]);
 
+  const visibleNotifications = useMemo(() => {
+    if (!notifications.length) return [];
+    return notifications.slice(0, Math.min(visibleCount, notifications.length));
+  }, [notifications, visibleCount]);
+
   const groupedNotifications = useMemo(() => {
-    if (!notifications.length) {
+    if (!visibleNotifications.length) {
       return { unread: [], read: [] };
     }
 
-    const sorted = [...notifications].sort(
+    const sorted = [...visibleNotifications].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
@@ -61,7 +67,9 @@ function NotificationBell() {
       unread: sorted.filter((notification) => isNotificationUnread(notification)),
       read: sorted.filter((notification) => !isNotificationUnread(notification)),
     };
-  }, [notifications]);
+  }, [visibleNotifications]);
+
+  const hasMoreNotifications = visibleCount < notifications.length;
 
   const fetchNotifications = useCallback(async () => {
     if (!accessToken) {
@@ -83,6 +91,7 @@ function NotificationBell() {
       });
 
       setNotifications(sortNotifications([...uniqueMap.values()]));
+      setVisibleCount(5);
     } catch (error) {
       console.error("Error fetching notifications:", error);
       if (error.response?.status !== 401) {
@@ -235,6 +244,12 @@ function NotificationBell() {
     }
   };
 
+  const handleShowMore = () => {
+    setVisibleCount((prev) =>
+      Math.min(prev + 5, notifications.length)
+    );
+  };
+
   const renderSection = (title, items) => {
     if (!items.length) return null;
 
@@ -318,7 +333,6 @@ function NotificationBell() {
           <div className="flex items-center justify-between gap-3 border-b border-[#272343]/15 px-4 py-3">
             <div>
               <h3 className="text-sm font-semibold text-[#272343]">Thông báo</h3>
-              <p className="text-xs text-[#2d334a]/70">Giữ kết nối giống Facebook.</p>
             </div>
             <button
               onClick={handleMarkAllAsRead}
@@ -348,6 +362,16 @@ function NotificationBell() {
               <div className="pb-3">
                 {renderSection("Mới", groupedNotifications.unread)}
                 {renderSection("Trước đó", groupedNotifications.read)}
+                {hasMoreNotifications && (
+                  <div className="px-4 pt-2">
+                    <button
+                      onClick={handleShowMore}
+                      className="w-full rounded-full border border-[#272343]/20 px-4 py-2 text-sm font-semibold text-[#272343] transition-colors hover:bg-[#e3f6f5]"
+                    >
+                      Xem thêm
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
