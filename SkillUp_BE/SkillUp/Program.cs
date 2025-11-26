@@ -195,6 +195,9 @@ builder.Services.AddScoped<ICommentReportLessonService, CommentReportLessonServi
 builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 
+builder.Services.AddScoped<IReportCourseRepository, ReportCourseRepository>();
+builder.Services.AddScoped<IReportCourseService, ReportCourseService>();
+
 //report post
 builder.Services.AddScoped<IReportPostRepository, ReportPostRepository>();
 builder.Services.AddScoped<IReportPostService, ReportPostService>();

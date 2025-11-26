@@ -48,10 +48,17 @@ namespace SkillUp.Repositories.Implementations
                 .Include(x => x.Account) // Đảm bảo lấy thông tin về Account nếu cần
                 .ToListAsync();
         }
+        //public async Task<Lecturer?> GetLecturerByAccountIdAsync(Guid accountId)
+        //{
+        //    return await _context.Lecturers
+        //         .FirstOrDefaultAsync(l => l.AccountId == accountId);
+        //}
         public async Task<Lecturer?> GetLecturerByAccountIdAsync(Guid accountId)
         {
             return await _context.Lecturers
-                 .FirstOrDefaultAsync(l => l.AccountId == accountId);
+                .AsNoTracking()
+                .Include(x => x.Account)
+                .FirstOrDefaultAsync(x => x.AccountId == accountId);
         }
 
         public async Task<Lecturer?> GetLecturerByIdAsync(Guid lecturerId)
@@ -64,10 +71,12 @@ namespace SkillUp.Repositories.Implementations
         public async Task<Lecturer?> GetLecturerProfileByAccountAsync(Guid accId)
         {
             return await _context.Lecturers
-                .Include(l => l.Account) 
-                .Include(l => l.Courses.Where(c => c.IsActive && c.Status == "Public")) 
+                .Include(l => l.Account)
+                .Include(l => l.Courses.Where(c => c.IsActive && c.Status == "Public"))
                     .ThenInclude(c => c.SubCategory)
                 .FirstOrDefaultAsync(l => l.AccountId == accId);
         }
+
+
     }
 }

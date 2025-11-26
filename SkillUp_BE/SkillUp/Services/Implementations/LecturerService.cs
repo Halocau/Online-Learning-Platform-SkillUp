@@ -87,7 +87,7 @@ namespace SkillUp.Services.Implementations
             }).ToList();
         }
 
-   
+
 
         // Cập nhật thông tin Lecturer sau khi thay đổi trạng thái đơn ứng tuyển
         public async Task<bool> UpdateLecturerInfoAsync(Guid? accountId, string? title, string? profession)
@@ -114,24 +114,27 @@ namespace SkillUp.Services.Implementations
             return await _lecturerRepository.SaveChangesAsync();
         }
 
-        public async Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId)
+        public async Task<LecturerProfileDto?> GetProfileByAccountIdAsync(Guid accountId)
         {
-            var lecturer = await _repository.GetLecturerByIdAsync(lecturerId);
+            // 1. Lấy Entity từ Repository
+            var lecturer = await _repository.GetLecturerByAccountIdAsync(accountId);
 
+            // 2. Nếu không tìm thấy (Account đó không phải là Lecturer)
             if (lecturer == null)
             {
-                throw new Exception("Lecturer not found"); // Hoặc sử dụng Custom Exception
+                return null;
             }
 
-            // Mapping thủ công từ Entity sang DTO
-            // (Có thể dùng AutoMapper nếu project có cài đặt)
-            return new LecturerProfileResponse
+            // 3. Map sang DTO
+            return new LecturerProfileDto
             {
                 Title = lecturer.Title,
                 Profession = lecturer.Profession,
                 BankNumber = lecturer.BankNumber,
                 BankName = lecturer.BankName,
                 ReceiverName = lecturer.ReceiverName
+
+
             };
         }
         public async Task<LecturerProfilePageDto> GetLecturerPublicProfileAsync(Guid accId)
@@ -185,6 +188,25 @@ namespace SkillUp.Services.Implementations
                     LecturerName = lecturer.Account.Fullname,
                 }).ToList()
             };
+        }
+        public async Task<bool> UpdateLecturerProfileAsync(Guid accountId, UpdateLecturerProfileDto request)
+        {
+            // 1. Tìm Lecturer theo AccountId
+            var lecturer = await _repository.GetLecturerByAccountIdAsync(accountId);
+
+            if (lecturer == null)
+            {
+                return false; // Không tìm thấy (Tài khoản này chưa là Lecturer)
+            }
+
+            lecturer.Title = request.Title;
+            lecturer.Profession = request.Profession;
+            lecturer.BankNumber = request.BankNumber;
+            lecturer.BankName = request.BankName;
+            lecturer.ReceiverName = request.ReceiverName;
+
+            await _repository.UpdateAsync(lecturer);
+            return await _repository.SaveChangesAsync();
         }
     }
 }
