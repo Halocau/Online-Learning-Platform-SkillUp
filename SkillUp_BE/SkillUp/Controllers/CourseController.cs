@@ -498,12 +498,17 @@ namespace SkillUp.Controllers
                 {
                     code = 200,
                     message = "Lấy chi tiết học tập của khóa học thành công",
-                    data = new List<object> { courseDetails }
+                    data = new List<object> { new {accountId = accountId.Value, courseDetails } }
                 });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
