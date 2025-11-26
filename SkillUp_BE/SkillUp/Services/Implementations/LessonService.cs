@@ -5,6 +5,7 @@ using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
+using SkillUp.Services.Rag.Subtitle;
 using System.ComponentModel.DataAnnotations;
 
 namespace SkillUp.Services.Implementations
@@ -19,6 +20,8 @@ namespace SkillUp.Services.Implementations
         private readonly CloudinaryService _cloudinaryService;
         private readonly IStudentRepository _studentRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
+        private readonly QdrantService _qdrantService;
+        private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
         public LessonService(
             ILessonRepository lessonRepository,
             ISectionRepository sectionRepository,
@@ -27,7 +30,9 @@ namespace SkillUp.Services.Implementations
             FtpVideoUploadService ftpVideoUploadService,
             CloudinaryService cloudinaryService,
             IStudentRepository studentRepository,
-            IStudentProgressRepository studentProgressRepository)
+            IStudentProgressRepository studentProgressRepository,
+            QdrantService qdrantService,
+            IAiSupportBackgroundJobService aiSupportBackgroundJobService)
         {
             _lessonRepository = lessonRepository;
             _sectionRepository = sectionRepository;
@@ -37,6 +42,8 @@ namespace SkillUp.Services.Implementations
             _cloudinaryService = cloudinaryService;
             _studentRepository = studentRepository;
             _studentProgressRepository = studentProgressRepository;
+            _qdrantService = qdrantService;
+            _aiSupportBackgroundJobService = aiSupportBackgroundJobService;
         }
 
         public async Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync()
@@ -243,6 +250,7 @@ namespace SkillUp.Services.Implementations
 
             // 4. Update asset
             var asset = lesson.Assets.FirstOrDefault();
+            var videoChanged = false;
             if (asset != null)
             {
                 if (lesson.Type == "Video" && dto.VideoFile != null)
@@ -256,6 +264,7 @@ namespace SkillUp.Services.Implementations
                     // Upload video mới lên VPS qua FTP
                     var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
                     asset.Url = videoUrl;
+                    videoChanged = true;
                 }
                 else if (lesson.Type == "Text" && !string.IsNullOrEmpty(dto.Content))
                 {
@@ -277,6 +286,23 @@ namespace SkillUp.Services.Implementations
             if (!saved)
             {
                 throw new Exception("Không thể cập nhật bài học!");
+            }
+
+            if (videoChanged)
+            {
+                try
+                {
+                    await _qdrantService.DeleteVectorsByLessonAsync(lesson.Id);
+                }
+                catch
+                {
+                    // ignore cleanup failures to avoid blocking lesson update
+                }
+
+                if (course.IsAiSupport == true)
+                {
+                    await _aiSupportBackgroundJobService.TriggerLessonSubtitleJobAsync(lesson.Id, force: true);
+                }
             }
 
             var updatedLesson = await _lessonRepository.GetLessonWithDetailsAsync(id);

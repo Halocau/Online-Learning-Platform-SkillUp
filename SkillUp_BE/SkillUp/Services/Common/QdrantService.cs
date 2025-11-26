@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
@@ -140,6 +141,38 @@ namespace SkillUp.Services.Common
             var count = await CountVectorsAsync(lessonId, null, ct);
             return count > 0;
         }
+
+        public async Task DeleteVectorsAsync(
+            Guid? lessonId = null,
+            Guid? courseId = null,
+            CancellationToken ct = default)
+        {
+            var filter = BuildFilter(lessonId, courseId);
+            if (filter is null)
+            {
+                throw new ArgumentException("At least lessonId or courseId must be provided to delete vectors.");
+            }
+
+            var name = _collectionName;
+            var body = new
+            {
+                filter,
+                wait = true
+            };
+
+            var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/delete", body, ct);
+            if (resp.StatusCode == HttpStatusCode.NotFound)
+            {
+                return;
+            }
+            resp.EnsureSuccessStatusCode();
+        }
+
+        public Task DeleteVectorsByLessonAsync(Guid lessonId, CancellationToken ct = default)
+            => DeleteVectorsAsync(lessonId: lessonId, courseId: null, ct: ct);
+
+        public Task DeleteVectorsByCourseAsync(Guid courseId, CancellationToken ct = default)
+            => DeleteVectorsAsync(lessonId: null, courseId: courseId, ct: ct);
 
         public async Task<IReadOnlyList<QdrantVectorPayload>> GetPayloadSamplesAsync(
             Guid? lessonId = null,
