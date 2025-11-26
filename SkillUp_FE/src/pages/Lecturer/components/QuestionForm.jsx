@@ -163,7 +163,7 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
   };
 
   const handleAddAnswer = () => {
-    if (questionData.answers.length < 6) {
+    if (questionData.answers.length < 7) {
       setQuestionData({
         ...questionData,
         answers: [

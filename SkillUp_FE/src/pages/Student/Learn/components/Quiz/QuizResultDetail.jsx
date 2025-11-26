@@ -119,13 +119,6 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                       </span>
                     </div>
                   </div>
-
-                  {/* <button
-                    onClick={handleClose}
-                    className="p-2 hover:bg-[#e3f6f5] rounded-lg transition-colors border border-[#272343]/20"
-                  >
-                    <X className="w-5 h-5 text-[#272343]" />
-                  </button> */}
                 </div>
               </div>
             </header>
@@ -350,7 +343,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                   </div>
 
                                   <div className="px-4 sm:px-5 py-4 space-y-4">
-                                    {/* Question text - NOW USING CLEAN TEXT */}
+                                    {/* Question text */}
                                     <div className="text-sm text-[#2d334a] leading-relaxed">
                                       <p className="text-base text-[#272343]">
                                         {cleanQuestionTitle}
@@ -362,11 +355,11 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                       <img
                                         src={question.image}
                                         alt="Question"
-                                        className="w-full max-w-md rounded-lg"
+                                        className="w-full max-w-md rounded-lg border border-[#272343]/20"
                                       />
                                     )}
 
-                                    {/* Answers with 4 states - NOW USING CLEAN TEXT */}
+                                    {/* Answers with images */}
                                     <div className="space-y-2">
                                       {question.allAnswers.map((answer) => {
                                         const isSelected = answer.wasSelected;
@@ -447,6 +440,16 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                               >
                                                 {cleanAnswerText}
                                               </p>
+                                              
+                                              {/* Answer image */}
+                                              {answer.image && (
+                                                <img
+                                                  src={answer.image}
+                                                  alt="Answer option"
+                                                  className="mt-2 w-full max-w-xs rounded-lg border border-[#272343]/20 object-contain max-h-48"
+                                                />
+                                              )}
+
                                               {isSelected && (
                                                 <p
                                                   className={cn(
@@ -476,29 +479,6 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                         );
                                       })}
                                     </div>
-
-                                    {/* Show explanation for wrong answers
-                                    {!isCorrect && (
-                                      <div className="mt-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-3 py-3">
-                                        <div className="flex items-start gap-2">
-                                          <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                                          <div>
-                                            <p className="text-sm font-semibold text-amber-900">
-                                              {question.type === "MultiChoice"
-                                                ? "Các đáp án đúng"
-                                                : "Đáp án đúng"}
-                                            </p>
-                                            <p className="mt-1 text-sm text-amber-800 leading-relaxed">
-                                              <span className="font-semibold">
-                                                {correctAnswers
-                                                  .map((a) => extractCleanText(a.answerName, 200))
-                                                  .join(", ")}
-                                              </span>
-                                            </p>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )} */}
                                   </div>
                                 </>
                               );

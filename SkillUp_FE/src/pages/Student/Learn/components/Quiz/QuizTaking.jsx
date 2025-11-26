@@ -188,7 +188,7 @@ const QuizTakingPage = () => {
   const isMultiple = currentQuestion.type === "MultiChoice";
   const selectedAnswers = answers[currentQuestion.questionId] || [];
 
-  // Clean the question title and answers
+  // Clean the question title
   const cleanQuestionTitle = extractCleanText(currentQuestion.title, 500);
 
   return (
@@ -324,7 +324,7 @@ const QuizTakingPage = () => {
                 <div className="h-1 w-20 bg-[#ffd803] rounded"></div>
               </div>
 
-              {/* Question content - NOW USING CLEAN TEXT */}
+              {/* Question content */}
               <div className="mb-6">
                 <p className="text-lg text-[#272343] leading-relaxed">
                   {cleanQuestionTitle}
@@ -340,7 +340,7 @@ const QuizTakingPage = () => {
                 />
               )}
 
-              {/* Answers - NOW USING CLEAN TEXT */}
+              {/* Answers with images */}
               <div className="space-y-3">
                 {currentQuestion.answers.map((answer) => {
                   const isSelected = selectedAnswers.includes(answer.answerId);
@@ -366,11 +366,11 @@ const QuizTakingPage = () => {
                           : "border-[#272343]/20 hover:border-[#272343]/40 bg-[#fffffe]"
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-3">
                         {/* Radio/Checkbox */}
                         <div
                           className={cn(
-                            "flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+                            "flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5",
                             isSelected
                               ? "border-[#272343] bg-[#ffd803]"
                               : "border-[#272343]/40"
@@ -381,10 +381,22 @@ const QuizTakingPage = () => {
                           )}
                         </div>
 
-                        {/* Answer text - CLEAN TEXT */}
-                        <span className="text-[#272343] flex-1 font-medium">
-                          {cleanAnswerText}
-                        </span>
+                        {/* Answer content */}
+                        <div className="flex-1">
+                          {/* Answer text */}
+                          <span className="text-[#272343] font-medium block">
+                            {cleanAnswerText}
+                          </span>
+
+                          {/* Answer image */}
+                          {answer.image && (
+                            <img
+                              src={answer.image}
+                              alt="Answer option"
+                              className="mt-3 w-full max-w-xs rounded-lg border border-[#272343]/20 object-contain max-h-48"
+                            />
+                          )}
+                        </div>
                       </div>
                     </button>
                   );
@@ -392,7 +404,7 @@ const QuizTakingPage = () => {
               </div>
             </div>
 
-            {/* Navigation buttons - OUTSIDE the box, aligned with it */}
+            {/* Navigation buttons */}
             <div className="mt-6 flex items-center gap-2">
               <button
                 onClick={handlePrev}
