@@ -55,7 +55,7 @@ function AppRouter() {
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/courses/:categoryId" element={<CoursesByCategory />} />
           <Route path="/my-courses" element={<MyCourses />} />
-          <Route path="/lecturer/:accountId" element={<LecturerProfile />} />
+           <Route path="/lecturer-info/:accountId" element={<LecturerProfile />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />

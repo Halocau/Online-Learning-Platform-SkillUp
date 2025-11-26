@@ -15,7 +15,7 @@ export default function LecturerSection({ lecturer, rating, enrollmentCount }) {
       </h2>
       <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-[#e5e7eb] bg-[#fffffe] p-4 sm:flex-row sm:p-5">
         <Link 
-          to={`/lecturer/${accId}`}
+          to={`/lecturer-info/${accId}`}
           className="flex items-center sm:block group"
         >
           <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-[#FFD54F] via-[#ffecb3] to-[#e3f6f5] ring-2 ring-[#fffffe] shadow-sm overflow-hidden group-hover:ring-[#FFD54F] transition-all">
@@ -31,7 +31,7 @@ export default function LecturerSection({ lecturer, rating, enrollmentCount }) {
         
         <div className="space-y-1 flex-1">
           <Link 
-            to={`/lecturer/${accId}`}
+            to={`/lecturer-info/${accId}`}
             className="text-base font-semibold tracking-tight text-[#272343] hover:text-[#FFD54F] transition-colors inline-block"
           >
             {lecturer.fullName}
