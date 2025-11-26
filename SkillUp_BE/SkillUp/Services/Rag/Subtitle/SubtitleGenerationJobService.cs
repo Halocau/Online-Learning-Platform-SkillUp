@@ -34,6 +34,11 @@ namespace SkillUp.Services.Rag.Subtitle
             bool force = false,
             CancellationToken ct = default)
         {
+            _logger.LogInformation(
+                "SubtitleGenerationJobService: Starting job for lesson {LessonId} (force={Force})",
+                lessonId,
+                force);
+
             var lesson = await _lessonRepository.GetLessonWithDetailsAsync(lessonId)
                          ?? throw new KeyNotFoundException($"Lesson {lessonId} not found.");
 
@@ -104,6 +109,11 @@ namespace SkillUp.Services.Rag.Subtitle
         {
             try
             {
+                _logger.LogInformation(
+                    "Starting subtitle generation for lesson {LessonId} (Video: {VideoUrl})",
+                    lesson.Id,
+                    videoAsset.Url);
+
                 var genSubStart = DateTime.UtcNow;
                 var subtitlePayload = await _genSubService.GenerateFromUrlAsync(
                     videoAsset.Url!,
@@ -112,12 +122,20 @@ namespace SkillUp.Services.Rag.Subtitle
                     cancellationToken: ct);
                 var genSubDuration = DateTime.UtcNow - genSubStart;
 
+                _logger.LogInformation(
+                    "GenSub completed for lesson {LessonId} in {Duration}ms. Starting Qdrant indexing...",
+                    lesson.Id,
+                    genSubDuration.TotalMilliseconds);
+
                 var subtitleText = !string.IsNullOrEmpty(subtitlePayload.TextContent)
                     ? subtitlePayload.TextContent
                     : Encoding.UTF8.GetString(subtitlePayload.Data ?? Array.Empty<byte>());
 
                 if (string.IsNullOrWhiteSpace(subtitleText))
                 {
+                    _logger.LogWarning(
+                        "Generated subtitle text is empty for lesson {LessonId}",
+                        lesson.Id);
                     return new SubtitleGenerationJobResult
                     {
                         LessonId = lesson.Id,
@@ -129,6 +147,12 @@ namespace SkillUp.Services.Rag.Subtitle
                     };
                 }
 
+                _logger.LogInformation(
+                    "Subtitle text received for lesson {LessonId} ({TextLength} chars). Starting Qdrant indexing...",
+                    lesson.Id,
+                    subtitleText.Length);
+
+                var indexStart = DateTime.UtcNow;
                 var indexResult = await _subtitleService.IndexLessonAsync(
                     new SubtitleIndexRequest
                     {
@@ -139,6 +163,14 @@ namespace SkillUp.Services.Rag.Subtitle
                         SourceVideoUrl = videoAsset.Url
                     },
                     ct);
+                var indexDuration = DateTime.UtcNow - indexStart;
+
+                _logger.LogInformation(
+                    "Successfully indexed {ChunkCount} chunks into Qdrant for lesson {LessonId} in {Duration}ms. Total time: {TotalDuration}ms",
+                    indexResult.ChunkCount,
+                    lesson.Id,
+                    indexDuration.TotalMilliseconds,
+                    (genSubDuration + indexDuration).TotalMilliseconds);
 
                 return new SubtitleGenerationJobResult
                 {
@@ -153,7 +185,11 @@ namespace SkillUp.Services.Rag.Subtitle
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to generate subtitle for lesson {LessonId}", lesson.Id);
+                _logger.LogError(
+                    ex,
+                    "Failed to generate subtitle for lesson {LessonId} (Video: {VideoUrl})",
+                    lesson.Id,
+                    videoAsset.Url);
                 return new SubtitleGenerationJobResult
                 {
                     LessonId = lesson.Id,

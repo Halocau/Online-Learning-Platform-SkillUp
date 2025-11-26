@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 using SkillUp.BussinessObjects.DTOs.Subtitle;
@@ -12,21 +13,27 @@ namespace SkillUp.Services.Rag.Subtitle
         private readonly RagOptions _ragOptions;
         private readonly QdrantService _qdrantService;
         private readonly IEmbeddingProvider _embeddingProvider;
+        private readonly ILogger<SubtitleService> _logger;
 
         public SubtitleService(
             IOptions<RagOptions> ragOptions,
             QdrantService qdrantService,
-            IEmbeddingProvider embeddingProvider)
+            IEmbeddingProvider embeddingProvider,
+            ILogger<SubtitleService> logger)
         {
             _ragOptions = ragOptions.Value ?? new RagOptions();
             _qdrantService = qdrantService;
             _embeddingProvider = embeddingProvider;
+            _logger = logger;
         }
 
         public async Task<SubtitleIndexResult> IndexLessonAsync(SubtitleIndexRequest request, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(request.SubtitleText))
             {
+                _logger.LogWarning(
+                    "Subtitle text is empty for lesson {LessonId}. Skipping indexing.",
+                    request.LessonId);
                 return new SubtitleIndexResult
                 {
                     LessonId = request.LessonId,
@@ -34,11 +41,25 @@ namespace SkillUp.Services.Rag.Subtitle
                 };
             }
 
+            _logger.LogInformation(
+                "Starting indexing for lesson {LessonId}. Text length: {TextLength} chars",
+                request.LessonId,
+                request.SubtitleText.Length);
+
+            var chunkStart = DateTime.UtcNow;
             var chunks = SubtitleChunker
                 .Chunk(request.SubtitleText, _ragOptions)
                 .ToList();
+            var chunkDuration = DateTime.UtcNow - chunkStart;
+
+            _logger.LogInformation(
+                "Chunked subtitle text for lesson {LessonId} into {ChunkCount} chunks in {Duration}ms",
+                request.LessonId,
+                chunks.Count,
+                chunkDuration.TotalMilliseconds);
 
             var vectors = new List<QdrantVectorPoint>();
+            var embeddingStart = DateTime.UtcNow;
 
             foreach (var chunk in chunks)
             {
@@ -56,9 +77,25 @@ namespace SkillUp.Services.Rag.Subtitle
                 vectors.Add(new QdrantVectorPoint(Guid.NewGuid().ToString(), vector, payload));
             }
 
+            var embeddingDuration = DateTime.UtcNow - embeddingStart;
+            _logger.LogInformation(
+                "Generated embeddings for {ChunkCount} chunks for lesson {LessonId} in {Duration}ms",
+                vectors.Count,
+                request.LessonId,
+                embeddingDuration.TotalMilliseconds);
+
             if (vectors.Count > 0)
             {
+                var upsertStart = DateTime.UtcNow;
                 await _qdrantService.UpsertAsync(vectors, ct);
+                var upsertDuration = DateTime.UtcNow - upsertStart;
+
+                _logger.LogInformation(
+                    "Indexed {ChunkCount} chunks into Qdrant for lesson {LessonId} in {Duration}ms. Total indexing time: {TotalDuration}ms",
+                    vectors.Count,
+                    request.LessonId,
+                    upsertDuration.TotalMilliseconds,
+                    (chunkDuration + embeddingDuration + upsertDuration).TotalMilliseconds);
             }
 
             return new SubtitleIndexResult

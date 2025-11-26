@@ -43,12 +43,34 @@ namespace SkillUp.Services.Rag.Subtitle
             Guid? courseId,
             Guid? lessonId)
         {
+            var jobId = Guid.NewGuid();
+            var identifier = courseId.HasValue 
+                ? $"course {courseId.Value}" 
+                : lessonId.HasValue 
+                    ? $"lesson {lessonId.Value}" 
+                    : "unknown";
+
+            _logger.LogInformation(
+                "Queueing background subtitle job [{JobId}] for {Identifier}",
+                jobId,
+                identifier);
+
             _ = Task.Run(async () =>
             {
                 try
                 {
+                    _logger.LogInformation(
+                        "Background subtitle job [{JobId}] for {Identifier} started",
+                        jobId,
+                        identifier);
+
                     using var scope = _scopeFactory.CreateScope();
                     await work(scope);
+
+                    _logger.LogInformation(
+                        "Background subtitle job [{JobId}] for {Identifier} completed successfully",
+                        jobId,
+                        identifier);
                 }
                 catch (Exception ex)
                 {
@@ -56,19 +78,24 @@ namespace SkillUp.Services.Rag.Subtitle
                     {
                         _logger.LogError(
                             ex,
-                            "Background subtitle job failed for course {CourseId}",
+                            "Background subtitle job [{JobId}] failed for course {CourseId}",
+                            jobId,
                             courseId.Value);
                     }
                     else if (lessonId.HasValue)
                     {
                         _logger.LogError(
                             ex,
-                            "Background subtitle job failed for lesson {LessonId}",
+                            "Background subtitle job [{JobId}] failed for lesson {LessonId}",
+                            jobId,
                             lessonId.Value);
                     }
                     else
                     {
-                        _logger.LogError(ex, "Background subtitle job failed.");
+                        _logger.LogError(
+                            ex,
+                            "Background subtitle job [{JobId}] failed",
+                            jobId);
                     }
                 }
             });
