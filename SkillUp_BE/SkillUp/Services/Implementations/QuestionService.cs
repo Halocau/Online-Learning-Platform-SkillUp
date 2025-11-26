@@ -40,7 +40,14 @@ namespace SkillUp.Services.Implementations
             {
                 throw new Exception("Quiz không tồn tại");
             }
-
+            if (createQuestionDTO.Answers.Count > 7)
+            {
+                throw new Exception("Số lượng câu trả lời không được vượt quá 7 câu.");
+            }
+            if (createQuestionDTO.Answers.Count < 2)
+            {
+                throw new Exception("Một câu hỏi phải có ít nhất 2 câu trả lời.");
+            }
             if (string.IsNullOrWhiteSpace(createQuestionDTO.Type))
             {
                 throw new Exception("Loại câu hỏi (Type) không được để trống.");
@@ -273,7 +280,14 @@ namespace SkillUp.Services.Implementations
 
             var link = await _questionQuizRepository.GetLinkAsync(dto.QuizId, oldQuestionId);
             if (link == null) throw new Exception("Không tìm thấy câu hỏi này trong quiz hiện tại.");
-
+            if (dto.Answers.Count > 7)
+            {
+                throw new Exception("Số lượng câu trả lời không được vượt quá 7 câu.");
+            }
+            if (dto.Answers.Count < 2)
+            {
+                throw new Exception("Một câu hỏi phải có ít nhất 2 câu trả lời.");
+            }
             int correctAnswersCount = dto.Answers.Count(a => a.IsCorrect == true);
             if (dto.Type == "SingleChoice" && correctAnswersCount != 1) throw new Exception("Câu hỏi chọn 1 (SingleChoice) phải có đúng 1 đáp án đúng.");
             if (dto.Type == "MultiChoice" && correctAnswersCount == 0) throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
