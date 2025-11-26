@@ -1,17 +1,24 @@
 // src/components/course-detail/LecturerSection.jsx
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Users, PlayCircle, GraduationCap } from "lucide-react";
 
 export default function LecturerSection({ lecturer, rating, enrollmentCount }) {
+  // Chỉ lấy accountId
+  const accId = lecturer?.accountId;
+  
   return (
     <section aria-labelledby="lecturer-section">
       <h2 id="lecturer-section" className="text-xl sm:text-2xl font-semibold tracking-tight text-[#272343]">
         Giảng viên
       </h2>
       <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-[#e5e7eb] bg-[#fffffe] p-4 sm:flex-row sm:p-5">
-        <div className="flex items-center sm:block">
-          <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-[#FFD54F] via-[#ffecb3] to-[#e3f6f5] ring-2 ring-[#fffffe] shadow-sm overflow-hidden">
+        <Link 
+          to={`/lecturer/${accId}`}
+          className="flex items-center sm:block group"
+        >
+          <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-[#FFD54F] via-[#ffecb3] to-[#e3f6f5] ring-2 ring-[#fffffe] shadow-sm overflow-hidden group-hover:ring-[#FFD54F] transition-all">
             {lecturer.avartar ? (
               <img src={lecturer.avartar} alt={lecturer.fullName} className="w-full h-full object-cover" />
             ) : (
@@ -20,11 +27,15 @@ export default function LecturerSection({ lecturer, rating, enrollmentCount }) {
               </div>
             )}
           </div>
-        </div>
+        </Link>
+        
         <div className="space-y-1 flex-1">
-          <div className="text-base font-semibold tracking-tight text-[#272343]">
+          <Link 
+            to={`/lecturer/${accId}`}
+            className="text-base font-semibold tracking-tight text-[#272343] hover:text-[#FFD54F] transition-colors inline-block"
+          >
             {lecturer.fullName}
-          </div>
+          </Link>
           <div className="text-sm text-[#6b7280]">
             {lecturer.profession || "Frontend Engineer · 8+ năm kinh nghiệm"}
           </div>
