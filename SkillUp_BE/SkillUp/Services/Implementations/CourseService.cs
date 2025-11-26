@@ -311,135 +311,13 @@ namespace SkillUp.Services.Implementations
 			}).ToList();
 		}
 
-		public async Task<CourseDetailDto?> GetCourseDetailsAsync(Guid courseId)
+        public async Task<CourseDetailDto?> GetCourseDetailsAsync(Guid courseId)
 		{
 			var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
 			if (course == null) return null;
 
-			// Lấy StudentId từ current user (nếu có)
-			Guid? studentId = null;
-			Dictionary<Guid, bool?> progressDict = new Dictionary<Guid, bool?>();
-			var accountId = _currentUserService.UserId;
-			if (accountId.HasValue)
-			{
-				var student = await _studentRepository.GetByAccountIdAsync(accountId.Value);
-				if (student != null)
-				{
-					studentId = student.Id;
-					// Lấy tất cả progress của student cho course này
-					progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
-				}
-			}
-
-			var detail = new CourseDetailDto
-			{
-				Id = course.Id,
-				Title = course.Title,
-				Description = course.Description,
-				Price = course.Price,
-				Image = course.Image,
-				EnrollmentCount = course.EnrollmentCount,
-				Rating = (double)(course.Rating ?? 0),
-				Status = course.Status,
-				IsActive = course.IsActive,
-				CreatedAt = course.CreatedAt,
-				UpdatedAt = course.UpdatedAt,
-				categoryId = course.SubCategory?.CategoryId ?? 0,
-				subCategoryId = course.SubCategoryId,
-				CategoryName = course.SubCategory?.Category?.Name ?? "",
-				SubCategoryName = course.SubCategory?.Name ?? "",
-				Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
-				{
-					FullName = course.Lecturer.Account?.Fullname ?? "",
-					Avartar = course.Lecturer.Account?.Avatar ?? "default-avatar.png",
-					Title = course.Lecturer.Title ?? "",
-					Profession = course.Lecturer.Profession ?? ""
-				} : null
-			};
-
-            detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
-            {
-                // Map Lesson -> SectionItemDto (CÓ Assets)
-                // Only include active lessons and their active assets
-                var lessonItems = section.Lessons
-                    .Where(l => l.IsActive)
-                    .Select(l => new SectionItemDto
-                    {
-                        Kind = "Lesson",
-                        Id = l.Id,
-                        Orders = (double)l.Orders,
-                        Title = l.Title,
-                        Description = l.Description,
-                        LessonType = l.Type,                 // "Video" | "Text"
-                        IsFree = l.IsFree ?? false,
-                        IsCompleted = progressDict.ContainsKey(l.Id) ? progressDict[l.Id] : null,
-                        Assets = l.Assets?
-                            .Where(a => a.IsActive)
-                            .Select(a => new AssetCourseDetailDto
-                            {
-                                Url = a.Url ?? "default-url",
-                                Content = a.Contents ?? "No content",
-                                FileUrl = a.FileUrl ?? "default-file-url"
-                            })
-                            .ToList() ?? new List<AssetCourseDetailDto>(),
-                        CreatedAt = l.CreatedAt,
-                        UpdatedAt = l.UpdatedAt
-                    });
-
-				// Map Quiz -> SectionItemDto (KHÔNG có Assets)
-				// Only include active quizzes
-				var quizItems = section.Quizzes
-					.Where(q => q.IsActive)
-					.Select(q =>
-					{
-						// Tìm Submission có EndedAt gần nhất của student hiện tại (nếu có)
-						Guid? quizSubmissionId = null;
-						if (studentId.HasValue)
-						{
-							var latestSubmission = q.QuizSubmissions
-								.Where(s => s.StudentId == studentId.Value && s.EndedAt != null)
-								.OrderByDescending(s => s.EndedAt)
-								.FirstOrDefault();
-							quizSubmissionId = latestSubmission?.Id;
-						}
-
-						return new SectionItemDto
-						{
-							Kind = "Quiz",
-							Id = q.Id,
-							Orders = (double)q.Orders,
-							Title = q.Title,
-							Description = q.Description,
-							PassPercent = q.PassPercent,
-							Timer = q.Timer,
-                            QuizSubmissionId = quizSubmissionId,
-							IsCompleted = progressDict.ContainsKey(q.Id) ? progressDict[q.Id] : null,
-							CreatedAt = q.CreatedAt,
-							UpdatedAt = q.UpdatedAt
-						};
-					});
-
-				// Gộp & sort tăng dần theo Orders
-				var items = lessonItems
-					.Concat(quizItems)
-					.OrderBy(i => i.Orders)
-					.ThenBy(i => i.Kind) // tie-break nếu Orders trùng
-					.ToList();
-
-				return new SectionCourseDetailDto
-				{
-					Id = section.Id,
-					Orders = (double)section.Orders,
-					Title = section.Title,
-					Description = section.Description,
-					CreatedAt = section.CreatedAt,
-					UpdatedAt = section.UpdatedAt,
-					Items = items
-				};
-			}).OrderBy(i => i.Orders)
-			  .ToList();
-
-			return detail;
+			// Public detail không cần progress
+			return BuildCourseDetailDto(course, null, null, includeProgress: false);
 		}
 		public async Task<CategoryPageDto> GetCategoryPageAsync(int categoryId)
 		{
@@ -693,11 +571,136 @@ namespace SkillUp.Services.Implementations
                 throw new UnauthorizedAccessException("Bạn chưa đăng ký khóa học này.");
             }
 
-            var detail = await GetCourseDetailsAsync(courseId);
-            if (detail == null)
+            var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+            if (course == null)
             {
                 throw new Exception("Không tìm thấy khóa học.");
             }
+
+            var progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
+
+            return BuildCourseDetailDto(course, student.Id, progressDict, includeProgress: true);
+        }
+
+        private CourseDetailDto BuildCourseDetailDto(
+            Course course,
+            Guid? studentId,
+            Dictionary<Guid, bool?>? progressDict,
+            bool includeProgress)
+        {
+            progressDict ??= new Dictionary<Guid, bool?>();
+
+            var detail = new CourseDetailDto
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                Price = course.Price,
+                Image = course.Image,
+                EnrollmentCount = course.EnrollmentCount,
+                Rating = (double)(course.Rating ?? 0),
+                Status = course.Status,
+                IsActive = course.IsActive,
+                CreatedAt = course.CreatedAt,
+                UpdatedAt = course.UpdatedAt,
+                categoryId = course.SubCategory?.CategoryId ?? 0,
+                subCategoryId = course.SubCategoryId,
+                CategoryName = course.SubCategory?.Category?.Name ?? "",
+                SubCategoryName = course.SubCategory?.Name ?? "",
+                Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
+                {
+                    FullName = course.Lecturer.Account?.Fullname ?? "",
+                    Avartar = course.Lecturer.Account?.Avatar ?? "default-avatar.png",
+                    Title = course.Lecturer.Title ?? "",
+                    Profession = course.Lecturer.Profession ?? ""
+                } : null
+            };
+
+            detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
+            {
+                // Map Lesson -> SectionItemDto (CÓ Assets)
+                // Only include active lessons and their active assets
+                var lessonItems = section.Lessons
+                    .Where(l => l.IsActive)
+                    .Select(l => new SectionItemDto
+                    {
+                        Kind = "Lesson",
+                        Id = l.Id,
+                        Orders = (double)l.Orders,
+                        Title = l.Title,
+                        Description = l.Description,
+                        LessonType = l.Type,                 // "Video" | "Text"
+                        IsFree = l.IsFree ?? false,
+                        IsCompleted = includeProgress && progressDict.ContainsKey(l.Id)
+                            ? progressDict[l.Id]
+                            : null,
+                        Assets = l.Assets?
+                            .Where(a => a.IsActive)
+                            .Select(a => new AssetCourseDetailDto
+                            {
+                                Url = a.Url ?? "default-url",
+                                Content = a.Contents ?? "No content",
+                                FileUrl = a.FileUrl ?? "default-file-url"
+                            })
+                            .ToList() ?? new List<AssetCourseDetailDto>(),
+                        CreatedAt = l.CreatedAt,
+                        UpdatedAt = l.UpdatedAt
+                    });
+
+                // Map Quiz -> SectionItemDto (KHÔNG có Assets)
+                // Only include active quizzes
+                var quizItems = section.Quizzes
+                    .Where(q => q.IsActive)
+                    .Select(q =>
+                    {
+                        // Tìm Submission có EndedAt gần nhất của student hiện tại (nếu có)
+                        Guid? quizSubmissionId = null;
+                        if (studentId.HasValue)
+                        {
+                            var latestSubmission = q.QuizSubmissions
+                                .Where(s => s.StudentId == studentId.Value && s.EndedAt != null)
+                                .OrderByDescending(s => s.EndedAt)
+                                .FirstOrDefault();
+                            quizSubmissionId = latestSubmission?.Id;
+                        }
+
+                        return new SectionItemDto
+                        {
+                            Kind = "Quiz",
+                            Id = q.Id,
+                            Orders = (double)q.Orders,
+                            Title = q.Title,
+                            Description = q.Description,
+                            PassPercent = q.PassPercent,
+                            Timer = q.Timer,
+                            QuizSubmissionId = quizSubmissionId,
+                            IsCompleted = includeProgress && progressDict.ContainsKey(q.Id)
+                                ? progressDict[q.Id]
+                                : null,
+                            CreatedAt = q.CreatedAt,
+                            UpdatedAt = q.UpdatedAt
+                        };
+                    });
+
+                // Gộp & sort tăng dần theo Orders
+                var items = lessonItems
+                    .Concat(quizItems)
+                    .OrderBy(i => i.Orders)
+                    .ThenBy(i => i.Kind) // tie-break nếu Orders trùng
+                    .ToList();
+
+                return new SectionCourseDetailDto
+                {
+                    Id = section.Id,
+                    Orders = (double)section.Orders,
+                    Title = section.Title,
+                    Description = section.Description,
+                    CreatedAt = section.CreatedAt,
+                    UpdatedAt = section.UpdatedAt,
+                    Items = items
+                };
+            }).OrderBy(i => i.Orders)
+              .ToList();
 
             return detail;
         }
