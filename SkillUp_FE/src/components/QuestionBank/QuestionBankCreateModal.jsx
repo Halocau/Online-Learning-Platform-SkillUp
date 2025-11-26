@@ -237,6 +237,11 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
 
     const currentLength = getCharacterCount(questionData.title);
     const isOverLimit = currentLength > 255;
+    const isAnswerOverLimit = questionData.answers.some(ans => getCharacterCount(ans.answerName) > 255);
+
+    const activeAnswerCount = questionData.answers 
+    ? questionData.answers.filter(ans => ans.isActive !== false).length 
+    : 0;
 
     return (
         <Modal
@@ -370,6 +375,8 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                                                                 }
                                                                 placeholder="Nhập nội dung đáp án"
                                                             />
+                                                            {getCharacterCount(answer.answerName.trim())} / 255
+                                                            {isAnswerOverLimit && <span style={{ marginLeft: '5px', color: 'red' }}>(Một hoặc nhiều câu trả lời vượt quá giới hạn ký tự)</span>}
                                                         </div>
                                                     ) : (
                                                         /* --- VIEW MODE: Show Static HTML --- */
@@ -469,10 +476,9 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                             <Button
                                 type="dashed"
                                 icon={<PlusOutlined />}
+                                disabled={activeAnswerCount >= 7}
                                 onClick={() => {
                                     handleAddAnswer();
-                                    // Optional: If you can get the ID of the new answer, 
-                                    // call setEditingAnswerId(newId) here to auto-open it.
                                 }}
                                 style={{ marginTop: "8px", width: "100%" }}
                             >
@@ -485,7 +491,8 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                             <span style={{ display: "block", marginBottom: "10px", color: "#888" }}>
                                 Chưa có đáp án nào
                             </span>
-                            <Button type="dashed" icon={<PlusOutlined />} onClick={handleAddAnswer} style={{ width: "100%" }}>
+                            <Button 
+                            type="dashed" icon={<PlusOutlined />} onClick={handleAddAnswer} style={{ width: "100%" }}>
                                 Thêm đáp án
                             </Button>
                         </div>
@@ -516,7 +523,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
             {/* Footer Buttons */}
             <Space style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
                 <Button onClick={onClose}>Huỷ</Button>
-                <Button type="primary" loading={loading} onClick={handleSave} disabled={isOverLimit}>
+                <Button type="primary" loading={loading} onClick={handleSave} disabled={isOverLimit || isAnswerOverLimit}>
                     Lưu
                 </Button>
             </Space>

@@ -216,6 +216,21 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
     });
   };
 
+  const getCharacterCount = (htmlString) => {
+    if (!htmlString) return 0;
+    const tempElement = document.createElement("div");
+    tempElement.innerHTML = htmlString;
+    const text = tempElement.textContent || tempElement.innerText || "";
+    return text.length;
+  };
+
+  const currentLength = getCharacterCount(questionData.title);
+  const isOverLimit = currentLength > 255;
+  const isAnswerOverLimit = questionData.answers.some(ans => getCharacterCount(ans.answerName) > 255);
+
+  const activeAnswerCount = questionData.answers
+    ? questionData.answers.filter(ans => ans.isActive !== false).length
+    : 0;
 
   return (
     <Modal
@@ -287,6 +302,8 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
               )}
             </Upload>
           </div>
+          {currentLength} / 255
+          {isOverLimit && <span style={{ marginLeft: '5px', color: 'red' }}>(Quá giới hạn ký tự)</span>}
         </Descriptions.Item>
 
         {/* Answers */}
@@ -338,6 +355,8 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
                                 }
                                 placeholder="Nhập nội dung đáp án"
                               />
+                              {getCharacterCount(answer.answerName.trim())} / 255
+                              {isAnswerOverLimit && <span style={{ marginLeft: '5px', color: 'red' }}>(Một hoặc nhiều câu trả lời vượt quá giới hạn ký tự)</span>}
                             </div>
                           ) : (
                             /* VIEW MODE: Show Static HTML */
@@ -471,6 +490,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
+                disabled={activeAnswerCount >= 7}
                 onClick={handleAddAnswer}
                 style={{ marginTop: "8px", width: "100%" }}
               >
@@ -533,7 +553,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
       {/* Footer Buttons */}
       <Space style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
         <Button onClick={onClose}>Huỷ</Button>
-        <Button type="primary" loading={loading} onClick={handleSave}>
+        <Button type="primary" loading={loading} onClick={handleSave} disabled={isOverLimit || isAnswerOverLimit}>
           Lưu
         </Button>
       </Space>
