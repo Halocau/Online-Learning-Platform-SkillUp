@@ -282,18 +282,38 @@ namespace SkillUp.Controllers
             }
         }
 
-        [HttpGet("ProfileLecturer/{id}")]
-        public async Task<IActionResult> GetProfile(Guid id)
+        [HttpGet("profile-by-account/{accountId}")]
+        public async Task<IActionResult> GetLecturerByAccountId(Guid accountId)
         {
             try
             {
-                var result = await _lecturerService.GetLecturerProfileAsync(id);
-                return Ok(result);
+                var profile = await _lecturerService.GetProfileByAccountIdAsync(accountId);
+
+                if (profile == null)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy thông tin giảng viên cho Account ID này (hoặc tài khoản này chưa là giảng viên).",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy thông tin giảng viên thành công",
+                    data = new List<object> { profile }
+                });
             }
-            catch (Exception ex) // Bắt lỗi "Not found" từ Service
+            catch (Exception ex)
             {
-                // Trong thực tế nên check type exception cụ thể hoặc dùng Middleware
-                return NotFound(new { message = ex.Message });
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = "Lỗi hệ thống: " + ex.Message,
+                    data = new List<object>()
+                });
             }
         }
 

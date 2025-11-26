@@ -113,24 +113,27 @@ namespace SkillUp.Services.Implementations
             return await _lecturerRepository.SaveChangesAsync();
         }
 
-        public async Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId)
+        public async Task<LecturerProfileDto?> GetProfileByAccountIdAsync(Guid accountId)
         {
-            var lecturer = await _repository.GetLecturerByIdAsync(lecturerId);
+            // 1. Lấy Entity từ Repository
+            var lecturer = await _repository.GetLecturerByAccountIdAsync(accountId);
 
+            // 2. Nếu không tìm thấy (Account đó không phải là Lecturer)
             if (lecturer == null)
             {
-                throw new Exception("Lecturer not found"); // Hoặc sử dụng Custom Exception
+                return null;
             }
 
-            // Mapping thủ công từ Entity sang DTO
-            // (Có thể dùng AutoMapper nếu project có cài đặt)
-            return new LecturerProfileResponse
+            // 3. Map sang DTO
+            return new LecturerProfileDto
             {
                 Title = lecturer.Title,
                 Profession = lecturer.Profession,
                 BankNumber = lecturer.BankNumber,
                 BankName = lecturer.BankName,
                 ReceiverName = lecturer.ReceiverName
+
+              
             };
         }
     }

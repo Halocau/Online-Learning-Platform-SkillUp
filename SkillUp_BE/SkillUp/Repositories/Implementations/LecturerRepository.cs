@@ -48,10 +48,17 @@ namespace SkillUp.Repositories.Implementations
                 .Include(x => x.Account) // Đảm bảo lấy thông tin về Account nếu cần
                 .ToListAsync();
         }
+        //public async Task<Lecturer?> GetLecturerByAccountIdAsync(Guid accountId)
+        //{
+        //    return await _context.Lecturers
+        //         .FirstOrDefaultAsync(l => l.AccountId == accountId);
+        //}
         public async Task<Lecturer?> GetLecturerByAccountIdAsync(Guid accountId)
         {
             return await _context.Lecturers
-                 .FirstOrDefaultAsync(l => l.AccountId == accountId);
+                .AsNoTracking() 
+                .Include(x => x.Account) 
+                .FirstOrDefaultAsync(x => x.AccountId == accountId);
         }
 
         public async Task<Lecturer?> GetLecturerByIdAsync(Guid lecturerId)
@@ -61,5 +68,7 @@ namespace SkillUp.Repositories.Implementations
                                  .AsNoTracking()
                                  .FirstOrDefaultAsync(x => x.Id == lecturerId);
         }
+
+
     }
 }

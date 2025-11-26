@@ -19,6 +19,7 @@ namespace SkillUp.Services.Interfaces
         Task<List<LecturerDto>> GetAllLecturersAsync();
         Task<bool> UpdateLecturerInfoAsync(Guid? accountId, string? title, string? profession);
 
-        Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId);
+        //Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId);
+        Task<LecturerProfileDto?> GetProfileByAccountIdAsync(Guid accountId);
     }
 }

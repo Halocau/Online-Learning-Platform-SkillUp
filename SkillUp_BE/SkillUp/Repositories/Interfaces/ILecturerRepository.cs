@@ -11,5 +11,6 @@ namespace SkillUp.Repositories.Interfaces
         Task<List<Lecturer>> GetAllLecturersAsync();
         Task<Lecturer?> GetLecturerByAccountIdAsync(Guid accountId);
         Task<Lecturer?> GetLecturerByIdAsync(Guid lecturerId);
+
     }
 }
