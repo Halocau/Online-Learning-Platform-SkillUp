@@ -362,6 +362,7 @@ namespace SkillUp.Services.Implementations
 				Rating = (double)(course.Rating ?? 0),
 				Status = course.Status,
 				IsActive = course.IsActive,
+				IsAiSupport = course.IsAiSupport ?? false,
 				CreatedAt = course.CreatedAt,
 				UpdatedAt = course.UpdatedAt,
 				categoryId = course.SubCategory?.CategoryId ?? 0,

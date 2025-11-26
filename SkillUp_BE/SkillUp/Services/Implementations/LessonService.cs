@@ -164,6 +164,7 @@ namespace SkillUp.Services.Implementations
                 LessonId = lesson.Id,
                 IsActive = true
             };
+            var videoCreated = false;
 
             if (dto.Type == "Video")
             {
@@ -176,6 +177,7 @@ namespace SkillUp.Services.Implementations
                 var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
                 asset.Url = videoUrl;
                 asset.FileUrl = null; // Video không dùng FileUrl trong Asset
+                videoCreated = true;
             }
             else if (dto.Type == "Text")
             {
@@ -201,6 +203,12 @@ namespace SkillUp.Services.Implementations
             if (!saved)
             {
                 throw new Exception("Không thể lưu bài học!");
+            }
+
+            if (videoCreated && (course.IsAiSupport ?? false))
+            {
+                // Fire-and-forget subtitle generation
+                await _aiSupportBackgroundJobService.TriggerLessonSubtitleJobAsync(lesson.Id, force: true);
             }
 
             // 5. Lấy lại lesson với đầy đủ thông tin

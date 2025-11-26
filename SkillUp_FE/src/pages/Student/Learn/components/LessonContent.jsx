@@ -12,6 +12,7 @@ import VideoPlayer from "./VideoPlayer";
 import TextLesson from "./TextLesson";
 import QuizView from "./Quiz/QuizView";
 import CommentSection from "./CommentSection";
+import LessonChat from "./LessonChat";
 
 const LessonContent = ({
   item,
@@ -24,6 +25,7 @@ const LessonContent = ({
   hasPrev,
   lessonId,
   onQuizComplete,
+  isAiSupportEnabled,
 }) => {
   const [videoProgress, setVideoProgress] = useState(0);
   const [marking, setMarking] = useState(false);
@@ -36,7 +38,7 @@ const LessonContent = ({
 
   const handleMarkComplete = async () => {
     if (isCompleted || marking) return;
-    
+
     setMarking(true);
     try {
       await onComplete(item.id);
@@ -49,6 +51,10 @@ const LessonContent = ({
     item.assets?.filter(
       (asset) => asset.type === "PDF" || asset.url?.endsWith(".pdf")
     ) || [];
+  const showLessonChat =
+    isAiSupportEnabled &&
+    item.kind === "Lesson" &&
+    item.lessonType === "Video";
 
   return (
     <div className="w-full bg-gray-50 min-h-full">
@@ -239,6 +245,12 @@ const LessonContent = ({
             </button>
           </div>
         </div>
+
+        {showLessonChat && (
+          <div className="mb-8">
+            <LessonChat lessonId={lessonId} />
+          </div>
+        )}
 
         {item.kind === "Lesson" && item.lessonType === "Video" && (
           <div className="mt-8">

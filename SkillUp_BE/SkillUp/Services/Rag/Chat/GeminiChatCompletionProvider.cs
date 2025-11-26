@@ -56,6 +56,7 @@ namespace SkillUp.Services.Rag.Chat
             var endpoint = $"{BaseUrl}/models/{model}:generateContent";
 
             var systemPrompt = BuildSystemPrompt(context);
+            var combinedPrompt = $"{systemPrompt}\n\nCâu hỏi: {userQuestion}";
             var requestBody = new
             {
                 contents = new[]
@@ -64,21 +65,15 @@ namespace SkillUp.Services.Rag.Chat
                     {
                         parts = new[]
                         {
-                            new { text = systemPrompt }
-                        }
-                    },
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = userQuestion }
+                            new { text = combinedPrompt }
                         }
                     }
                 },
                 generationConfig = new
                 {
                     temperature = _options.Temperature,
-                    maxOutputTokens = _options.MaxOutputTokens
+                    maxOutputTokens = _options.MaxOutputTokens,
+                    topP = _options.TopP
                 }
             };
 
@@ -178,6 +173,17 @@ Lưu ý:
                         }
                     }
 
+                    string? finishReasonText = null;
+                    if (candidate.TryGetProperty("finishReason", out var finishReason))
+                    {
+                        finishReasonText = finishReason.GetString();
+                        if (finishReasonText == "SAFETY")
+                        {
+                            _logger.LogWarning("Gemini blocked response due to safety filter.");
+                            return "Xin lỗi, câu hỏi này có thể vi phạm chính sách nội dung. Vui lòng thử lại với câu hỏi khác.";
+                        }
+                    }
+
                     if (candidate.TryGetProperty("content", out var content))
                     {
                         if (content.TryGetProperty("parts", out var parts)
@@ -190,6 +196,17 @@ Lưu ý:
                                 var text = textElement.GetString();
                                 if (!string.IsNullOrWhiteSpace(text))
                                 {
+                                    if (!string.IsNullOrEmpty(finishReasonText) && finishReasonText != "STOP")
+                                    {
+                                        if (finishReasonText == "MAX_TOKENS")
+                                        {
+                                            return $"{text.Trim()}\n\n_(Phản hồi đã được cắt ngắn do vượt giới hạn. Vui lòng hỏi cụ thể hơn nếu cần thêm thông tin.)_";
+                                        }
+
+                                        _logger.LogWarning("Gemini finishReason={FinishReason}", finishReasonText);
+                                        return text.Trim();
+                                    }
+
                                     return text;
                                 }
                             }
