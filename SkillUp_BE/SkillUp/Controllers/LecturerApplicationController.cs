@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.ExceptionHandling;
 using SkillUp.Services.Implementations;
@@ -282,20 +283,97 @@ namespace SkillUp.Controllers
             }
         }
 
-        [HttpGet("ProfileLecturer/{id}")]
-        public async Task<IActionResult> GetProfile(Guid id)
+        [HttpGet("profile-by-account/{accountId}")]
+        public async Task<IActionResult> GetLecturerByAccountId(Guid accountId)
         {
             try
             {
-                var result = await _lecturerService.GetLecturerProfileAsync(id);
-                return Ok(result);
+                var profile = await _lecturerService.GetProfileByAccountIdAsync(accountId);
+
+                if (profile == null)
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = "Không tìm thấy thông tin giảng viên cho Account ID này (hoặc tài khoản này chưa là giảng viên).",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy thông tin giảng viên thành công",
+                    data = new List<object> { profile }
+                });
             }
-            catch (Exception ex) // Bắt lỗi "Not found" từ Service
+            catch (Exception ex)
             {
-                // Trong thực tế nên check type exception cụ thể hoặc dùng Middleware
-                return NotFound(new { message = ex.Message });
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = "Lỗi hệ thống: " + ex.Message,
+                    data = new List<object>()
+                });
             }
         }
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateLecturerProfileDto request)
+        {
+            try
+            {
+                // 1. Lấy User ID từ Token
+                var userId = _currentUserService.UserId;
+                if (userId == null)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Unauthorized - Bạn chưa đăng nhập",
+                        data = new List<object>()
+                    });
+                }
 
+                // 2. Validate dữ liệu đầu vào
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Dữ liệu không hợp lệ",
+                        data = new List<object> { ModelState }
+                    });
+                }
+
+                // 3. Gọi Service xử lý
+                var result = await _lecturerService.UpdateLecturerProfileAsync(userId.Value, request);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Cập nhật thất bại. Tài khoản này không phải là Giảng viên.",
+                        data = new List<object>()
+                    });
+                }
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Cập nhật hồ sơ giảng viên thành công!",
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = "Lỗi hệ thống: " + ex.Message,
+                    data = new List<object>()
+                });
+            }
+        }
     }
 }

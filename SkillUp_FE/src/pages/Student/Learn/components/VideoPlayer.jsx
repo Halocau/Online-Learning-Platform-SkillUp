@@ -18,6 +18,7 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
+  const settingsTimeoutRef = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -148,7 +149,6 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
     if (videoRef.current) {
       videoRef.current.playbackRate = rate;
       setPlaybackRate(rate);
-      setShowSettings(false);
     }
   };
 
@@ -181,6 +181,22 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
     }
   };
 
+  // Handle settings menu with delay
+  const handleSettingsMouseEnter = () => {
+    // Clear any existing timeout
+    if (settingsTimeoutRef.current) {
+      clearTimeout(settingsTimeoutRef.current);
+    }
+    setShowSettings(true);
+  };
+
+  const handleSettingsMouseLeave = () => {
+    // Add a delay before hiding the settings menu
+    settingsTimeoutRef.current = setTimeout(() => {
+      setShowSettings(false);
+    }, 300); // 300ms delay
+  };
+
   // Get appropriate volume icon
   const getVolumeIcon = () => {
     if (isMuted || volume === 0) {
@@ -192,11 +208,14 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
     }
   };
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (controlsTimeoutRef.current) {
         clearTimeout(controlsTimeoutRef.current);
+      }
+      if (settingsTimeoutRef.current) {
+        clearTimeout(settingsTimeoutRef.current);
       }
     };
   }, []);
@@ -341,11 +360,11 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Playback Speed */}
+            {/* Playback Speed - with improved hover handling */}
             <div
               className="relative"
-              onMouseEnter={() => setShowSettings(true)}
-              onMouseLeave={() => setShowSettings(false)}
+              onMouseEnter={handleSettingsMouseEnter}
+              onMouseLeave={handleSettingsMouseLeave}
             >
               <button className="text-white hover:text-[#FFD54F] transition-colors text-sm flex items-center gap-1">
                 <Settings className="w-4 h-4" />
@@ -353,7 +372,11 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
               </button>
 
               {showSettings && (
-                <div className="absolute bottom-full right-0 mb-2 bg-black/95 rounded-lg overflow-hidden shadow-xl">
+                <div 
+                  className="absolute bottom-full right-0 mb-2 bg-black/95 rounded-lg overflow-hidden shadow-xl"
+                  onMouseEnter={handleSettingsMouseEnter}
+                  onMouseLeave={handleSettingsMouseLeave}
+                >
                   {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
                     <button
                       key={rate}

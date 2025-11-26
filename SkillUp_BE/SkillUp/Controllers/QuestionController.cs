@@ -68,13 +68,17 @@ namespace SkillUp.Controllers
                 {
                     return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
                 }
-                if (ex.Message.Contains("Lỗi:") || 
+
+                if (ex.Message.Contains("Lỗi:") ||
                     ex.Message.Contains("Loại câu hỏi") ||
                     ex.Message.Contains("đáp án đúng") ||
-                    ex.Message.Contains("không hợp lệ"))
+                    ex.Message.Contains("không hợp lệ") ||
+                    ex.Message.Contains("Số lượng câu trả lời") ||
+                    ex.Message.Contains("ít nhất 2 câu trả lời"))
                 {
                     return BadRequest(new APIReturn { code = 400, message = ex.Message, data = new List<object>() });
                 }
+
                 return StatusCode(500, new APIReturn
                 {
                     code = 500,
@@ -165,21 +169,26 @@ namespace SkillUp.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid();
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
             }
             catch (Exception ex)
             {
-
                 if (ex.Message.Contains("Không tìm thấy giảng viên") ||
                     ex.Message.Contains("Không tìm thấy câu hỏi gốc") ||
                     ex.Message.Contains("Không tìm thấy câu hỏi này trong quiz"))
                 {
                     return NotFound(new APIReturn { code = 404, message = ex.Message, data = new List<object>() });
                 }
-
                 if (ex.Message.Contains("Câu hỏi chọn 1") ||
                     ex.Message.Contains("Câu hỏi chọn nhiều") ||
-                    ex.Message.Contains("Lỗi: Không thể cập nhật câu hỏi"))
+                    ex.Message.Contains("Lỗi: Không thể cập nhật câu hỏi") ||
+                    ex.Message.Contains("Số lượng câu trả lời") || 
+                    ex.Message.Contains("ít nhất 2 câu trả lời"))  
                 {
                     return BadRequest(new APIReturn { code = 400, message = ex.Message, data = new List<object>() });
                 }

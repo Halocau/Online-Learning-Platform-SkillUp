@@ -218,11 +218,11 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                 key={section.id}
                 className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-[#FFD54F]/40 hover:shadow-lg sm:p-5"
               >
-                {/* Hover glow effect - FIXED: Added pointer-events-none */}
+                {/* Hover glow effect */}
                 <div className="pointer-events-none absolute inset-y-6 right-0 w-32 bg-gradient-to-l from-[#FFD54F]/10 via-transparent to-transparent opacity-0 blur-3xl transition-opacity group-hover:opacity-100"></div>
 
                 <div className="relative flex items-start gap-4 sm:gap-5">
-                  {/* Section Index / Status */}
+                  {/* Section */}
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200 shadow-inner">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold tracking-tight ring-1 ${
@@ -284,10 +284,6 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                       {/* Call to Action */}
                       <button
                         onClick={() => {
-                          console.log(
-                            "Button clicked, navigating to:",
-                            `/student/learn/${courseId}/section/${section.id}`
-                          );
                           navigate(
                             `/student/learn/${courseId}/section/${section.id}`
                           );
