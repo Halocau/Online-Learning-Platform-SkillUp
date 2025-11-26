@@ -20,5 +20,6 @@ namespace SkillUp.Services.Interfaces
         Task<bool> UpdateLecturerInfoAsync(Guid? accountId, string? title, string? profession);
 
         Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId);
+        Task<LecturerProfilePageDto> GetLecturerPublicProfileAsync(Guid lecturerId);
     }
 }

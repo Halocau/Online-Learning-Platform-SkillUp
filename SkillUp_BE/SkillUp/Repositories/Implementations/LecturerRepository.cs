@@ -61,5 +61,13 @@ namespace SkillUp.Repositories.Implementations
                                  .AsNoTracking()
                                  .FirstOrDefaultAsync(x => x.Id == lecturerId);
         }
+        public async Task<Lecturer?> GetLecturerProfileByAccountAsync(Guid accId)
+        {
+            return await _context.Lecturers
+                .Include(l => l.Account) 
+                .Include(l => l.Courses.Where(c => c.IsActive && c.Status == "Public")) 
+                    .ThenInclude(c => c.SubCategory)
+                .FirstOrDefaultAsync(l => l.AccountId == accId);
+        }
     }
 }

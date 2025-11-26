@@ -1,4 +1,5 @@
 ﻿using SkillUp.BussinessObjects.DTOs;
+using SkillUp.BussinessObjects.DTOs.Course;
 using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
@@ -131,6 +132,58 @@ namespace SkillUp.Services.Implementations
                 BankNumber = lecturer.BankNumber,
                 BankName = lecturer.BankName,
                 ReceiverName = lecturer.ReceiverName
+            };
+        }
+        public async Task<LecturerProfilePageDto> GetLecturerPublicProfileAsync(Guid accId)
+        {
+            var lecturer = await _lecturerRepository.GetLecturerProfileByAccountAsync(accId);
+
+            if (lecturer == null)
+            {
+                throw new Exception("Không tìm thấy giảng viên này.");
+            }
+
+            var publicCourses = lecturer.Courses
+                .Where(c => c.Status == "Public" && c.IsActive)
+                .ToList();
+
+            int totalStudents = publicCourses.Sum(c => c.EnrollmentCount);
+
+            double avgRating = 0;
+            if (publicCourses.Any())
+            {
+                var ratedCourses = publicCourses.Where(c => c.Rating > 0).ToList();
+                if (ratedCourses.Any())
+                {
+                    avgRating = ratedCourses.Average(c => c.Rating ?? 0);
+                }
+            }
+
+            return new LecturerProfilePageDto
+            {
+                LecturerId = lecturer.Id,
+                AccountId = lecturer.AccountId,
+                FullName = lecturer.Account.Fullname ?? "Unknown Lecturer",
+                Avatar = lecturer.Account.Avatar,
+                Description = lecturer.Account.Description,
+
+                Title = lecturer.Title,
+                Profession = lecturer.Profession,
+
+                TotalStudents = totalStudents,
+                TotalCourses = publicCourses.Count,
+                AverageRating = Math.Round(avgRating, 1),
+
+                Courses = publicCourses.Select(c => new CourseSummaryDTO
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    Image = c.Image,
+                    Price = c.Price,
+                    Rating = c.Rating,
+                    EnrollmentCount = c.EnrollmentCount,
+                    LecturerName = lecturer.Account.Fullname,
+                }).ToList()
             };
         }
     }
