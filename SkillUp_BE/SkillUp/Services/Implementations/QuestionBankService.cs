@@ -96,7 +96,8 @@ namespace SkillUp.Services.Implementations
 					QuestionBankId = questionBank.Id,
 					AnswerName = answerDto.AnswerName,
 					IsCorrect = answerDto.IsCorrect,
-					IsActive = true
+					IsActive = true,
+					Image = answerDto.ImageUrl
 				};
 				questionBank.AnswerBanks.Add(answer);
 			}
@@ -121,6 +122,7 @@ namespace SkillUp.Services.Implementations
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
+					Image = a.Image,
 				}).ToList()
 			};
 		}
@@ -174,7 +176,8 @@ namespace SkillUp.Services.Implementations
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
-					IsActive = a.IsActive
+					IsActive = a.IsActive,
+					Image = a.Image
 				}).ToList()
 			};
 		}
@@ -206,6 +209,7 @@ namespace SkillUp.Services.Implementations
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
 					IsActive = a.IsActive,
+					Image = a.Image
 				}).ToList()
 			}).ToList();
 			return questionBankDTOs;
@@ -328,6 +332,7 @@ namespace SkillUp.Services.Implementations
 					answer.AnswerName = answerDTO.AnswerName;
 					answer.IsCorrect = answerDTO.IsCorrect;
 					answer.IsActive = answerDTO.IsActive;
+					answer.Image = answerDTO.Image;
 				}
 			}
 
@@ -343,7 +348,8 @@ namespace SkillUp.Services.Implementations
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
-					IsActive = a.IsActive
+					IsActive = a.IsActive,
+					Image = a.Image
 				}).ToList()
 			};
 		}
