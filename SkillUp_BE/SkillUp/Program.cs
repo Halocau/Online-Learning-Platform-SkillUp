@@ -121,7 +121,6 @@ builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 
-
 // POST
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<IPostService, PostService>();
@@ -199,6 +198,10 @@ builder.Services.AddScoped<IRatingService, RatingService>();
 //report post
 builder.Services.AddScoped<IReportPostRepository, ReportPostRepository>();
 builder.Services.AddScoped<IReportPostService, ReportPostService>();
+
+//background
+builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+builder.Services.AddHostedService<QueuedHostedService>();
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];

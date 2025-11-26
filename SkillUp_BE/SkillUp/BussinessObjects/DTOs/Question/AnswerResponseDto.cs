@@ -5,5 +5,6 @@
         public Guid Id { get; set; }
         public string AnswerName { get; set; }
         public bool IsCorrect { get; set; }
+        public string? Image { get; set; }
     }
 }

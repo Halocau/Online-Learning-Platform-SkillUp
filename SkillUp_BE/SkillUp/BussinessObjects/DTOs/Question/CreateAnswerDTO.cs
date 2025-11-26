@@ -4,6 +4,6 @@
     {
         public string AnswerName { get; set; } = string.Empty;
         public bool IsCorrect { get; set; } = false;
-		public string? Image { get; set; }
-	}
+        public string? ImageUrl { get; set; }
+    }
 }

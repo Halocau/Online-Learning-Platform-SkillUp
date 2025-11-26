@@ -17,7 +17,7 @@ import {
 import { getQuizResult } from "@/api/quizAPI";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import DOMPurify from "dompurify";
+import { extractCleanText } from "@/utils/htmlUtils";
 
 const QuizResultDetail = ({ submissionId, onClose }) => {
   const [loading, setLoading] = useState(true);
@@ -57,10 +57,6 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
   const handleClose = () => {
     setIsOpen(false);
     setTimeout(onClose, 300);
-  };
-
-  const createMarkup = (html) => {
-    return { __html: DOMPurify.sanitize(html) };
   };
 
   const correctCount =
@@ -103,7 +99,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                       Kết quả bài kiểm tra
                     </span>
                     <span className="text-xs text-[#2d334a]">
-                      {resultData.quizTitle} · {totalQuestions} câu hỏi
+                      {extractCleanText(resultData.quizTitle, 100)} · {totalQuestions} câu hỏi
                     </span>
                   </div>
                 </div>
@@ -312,6 +308,12 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                 (a) => a.isCorrect
                               );
 
+                              // Clean the question title
+                              const cleanQuestionTitle = extractCleanText(
+                                question.title,
+                                500
+                              );
+
                               return (
                                 <>
                                   <div
@@ -348,13 +350,12 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                   </div>
 
                                   <div className="px-4 sm:px-5 py-4 space-y-4">
-                                    {/* Question text */}
-                                    <div
-                                      className="text-sm text-[#2d334a] leading-relaxed prose prose-sm max-w-none"
-                                      dangerouslySetInnerHTML={createMarkup(
-                                        question.title
-                                      )}
-                                    />
+                                    {/* Question text - NOW USING CLEAN TEXT */}
+                                    <div className="text-sm text-[#2d334a] leading-relaxed">
+                                      <p className="text-base text-[#272343]">
+                                        {cleanQuestionTitle}
+                                      </p>
+                                    </div>
 
                                     {/* Question image */}
                                     {question.image && (
@@ -365,12 +366,18 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                       />
                                     )}
 
-                                    {/* Answers with 4 states */}
+                                    {/* Answers with 4 states - NOW USING CLEAN TEXT */}
                                     <div className="space-y-2">
                                       {question.allAnswers.map((answer) => {
                                         const isSelected = answer.wasSelected;
                                         const isCorrectAnswer =
                                           answer.isCorrect;
+
+                                        // Clean the answer text
+                                        const cleanAnswerText = extractCleanText(
+                                          answer.answerName,
+                                          300
+                                        );
 
                                         let borderColor = "border-[#272343]/20";
                                         let bgColor = "bg-[#fffffe]";
@@ -438,7 +445,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                                   textColor
                                                 )}
                                               >
-                                                {answer.answerName}
+                                                {cleanAnswerText}
                                               </p>
                                               {isSelected && (
                                                 <p
@@ -484,7 +491,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                             <p className="mt-1 text-sm text-amber-800 leading-relaxed">
                                               <span className="font-semibold">
                                                 {correctAnswers
-                                                  .map((a) => a.answerName)
+                                                  .map((a) => extractCleanText(a.answerName, 200))
                                                   .join(", ")}
                                               </span>
                                             </p>

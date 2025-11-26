@@ -131,7 +131,6 @@ function CourseDetailManagement() {
   };
 
   const checkPricingCompleted = (courseData, options = {}) => {
-
     if (options.pricingCompleted) {
       return true;
     }

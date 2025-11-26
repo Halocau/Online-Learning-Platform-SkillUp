@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import QuizResultDetail from "./QuizResultDetail";
 import { getQuizResult } from "@/api/quizAPI";
+import { extractCleanText } from "@/utils/htmlUtils";
 
 const QuizView = ({ quiz, onComplete, isCompleted }) => {
   const navigate = useNavigate();
@@ -56,6 +57,13 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
     navigate(`/student/quiz/${quiz.id}/take`);
   };
 
+  // Clean quiz title and description
+  const cleanTitle = extractCleanText(quiz.title || "Sẵn sàng kiểm tra?", 100);
+  const cleanDescription = extractCleanText(
+    quiz.description || "Đánh giá kiến thức của bạn về nội dung đã học",
+    200
+  );
+
   // Start screen (no submission yet)
   if (!hasSubmission) {
     return (
@@ -65,12 +73,9 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
             <PlayCircle className="w-8 h-8 text-[#272343]" />
           </div>
           <h3 className="text-2xl font-bold text-[#272343] mb-2 tracking-tight">
-            {quiz.title || "Sẵn sàng kiểm tra?"}
+            {cleanTitle}
           </h3>
-          <p className="text-[#2d334a]">
-            {quiz.description ||
-              "Đánh giá kiến thức của bạn về nội dung đã học"}
-          </p>
+          <p className="text-[#2d334a]">{cleanDescription}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
@@ -151,7 +156,7 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
                 <div className="p-4 rounded-xl bg-[#e3f6f5]/60 border border-[#272343]/20">
                   <p className="text-xs text-[#2d334a] mb-1">Thông tin</p>
                   <p className="text-sm font-semibold text-[#272343] tracking-tight">
-                    {quiz.title}
+                    {cleanTitle}
                   </p>
                   <p className="mt-1 text-xs text-[#2d334a]">
                     Điểm yêu cầu: {quiz.passPercent}%
