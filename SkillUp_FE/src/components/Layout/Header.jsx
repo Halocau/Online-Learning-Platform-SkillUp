@@ -212,6 +212,12 @@ function Header() {
                       >
                         Khóa học của tôi
                       </Link>
+                      <Link
+                        to="/purchase-history"
+                        className="block px-4 py-2 text-sm text-[#2d334a] hover:bg-[#e3f6f5] hover:text-[#272343] font-medium tracking-tight"
+                      >
+                        Lịch sử mua hàng
+                      </Link>
                     </div>
 
                     <div className="border-t border-[#272343]/15 pt-1">
