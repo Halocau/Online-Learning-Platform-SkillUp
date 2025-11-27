@@ -17,7 +17,7 @@ namespace SkillUp.Services.Implementations
         {
             var transactions = await _transactionRepository.GetTransactionHistoryByAccountIdAsync(accountId);
 
-            var result = transactions.Select(t => new PurchaseHistoryDto
+            return transactions.Select(t => new PurchaseHistoryDto
             {
                 TransactionId = t.Id,
                 CreatedAt = t.CreatedAt,
@@ -29,13 +29,13 @@ namespace SkillUp.Services.Implementations
                 Courses = t.TransactionDetails.Select(td => new PurchasedCourseDto
                 {
                     CourseId = td.CourseId,
-                    CourseTitle = td.Course.Title, 
-                    CourseImage = td.Course.Image, 
-                    PricePaid = td.Price
+                    CourseTitle = td.Course?.Title ?? "Unknown Course",
+                    CourseImage = td.Course?.Image,
+                    PricePaid = td.Price,
+                    LecturerName = td.Course?.Lecturer?.Account?.Fullname ?? "Đang cập nhật",
+                    Rating = td.Course?.Rating ?? 0
                 }).ToList()
             }).ToList();
-
-            return result;
         }
     }
 }

@@ -16,9 +16,11 @@ namespace SkillUp.Repositories.Implementations
         public async Task<List<Transaction>> GetTransactionHistoryByAccountIdAsync(Guid accountId)
         {
             return await _context.Transactions
-                .Where(t => t.AccountId == accountId) 
+                .Where(t => t.AccountId == accountId)
                 .Include(t => t.TransactionDetails)
                     .ThenInclude(td => td.Course)
+                        .ThenInclude(c => c.Lecturer) 
+                            .ThenInclude(l => l.Account) 
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
         }

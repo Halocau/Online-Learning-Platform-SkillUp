@@ -16,6 +16,8 @@
         public Guid CourseId { get; set; }
         public string CourseTitle { get; set; }
         public string CourseImage { get; set; }
-        public decimal PricePaid { get; set; } 
+        public decimal PricePaid { get; set; }
+        public string LecturerName { get; set; } = "Unknown";
+        public double Rating { get; set; } 
     }
 }
