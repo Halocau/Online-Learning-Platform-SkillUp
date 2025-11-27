@@ -609,6 +609,7 @@ namespace SkillUp.Services.Implementations
                 SubCategoryName = course.SubCategory?.Name ?? "",
                 Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
                 {
+                    AccountId = course.Lecturer.AccountId,
                     FullName = course.Lecturer.Account?.Fullname ?? "",
                     Avartar = course.Lecturer.Account?.Avatar ?? "default-avatar.png",
                     Title = course.Lecturer.Title ?? "",

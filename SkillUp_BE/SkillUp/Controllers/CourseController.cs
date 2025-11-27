@@ -498,7 +498,7 @@ namespace SkillUp.Controllers
                 {
                     code = 200,
                     message = "Lấy chi tiết học tập của khóa học thành công",
-                    data = new List<object> { new {accountId = accountId.Value, courseDetails } }
+                    data = new List<object> { courseDetails }
                 });
             }
             catch (UnauthorizedAccessException ex)
