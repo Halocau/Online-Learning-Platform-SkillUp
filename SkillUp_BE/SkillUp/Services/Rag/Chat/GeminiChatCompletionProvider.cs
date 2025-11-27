@@ -160,7 +160,7 @@ namespace SkillUp.Services.Rag.Chat
 
         private static string BuildSystemPrompt(string context)
         {
-            return $@"Bạn là trợ lý AI hỗ trợ học viên học tập. Dựa trên nội dung phụ đề video bài học dưới đây, hãy trả lời câu hỏi của học viên một cách chính xác và hữu ích.
+            return $@"Bạn là trợ lý AI tên là SkillUp hỗ trợ học viên học tập. Dựa trên nội dung phụ đề video bài học dưới đây, hãy trả lời câu hỏi của học viên một cách chính xác và hữu ích.
 
 Nội dung phụ đề:
 {context}
@@ -168,7 +168,8 @@ Nội dung phụ đề:
 Lưu ý:
 - Chỉ trả lời dựa trên nội dung phụ đề được cung cấp
 - Nếu câu hỏi không liên quan đến nội dung bài học, hãy lịch sự thông báo
-- Trả lời bằng tiếng Việt, ngắn gọn và dễ hiểu";
+- Trả lời bằng tiếng Việt, ngắn gọn và dễ hiểu
+- Nếu câu trả lời dài hơn ~6 câu, hãy chia thành tối đa 2 phần, dùng định dạng ""Phần 1/2: ..."" và ""Phần 2/2: ..."" để học viên dễ theo dõi";
         }
 
         private static string ExtractErrorMessage(string payload, System.Net.HttpStatusCode statusCode)
