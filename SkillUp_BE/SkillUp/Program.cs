@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Options;
 using SkillUp.Bussiness.Services;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Configuration;
@@ -16,6 +17,7 @@ using SkillUp.Services.Rag.Subtitle;
 using SkillUp.Services.Rag.Chat;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Net.Http.Headers;
 
 // Clear default claim type mappings để giữ nguyên custom claim types
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -42,6 +44,24 @@ builder.Services.Configure<GenSubOptions>(builder.Configuration.GetSection("GenS
 builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
 builder.Services.Configure<QdrantOptions>(builder.Configuration.GetSection("Qdrant"));
 builder.Services.Configure<RagOptions>(builder.Configuration.GetSection("Rag"));
+
+builder.Services.AddHttpClient(nameof(QdrantService), (sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<QdrantOptions>>().Value ?? new QdrantOptions();
+    var endpoint = string.IsNullOrWhiteSpace(options.Endpoint)
+        ? "https://08d02dbc-fd71-4d4a-80e4-4194b2c14301.europe-west3-0.gcp.cloud.qdrant.io"
+        : options.Endpoint;
+
+    client.BaseAddress = new Uri(endpoint.TrimEnd('/') + "/");
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+    if (!string.IsNullOrWhiteSpace(options.ApiKey))
+    {
+        client.DefaultRequestHeaders.Remove("api-key");
+        client.DefaultRequestHeaders.Add("api-key", options.ApiKey);
+    }
+});
 
 // Configure Swagger with JWT Authentication
 builder.Services.AddSwaggerGen(options =>

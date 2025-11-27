@@ -1,6 +1,6 @@
 using System.Net;
-using System.Net;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
@@ -15,6 +15,7 @@ namespace SkillUp.Services.Common
         private readonly string _collectionBaseName;
         private readonly int _defaultVectorSize;
         private string _collectionName;
+        private bool _indexesEnsured;
 
         public QdrantService(IHttpClientFactory httpClientFactory, IOptions<QdrantOptions> options)
         {
@@ -24,40 +25,48 @@ namespace SkillUp.Services.Common
                 : _options.Collection;
             _defaultVectorSize = _options.DefaultVectorSize > 0 ? _options.DefaultVectorSize : 3072;
             _collectionName = BuildCollectionName(_defaultVectorSize);
+            _indexesEnsured = false;
             _httpClient = httpClientFactory.CreateClient(nameof(QdrantService));
-            _httpClient.BaseAddress = new Uri(_options.Endpoint.TrimEnd('/') + "/");
+
+            if (_httpClient.BaseAddress is null)
+            {
+                _httpClient.BaseAddress = new Uri(BuildBaseAddress(_options.Endpoint));
+            }
+
+            if (!string.IsNullOrWhiteSpace(_options.ApiKey) &&
+                !_httpClient.DefaultRequestHeaders.Contains("api-key"))
+            {
+                _httpClient.DefaultRequestHeaders.Add("api-key", _options.ApiKey);
+            }
+
+            if (_httpClient.DefaultRequestHeaders.Accept.Count == 0)
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Add(
+                    new MediaTypeWithQualityHeaderValue("application/json"));
+            }
         }
 
         public async Task EnsureCollectionAsync(int vectorSize, CancellationToken ct = default)
         {
-            var name = BuildCollectionName(vectorSize);
-            _collectionName = name;
-
-            var check = await _httpClient.GetAsync($"collections/{name}", ct);
-            if (check.IsSuccessStatusCode)
-            {
-                return;
-            }
-
-            var body = new
-            {
-                vectors = new
-                {
-                    size = vectorSize,
-                    distance = "Cosine"
-                }
-            };
-
-            var resp = await _httpClient.PutAsJsonAsync($"collections/{name}", body, ct);
-            resp.EnsureSuccessStatusCode();
+            await EnsureCollectionExistsIfMissingAsync(vectorSize, ct);
+            await EnsurePayloadIndexesAsync(ct);
         }
 
         public async Task UpsertAsync(IEnumerable<QdrantVectorPoint> points, CancellationToken ct = default)
         {
+            var pointList = points.ToList();
+            if (pointList.Count == 0)
+            {
+                return;
+            }
+
+            await EnsureCollectionExistsIfMissingAsync(pointList[0].Vector.Length, ct);
+            await EnsurePayloadIndexesAsync(ct);
+
             var name = _collectionName;
             var payload = new
             {
-                points = points.Select(p => new
+                points = pointList.Select(p => new
                 {
                     id = p.Id,
                     vector = p.Vector,
@@ -84,16 +93,23 @@ namespace SkillUp.Services.Common
             CancellationToken ct = default)
         {
             var name = _collectionName;
-            var body = new
+            await EnsurePayloadIndexesAsync(ct);
+            var limit = topK <= 0 ? 5 : topK;
+            var filter = BuildFilter(lessonId, courseId);
+            var body = new Dictionary<string, object?>
             {
-                vector = query,
-                top = topK,
-                with_payload = true,
-                filter = BuildFilter(lessonId, courseId)
+                ["vector"] = query,
+                ["limit"] = limit,
+                ["with_payload"] = true
             };
 
+            if (filter is not null)
+            {
+                body["filter"] = filter;
+            }
+
             var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/search", body, ct);
-            resp.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(resp, "search", ct);
 
             var json = await resp.Content.ReadFromJsonAsync<QdrantSearchResponse>(cancellationToken: ct)
                        ?? new QdrantSearchResponse();
@@ -118,19 +134,24 @@ namespace SkillUp.Services.Common
             CancellationToken ct = default)
         {
             var name = _collectionName;
+            await EnsurePayloadIndexesAsync(ct);
             var filter = BuildFilter(lessonId, courseId);
-            var body = new
+            var body = new Dictionary<string, object?>
             {
-                filter,
-                exact = false
+                ["exact"] = false
             };
+
+            if (filter is not null)
+            {
+                body["filter"] = filter;
+            }
 
             var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/count", body, ct);
             if (resp.StatusCode == HttpStatusCode.NotFound)
             {
                 return 0;
             }
-            resp.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(resp, "count", ct);
 
             var result = await resp.Content.ReadFromJsonAsync<QdrantCountResponse>(cancellationToken: ct);
             return result?.Result.Count ?? 0;
@@ -154,18 +175,23 @@ namespace SkillUp.Services.Common
             }
 
             var name = _collectionName;
-            var body = new
+            await EnsurePayloadIndexesAsync(ct);
+            var body = new Dictionary<string, object?>
             {
-                filter,
-                wait = true
+                ["wait"] = true
             };
+
+            if (filter is not null)
+            {
+                body["filter"] = filter;
+            }
 
             var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/delete", body, ct);
             if (resp.StatusCode == HttpStatusCode.NotFound)
             {
                 return;
             }
-            resp.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(resp, "delete", ct);
         }
 
         public Task DeleteVectorsByLessonAsync(Guid lessonId, CancellationToken ct = default)
@@ -181,22 +207,27 @@ namespace SkillUp.Services.Common
             CancellationToken ct = default)
         {
             var name = _collectionName;
+            await EnsurePayloadIndexesAsync(ct);
             var filter = BuildFilter(lessonId, courseId);
             var clampedLimit = Math.Clamp(limit, 1, 50);
-            var body = new
+            var body = new Dictionary<string, object?>
             {
-                filter,
-                limit = clampedLimit,
-                with_payload = true,
-                with_vectors = false
+                ["limit"] = clampedLimit,
+                ["with_payload"] = true,
+                ["with_vectors"] = false
             };
+
+            if (filter is not null)
+            {
+                body["filter"] = filter;
+            }
 
             var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/scroll", body, ct);
             if (resp.StatusCode == HttpStatusCode.NotFound)
             {
                 return Array.Empty<QdrantVectorPayload>();
             }
-            resp.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(resp, "scroll", ct);
 
             var result = await resp.Content.ReadFromJsonAsync<QdrantScrollResponse>(cancellationToken: ct)
                          ?? new QdrantScrollResponse();
@@ -216,6 +247,14 @@ namespace SkillUp.Services.Common
         {
             var size = vectorSize > 0 ? vectorSize : _defaultVectorSize;
             return $"{_collectionBaseName}_{size}";
+        }
+
+        private static string BuildBaseAddress(string? endpoint)
+        {
+            var value = string.IsNullOrWhiteSpace(endpoint)
+                ? "http://localhost:6333"
+                : endpoint;
+            return value.TrimEnd('/') + "/";
         }
 
         private static object? BuildFilter(Guid? lessonId, Guid? courseId)
@@ -246,6 +285,87 @@ namespace SkillUp.Services.Common
             }
 
             return new { must };
+        }
+
+        private async Task EnsureCollectionExistsIfMissingAsync(int? vectorSize, CancellationToken ct)
+        {
+            var size = vectorSize.HasValue && vectorSize.Value > 0
+                ? vectorSize.Value
+                : _defaultVectorSize;
+
+            var name = BuildCollectionName(size);
+            var collectionChanged = !string.Equals(_collectionName, name, StringComparison.OrdinalIgnoreCase);
+
+            if (collectionChanged)
+            {
+                _collectionName = name;
+                _indexesEnsured = false;
+            }
+
+            var check = await _httpClient.GetAsync($"collections/{name}", ct);
+            if (check.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            var body = new
+            {
+                vectors = new
+                {
+                    size,
+                    distance = "Cosine"
+                }
+            };
+
+            var resp = await _httpClient.PutAsJsonAsync($"collections/{name}", body, ct);
+            resp.EnsureSuccessStatusCode();
+            _indexesEnsured = false;
+        }
+
+        private async Task EnsurePayloadIndexesAsync(CancellationToken ct)
+        {
+            if (_indexesEnsured)
+            {
+                return;
+            }
+
+            await EnsureCollectionExistsIfMissingAsync(null, ct);
+            await CreateIndexIfNeededAsync("lessonId", "uuid", ct);
+            await CreateIndexIfNeededAsync("courseId", "uuid", ct);
+            _indexesEnsured = true;
+        }
+
+        private async Task CreateIndexIfNeededAsync(string fieldName, string fieldType, CancellationToken ct)
+        {
+            var name = _collectionName;
+            var body = new
+            {
+                field_name = fieldName,
+                field_schema = new
+                {
+                    type = fieldType
+                }
+            };
+
+            var resp = await _httpClient.PutAsJsonAsync($"collections/{name}/index", body, ct);
+
+            if (resp.StatusCode == HttpStatusCode.Conflict)
+            {
+                return;
+            }
+
+            await EnsureSuccessAsync(resp, $"index:{fieldName}", ct);
+        }
+
+        private static async Task EnsureSuccessAsync(HttpResponseMessage response, string operation, CancellationToken ct)
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            var details = await response.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException($"Qdrant {operation} failed ({(int)response.StatusCode} {response.StatusCode}). Body: {details}");
         }
     }
 
