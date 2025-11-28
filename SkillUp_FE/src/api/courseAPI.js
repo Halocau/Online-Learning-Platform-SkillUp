@@ -96,6 +96,18 @@ export const courseAPI = {
     }
   },
 
+  // Get course detail for learning (requires enrollment)
+  getCourseLearningDetail: async (courseId) => {
+    try {
+      const response = await axiosInstance.get(`${API_BASE_URL}/${courseId}/learning`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching learning course detail:", error);
+      throw error;
+    }
+  },
+
+  // Publish course
   publishCourse: async (courseId) => {
     try {
       const response = await axiosInstance.put(

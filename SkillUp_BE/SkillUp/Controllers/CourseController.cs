@@ -475,6 +475,62 @@ namespace SkillUp.Controllers
             }
         }
 
+        [HttpGet("{courseId}/learning")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetCourseLearningContent(Guid courseId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+
+                var courseDetails = await _courseService.GetCourseLearningContentAsync(courseId, accountId.Value);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy chi tiết học tập của khóa học thành công",
+                    data = new List<object> { courseDetails }
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
         [HttpPut("Set-Price/{courseId}")]
         [Authorize]
         public async Task<IActionResult> SetCoursePrice(Guid courseId, [FromBody] CoursePriceDto request)

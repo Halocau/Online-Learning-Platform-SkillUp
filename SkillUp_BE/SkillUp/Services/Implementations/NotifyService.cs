@@ -29,7 +29,7 @@ namespace SkillUp.Services.Implementations
             _accountRepository = accountRepository;
         }
 
-        public async Task CreateNotificationAsync(Guid recipientAccountId, string title, string contents)
+        public async Task CreateNotificationAsync(Guid recipientAccountId, string title, string contents, string? hyperlink = null)
         {
             // 1. Tạo và lưu thông báo vào DB
             var notification = new Notify
@@ -39,7 +39,8 @@ namespace SkillUp.Services.Implementations
                 Title = title,
                 Contents = contents,
                 Status = "Unread",
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.Now,
+                Hyperlink = hyperlink
             };
 
             var savedNotify = await _notifyRepo.CreateAsync(notification);
@@ -52,7 +53,8 @@ namespace SkillUp.Services.Implementations
                 Title = savedNotify.Title,
                 Contents = savedNotify.Contents,
                 Status = savedNotify.Status,
-                CreatedAt = savedNotify.CreatedAt
+                CreatedAt = savedNotify.CreatedAt,
+                Hyperlink = savedNotify.Hyperlink
             };
 
             // 3. Gửi thông báo realtime đến ĐÚNG group (group có tên là AccountId)
@@ -96,7 +98,8 @@ namespace SkillUp.Services.Implementations
                 Title = n.Title,
                 Contents = n.Contents,
                 Status = n.Status,
-                CreatedAt = n.CreatedAt
+                CreatedAt = n.CreatedAt,
+                Hyperlink = n.Hyperlink
             });
         }
         public async Task<bool> MarkAsReadAsync(Guid notificationId, Guid accountId)

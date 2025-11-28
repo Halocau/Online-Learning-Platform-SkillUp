@@ -4,7 +4,7 @@ namespace SkillUp.Services.Interfaces
 {
     public interface INotifyService
     {
-        Task CreateNotificationAsync(Guid recipientAccountId, string title, string contents);
+        Task CreateNotificationAsync(Guid recipientAccountId, string title, string contents, string? hyperlink = null);
 
         Task<IEnumerable<NotifyDto>> GetMyNotificationsAsync();
 
