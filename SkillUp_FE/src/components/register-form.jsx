@@ -2,11 +2,9 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { GoogleLogin } from '@react-oauth/google'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { axiosInstance, API_ENDPOINTS } from '@/config/api'
-import { saveUserFromToken } from '@/lib/auth-utils'
 import { toast } from 'react-toastify'
 
 export function RegisterForm({
@@ -23,48 +21,6 @@ export function RegisterForm({
     fullname: ''
   })
   const [errorMsg, setErrorMsg] = useState('')
-
-  // Handle Google Register
-  const handleGoogleRegister = async (credentialResponse) => {
-    try {
-      setLoading(true)
-
-      // Xác định roleId: Student = 5, Lecturer = 4
-      const defaultRoleId = activeTab === 'student' ? 5 : 4
-
-      const response = await axiosInstance.post(API_ENDPOINTS.GOOGLE_LOGIN, {
-        idToken: credentialResponse.credential,
-        defaultRoleId: defaultRoleId
-      })
-
-      if (response.data.code === 200) {
-        const userData = response.data.data[0]
-
-        // Lưu token và user info
-        saveUserFromToken(
-          userData.token.accessToken,
-          userData.token.refreshToken
-        )
-
-        // Thông báo thành công
-        toast.success('Đăng ký thành công! Chào mừng bạn đến với SkillUp!')
-
-        // Navigate về trang chủ hoặc dashboard
-        setTimeout(() => {
-          navigate('/home', { replace: true })
-        }, 1000)
-      }
-    } catch (error) {
-      console.error('Register failed:', error)
-      if (error.response?.data?.message) {
-        setErrorMsg('Đăng ký thất bại: ' + error.response.data.message)
-      } else {
-        setErrorMsg('Đăng ký thất bại. Vui lòng thử lại!')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Handle normal register
   const handleNormalRegister = async (e) => {
@@ -279,32 +235,6 @@ export function RegisterForm({
         >
           {loading ? 'Đang đăng ký...' : 'Đăng ký ngay'}
         </Button>
-
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">hoặc tiếp tục với</span>
-          </div>
-        </div>
-
-        {/* Google Login */}
-        <div className="flex justify-center">
-          <GoogleLogin
-            onSuccess={handleGoogleRegister}
-            onError={() => {
-              setErrorMsg('Đăng ký với Google thất bại')
-            }}
-            type="standard"
-            theme="outline"
-            size="large"
-            text="signup_with"
-            shape="circle"
-            width="100%"
-          />
-        </div>
 
         {/* Login Link */}
         <div className="text-center mt-6">
