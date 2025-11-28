@@ -84,4 +84,17 @@ export const postApi = {
       throw error;
     }
   },
+
+  report: async (reportData) => {
+    try {
+      const response = await axiosInstance.post(
+        `/ReportPosts`,
+        reportData
+      );
+      return response;
+    } catch (error) {
+      console.error("Error reporting post:", error);
+      throw error;
+    }
+  },
 };
