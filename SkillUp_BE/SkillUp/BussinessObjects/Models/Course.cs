@@ -33,6 +33,8 @@ public partial class Course
 
     public decimal? OriginalPrice { get; set; }
 
+    public bool? IsAiSupport { get; set; }
+
     public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
 
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();

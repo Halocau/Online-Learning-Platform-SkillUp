@@ -45,7 +45,7 @@ const CourseLearning = () => {
   const fetchCourseDetail = async () => {
     try {
       setLoading(true);
-      const response = await courseAPI.getCourseDetail(courseId);
+      const response = await courseAPI.getCourseLearningDetail(courseId);
       const course = response.data.data[0];
       setCourseData(course);
 
