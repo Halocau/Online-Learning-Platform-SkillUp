@@ -76,10 +76,7 @@ export default function UserPosts() {
     );
   }
 
-  const userName =
-    posts[0].accountName ??
-    posts[0].AccountName ??
-    "Người dùng";
+  const userName = posts[0].accountName ?? posts[0].AccountName ?? "Người dùng";
   const avatarUrl =
     posts[0].accountAvatarUrl ??
     posts[0].AccountAvatarUrl ??

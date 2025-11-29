@@ -2,18 +2,10 @@
 import { useRef, useEffect } from "react";
 import { Check, X, Upload, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Editor } from "@tinymce/tinymce-react";
-import { TINYMCE_API_KEY } from "@/config/api";
+import RichTextEditor from "@/components/Editor/RichText";
 
 function LessonForm({ lessonForm, setLessonForm, onSave, onCancel, loading }) {
   const editorRef = useRef(null);
-
-  // Initialize TinyMCE content when switching to Text type
-  useEffect(() => {
-    if (lessonForm.type === "Text" && editorRef.current) {
-      editorRef.current.setContent(lessonForm.content || "");
-    }
-  }, [lessonForm.type]);
 
   const handleEditorChange = (content) => {
     setLessonForm({ ...lessonForm, content });
@@ -64,46 +56,18 @@ function LessonForm({ lessonForm, setLessonForm, onSave, onCancel, loading }) {
           </label>
         </div>
 
-        {/* TinyMCE Editor for Text Type */}
+        {/* RichTextEditor for Text Type */}
         {lessonForm.type === "Text" && (
           <div className="border rounded-lg overflow-hidden">
-            <Editor
-              apiKey={TINYMCE_API_KEY}
-              onInit={(evt, editor) => (editorRef.current = editor)}
+            <RichTextEditor
               value={lessonForm.content}
-              onEditorChange={handleEditorChange}
-              init={{
-                height: 300,
-                menubar: false,
-                plugins: [
-                  "advlist",
-                  "autolink",
-                  "lists",
-                  "link",
-                  "image",
-                  "charmap",
-                  "preview",
-                  "anchor",
-                  "searchreplace",
-                  "visualblocks",
-                  "code",
-                  "fullscreen",
-                  "insertdatetime",
-                  "media",
-                  "table",
-                  "code",
-                  "help",
-                  "wordcount",
-                ],
-                toolbar:
-                  "undo redo | blocks | " +
-                  "bold italic forecolor | alignleft aligncenter " +
-                  "alignright alignjustify | bullist numlist outdent indent | " +
-                  "removeformat | help",
-                content_style:
-                  "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-                placeholder: "Nhập nội dung bài học...",
+              onChange={handleEditorChange}
+              onReady={(editor) => {
+                editorRef.current = editor;
               }}
+              placeholder="Nhập nội dung bài học..."
+              minHeight={300}
+              maxHeight={600}
             />
           </div>
         )}

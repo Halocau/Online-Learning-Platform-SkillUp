@@ -1,4 +1,6 @@
-﻿using SkillUp.BussinessObjects.DTOs.Lecturer;
+﻿using SkillUp.BussinessObjects.DTOs;
+using SkillUp.BussinessObjects.DTOs.Course;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
@@ -8,10 +10,12 @@ namespace SkillUp.Services.Implementations
     public class LecturerService : ILecturerService
     {
         private readonly ILecturerRepository _lecturerRepository;
+        private readonly ILecturerRepository _repository;
 
-        public LecturerService(ILecturerRepository lecturerRepository)
+        public LecturerService(ILecturerRepository lecturerRepository, ILecturerRepository repository)
         {
             _lecturerRepository = lecturerRepository;
+            _repository = repository;
         }
         public async Task<bool> CreateLecturerAsync(Lecturer newLecturer)
         {
@@ -83,7 +87,7 @@ namespace SkillUp.Services.Implementations
             }).ToList();
         }
 
-   
+
 
         // Cập nhật thông tin Lecturer sau khi thay đổi trạng thái đơn ứng tuyển
         public async Task<bool> UpdateLecturerInfoAsync(Guid? accountId, string? title, string? profession)
@@ -108,6 +112,101 @@ namespace SkillUp.Services.Implementations
             // Lưu thay đổi vào cơ sở dữ liệu
             await _lecturerRepository.UpdateAsync(lecturer);
             return await _lecturerRepository.SaveChangesAsync();
+        }
+
+        public async Task<LecturerProfileDto?> GetProfileByAccountIdAsync(Guid accountId)
+        {
+            // 1. Lấy Entity từ Repository
+            var lecturer = await _repository.GetLecturerByAccountIdAsync(accountId);
+
+            // 2. Nếu không tìm thấy (Account đó không phải là Lecturer)
+            if (lecturer == null)
+            {
+                return null;
+            }
+
+            // 3. Map sang DTO
+            return new LecturerProfileDto
+            {
+                Title = lecturer.Title,
+                Profession = lecturer.Profession,
+                BankNumber = lecturer.BankNumber,
+                BankName = lecturer.BankName,
+                ReceiverName = lecturer.ReceiverName
+
+
+            };
+        }
+        public async Task<LecturerProfilePageDto> GetLecturerPublicProfileAsync(Guid accId)
+        {
+            var lecturer = await _lecturerRepository.GetLecturerProfileByAccountAsync(accId);
+
+            if (lecturer == null)
+            {
+                throw new Exception("Không tìm thấy giảng viên này.");
+            }
+
+            var publicCourses = lecturer.Courses
+                .Where(c => c.Status == "Public" && c.IsActive)
+                .ToList();
+
+            int totalStudents = publicCourses.Sum(c => c.EnrollmentCount);
+
+            double avgRating = 0;
+            if (publicCourses.Any())
+            {
+                var ratedCourses = publicCourses.Where(c => c.Rating > 0).ToList();
+                if (ratedCourses.Any())
+                {
+                    avgRating = ratedCourses.Average(c => c.Rating ?? 0);
+                }
+            }
+
+            return new LecturerProfilePageDto
+            {
+                LecturerId = lecturer.Id,
+                AccountId = lecturer.AccountId,
+                FullName = lecturer.Account.Fullname ?? "Unknown Lecturer",
+                Avatar = lecturer.Account.Avatar,
+                Description = lecturer.Account.Description,
+
+                Title = lecturer.Title,
+                Profession = lecturer.Profession,
+
+                TotalStudents = totalStudents,
+                TotalCourses = publicCourses.Count,
+                AverageRating = Math.Round(avgRating, 1),
+
+                Courses = publicCourses.Select(c => new CourseSummaryDTO
+                {
+                    Id = c.Id,
+                    Title = c.Title,
+                    Image = c.Image,
+                    Price = c.Price,
+                    Rating = c.Rating,
+                    EnrollmentCount = c.EnrollmentCount,
+                    LecturerName = lecturer.Account.Fullname,
+                }).ToList()
+            };
+        }
+        public async Task<bool> UpdateLecturerProfileAsync(Guid accountId, UpdateLecturerProfileDto request)
+        {
+            // 1. Tìm Lecturer theo AccountId
+            var lecturer = await _repository.GetLecturerByAccountIdAsync(accountId);
+
+            if (lecturer == null)
+            {
+                return false; // Không tìm thấy (Tài khoản này chưa là Lecturer)
+            }
+
+            lecturer.Title = request.Title;
+            lecturer.Profession = request.Profession;
+            lecturer.BankNumber = request.BankNumber;
+            lecturer.BankName = request.BankName;
+            lecturer.ReceiverName = request.ReceiverName;
+
+            await _repository.UpdateAsync(lecturer);
+            return await _repository.SaveChangesAsync();
         }
     }
 }

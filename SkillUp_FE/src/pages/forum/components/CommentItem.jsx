@@ -12,6 +12,7 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/vi";
+import { motion, AnimatePresence } from "framer-motion";
 
 dayjs.extend(relativeTime);
 dayjs.locale("vi");
@@ -22,20 +23,25 @@ const CommentItem = ({
   isOwner,
   showReplies,
   replyingToId,
+  isLiked = false,
   onEdit,
   onDelete,
   onReport,
   onToggleLike,
   onReply,
   onToggleReplies,
-  children, // For reply form and nested replies
+  children,
 }) => {
   const commentId = comment.id;
   const likeCount = comment.likeCount ?? 0;
   const replies = comment.replies ?? [];
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.2 }}
       className={`flex gap-4 pb-4 ${
         !isReply ? "border-b border-gray-100" : ""
       }`}
@@ -59,31 +65,37 @@ const CommentItem = ({
           {isOwner && (
             <div className="flex gap-1 flex-shrink-0">
               <Tooltip title="Sửa">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => onEdit(comment)}
-                  className="text-gray-400 hover:text-indigo-600 p-1 hover:bg-gray-100 rounded transition-colors"
+                  className="text-gray-400 hover:text-indigo-600 p-1 hover:bg-indigo-50 rounded transition-colors"
                 >
                   <Edit2 size={14} />
-                </button>
+                </motion.button>
               </Tooltip>
               <Tooltip title="Xóa">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => onDelete(commentId)}
-                  className="text-gray-400 hover:text-red-600 p-1 hover:bg-gray-100 rounded transition-colors"
+                  className="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors"
                 >
                   <Trash2 size={14} />
-                </button>
+                </motion.button>
               </Tooltip>
             </div>
           )}
           {!isOwner && (
             <Tooltip title="Báo cáo">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => onReport(commentId)}
-                className="text-gray-400 hover:text-red-600 p-1 hover:bg-gray-100 rounded transition-colors"
+                className="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded transition-colors"
               >
                 <Flag size={14} />
-              </button>
+              </motion.button>
             </Tooltip>
           )}
         </div>
@@ -93,54 +105,101 @@ const CommentItem = ({
         </p>
 
         <div className="flex items-center gap-4 text-xs">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={() => onToggleLike(commentId)}
-            className="flex items-center gap-1 text-gray-500 hover:text-pink-600 font-medium transition-colors"
+            className={`flex items-center gap-1 font-medium transition-all ${
+              isLiked
+                ? "text-pink-600"
+                : "text-gray-500 hover:text-pink-600"
+            }`}
           >
-            <Heart size={14} />
-            <span>{likeCount}</span>
-          </button>
-          <button
+            <motion.div
+              animate={isLiked ? { scale: [1, 1.3, 1] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              <Heart
+                size={14}
+                fill={isLiked ? "currentColor" : "none"}
+                className={isLiked ? "drop-shadow-sm" : ""}
+              />
+            </motion.div>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={likeCount}
+                initial={{ scale: 1.3, color: "#ec4899" }}
+                animate={{ scale: 1, color: isLiked ? "#ec4899" : undefined }}
+                transition={{ duration: 0.2 }}
+              >
+                {likeCount}
+              </motion.span>
+            </AnimatePresence>
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => onReply(commentId)}
             className="flex items-center gap-1 text-gray-500 hover:text-indigo-600 font-medium transition-colors"
           >
             <MessageCircle size={14} />
             <span>Trả lời</span>
-          </button>
+          </motion.button>
         </div>
 
         {/* Reply form if this comment is being replied to */}
-        {replyingToId === commentId && children}
+        <AnimatePresence>
+          {replyingToId === commentId && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {children}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Toggle replies button and nested replies */}
         {replies.length > 0 && (
           <div className="mt-3">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => onToggleReplies(commentId)}
               className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
             >
-              {showReplies ? (
-                <>
+              <motion.div
+                animate={{ rotate: showReplies ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {showReplies ? (
                   <ChevronUp size={14} />
-                  Ẩn {replies.length} trả lời
-                </>
-              ) : (
-                <>
+                ) : (
                   <ChevronDown size={14} />
-                  Hiển thị {replies.length} trả lời
-                </>
-              )}
-            </button>
+                )}
+              </motion.div>
+              {showReplies ? "Ẩn" : "Hiển thị"} {replies.length} trả lời
+            </motion.button>
 
-            {showReplies && (
-              <div className="mt-3 pl-4 border-l-2 border-gray-200 space-y-3">
-                {children}
-              </div>
-            )}
+            <AnimatePresence>
+              {showReplies && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mt-3 pl-4 border-l-2 border-gray-200 space-y-3"
+                >
+                  {children}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

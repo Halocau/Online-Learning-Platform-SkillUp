@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Trash2, Edit2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import {
   addQuestionToQuiz,
   addQuestionsFromBank,
   updateQuestion,
+  deleteQuestionFromQuiz,
 } from "@/api/questionAPI";
 import { getQuizById } from "@/api/quizAPI";
 import { toast } from "react-toastify";
@@ -77,6 +78,25 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         }
       }
 
+      questionsList = questionsList.map((q) => ({
+        id: q.questionId || q.id || q.questionID,
+        questionId: q.questionId || q.id || q.questionID,
+
+        title: q.title || "",
+        description: q.description || "",
+        type: q.type || "SingleChoice",
+        orders: q.orders || 0,
+
+        imageUrl: q.image || q.imageUrl || "",
+
+        answers: (q.answers || []).map((ans) => ({
+          answerId: ans.answerId || ans.id,
+          id: ans.answerId || ans.id,
+          answerName: ans.answerName || "",
+          isCorrect: ans.isCorrect ?? false,
+          imageUrl: ans.imageUrl || ans.image || "",
+        })),
+      }));
       setQuestions(questionsList);
     } catch (error) {
       console.error("❌ Error loading questions:", error);
@@ -101,7 +121,11 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         orders: maxOrder + 1,
         imageUrl: questionData.imageUrl || "",
         type: questionData.type || "SingleChoice",
-        answers: questionData.answers,
+        answers: questionData.answers.map((ans) => ({
+          answerName: ans.answerName,
+          isCorrect: ans.isCorrect,
+          imageUrl: ans.imageUrl || "",
+        })),
       };
 
       const result = await addQuestionToQuiz(payload);
@@ -161,10 +185,44 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
   const handleEditQuestion = (question) => {
     const id = getQuestionId(question);
     if (!id) {
-      console.warn("Question has no id:", question);
+      toast.error("Không thể chỉnh sửa: Không tìm thấy ID câu hỏi");
+      return;
     }
+
     setEditingQuestionId(id);
   };
+
+  // Memoize the initial data for the editing question to prevent unnecessary re-renders
+  const editingQuestionData = useMemo(() => {
+    if (!editingQuestionId) return null;
+
+    const question = questions.find(
+      (q) => getQuestionId(q) === editingQuestionId
+    );
+    if (!question) {
+      return null;
+    }
+
+    return {
+      title: question.title || "",
+      description: question.description || "",
+      type: question.type || "SingleChoice",
+      imageUrl: question.imageUrl || "",
+      answers:
+        question.answers && question.answers.length > 0
+          ? question.answers.map((ans) => ({
+              answerId: ans.answerId || ans.id, // CRITICAL: Include answerId for updates
+              answerName: ans.answerName || "",
+              isCorrect: ans.isCorrect ?? false,
+              imageUrl: ans.imageUrl || "",
+            }))
+          : [
+              { answerName: "", isCorrect: false, imageUrl: "" },
+              { answerName: "", isCorrect: false, imageUrl: "" },
+            ],
+      orders: question.orders || 0,
+    };
+  }, [editingQuestionId, questions]);
 
   const handleUpdateQuestion = async (questionData) => {
     if (!editingQuestionId) {
@@ -181,7 +239,11 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         orders: questionData.orders,
         imageUrl: questionData.imageUrl || "",
         type: questionData.type || "SingleChoice",
-        answers: questionData.answers,
+        answers: questionData.answers.map((ans) => ({
+          answerName: ans.answerName,
+          isCorrect: ans.isCorrect,
+          imageUrl: ans.imageUrl || "",
+        })),
       };
 
       const result = await updateQuestion(editingQuestionId, payload);
@@ -218,7 +280,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
   const handleDeleteQuestion = async (questionId) => {
     if (!questionId) return;
-    
+
     if (!window.confirm("Bạn có chắc muốn xóa câu hỏi này?")) {
       return;
     }
@@ -226,6 +288,10 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     try {
       setLoading(true);
 
+      // Call the actual delete API
+      await deleteQuestionFromQuiz(quiz.id, questionId);
+
+      // Remove from local state after successful API call
       setQuestions((prev) =>
         prev.filter((q) => getQuestionId(q) !== questionId)
       );
@@ -238,6 +304,21 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       setLoading(false);
     }
   };
+
+  // Count answers with images
+  const countAnswerImages = (answers) => {
+    if (!answers || !Array.isArray(answers)) return 0;
+    return answers.filter((ans) => ans.imageUrl || ans.image).length;
+  };
+
+  // Debug log when editingQuestionId changes
+  useEffect(() => {
+    if (editingQuestionId) {
+      const question = questions.find(
+        (q) => getQuestionId(q) === editingQuestionId
+      );
+    }
+  }, [editingQuestionId, questions]);
 
   return (
     <div className="mt-3 space-y-3">
@@ -298,9 +379,13 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
               // Extract clean text from HTML title
               const cleanTitle = extractCleanText(question.title, 100);
+              const answerImageCount = countAnswerImages(question.answers);
 
               return (
-                <Card key={qId} className="overflow-hidden rounded-2xl border border-[#272343]/15">
+                <Card
+                  key={qId}
+                  className="overflow-hidden rounded-2xl border border-[#272343]/15"
+                >
                   {/* Simple Question Display - Collapsed by default */}
                   {!isEditing && (
                     <div className="flex items-center gap-3 p-3 bg-[#FFD54F]/5">
@@ -314,7 +399,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
                         <h5 className="font-medium text-[#272343] truncate">
                           {cleanTitle}
                         </h5>
-                        <div className="flex gap-2 mt-1">
+                        <div className="flex gap-2 mt-1 flex-wrap">
                           {question.type && (
                             <span className="text-xs px-2 py-0.5 bg-[#FFD54F]/20 text-[#272343] rounded-full">
                               {question.type === "SingleChoice"
@@ -325,12 +410,18 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
                           {question.imageUrl && (
                             <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#272343] rounded-full flex items-center gap-1">
                               <ImageIcon className="w-3 h-3" />
-                              Có ảnh
+                              Có ảnh câu hỏi
                             </span>
                           )}
                           {question.answers && (
                             <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#2d334a] rounded-full">
                               {question.answers.length} đáp án
+                            </span>
+                          )}
+                          {answerImageCount > 0 && (
+                            <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full flex items-center gap-1">
+                              <ImageIcon className="w-3 h-3" />
+                              {answerImageCount} ảnh đáp án
                             </span>
                           )}
                         </div>
@@ -356,28 +447,22 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
                     </div>
                   )}
 
-                  {/* Edit Form - Only shows when editing */}
-                  {isEditing && (
-                    <CardContent className="p-3 bg-white">
-                      <QuestionForm
-                        onSave={handleUpdateQuestion}
-                        onCancel={handleCancelEdit}
-                        loading={loading}
-                        initialData={{
-                          title: question.title,
-                          description: question.description || "",
-                          type: question.type || "SingleChoice",
-                          imageUrl: question.imageUrl || "",
-                          answers: question.answers || [
-                            { answerName: "", isCorrect: false },
-                            { answerName: "", isCorrect: false },
-                          ],
-                          orders: question.orders,
-                        }}
-                        isEditMode={true}
-                      />
-                    </CardContent>
-                  )}
+                  {/* Edit Form - Only shows when editing AND we have valid data */}
+                  {isEditing &&
+                    editingQuestionData &&
+                    editingQuestionData.answers &&
+                    editingQuestionData.answers.length > 0 && (
+                      <CardContent className="p-3 bg-white">
+                        <QuestionForm
+                          key={`edit-${qId}`}
+                          onSave={handleUpdateQuestion}
+                          onCancel={handleCancelEdit}
+                          loading={loading}
+                          initialData={editingQuestionData}
+                          isEditMode={true}
+                        />
+                      </CardContent>
+                    )}
                 </Card>
               );
             })}

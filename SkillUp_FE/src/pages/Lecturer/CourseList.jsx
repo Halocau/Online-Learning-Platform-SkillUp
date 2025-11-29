@@ -10,6 +10,8 @@ import {
   Eye,
   EyeOff,
   Check,
+  Info,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,7 +65,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
       id: "Pending",
       label: "Chờ duyệt",
       icon: Check,
-      color: "green",
+      color: "yellow",
     },
   ];
 
@@ -157,6 +159,18 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
 
   const handleEdit = (courseId) => {
     const courseToEdit = courses.find((c) => c.id === courseId);
+
+    // Check if course is pending - add extra validation
+    if (courseToEdit && courseToEdit.status === "Pending") {
+      toast.warning(
+        "Không thể chỉnh sửa khóa học đang chờ duyệt. Vui lòng chờ admin phê duyệt.",
+        {
+          icon: "🔒",
+        }
+      );
+      return;
+    }
+
     if (courseToEdit && onEdit) {
       onEdit(courseId, courseToEdit);
     } else {
@@ -215,6 +229,9 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
       orange: isActive
         ? "bg-orange-100 text-orange-700 border-orange-300 shadow-sm"
         : "text-gray-600 hover:bg-orange-50 hover:text-orange-600 border-transparent",
+      yellow: isActive
+        ? "bg-yellow-100 text-yellow-700 border-yellow-300 shadow-sm"
+        : "text-gray-600 hover:bg-yellow-50 hover:text-yellow-600 border-transparent",
     };
     return colors[color] || colors.blue;
   };
@@ -294,6 +311,32 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
           })}
         </div>
       </div>
+
+      {/* Pending Status Info Banner */}
+      {filterStatus === "Pending" && (
+        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                <Lock className="w-5 h-5 text-yellow-900" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-yellow-900 mb-1 flex items-center gap-2">
+                <Info className="w-4 h-4" />
+                Lưu ý về khóa học đang chờ duyệt
+              </h4>
+              <p className="text-sm text-yellow-800 leading-relaxed">
+                Các khóa học ở trạng thái <strong>"Chờ duyệt"</strong> đã được
+                gửi để xét duyệt. Bạn{" "}
+                <strong>không thể chỉnh sửa</strong> khóa học trong thời gian
+                này. Vui lòng chờ kết quả phê duyệt để có thể tiếp tục
+                chỉnh sửa, xuất bản khóa học.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search and Filter Bar */}
       <div className="space-y-4">
@@ -406,7 +449,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
                     onClick={clearDateFilter}
                     className="w-full px-3 py-1 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
                   >
-                    🗑️ Xóa bộ lọc ngày
+                    Xóa bộ lọc ngày
                   </button>
                 )}
               </div>

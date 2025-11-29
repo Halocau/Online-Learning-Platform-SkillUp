@@ -98,7 +98,10 @@ namespace SkillUp.Repositories.Implementations
 
         public async Task<List<LecturerApplication>> GetAllLecturerApplicationsAsync()
         {
-            var applications = await _context.LecturerApplications.ToListAsync();
+            var applications = await _context.LecturerApplications
+                .Include(x => x.Account)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
             return applications ?? new List<LecturerApplication>();
         }
 

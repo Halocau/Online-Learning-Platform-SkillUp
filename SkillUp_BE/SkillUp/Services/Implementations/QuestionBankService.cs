@@ -22,13 +22,15 @@ namespace SkillUp.Services.Implementations
 		private readonly ILecturerRepository _lecturerRepository;
 		private readonly ICourseRepository _courseRepository;
 		private readonly CloudinaryService _cloudinaryService;
-		public QuestionBankService(IQuestionBankRepository questionBankRepository, ICurrentUserService currentUserService, ILecturerRepository lecturerRepository, ICourseRepository courseRepository, CloudinaryService cloudinaryService)
+		private readonly ISectionRepository _sectionRepository;
+		public QuestionBankService(IQuestionBankRepository questionBankRepository, ICurrentUserService currentUserService, ILecturerRepository lecturerRepository, ICourseRepository courseRepository, CloudinaryService cloudinaryService, ISectionRepository sectionRepository)
 		{
 			_questionBankRepository = questionBankRepository;
 			_currentUserService = currentUserService;
 			_lecturerRepository = lecturerRepository;
 			_courseRepository = courseRepository;
 			_cloudinaryService = cloudinaryService;
+			_sectionRepository = sectionRepository;
 		}
 		public async Task<DetailQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId, string? imageUrl)
 		{
@@ -94,7 +96,8 @@ namespace SkillUp.Services.Implementations
 					QuestionBankId = questionBank.Id,
 					AnswerName = answerDto.AnswerName,
 					IsCorrect = answerDto.IsCorrect,
-					IsActive = true
+					IsActive = true,
+					Image = answerDto.ImageUrl
 				};
 				questionBank.AnswerBanks.Add(answer);
 			}
@@ -119,6 +122,7 @@ namespace SkillUp.Services.Implementations
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
+					Image = a.Image,
 				}).ToList()
 			};
 		}
@@ -172,7 +176,8 @@ namespace SkillUp.Services.Implementations
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
-					IsActive = a.IsActive
+					IsActive = a.IsActive,
+					Image = a.Image
 				}).ToList()
 			};
 		}
@@ -204,12 +209,13 @@ namespace SkillUp.Services.Implementations
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
 					IsActive = a.IsActive,
+					Image = a.Image
 				}).ToList()
 			}).ToList();
 			return questionBankDTOs;
 		}
 
-		public async Task<List<DetailQuestionBankDTO>> GetQuestionBanksByCourseIdAsync(Guid accountId, Guid courseId)
+		public async Task<List<SectionQuestionBankDTO>> GetQuestionBanksByCourseIdAsync(Guid accountId, Guid courseId)
 		{
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 			var course = await _courseRepository.GetCourseByIdAsync(courseId);
@@ -217,28 +223,45 @@ namespace SkillUp.Services.Implementations
 			{
 				throw new UnauthorizedAccessException("Bạn không phải là giảng viên của khoá học này");
 			}
+
+			var sections = await _sectionRepository.GetByCourseIdAsync(courseId);
 			var questionBanks = await _questionBankRepository.GetByCourseId(courseId);
-			var questionBankDTOs = questionBanks.Select(q => new DetailQuestionBankDTO
+
+			var sectionDTOs = sections.Select(s => new SectionQuestionBankDTO
 			{
-				Id = (Guid)q.Id,
-				SectionId = q.SectionId,
-				LecturerId = q.LecturerId,
-				Title = q.Title,
-				Description = q.Description,
-				CreatedAt = q.CreatedAt,
-				UpdatedAt = q.UpdatedAt,
-				IsActive = q.IsActive,
-				Image = q.Image,
-				Type = q.Type,
-				Answers = q.AnswerBanks.Select(a => new AnswerBankDetailDTO
-				{
-					AnswerId = (Guid)a.Id,
-					AnswerName = a.AnswerName,
-					IsCorrect = a.IsCorrect,
-					IsActive = a.IsActive,
-				}).ToList()
+				Id = s.Id,
+				CourseId = s.CourseId,
+				Title = s.Title,
+				Description = s.Description,
+				CreatedAt = s.CreatedAt,
+				UpdatedAt = s.UpdatedAt,
+				IsActive = s.IsActive,
+				Orders = s.Orders,
+				QuestionBanks = questionBanks
+					.Where(q => q.SectionId == s.Id)
+					.Select(q => new DetailQuestionBankDTO
+					{
+						Id = (Guid)q.Id,
+						SectionId = q.SectionId,
+						LecturerId = q.LecturerId,
+						Title = q.Title,
+						Description = q.Description,
+						CreatedAt = q.CreatedAt,
+						UpdatedAt = q.UpdatedAt,
+						IsActive = q.IsActive,
+						Image = q.Image,
+						Type = q.Type,
+						Answers = q.AnswerBanks.Select(a => new AnswerBankDetailDTO
+						{
+							AnswerId = (Guid)a.Id,
+							AnswerName = a.AnswerName,
+							IsCorrect = a.IsCorrect,
+							IsActive = a.IsActive,
+							Image = a.Image
+						}).ToList()
+					}).ToList()
 			}).ToList();
-			return questionBankDTOs;
+			return sectionDTOs;
 		}
 
 		public async Task<UpdateQuestionBankDTO> UpdateQuestionBank(UpdateQuestionBankDTO updateQuestionBankDTO, Guid questionBankId, Guid accountId, Guid courseId)
@@ -309,6 +332,7 @@ namespace SkillUp.Services.Implementations
 					answer.AnswerName = answerDTO.AnswerName;
 					answer.IsCorrect = answerDTO.IsCorrect;
 					answer.IsActive = answerDTO.IsActive;
+					answer.Image = answerDTO.Image;
 				}
 			}
 
@@ -324,7 +348,8 @@ namespace SkillUp.Services.Implementations
 					AnswerId = (Guid)a.Id,
 					AnswerName = a.AnswerName,
 					IsCorrect = a.IsCorrect,
-					IsActive = a.IsActive
+					IsActive = a.IsActive,
+					Image = a.Image
 				}).ToList()
 			};
 		}

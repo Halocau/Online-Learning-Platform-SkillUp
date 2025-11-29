@@ -5,12 +5,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Spin, Empty, Divider, Button } from "antd";
 import { MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
 import CommentItem from "./CommentItem";
 import CommentForm from "./CommentForm";
 import CommentModals from "./CommentModal";
 import commentApi from "@/api/commentAPI";
 import ReplyForm from "./ReplyForm";
-import signalRService from "./SignalRService"; // <-- THÊM DÒNG NÀY
+import signalRService from "./SignalRService";
 
 // --- Chuyển hàm helper ra ngoài để dùng chung ---
 const findCommentById = (list, id) => {
@@ -46,6 +47,7 @@ export default function CommentSection({ postId }) {
   const [expandedReplies, setExpandedReplies] = useState({});
   const [deletedCommentNotification, setDeletedCommentNotification] =
     useState("");
+  const [likedComments, setLikedComments] = useState(new Set());
 
   // Modal states
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -123,26 +125,19 @@ export default function CommentSection({ postId }) {
 
   // --- 2. useEffect MỚI cho SIGNALR ---
   useEffect(() => {
-    // Chỉ chạy khi có postId VÀ user đã đăng nhập (để có token)
     if (!postId || !userId) return;
 
-    // === Các hàm xử lý state khi nhận tín hiệu ===
-
-    // Khi nhận comment mới
     const handleReceiveComment = (newComment) => {
       console.log("signalR: Nhận comment mới", newComment);
       setComments((prevComments) => {
-        // Kiểm tra trùng lặp
         if (findCommentById(prevComments, newComment.id)) return prevComments;
 
         const normalized = normalizeComment(newComment);
 
         if (normalized.parentCommentId) {
-          // Đây là một reply
           const addReply = (comments) => {
             return comments.map((c) => {
               if (c.id === normalized.parentCommentId) {
-                // Thêm reply mới vào cuối danh sách
                 return { ...c, replies: [...c.replies, normalized] };
               }
               if (c.replies?.length > 0) {
@@ -151,27 +146,23 @@ export default function CommentSection({ postId }) {
               return c;
             });
           };
-          // Tự động mở rộng comment cha
           setExpandedReplies((prev) => ({
             ...prev,
             [normalized.parentCommentId]: true,
           }));
           return addReply(prevComments);
         } else {
-          // Đây là một root comment mới (thêm vào đầu danh sách)
           return [normalized, ...prevComments];
         }
       });
     };
 
-    // Khi nhận cập nhật
     const handleUpdateComment = (updatedComment) => {
       console.log("signalR: Nhận cập nhật", updatedComment);
       setComments((prevComments) => {
         const update = (commentsList) => {
           return commentsList.map((c) => {
             if (c.id === updatedComment.id) {
-              // Cập nhật nội dung/like, giữ nguyên replies
               return { ...c, ...updatedComment, replies: c.replies };
             }
             if (c.replies?.length > 0) {
@@ -184,13 +175,12 @@ export default function CommentSection({ postId }) {
       });
     };
 
-    // Khi nhận xóa (nhận về commentId)
     const handleDeleteComment = (commentId) => {
       console.log("signalR: Nhận xóa", commentId);
       setComments((prevComments) => {
         const remove = (comments, idToRemove) => {
           return comments.reduce((acc, c) => {
-            if (c.id === idToRemove) return acc; // Lọc bỏ
+            if (c.id === idToRemove) return acc;
             if (c.replies?.length > 0) {
               return [...acc, { ...c, replies: remove(c.replies, idToRemove) }];
             }
@@ -207,11 +197,9 @@ export default function CommentSection({ postId }) {
       setComments((prevComments) => {
         const updateLike = (commentsList) => {
           return commentsList.map((c) => {
-            // 1. Tìm đúng comment
             if (c.id === commentId) {
               return { ...c, likeCount: totalLikes };
             }
-            // 2. Tìm trong replies (đệ quy)
             if (c.replies?.length > 0) {
               return { ...c, replies: updateLike(c.replies) };
             }
@@ -222,14 +210,10 @@ export default function CommentSection({ postId }) {
       });
     };
 
-    // === Kết nối và lắng nghe ===
-
     signalRService
       .startConnection()
       .then(() => {
         signalRService.joinPostGroup(postId);
-
-        // Đăng ký các hàm lắng nghe
         signalRService.onCommentReceived(handleReceiveComment);
         signalRService.onCommentUpdated(handleUpdateComment);
         signalRService.onCommentDeleted(handleDeleteComment);
@@ -242,26 +226,15 @@ export default function CommentSection({ postId }) {
         )
       );
 
-    // Dọn dẹp (rất quan trọng)
     return () => {
       console.log(`Dọn dẹp SignalR cho post ${postId}`);
       signalRService.leavePostGroup(postId);
-
-      // Gỡ lắng nghe
       signalRService.offCommentReceived();
       signalRService.offCommentUpdated();
       signalRService.offCommentDeleted();
       signalRService.offLikeUpdate();
-      // Không gọi stopConnection() ở đây, để giữ kết nối cho trang khác
     };
-  }, [postId, userId]); // Chạy lại khi đổi PostId hoặc user (đăng nhập)
-
-  // --- 3. CÁC HÀM SUBMIT VÀ HANDLER (Giữ nguyên logic của bạn) ---
-  // Các hàm này (handleSubmit, handleDelete...) vẫn cập nhật state
-  // ngay lập tức (Optimistic Update) để UI mượt mà.
-  // SignalR sẽ lo việc cập nhật cho *các user khác*.
-
-  // Thay thế TOÀN BỘ hàm handleSubmitComment bằng code này
+  }, [postId, userId]);
 
   const handleSubmitComment = async () => {
     if (!commentText.trim()) return toast.warning("Vui lòng nhập bình luận");
@@ -270,22 +243,17 @@ export default function CommentSection({ postId }) {
     setSubmitting(true);
     try {
       if (editingId) {
-        // --- LOGIC UPDATE (CẬP NHẬT) ---
-        // Block này gọi commentApi.update
-
         const res = await commentApi.update({
           commentId: editingId,
           contents: commentText,
         });
         const updatedComment = res?.data?.data;
 
-        // Cập nhật state (để UI mượt)
         if (updatedComment) {
           setComments((prev) => {
             const update = (commentsList) => {
               return commentsList.map((c) => {
                 if (c.id === editingId) {
-                  // Giữ nguyên replies, cập nhật phần còn lại
                   return { ...c, ...updatedComment, replies: c.replies };
                 }
                 if (c.replies?.length > 0) {
@@ -301,9 +269,6 @@ export default function CommentSection({ postId }) {
         toast.success("Cập nhật bình luận thành công");
         setEditingId(null);
       } else {
-        // --- LOGIC CREATE (TẠO MỚI) ---
-        // Block này gọi commentApi.create
-
         const res = await commentApi.create({
           postId,
           contents: commentText,
@@ -313,24 +278,18 @@ export default function CommentSection({ postId }) {
         const newComment = res?.data?.data;
         if (!newComment) throw new Error("Không nhận được dữ liệu comment mới");
 
-        // Cập nhật state (để UI mượt)
         const normalized = normalizeComment(newComment);
 
-        // --- ĐÂY LÀ PHẦN SỬA LỖI DOUBLE ---
-        // Chỉ thêm vào state NẾU nó chưa tồn tại
-        // (Phòng trường hợp SignalR chạy về trước)
         setComments((prev) => {
           if (findCommentById(prev, normalized.id)) {
-            return prev; // Đã tồn tại (do SignalR), không làm gì cả
+            return prev;
           }
-          return [normalized, ...prev]; // Thêm mới
+          return [normalized, ...prev];
         });
-        // --- KẾT THÚC PHẦN SỬA ---
 
         toast.success("Bình luận thành công");
       }
 
-      // Xóa nội dung ô nhập liệu (cho cả 2 trường hợp)
       setCommentText("");
     } catch (err) {
       toast.error(err?.response?.data?.message || "Lỗi khi gửi bình luận");
@@ -352,7 +311,6 @@ export default function CommentSection({ postId }) {
       const newReply = res?.data?.data;
       if (!newReply) throw new Error("Không nhận được dữ liệu trả lời");
 
-      // Cập nhật state (để UI mượt)
       const normalizedReply = normalizeComment(newReply);
       setComments((prevComments) => {
         const addReply = (comments) => {
@@ -394,7 +352,6 @@ export default function CommentSection({ postId }) {
     try {
       await commentApi.delete(deleteCommentId);
 
-      // Cập nhật state (để UI mượt)
       setComments((prev) => {
         const remove = (comments, idToRemove) => {
           return comments.reduce((acc, c) => {
@@ -420,30 +377,59 @@ export default function CommentSection({ postId }) {
   const handleToggleLike = async (commentId) => {
     if (!userId) return toast.warning("Vui lòng đăng nhập");
 
-    const updateLike = (comments, id, fn) => {
+    // Find current like count
+    let currentLikeCount = 0;
+    const comment = findCommentById(comments, commentId);
+    if (comment) {
+      currentLikeCount = comment.likeCount || 0;
+    }
+
+    const wasLiked = likedComments.has(commentId);
+
+    // Optimistic update for liked state
+    setLikedComments((prev) => {
+      const newSet = new Set(prev);
+      if (wasLiked) {
+        newSet.delete(commentId);
+      } else {
+        newSet.add(commentId);
+      }
+      return newSet;
+    });
+
+    // Optimistic update for like count
+    const updateLike = (comments, id, newCount) => {
       return comments.map((c) => {
-        if (c.id === id) return { ...c, likeCount: fn(c.likeCount ?? 0) };
+        if (c.id === id) return { ...c, likeCount: newCount };
         if (c.replies?.length > 0)
-          return { ...c, replies: updateLike(c.replies, id, fn) };
+          return { ...c, replies: updateLike(c.replies, id, newCount) };
         return c;
       });
     };
 
-    // Optimistic Update: Cập nhật UI trước
-    setComments((prev) => updateLike(prev, commentId, (c) => c + 1));
+    const newCount = wasLiked
+      ? Math.max(0, currentLikeCount - 1)
+      : currentLikeCount + 1;
+    setComments((prev) => updateLike(prev, commentId, newCount));
 
     try {
-      // Gọi API
       const res = await commentApi.toggleLike(commentId);
-      const actualLikes = res?.data?.data?.totalLikes ?? 0;
+      const actualLikes = res?.data?.data?.totalLikes ?? newCount;
 
-      // Cập nhật lại state với số like CHUẨN từ server
-      setComments((prev) => updateLike(prev, commentId, () => actualLikes));
+      // Update with actual count from server
+      setComments((prev) => updateLike(prev, commentId, actualLikes));
     } catch (err) {
-      // Rollback nếu lỗi
-      setComments((prev) =>
-        updateLike(prev, commentId, (c) => Math.max(0, c - 1))
-      );
+      // Rollback on error
+      setLikedComments((prev) => {
+        const newSet = new Set(prev);
+        if (wasLiked) {
+          newSet.add(commentId);
+        } else {
+          newSet.delete(commentId);
+        }
+        return newSet;
+      });
+      setComments((prev) => updateLike(prev, commentId, currentLikeCount));
       toast.error("Lỗi khi thích bình luận");
     }
   };
@@ -477,7 +463,7 @@ export default function CommentSection({ postId }) {
     setEditingId(null);
   };
 
-  // --- HÀM RENDER ĐỆ QUY (Giữ nguyên) ---
+  // --- HÀM RENDER ĐỆ QUY ---
   const renderComment = (
     comment,
     isReply = false,
@@ -489,6 +475,7 @@ export default function CommentSection({ postId }) {
     const maxDepth = 20;
     const canReply = depth < maxDepth;
     const uniqueKey = `${comment.id}-${parentId || "root"}-${depth}`;
+    const isLiked = likedComments.has(comment.id);
 
     return (
       <div key={uniqueKey}>
@@ -498,6 +485,7 @@ export default function CommentSection({ postId }) {
           isOwner={isOwner}
           showReplies={showReplies}
           replyingToId={replyingToId}
+          isLiked={isLiked}
           onEdit={handleEditComment}
           onDelete={(id) => {
             setDeleteCommentId(id);
@@ -536,7 +524,7 @@ export default function CommentSection({ postId }) {
     );
   };
 
-  // --- 4. JSX (Giữ nguyên) ---
+  // --- 4. JSX ---
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
       <div className="flex items-center justify-between mb-6">
@@ -558,9 +546,14 @@ export default function CommentSection({ postId }) {
       </div>
 
       {deletedCommentNotification && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg"
+        >
           <p className="text-sm text-green-800">{deletedCommentNotification}</p>
-        </div>
+        </motion.div>
       )}
 
       <Divider />
@@ -587,7 +580,9 @@ export default function CommentSection({ postId }) {
         ) : comments.length === 0 ? (
           <Empty description="Chưa có bình luận nào" />
         ) : (
-          comments.map((comment) => renderComment(comment, false, 0))
+          <AnimatePresence>
+            {comments.map((comment) => renderComment(comment, false, 0))}
+          </AnimatePresence>
         )}
       </div>
 

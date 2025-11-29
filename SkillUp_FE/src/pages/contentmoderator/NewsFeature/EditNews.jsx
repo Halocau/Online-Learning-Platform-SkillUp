@@ -60,7 +60,7 @@ export default function EditNews() {
       await updateNews(updateData);
 
       toast.success("Cập nhật tin tức thành công!");
-      setTimeout(() => navigate("/contentmod/newsmanage"), 1500);
+      setTimeout(() => navigate("/contentmod/news"), 1500);
     } catch (err) {
       console.error(err);
       toast.error("Cập nhật tin tức thất bại!");

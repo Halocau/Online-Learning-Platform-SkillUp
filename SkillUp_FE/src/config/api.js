@@ -67,6 +67,9 @@ export const API_ENDPOINTS = {
     //Notification endpoints
     GET_MY_NOTIFICATIONS: '/Notify/GetMyNotifications',
     GET_NOTIFICATIONS_BY_ACCOUNT: '/Notify/GetByAccount/{accountId}',
+
+    //Transaction endpoints
+    PURCHASE_HISTORY: '/Transaction/history',
 };
 
 

@@ -40,7 +40,14 @@ namespace SkillUp.Services.Implementations
             {
                 throw new Exception("Quiz không tồn tại");
             }
-
+            if (createQuestionDTO.Answers.Count > 7)
+            {
+                throw new Exception("Số lượng câu trả lời không được vượt quá 7 câu.");
+            }
+            if (createQuestionDTO.Answers.Count < 2)
+            {
+                throw new Exception("Một câu hỏi phải có ít nhất 2 câu trả lời.");
+            }
             if (string.IsNullOrWhiteSpace(createQuestionDTO.Type))
             {
                 throw new Exception("Loại câu hỏi (Type) không được để trống.");
@@ -96,7 +103,8 @@ namespace SkillUp.Services.Implementations
                     QuestionBankId = question.Id,
                     AnswerName = answerDto.AnswerName,
                     IsCorrect = answerDto.IsCorrect,
-                    IsActive = true
+                    IsActive = true,
+                    Image = answerDto.ImageUrl
                 };
                 question.AnswerBanks.Add(answer);
                 newAnswersForDto.Add(answer);
@@ -134,7 +142,8 @@ namespace SkillUp.Services.Implementations
                 {
                     Id = a.Id,
                     AnswerName = a.AnswerName,
-                    IsCorrect = a.IsCorrect
+                    IsCorrect = a.IsCorrect,
+                    Image = a.Image
                 }).ToList()
             };
 
@@ -259,30 +268,30 @@ namespace SkillUp.Services.Implementations
             return await _questionBankRepository.SaveChangesAsync();
         }
 
-        public async Task<QuestionResponseDto> UpdateQuestionInQuizAsync(Guid oldQuestionId,UpdateQuestionDTO dto,Guid accId)
+        public async Task<QuestionResponseDto> UpdateQuestionInQuizAsync(Guid oldQuestionId, UpdateQuestionDTO dto, Guid accId)
         {
             var lecturer = await _lecturerRepository.GetByAccountIdAsync(accId);
-            if (lecturer == null)
-                throw new Exception("Không tìm thấy giảng viên.");
+            if (lecturer == null) throw new Exception("Không tìm thấy giảng viên.");
 
             var oldQuestion = await _questionBankRepository.GetQuestionWithAnswersAsync(oldQuestionId);
-            if (oldQuestion == null)
-                throw new Exception("Không tìm thấy câu hỏi gốc.");
+            if (oldQuestion == null) throw new Exception("Không tìm thấy câu hỏi gốc.");
 
-            if (oldQuestion.LecturerId != lecturer.Id)
-                throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa câu hỏi này.");
+            if (oldQuestion.LecturerId != lecturer.Id) throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa câu hỏi này.");
 
             var link = await _questionQuizRepository.GetLinkAsync(dto.QuizId, oldQuestionId);
-            if (link == null)
-                throw new Exception("Không tìm thấy câu hỏi này trong quiz hiện tại.");
-
+            if (link == null) throw new Exception("Không tìm thấy câu hỏi này trong quiz hiện tại.");
+            if (dto.Answers.Count > 7)
+            {
+                throw new Exception("Số lượng câu trả lời không được vượt quá 7 câu.");
+            }
+            if (dto.Answers.Count < 2)
+            {
+                throw new Exception("Một câu hỏi phải có ít nhất 2 câu trả lời.");
+            }
             int correctAnswersCount = dto.Answers.Count(a => a.IsCorrect == true);
-            if (dto.Type == "SingleChoice" && correctAnswersCount != 1)
-                throw new Exception("Câu hỏi chọn 1 (SingleChoice) phải có đúng 1 đáp án đúng.");
-            if (dto.Type == "MultiChoice" && correctAnswersCount == 0)
-                throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
+            if (dto.Type == "SingleChoice" && correctAnswersCount != 1) throw new Exception("Câu hỏi chọn 1 (SingleChoice) phải có đúng 1 đáp án đúng.");
+            if (dto.Type == "MultiChoice" && correctAnswersCount == 0) throw new Exception("Câu hỏi chọn nhiều (MultiChoice) phải có ít nhất 1 đáp án đúng.");
 
-            // --- 3. TẠO CÂU HỎI MỚI (BẢN SAO) ---
             var newQuestion = new QuestionBank
             {
                 Id = Guid.NewGuid(),
@@ -299,19 +308,34 @@ namespace SkillUp.Services.Implementations
             };
 
             var newAnswersForDto = new List<AnswerBank>();
+
             foreach (var answerDto in dto.Answers)
             {
+                string? finalAnswerImage = answerDto.ImageUrl;
+
+                if (finalAnswerImage == null && answerDto.AnswerId.HasValue)
+                {
+                    var oldAnswer = oldQuestion.AnswerBanks.FirstOrDefault(a => a.Id == answerDto.AnswerId.Value);
+                    if (oldAnswer != null)
+                    {
+                        finalAnswerImage = oldAnswer.Image;
+                    }
+                }
+
                 var newAnswer = new AnswerBank
                 {
                     Id = Guid.NewGuid(),
                     QuestionBankId = newQuestion.Id,
                     AnswerName = answerDto.AnswerName,
                     IsCorrect = answerDto.IsCorrect,
-                    IsActive = true
+                    IsActive = true,
+                    Image = finalAnswerImage
                 };
+
                 newQuestion.AnswerBanks.Add(newAnswer);
                 newAnswersForDto.Add(newAnswer);
             }
+
             oldQuestion.IsHidden = true;
             _questionBankRepository.Update(oldQuestion);
 
@@ -337,7 +361,8 @@ namespace SkillUp.Services.Implementations
                 {
                     Id = a.Id,
                     AnswerName = a.AnswerName,
-                    IsCorrect = a.IsCorrect
+                    IsCorrect = a.IsCorrect,
+                    Image = a.Image
                 }).ToList()
             };
         }

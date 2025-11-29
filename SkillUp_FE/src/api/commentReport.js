@@ -36,7 +36,10 @@ export const getAllReports = async () => {
 export const getPendingReports = async () => {
   try {
     const res = await axiosInstance.get(`${API_URL}/Pending`);
-    return handleAPIResponse(res, "Lấy danh sách báo cáo chờ xử lý thành công!");
+    return handleAPIResponse(
+      res,
+      "Lấy danh sách báo cáo chờ xử lý thành công!"
+    );
   } catch (err) {
     return handleAPIError(err, "Không thể tải danh sách báo cáo chờ xử lý!");
   }

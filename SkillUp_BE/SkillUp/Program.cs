@@ -138,6 +138,7 @@ builder.Services.AddScoped<IQuizAnswerSubmissionRepository, QuizAnswerSubmission
 builder.Services.AddScoped<IAnswerBankRepository, AnswerBankRepository>();
 builder.Services.AddScoped<IStudentProgressRepository, StudentProgressRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -172,6 +173,7 @@ builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider
 builder.Services.AddScoped<ILessonChatService, LessonChatService>();
 builder.Services.AddScoped<ICourseChatService, CourseChatService>();
 
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 // POST
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -247,9 +249,16 @@ builder.Services.AddScoped<ICommentReportLessonService, CommentReportLessonServi
 builder.Services.AddScoped<IRatingRepository, RatingRepository>();
 builder.Services.AddScoped<IRatingService, RatingService>();
 
+builder.Services.AddScoped<IReportCourseRepository, ReportCourseRepository>();
+builder.Services.AddScoped<IReportCourseService, ReportCourseService>();
+
 //report post
 builder.Services.AddScoped<IReportPostRepository, ReportPostRepository>();
 builder.Services.AddScoped<IReportPostService, ReportPostService>();
+
+//background
+builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+builder.Services.AddHostedService<QueuedHostedService>();
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];

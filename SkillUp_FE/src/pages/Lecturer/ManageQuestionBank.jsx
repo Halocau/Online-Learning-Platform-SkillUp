@@ -8,6 +8,7 @@ import QuestionBankViewModal from '@/components/QuestionBank/QuestionBankViewMod
 import QuestionBankEditModal from '@/components/QuestionBank/QuestionBankEditModal';
 import QuestionBankCreateModal from '@/components/QuestionBank/QuestionBanKCreateModal';
 import QuestionBankExcelModal from '@/components/QuestionBank/QuestionBankExcelModal';
+import { extractCleanText } from '@/utils/htmlUtils';
 
 const PAGE_SIZE = 10;
 
@@ -265,9 +266,19 @@ export default function ManageQuestionBank() {
             dataIndex: 'title',
             key: 'title',
             width: 140,
-            sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
+            // 1. Update Sorter: Sort by the Clean text, not the HTML
+            sorter: (a, b) => {
+                const textA = extractCleanText(a.title || '');
+                const textB = extractCleanText(b.title || '');
+                return textA.localeCompare(textB);
+            },
             sortOrder: sortedInfo.columnKey === 'title' ? sortedInfo.order : null,
-            render: (v) => <span className="font-medium">{v}</span>,
+            // 2. Update Render: Display the Clean text
+            render: (v) => (
+                <span className="font-medium">
+                    {extractCleanText(v)}
+                </span>
+            ),
             ellipsis: true,
         },
         {
@@ -284,7 +295,7 @@ export default function ManageQuestionBank() {
             dataIndex: 'updatedAt',
             key: 'updatedAt',
             width: 180,
-            sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+            sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
             sortOrder: sortedInfo.columnKey === 'updatedAt' ? sortedInfo.order : null,
             render: (v) => <span>{formatDateTime(v)}</span>,
         },

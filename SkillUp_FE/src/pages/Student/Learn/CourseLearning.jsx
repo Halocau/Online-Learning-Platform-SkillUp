@@ -49,6 +49,17 @@ const CourseLearning = () => {
       const course = response.data.data[0];
       setCourseData(course);
 
+      // Extract completed items from API response
+      const completed = new Set();
+      course.sections.forEach((section) => {
+        section.items?.forEach((item) => {
+          if (item.isCompleted === true) {
+            completed.add(item.id);
+          }
+        });
+      });
+      setCompletedItems(completed);
+
       if (sectionId) {
         const section = course.sections.find((s) => s.id === sectionId);
         if (section) {
@@ -68,15 +79,7 @@ const CourseLearning = () => {
         setCurrentItem(null);
       }
     } catch (error) {
-      if (error.response?.status === 403) {
-        toast.error("Bạn cần đăng ký khóa học trước khi học.");
-        navigate(`/course/${courseId}`);
-      } else if (error.response?.status === 401) {
-        toast.error("Vui lòng đăng nhập để tiếp tục học.");
-        navigate("/login");
-      } else {
-        toast.error("Không thể tải khóa học");
-      }
+      toast.error("Không thể tải khóa học");
     } finally {
       setTimeout(() => setLoading(false), 150);
     }
@@ -156,7 +159,7 @@ const CourseLearning = () => {
     return (
       idx < currentSection.items.length - 1 ||
       courseData.sections.findIndex((s) => s.id === currentSection.id) <
-      courseData.sections.length - 1
+        courseData.sections.length - 1
     );
   };
 
@@ -171,13 +174,29 @@ const CourseLearning = () => {
 
   const handleItemComplete = async (itemId) => {
     try {
+      // Call API to mark complete
       await markLessonComplete(itemId);
+
+      // Optimistic update
       setCompletedItems((prev) => new Set([...prev, itemId]));
+
+      // Refetch to get updated progress from server
+      await fetchCourseDetail();
+
+      // Check if course is now complete
       checkCourseCompletion();
+
+      toast.success("Đã đánh dấu hoàn thành");
     } catch (error) {
       console.error("Error marking lesson complete:", error);
-      // Vẫn cập nhật local state nếu API lỗi
-      setCompletedItems((prev) => new Set([...prev, itemId]));
+      toast.error("Không thể đánh dấu hoàn thành. Vui lòng thử lại.");
+
+      // Rollback optimistic update on error
+      setCompletedItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(itemId);
+        return newSet;
+      });
     }
   };
 
@@ -186,7 +205,7 @@ const CourseLearning = () => {
       (a, s) => a + (s.items?.length || 0),
       0
     );
-    if (completedItems.size + 1 >= total && total > 0) {
+    if (completedItems.size >= total && total > 0) {
       setShowRatingModal(true);
     }
   };
@@ -198,9 +217,12 @@ const CourseLearning = () => {
     );
     return total > 0 ? (completedItems.size / total) * 100 : 0;
   };
+
   const handleQuizComplete = async () => {
+    // Refetch course detail to get updated completion status
     await fetchCourseDetail();
   };
+
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
@@ -247,7 +269,7 @@ const CourseLearning = () => {
         {showRatingModal && (
           <RatingModal
             courseName={courseData.title}
-            onSubmit={() => { }}
+            onSubmit={() => {}}
             onClose={() => setShowRatingModal(false)}
           />
         )}
@@ -269,7 +291,7 @@ const CourseLearning = () => {
         {showRatingModal && (
           <RatingModal
             courseName={courseData.title}
-            onSubmit={() => { }}
+            onSubmit={() => {}}
             onClose={() => setShowRatingModal(false)}
           />
         )}
@@ -313,7 +335,7 @@ const CourseLearning = () => {
         {showRatingModal && (
           <RatingModal
             courseName={courseData.title}
-            onSubmit={() => { }}
+            onSubmit={() => {}}
             onClose={() => setShowRatingModal(false)}
           />
         )}

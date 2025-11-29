@@ -47,7 +47,6 @@ export const courseAPI = {
       );
       return response;
     } catch (error) {
-      // Thêm log lỗi ở đây
       console.error("Error updating course:", error);
       throw error;
     }
@@ -60,7 +59,6 @@ export const courseAPI = {
       );
       return response;
     } catch (error) {
-      // Thêm log lỗi ở đây
       console.error("Error deleting course:", error);
       throw error;
     }
@@ -88,7 +86,6 @@ export const courseAPI = {
     }
   },
 
-  // Get course detail by ID
   getCourseDetail: async (courseId) => {
     try {
       const response = await axiosInstance.get(`${API_BASE_URL}/${courseId}`);
@@ -123,7 +120,6 @@ export const courseAPI = {
     }
   },
 
-  // Approve or reject course
   approveCourse: async (courseId, decision, reason = "") => {
     try {
       const response = await axiosInstance.put(
@@ -132,7 +128,7 @@ export const courseAPI = {
         {
           params: {
             decision,
-            reason: reason || undefined, // Only include if provided
+            reason: reason || undefined,
           },
         }
       );
@@ -142,7 +138,7 @@ export const courseAPI = {
       throw error;
     }
   },
-  // Get my courses (enrolled courses with progress)
+
   getStudentEnrolledCourses: async () => {
     try {
       const response = await axiosInstance.get(
@@ -167,7 +163,6 @@ export const courseAPI = {
     }
   },
 
-  // Get resume item (lấy vị trí học tiếp)
   getResumeItem: async (courseId) => {
     try {
       const response = await axiosInstance.get(
@@ -176,6 +171,19 @@ export const courseAPI = {
       return response;
     } catch (error) {
       console.error("Error fetching resume item:", error);
+      throw error;
+    }
+  },
+
+  reportCourse: async (reportData) => {
+    try {
+      const response = await axiosInstance.post(
+        `/ReportCourse`,
+        reportData
+      );
+      return response;
+    } catch (error) {
+      console.error("Error reporting course:", error);
       throw error;
     }
   },

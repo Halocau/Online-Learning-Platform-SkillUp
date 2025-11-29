@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select, Alert } from "antd";
-import { PlusOutlined, MinusCircleOutlined, UploadOutlined } from "@ant-design/icons";
+import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select, Alert, Tooltip } from "antd";
+import { PlusOutlined, MinusCircleOutlined, UploadOutlined, CheckOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axios";
+import RichTextEditor from "../Editor/RichText";
 
 const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   const [questionData, setQuestionData] = useState(null);
   const [fileList, setFileList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [editingAnswerId, setEditingAnswerId] = useState(null);
 
   useEffect(() => {
     if (questionBankObj) {
@@ -90,6 +92,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   };
 
   const handleSave = async () => {
+    // 1. Validation
     if (!questionData.title?.trim()) {
       toast.error("Vui lòng nhập câu hỏi!");
       return;
@@ -103,19 +106,37 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
     setLoading(true);
 
     try {
-      const currentData = { ...questionData };
-      let imageUrl = currentData.image;
-      console.log("Saved Data:", currentData);
-
-      if (currentData.image instanceof File) {
-        imageUrl = await uploadImage(currentData.image);
+      let mainQuestionImageUrl = questionData.image;
+      if (questionData.image instanceof File) {
+        mainQuestionImageUrl = await uploadImage(questionData.image);
       }
-      currentData.image = imageUrl;
 
-      if (onSave) onSave(currentData);
+      const processedAnswers = await Promise.all(questionData.answers.map(async (ans) => {
+        let finalUrl = ans.imageUrl || ans.image || null;
+        if (ans.imageFile instanceof File) {
+          finalUrl = await uploadImage(ans.imageFile);
+        }
+        return {
+          ...ans,
+          image: finalUrl,
+
+          // Cleanup: Remove frontend-only fields so they don't get sent to API
+          imageFile: undefined,
+          previewUrl: undefined,
+          imageUrl: undefined
+        };
+      }));
+
+      const finalData = {
+        ...questionData,
+        image: mainQuestionImageUrl,
+        answers: processedAnswers
+      };
+      if (onSave) await onSave(finalData);
+
       toast.success("Lưu thành công!");
-      console.log("Lưu thành công:", currentData);
       onClose();
+
     } catch (error) {
       console.error("Lưu thất bại:", error);
       toast.error(error.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
@@ -154,6 +175,62 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
     setQuestionData(updatedData);
   }
 
+  const handleAnswerImageChange = (answerId, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Optional: Validate size/type here
+
+    setQuestionData((prev) => {
+      const newAnswers = prev.answers.map((ans) => {
+        if (ans.answerId === answerId) {
+          return {
+            ...ans,
+            imageFile: file, // File to be uploaded
+            previewUrl: URL.createObjectURL(file), // Local preview
+            // We do NOT clear imageUrl here yet, so we know what to replace/delete on backend if needed,
+            // but the UI will prioritize showing previewUrl.
+          };
+        }
+        return ans;
+      });
+      return { ...prev, answers: newAnswers };
+    });
+  };
+
+  // Handle removing the image (both new preview or existing URL)
+  const handleRemoveAnswerImage = (answerId) => {
+    setQuestionData((prev) => {
+      const newAnswers = prev.answers.map((ans) => {
+        if (ans.answerId === answerId) {
+          return {
+            ...ans,
+            imageFile: null,
+            previewUrl: null,
+            image: null, // Mark as removed so backend knows to delete it
+          };
+        }
+        return ans;
+      });
+      return { ...prev, answers: newAnswers };
+    });
+  };
+
+  const getCharacterCount = (htmlString) => {
+    if (!htmlString) return 0;
+    const tempElement = document.createElement("div");
+    tempElement.innerHTML = htmlString;
+    const text = tempElement.textContent || tempElement.innerText || "";
+    return text.length;
+  };
+
+  const currentLength = getCharacterCount(questionData.title);
+  const isOverLimit = currentLength > 255;
+  const isAnswerOverLimit = questionData.answers.some(ans => getCharacterCount(ans.answerName) > 255);
+
+  const activeAnswerCount = questionData.answers
+    ? questionData.answers.filter(ans => ans.isActive !== false).length
+    : 0;
 
   return (
     <Modal
@@ -175,7 +252,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
           <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
 
             {/* Title Textarea (Left) */}
-            <Input.TextArea
+            {/* <Input.TextArea
               value={questionData.title}
               onChange={handleTitleChange}
               placeholder="Nhập câu hỏi"
@@ -183,6 +260,17 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
               autoSize={{ minRows: 4, maxRows: 4 }}
               style={{ width: "100%" }}
               required
+            /> */}
+
+            <RichTextEditor
+              value={questionData.title}
+              onChange={(content) => {
+                // Update state regardless of length (prevents editor glitches)
+                handleTitleChange({ target: { value: content } });
+              }}
+              placeholder="Nhập câu hỏi"
+              minHeight={100}
+              maxHeight={250}
             />
 
             {/* Image Upload */}
@@ -214,6 +302,8 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
               )}
             </Upload>
           </div>
+          {currentLength} / 255
+          {isOverLimit && <span style={{ marginLeft: '5px', color: 'red' }}>(Quá giới hạn ký tự)</span>}
         </Descriptions.Item>
 
         {/* Answers */}
@@ -223,53 +313,184 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
               <ul style={{ paddingLeft: "0", margin: 0, listStyle: "none" }}>
                 {questionData.answers
                   .filter((ans) => ans.isActive !== false)
-                  .map((answer) => (
-                    <li
-                      key={answer.answerId}
-                      style={{
-                        marginBottom: "10px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                      }}
-                    >
+                  .map((answer) => {
+                    // 1. Determine if this specific answer is being edited
+                    const isEditing = editingAnswerId === answer.answerId;
 
-                      {questionData.type === "MultiChoice" ? (
-                        <Checkbox
-                          checked={answer.isCorrect}
-                          onChange={() => handleCheckboxChange(answer.answerId)}
-                        />
-                      ) : (
-                        <Radio
-                          checked={answer.isCorrect}
-                          onChange={() => handleRadioChange(answer.answerId)}
-                        />
-                      )}
+                    return (
+                      <li
+                        key={answer.answerId}
+                        style={{
+                          marginBottom: "15px",
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "10px",
+                          flexWrap: "nowrap", // CRITICAL: Keeps everything on one line
+                        }}
+                      >
+                        {/* --- COLUMN 1: CHECKBOX/RADIO --- */}
+                        <div style={{ paddingTop: "5px", flexShrink: 0 }}>
+                          {questionData.type === "MultiChoice" ? (
+                            <Checkbox
+                              checked={answer.isCorrect}
+                              onChange={() => handleCheckboxChange(answer.answerId)}
+                            />
+                          ) : (
+                            <Radio
+                              checked={answer.isCorrect}
+                              onChange={() => handleRadioChange(answer.answerId)}
+                            />
+                          )}
+                        </div>
 
-                      <Input.TextArea
-                        value={answer.answerName}
-                        onChange={(e) =>
-                          handleAnswerNameChange(answer.answerId, e.target.value)
-                        }
-                        placeholder="Nhập nội dung đáp án"
-                        maxLength={255}
-                        autoSize={{ minRows: 1, maxRows: 4 }}
-                        style={{ flex: 1, minWidth: 0 }}
-                      />
+                        {/* --- COLUMN 2: EDITOR / STATIC VIEW --- */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          {isEditing ? (
+                            /* EDIT MODE: Show RichTextEditor */
+                            <div className="short-editor-wrapper">
+                              <RichTextEditor
+                                value={answer.answerName}
+                                onChange={(content) =>
+                                  handleAnswerNameChange(answer.answerId, content)
+                                }
+                                placeholder="Nhập nội dung đáp án"
+                              />
+                              {getCharacterCount(answer.answerName.trim())} / 255
+                              {isAnswerOverLimit && <span style={{ marginLeft: '5px', color: 'red' }}>(Một hoặc nhiều câu trả lời vượt quá giới hạn ký tự)</span>}
+                            </div>
+                          ) : (
+                            /* VIEW MODE: Show Static HTML */
+                            <div
+                              onClick={() => setEditingAnswerId(answer.answerId)}
+                              style={{
+                                border: "1px solid #d9d9d9",
+                                borderRadius: "6px",
+                                padding: "4px 11px",
+                                minHeight: "32px",
+                                cursor: "pointer",
+                                backgroundColor: "#fafafa",
+                                whiteSpace: "normal",
+                                wordBreak: "break-word",
+                                overflowWrap: "break-word",
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html:
+                                  answer.answerName ||
+                                  "<span style='color:#ccc'>Nhập nội dung đáp án...</span>",
+                              }}
+                            />
+                          )}
 
-                      <Button
-                        type="text"
-                        danger
-                        icon={<MinusCircleOutlined />}
-                        onClick={() => handleDeleteAnswer(answer.answerId)}
-                      />
-                    </li>
-                  ))}
+                          {/* IMAGE PREVIEW */}
+                          {(answer.previewUrl || answer.image) && (
+                            <div
+                              style={{
+                                marginTop: "10px",
+                                position: "relative",
+                                display: "inline-block",
+                              }}
+                            >
+                              <img
+                                src={answer.previewUrl || answer.image}
+                                alt="Answer"
+                                style={{
+                                  height: "80px",
+                                  borderRadius: "8px",
+                                  border: "1px solid #d9d9d9",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <Button
+                                type="primary"
+                                danger
+                                shape="circle"
+                                size="small"
+                                icon={<MinusCircleOutlined />}
+                                onClick={() => handleRemoveAnswerImage(answer.answerId)}
+                                style={{
+                                  position: "absolute",
+                                  top: "-5px",
+                                  right: "-5px",
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* --- COLUMN 3: ACTIONS --- */}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "5px",
+                            flexShrink: 0,
+                            alignItems: "center",
+                          }}
+                        >
+                          {/* Show Upload Button only when NOT editing (cleaner UI) */}
+                          {!isEditing && (
+                            <>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                id={`edit-file-upload-${answer.answerId}`}
+                                style={{ display: "none" }}
+                                onChange={(e) =>
+                                  handleAnswerImageChange(answer.answerId, e)
+                                }
+                              />
+                              <label htmlFor={`edit-file-upload-${answer.answerId}`}>
+                                <Tooltip title="Thêm/Sửa ảnh minh họa">
+                                  <span
+                                    className="ant-btn ant-btn-default ant-btn-icon-only"
+                                    style={{
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      width: "32px",
+                                      height: "32px",
+                                      border: "1px solid #d9d9d9",
+                                      borderRadius: "6px",
+                                    }}
+                                  >
+                                    <UploadOutlined />
+                                  </span>
+                                </Tooltip>
+                              </label>
+                            </>
+                          )}
+
+                          {/* Toggle: Delete vs Check Button */}
+                          {isEditing ? (
+                            <Tooltip title="Xong">
+                              <Button
+                                type="primary"
+                                size="small"
+                                icon={<CheckOutlined />}
+                                onClick={() => setEditingAnswerId(null)}
+                              />
+                            </Tooltip>
+                          ) : (
+                            <Tooltip title="Xóa đáp án">
+                              <Button
+                                type="text"
+                                danger
+                                icon={<MinusCircleOutlined />}
+                                onClick={() => handleDeleteAnswer(answer.answerId)}
+                              />
+                            </Tooltip>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
               </ul>
 
+              {/* Add Answer Button */}
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
+                disabled={activeAnswerCount >= 7}
                 onClick={handleAddAnswer}
                 style={{ marginTop: "8px", width: "100%" }}
               >
@@ -277,19 +498,26 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
               </Button>
             </>
           ) : (
+            /* --- EMPTY STATE --- */
             <>
-              <span>Không có đáp án nào</span>
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={handleAddAnswer}
-                style={{ marginTop: "8px", width: "100%" }}
-              >
-                Thêm đáp án
-              </Button>
+              <div style={{ textAlign: "center", padding: "10px 0" }}>
+                <span
+                  style={{ display: "block", marginBottom: "10px", color: "#888" }}
+                >
+                  Không có đáp án nào
+                </span>
+                <Button
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={handleAddAnswer}
+                  style={{ width: "100%" }}
+                >
+                  Thêm đáp án
+                </Button>
+              </div>
 
               {questionData.answers.length > 0 &&
-                !questionData.answers.some(ans => ans.isCorrect) && (
+                !questionData.answers.some((ans) => ans.isCorrect) && (
                   <Alert
                     message="Vui lòng chọn ít nhất một đáp án đúng."
                     type="warning"
@@ -299,7 +527,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
                 )}
             </>
           )}
-        </Descriptions.Item>
+        </Descriptions.Item>;
 
         <Descriptions.Item label="Loại câu hỏi">
           <Select
@@ -325,7 +553,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
       {/* Footer Buttons */}
       <Space style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
         <Button onClick={onClose}>Huỷ</Button>
-        <Button type="primary" loading={loading} onClick={handleSave}>
+        <Button type="primary" loading={loading} onClick={handleSave} disabled={isOverLimit || isAnswerOverLimit}>
           Lưu
         </Button>
       </Space>

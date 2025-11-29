@@ -3,7 +3,6 @@ import {
   ChevronRight,
   CheckCircle2,
   AlertCircle,
-  FileDown,
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +12,7 @@ import TextLesson from "./TextLesson";
 import QuizView from "./Quiz/QuizView";
 import CommentSection from "./CommentSection";
 import LessonChat from "./LessonChat";
+import LearningTabs from "./LearningTabs";
 
 const LessonContent = ({
   item,
@@ -88,27 +88,6 @@ const LessonContent = ({
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {item.title}
               </h1>
-
-              {/* PDF Downloads */}
-              {pdfAssets.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {pdfAssets.map((asset, index) => (
-                    <a
-                      key={index}
-                      href={asset.url}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition-colors text-sm font-medium"
-                    >
-                      <FileDown className="w-4 h-4" />
-                      <span>
-                        Tải tài liệu {pdfAssets.length > 1 ? index + 1 : ""}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              )}
             </div>
 
             {isCompleted && (
@@ -126,54 +105,11 @@ const LessonContent = ({
         {item.kind === "Lesson" && item.lessonType === "Video" && (
           <div className="mb-8">
             {item.assets?.[0]?.url ? (
-              <>
-                <VideoPlayer
-                  videoUrl={item.assets[0].url}
-                  onVideoEnd={handleVideoComplete}
-                  onProgress={setVideoProgress}
-                />
-
-                {/* Description and Document Section */}
-                {(item.description || item.assets[0].fileUrl) && (
-                  <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                    {/* Description */}
-                    {item.description && (
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          Mô tả bài học
-                        </h3>
-                        <p className="text-gray-700 leading-relaxed">
-                          {item.description}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* PDF Document */}
-                    {item.assets[0].fileUrl && (
-                      <div
-                        className={
-                          item.description
-                            ? "pt-4 border-t border-gray-200"
-                            : ""
-                        }
-                      >
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                          Tài liệu
-                        </h3>
-                        <a
-                          href={item.assets[0].fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition-colors font-medium"
-                        >
-                          <FileDown className="w-5 h-5" />
-                          <span>Tải tài liệu PDF</span>
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
+              <VideoPlayer
+                videoUrl={item.assets[0].url}
+                onVideoEnd={handleVideoComplete}
+                onProgress={setVideoProgress}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center py-32 text-gray-500 bg-white rounded-xl border border-gray-200 shadow-sm">
                 <AlertCircle className="w-12 h-12 mb-3" />
@@ -252,9 +188,14 @@ const LessonContent = ({
           </div>
         )}
 
+        {/* Learning Tabs - Only for Video Lessons */}
         {item.kind === "Lesson" && item.lessonType === "Video" && (
           <div className="mt-8">
-            <CommentSection lessonId={lessonId} />
+            <LearningTabs 
+              lessonId={lessonId} 
+              item={item}
+              description={item.description}
+            />
           </div>
         )}
       </div>

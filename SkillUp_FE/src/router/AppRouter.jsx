@@ -29,7 +29,9 @@ import CourseDetail from "@/pages/Course/CourseDetail";
 import CoursesByCategory from "@/pages/Course/CoursesByCategory";
 import MyCourses from "@/pages/Student/MyCourses";
 import PaymentResult from "@/pages/Payment/PaymentResult";
+import LecturerProfile from "@/pages/Lecturer/LecturerProfile";
 import LecturerPendingGuard from "./LecturerPendingGuard";
+import PurchaseHistory from "@/pages/Student/PurchaseHistory";
 
 function AppRouter() {
   return (
@@ -54,6 +56,8 @@ function AppRouter() {
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/courses/:categoryId" element={<CoursesByCategory />} />
           <Route path="/my-courses" element={<MyCourses />} />
+          <Route path="/purchase-history" element={<PurchaseHistory />} />
+           <Route path="/lecturer-info/:accountId" element={<LecturerProfile />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />

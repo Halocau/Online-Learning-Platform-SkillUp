@@ -259,6 +259,7 @@ namespace SkillUp.Services.Implementations
                 Title = app.Title ?? string.Empty,
                 Profession = app.Profession ?? string.Empty,
                 Description = app.Description,
+                Email = app.Account?.Email,
                 Status = app.Status,
                 RejectReason = app.Reason,
                 CreatedAt = app.CreatedAt,

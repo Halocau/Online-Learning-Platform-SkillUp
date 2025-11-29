@@ -9,7 +9,9 @@ import {
   Trophy,
   Lock,
   CheckCircle2,
+  ArrowLeft,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const CourseOverview = ({ courseData, completedItems, courseId }) => {
   const navigate = useNavigate();
@@ -57,6 +59,17 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
         <div className="pointer-events-none absolute right-10 top-10 -z-10 h-[10rem] w-[20rem] rounded-full bg-[#FFD54F]/20 blur-3xl"></div>
 
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6">
+          {/* Back Button */}
+          <motion.button
+            whileHover={{ x: -4 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/my-courses")}
+            className="mb-6 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm border border-transparent hover:border-gray-200"
+          >
+            <ArrowLeft size={16} />
+            <span>Quay lại khóa học của tôi</span>
+          </motion.button>
+
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
             {/* Main Content */}
             <div className="relative flex-1 space-y-4">
@@ -214,15 +227,18 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
             ).length;
 
             return (
-              <article
+              <motion.article
                 key={section.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: sectionIndex * 0.05, duration: 0.3 }}
                 className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-[#FFD54F]/40 hover:shadow-lg sm:p-5"
               >
-                {/* Hover glow effect - FIXED: Added pointer-events-none */}
+                {/* Hover glow effect */}
                 <div className="pointer-events-none absolute inset-y-6 right-0 w-32 bg-gradient-to-l from-[#FFD54F]/10 via-transparent to-transparent opacity-0 blur-3xl transition-opacity group-hover:opacity-100"></div>
 
                 <div className="relative flex items-start gap-4 sm:gap-5">
-                  {/* Section Index / Status */}
+                  {/* Section */}
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200 shadow-inner">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold tracking-tight ring-1 ${
@@ -282,12 +298,10 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                       </div>
 
                       {/* Call to Action */}
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => {
-                          console.log(
-                            "Button clicked, navigating to:",
-                            `/student/learn/${courseId}/section/${section.id}`
-                          );
                           navigate(
                             `/student/learn/${courseId}/section/${section.id}`
                           );
@@ -296,7 +310,7 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                       >
                         {isStarted ? "Tiếp tục" : "Bắt đầu"}
                         <ChevronRight className="h-3.5 w-3.5" />
-                      </button>
+                      </motion.button>
                     </div>
 
                     {/* Progress Bar */}
@@ -310,20 +324,22 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                           </span>
                         </div>
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 0.5, delay: sectionIndex * 0.05 }}
+                            className={`h-full rounded-full ${
                               isCompleted
                                 ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600"
                                 : "bg-gradient-to-r from-[#FFD54F] via-[#FFC107] to-[#FFB300]"
                             }`}
-                            style={{ width: `${progress}%` }}
-                          ></div>
+                          ></motion.div>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
-              </article>
+              </motion.article>
             );
           })}
         </div>

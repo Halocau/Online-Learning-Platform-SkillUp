@@ -16,7 +16,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import { Modal } from "antd";
+import { Modal, Spin } from "antd";
 import Table from "@/components/common/Table";
 import { getAllNews, deleteNews } from "../../../api/newsAPI";
 import { Link, useNavigate } from "react-router-dom";
@@ -213,8 +213,8 @@ export default function NewsManage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Đang tải tin tức...</div>
+      <div className="flex justify-center items-center h-screen">
+        <Spin size="large" />
       </div>
     );
   }

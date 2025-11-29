@@ -1,32 +1,100 @@
 // src/api/postAPI.js
-import axios from "axios";
-import { id } from "zod/v4/locales";
+import axiosInstance from "@/lib/axios";
 
-const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5120/api",
-  headers: { "Content-Type": "application/json" },
-});
-
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+const API_BASE_URL = "/Post";
 
 export const postApi = {
-  getActive: () => API.get("/Post/view-active"),
-  getUser: (accountId) => API.get(`/Post/user/${accountId}`),
-  getById: (postId) => API.get(`/Post/ViewPostById/${postId}`),
-  create: (formData) =>
-    API.post("/Post/create", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-  update: (postId, formData) =>
-    API.put(`/Post/update/${postId}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
-  delete: (id) => {
-    console.log("Calling delete API with id:", id);
-    return API.put(`/Post/delete/${id}`);
+  getActive: async () => {
+    try {
+      const response = await axiosInstance.get(`${API_BASE_URL}/view-active`);
+      return response;
+    } catch (error) {
+      console.error("Error fetching active posts:", error);
+      throw error;
+    }
+  },
+
+  getUser: async (accountId) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_BASE_URL}/user/${accountId}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      throw error;
+    }
+  },
+
+  getById: async (postId) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_BASE_URL}/ViewPostById/${postId}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching post by id:", error);
+      throw error;
+    }
+  },
+
+  create: async (formData) => {
+    try {
+      const response = await axiosInstance.post(
+        `${API_BASE_URL}/create`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error("Error creating post:", error);
+      throw error;
+    }
+  },
+
+  update: async (postId, formData) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_BASE_URL}/update/${postId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error("Error updating post:", error);
+      throw error;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      console.log("Calling delete API with id:", id);
+      const response = await axiosInstance.put(`${API_BASE_URL}/delete/${id}`);
+      return response;
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      throw error;
+    }
+  },
+
+  report: async (reportData) => {
+    try {
+      const response = await axiosInstance.post(
+        `/ReportPosts`,
+        reportData
+      );
+      return response;
+    } catch (error) {
+      console.error("Error reporting post:", error);
+      throw error;
+    }
   },
 };

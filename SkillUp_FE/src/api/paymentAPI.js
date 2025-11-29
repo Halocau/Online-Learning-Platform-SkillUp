@@ -125,4 +125,21 @@ export const paymentAPI = {
       throw error;
     }
   },
+
+  // Get purchase history
+  getPurchaseHistory: async () => {
+    try {
+      const response = await axiosInstance.get(
+        `/Transaction/history`
+      );
+
+      if (response.data.code === 200 && response.data.data && response.data.data.length > 0) {
+        return response.data.data[0];
+      }
+      return [];
+    } catch (error) {
+      console.error("Error getting purchase history:", error);
+      throw error;
+    }
+  },
 };

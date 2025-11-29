@@ -1,5 +1,6 @@
 import React from "react";
-import { Modal, Descriptions, Tag } from "antd";
+import { Modal, Descriptions, Tag, Image } from "antd";
+import { extractCleanText } from "@/utils/htmlUtils";
 
 const QuestionBankViewModal = ({ open, onClose, questionBankObj }) => {
 
@@ -58,14 +59,15 @@ const QuestionBankViewModal = ({ open, onClose, questionBankObj }) => {
         labelStyle={{ fontWeight: 600, width: "30%" }}
         contentStyle={{ wordBreak: "break-word" }}
       >
-        <Descriptions.Item label="Câu hỏi">{questionBankObj.title}</Descriptions.Item>
+        <Descriptions.Item label="Câu hỏi">{extractCleanText(questionBankObj.title)}</Descriptions.Item>
 
         <Descriptions.Item label="Đáp án">
           {questionBankObj.answers && questionBankObj.answers.length > 0 ? (
             <ul style={{ paddingLeft: "20px", margin: 0 }}>
               {questionBankObj.answers.map((answer, index) => (
-                <li key={answer.answerId} style={{ marginBottom: "8px" }}>
-                  <p>
+                <li key={answer.answerId} style={{ marginBottom: "15px" }}> {/* Increased margin slightly */}
+
+                  <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
                     <span
                       style={
                         answer.isCorrect
@@ -73,15 +75,33 @@ const QuestionBankViewModal = ({ open, onClose, questionBankObj }) => {
                           : {}
                       }
                     >
-                      <b>{String.fromCharCode(97 + index)}) </b>{answer.answerName}
-                    </span>{" "}
+                      <b>{String.fromCharCode(97 + index)}) </b>
+                      {extractCleanText(answer.answerName)}
+                    </span>
 
                     {answer.isCorrect && (
                       <Tag color="green" style={{ marginLeft: "8px" }}>
                         ✅ Đúng
                       </Tag>
                     )}
-                  </p>
+                  </div>
+
+                  {answer.image && (
+                    <div style={{ marginTop: "8px", marginLeft: "15px" }}>
+                      <Image
+                        width={150}
+                        height={100}
+                        src={answer.image}
+                        
+                        style={{ 
+                          borderRadius: "8px", 
+                          objectFit: "cover",
+                          border: answer.isCorrect ? "2px solid green" : "1px solid #f0f0f0",
+                         }}
+                      />
+
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
