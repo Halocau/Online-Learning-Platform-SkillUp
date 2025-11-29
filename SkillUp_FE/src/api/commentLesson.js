@@ -44,7 +44,6 @@ export const commentLessonApi = {
   delete: async (commentId) => {
     try {
       await axiosInstance.delete(`${API}/Delete/${commentId}`);
-      toast.success("Đã xóa bình luận!");
     } catch (err) {
       console.error("Không thể xóa!");
       throw err;
@@ -67,6 +66,33 @@ export const commentLessonApi = {
       toast.success("Đã báo cáo bình luận!");
     } catch (err) {
       console.error("Không thể báo cáo!");
+      throw err;
+    }
+  },
+
+
+  getPendingReports: async () => {
+    try {
+      const res = await axiosInstance.get(`${REPORT_API}/GetPending`);
+      const data = res.data?.data ?? [];
+      return Array.isArray(data) && Array.isArray(data[0]) ? data[0] : data;
+    } catch (err) {
+      console.error("Không thể tải báo cáo!");
+      toast.error("Không thể tải báo cáo bài học!");
+      return [];
+    }
+  },
+
+  updateReportStatus: async (reportId, isApproved) => {
+    try {
+      const res = await axiosInstance.put(`${REPORT_API}/UpdateStatus`, {
+        reportId,
+        isApproved,
+      });
+      return res.data?.data;
+    } catch (err) {
+      console.error("Không thể cập nhật trạng thái!");
+      toast.error("Không thể cập nhật trạng thái báo cáo!");
       throw err;
     }
   },

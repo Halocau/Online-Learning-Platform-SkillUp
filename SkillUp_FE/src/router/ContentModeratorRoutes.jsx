@@ -10,7 +10,7 @@ import CommentReport from "@/pages/contentmoderator/CommentReport";
 import CreateNews from "@/pages/contentmoderator/NewsFeature/CreateNews";
 import EditNews from "@/pages/contentmoderator/NewsFeature/EditNews";
 import NewsDetailMod from "@/pages/contentmoderator/NewsFeature/DetailNewsMod";
-import CourseManage from "@/pages/contentmoderator/CourseManage";
+import CourseManage from "@/pages/contentmoderator/CourseManage/CourseManage";
 import CategoryManage from "@/pages/contentmoderator/CategoryManage";
 import ForumManage from "@/pages/contentmoderator/ForumManage";
 import BannerManage from "@/pages/contentmoderator/BannerManage";
