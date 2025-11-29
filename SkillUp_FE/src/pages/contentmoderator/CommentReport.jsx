@@ -21,47 +21,73 @@ import {
 } from "@heroicons/react/24/outline";
 import { Modal, Spin } from "antd";
 import Table from "@/components/common/Table";
-import { getAllReports, resolveReport } from "@/api/commentReport";
+
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
+import { getAllReports, resolveReport } from "@/api/commentReport";
+import { commentLessonApi } from "@/api/commentLesson";
 
 export default function CommentReport() {
-  const [data, setData] = useState([]);
+  // Tab state
+  const [activeTab, setActiveTab] = useState("forum"); // "forum" or "lesson"
+  
+  // Data state
+  const [forumData, setForumData] = useState([]);
+  const [lessonData, setLessonData] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // Filter/Search state
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Modal state
   const [selectedReport, setSelectedReport] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolveLoading, setResolveLoading] = useState(false);
 
   const itemsPerPage = 10;
 
-  const fetchReports = async () => {
-    try {
-      setLoading(true);
-      const reports = await getAllReports();
-      setData(reports);
-    } catch (err) {
-      console.error(err);
-      toast.error("Không thể tải danh sách báo cáo");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch data on mount
   useEffect(() => {
-    fetchReports();
+    const fetchData = async () => {
+      setLoading(true);
+      const forumPromise = getAllReports()
+        .then((reports) => setForumData(Array.isArray(reports) ? reports : []))
+        .catch((err) => {
+          console.error(err);
+          toast.error("Không thể tải danh sách báo cáo diễn đàn");
+          setForumData([]);
+        });
+
+      const lessonPromise = commentLessonApi.getPendingReports()
+        .then((reports) => setLessonData(Array.isArray(reports) ? reports : []))
+        .catch((err) => {
+          console.error(err);
+          toast.error("Không thể tải danh sách báo cáo bài học");
+          setLessonData([]);
+        });
+
+      await Promise.all([forumPromise, lessonPromise]);
+      setLoading(false);
+    };
+
+    fetchData();
   }, []);
 
+  // Get current data based on active tab
+  const currentData = activeTab === "forum" ? forumData : lessonData;
+
+  // Handle view report details
   const handleView = (report) => {
     setSelectedReport(report);
     setIsModalOpen(true);
   };
 
-  const handleResolve = async (shouldDeleteComment) => {
+  // Handle resolve forum report
+  const handleResolveForumReport = async (shouldDeleteComment) => {
     if (!selectedReport) return;
 
     try {
@@ -69,7 +95,7 @@ export default function CommentReport() {
       await resolveReport(selectedReport.id, shouldDeleteComment);
 
       // Update local data
-      setData((prevData) =>
+      setForumData((prevData) =>
         prevData.map((item) =>
           item.id === selectedReport.id
             ? { ...item, status: shouldDeleteComment ? "Accepted" : "Rejected" }
@@ -90,11 +116,42 @@ export default function CommentReport() {
     }
   };
 
+  // Handle resolve lesson report
+  const handleResolveLessonReport = async (isApproved) => {
+    if (!selectedReport) return;
+
+    try {
+      setResolveLoading(true);
+      await commentLessonApi.updateReportStatus(selectedReport.id, isApproved);
+
+      // Update local data
+      setLessonData((prevData) =>
+        prevData.map((item) =>
+          item.id === selectedReport.id
+            ? { ...item, status: isApproved ? "Accepted" : "Rejected" }
+            : item
+        )
+      );
+
+      setIsModalOpen(false);
+      toast.success(
+        isApproved
+          ? "Chấp nhận báo cáo và xóa bình luận thành công!"
+          : "Từ chối báo cáo thành công!"
+      );
+    } catch (err) {
+      toast.error("Xử lý báo cáo thất bại!");
+    } finally {
+      setResolveLoading(false);
+    }
+  };
+
   // Filter and search logic
-  const filteredData = data.filter((report) => {
+  const filteredData = currentData.filter((report) => {
     const matchesSearch =
       report.reporterName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+      report.reason?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.commentContents?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
       statusFilter === "all" || report.status === statusFilter;
@@ -173,7 +230,8 @@ export default function CommentReport() {
     );
   };
 
-  const columns = [
+  // Table columns
+  let baseColumns = [
     {
       key: "reporterName",
       title: (
@@ -229,13 +287,22 @@ export default function CommentReport() {
     },
   ];
 
-  // Statistics
-  const stats = {
-    total: data.length,
-    pending: data.filter((r) => r.status === "Pending").length,
-    accepted: data.filter((r) => r.status === "Accepted").length,
-    rejected: data.filter((r) => r.status === "Rejected").length,
-  };
+  let columns = baseColumns;
+  if (activeTab === "lesson") {
+    columns = [
+      ...baseColumns.slice(0, 2),
+      {
+        key: "commentContents",
+        title: "Nội dung bình luận",
+        render: (value) => (
+          <p className="max-w-[300px] truncate" title={value}>
+            {value}
+          </p>
+        ),
+      },
+      ...baseColumns.slice(2),
+    ];
+  }
 
   if (loading) {
     return (
@@ -255,8 +322,62 @@ export default function CommentReport() {
           </h2>
         </div>
 
+        {/* Tabs */}
+        <div className="bg-white rounded-t-xl shadow-sm border-b">
+          <div className="flex gap-1 p-1">
+            <button
+              onClick={() => {
+                setActiveTab("forum");
+                setCurrentPage(1);
+                setSearchTerm("");
+                setStatusFilter("all");
+              }}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeTab === "forum"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Bình luận Diễn đàn
+              <span
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  activeTab === "forum"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {forumData.length}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("lesson");
+                setCurrentPage(1);
+                setSearchTerm("");
+                setStatusFilter("all");
+              }}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
+                activeTab === "lesson"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              Bình luận Bài học
+              <span
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  activeTab === "lesson"
+                    ? "bg-purple-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {lessonData.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Filters and Search */}
-        <div className="bg-white p-4 rounded-xl shadow-sm">
+        <div className="bg-white p-4 shadow-sm">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
@@ -419,17 +540,41 @@ export default function CommentReport() {
                   Ngày báo cáo:
                 </label>
                 <p className="mt-1 text-gray-900">
-                  {dayjs(selectedReport.createdAt).format(
-                    "DD/MM/YYYY HH:mm:ss"
-                  )}
+                  {dayjs(selectedReport.createdAt).format("DD/MM/YYYY HH:mm:ss")}
                 </p>
               </div>
+
+              {activeTab === "lesson" && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Tác giả bình luận:
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {selectedReport.commentAuthorName}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Nội dung bình luận:
+                    </label>
+                    <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-lg">
+                      {selectedReport.commentContents}
+                    </p>
+                  </div>
+                </>
+              )}
 
               {/* Action buttons - only show for Pending status */}
               {selectedReport.status === "Pending" && (
                 <div className="flex gap-3 pt-4 border-t">
                   <Button
-                    onClick={() => handleResolve(true)}
+                    onClick={() =>
+                      activeTab === "forum"
+                        ? handleResolveForumReport(true)
+                        : handleResolveLessonReport(true)
+                    }
                     disabled={resolveLoading}
                     className="flex-1 bg-green-600 hover:bg-green-700"
                   >
@@ -437,7 +582,11 @@ export default function CommentReport() {
                     Chấp nhận & Xóa bình luận
                   </Button>
                   <Button
-                    onClick={() => handleResolve(false)}
+                    onClick={() =>
+                      activeTab === "forum"
+                        ? handleResolveForumReport(false)
+                        : handleResolveLessonReport(false)
+                    }
                     disabled={resolveLoading}
                     variant="outline"
                     className="flex-1"
