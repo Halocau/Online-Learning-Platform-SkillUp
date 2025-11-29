@@ -19,7 +19,7 @@ import {
   XCircleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
-import { Modal } from "antd";
+import { Modal, Spin } from "antd";
 import Table from "@/components/common/Table";
 import { getAllReports, resolveReport } from "@/api/commentReport";
 import dayjs from "dayjs";
@@ -239,8 +239,8 @@ export default function CommentReport() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Đang tải báo cáo...</div>
+      <div className="flex justify-center items-center h-screen">
+        <Spin size="large" />
       </div>
     );
   }

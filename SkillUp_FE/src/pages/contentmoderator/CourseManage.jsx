@@ -29,6 +29,7 @@ import {
 
 import { toast } from "react-toastify";
 import { courseAPI } from "@/api/courseAPI";
+import { Spin } from "antd";
 
 export default function CourseManagement() {
   const [courses, setCourses] = useState([]);
@@ -425,8 +426,8 @@ export default function CourseManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Đang tải khóa học...</div>
+      <div className="flex justify-center items-center h-screen">
+        <Spin size="large" />
       </div>
     );
   }

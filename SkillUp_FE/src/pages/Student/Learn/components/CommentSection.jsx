@@ -132,7 +132,7 @@ const CommentSection = ({ lessonId }) => {
 
     const wasLiked = likedComments.has(id);
     
-    // Optimistic update
+    // Optimistic update for liked state
     setLikedComments(prev => {
       const newSet = new Set(prev);
       if (wasLiked) {
@@ -143,18 +143,21 @@ const CommentSection = ({ lessonId }) => {
       return newSet;
     });
 
+    // Calculate new count based on current state
+    const newCount = wasLiked ? Math.max(0, currentLikeCount - 1) : currentLikeCount + 1;
+
     // Update comment counts optimistically
     setComments(prevComments => 
       prevComments.map(c => {
         if (c.id === id) {
-          return { ...c, likeCount: wasLiked ? Math.max(0, currentLikeCount - 1) : currentLikeCount + 1 };
+          return { ...c, likeCount: newCount };
         }
         if (c.replies?.length > 0) {
           return {
             ...c,
             replies: c.replies.map(r => 
               r.id === id 
-                ? { ...r, likeCount: wasLiked ? Math.max(0, currentLikeCount - 1) : currentLikeCount + 1 }
+                ? { ...r, likeCount: newCount }
                 : r
             )
           };
@@ -165,9 +168,9 @@ const CommentSection = ({ lessonId }) => {
 
     try {
       await commentLessonApi.toggleLike(id);
-      // Reload to get actual count from server
-      await loadComments();
+      // Don't reload - keep optimistic update
     } catch (err) {
+      console.error("Error toggling like:", err);
       // Rollback on error
       setLikedComments(prev => {
         const newSet = new Set(prev);
@@ -178,7 +181,26 @@ const CommentSection = ({ lessonId }) => {
         }
         return newSet;
       });
-      await loadComments();
+      
+      // Rollback count
+      setComments(prevComments => 
+        prevComments.map(c => {
+          if (c.id === id) {
+            return { ...c, likeCount: currentLikeCount };
+          }
+          if (c.replies?.length > 0) {
+            return {
+              ...c,
+              replies: c.replies.map(r => 
+                r.id === id 
+                  ? { ...r, likeCount: currentLikeCount }
+                  : r
+              )
+            };
+          }
+          return c;
+        })
+      );
     }
   };
 

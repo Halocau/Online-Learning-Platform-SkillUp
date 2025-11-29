@@ -195,9 +195,9 @@ export default function CourseDetail() {
             whileHover={{ y: -2 }}
             whileTap={{ y: 0 }}
             onClick={handleReportClick}
-            className="p-3 bg-white shadow-lg hover:shadow-xl rounded-full hover:bg-red-50 hover:text-red-600 text-gray-600 transition-all duration-200 border border-gray-200 hover:border-red-300"
+            className="p-3 bg-white shadow-lg shadow-xl rounded-full bg-red-50 text-red-600 text-gray-600 transition-all duration-200 border border-gray-200 border-red-300"
           >
-            <Flag size={20} />
+            <Flag size={30} />
           </motion.button>
         </Tooltip>
       </div>
