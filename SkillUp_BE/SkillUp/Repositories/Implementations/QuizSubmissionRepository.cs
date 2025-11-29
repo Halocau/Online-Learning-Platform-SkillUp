@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class QuizSubmissionRepository : IQuizSubmissionRepository
     {
-        private readonly SkillUp1Context _context; 
+        private readonly SkillUpContext _context; 
 
-        public QuizSubmissionRepository(SkillUp1Context context)
+        public QuizSubmissionRepository(SkillUpContext context)
         {
             _context = context;
         }

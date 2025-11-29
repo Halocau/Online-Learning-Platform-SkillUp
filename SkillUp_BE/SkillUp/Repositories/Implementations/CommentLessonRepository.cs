@@ -8,9 +8,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class CommentLessonRepository : ICommentLessonRepository
     {
-        private readonly SkillUp1Context _context;
+        private readonly SkillUpContext _context;
 
-        public CommentLessonRepository(SkillUp1Context context)
+        public CommentLessonRepository(SkillUpContext context)
         {
             _context = context;
         }

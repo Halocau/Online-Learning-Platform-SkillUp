@@ -7,9 +7,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class RatingRepository : IRatingRepository
     {
-        private readonly SkillUp1Context _context;
+        private readonly SkillUpContext _context;
 
-        public RatingRepository(SkillUp1Context context)
+        public RatingRepository(SkillUpContext context)
         {
             _context = context;
         }

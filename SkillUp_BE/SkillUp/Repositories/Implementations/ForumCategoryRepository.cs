@@ -6,9 +6,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class ForumCategoryRepository : IForumCategoryRepository
     {
-        private readonly SkillUp1Context _context;
+        private readonly SkillUpContext _context;
 
-        public ForumCategoryRepository(SkillUp1Context context)
+        public ForumCategoryRepository(SkillUpContext context)
         {
             _context = context;
         }

@@ -10,14 +10,14 @@ namespace SkillUp.Services.Common
 {
     public class PayOSService : IPayOSService
     {
-        private readonly SkillUp1Context _context;
+        private readonly SkillUpContext _context;
         private readonly HttpClient _httpClient;
         private readonly string _clientId;
         private readonly string _apiKey;
         private readonly string _checksumKey;
         private readonly IConfiguration _config;
 
-        public PayOSService(SkillUp1Context context, IConfiguration config)
+        public PayOSService(SkillUpContext context, IConfiguration config)
         {
             _context = context;
             _config = config;

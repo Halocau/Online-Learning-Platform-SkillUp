@@ -8,9 +8,9 @@ namespace SkillUp.Repositories.Implementations
 {
     public class CategoryRepository : ICategoryRepository
     {
-        private readonly SkillUp1Context _context;
+        private readonly SkillUpContext _context;
 
-        public CategoryRepository(SkillUp1Context context)
+        public CategoryRepository(SkillUpContext context)
         {
             _context = context;
         }
