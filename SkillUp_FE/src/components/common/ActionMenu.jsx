@@ -12,14 +12,14 @@ const ActionMenu = ({ onEdit, onDelete }) => {
           className="flex w-full items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
         >
           <PencilIcon className="h-4 w-4" />
-          Edit
+          Sửa 
         </button>
         <button
           onClick={onDelete}
           className="flex w-full items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
         >
           <TrashIcon className="h-4 w-4" />
-          Delete
+          Xóa
         </button>
       </div>
     </div>
