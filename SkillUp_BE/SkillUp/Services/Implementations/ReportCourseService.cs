@@ -52,6 +52,38 @@ namespace SkillUp.Services.Implementations
             }).ToList();
         }
 
+        public async Task<List<CourseReportGroupDto>> GetGroupedReportsAsync()
+        {
+            var reports = await _repository.GetAllAsync();
+
+            // Map Entity -> DTO Response
+            var reportDtos = reports.Select(r => new ReportCourseResponseDto
+            {
+                Id = r.Id,
+                Description = r.Description,
+                Status = r.Status,
+                CreatedAt = r.CreatedAt,
+                CourseName = r.Course?.Title ?? "Unknown",
+                StudentName = r.Student?.Account?.Fullname ?? "Unknown"
+            }).ToList();
+
+            // Group by CourseName
+            var grouped = reportDtos
+                .GroupBy(r => r.CourseName)
+                .Select(g => new CourseReportGroupDto
+                {
+                    CourseName = g.Key,
+                    TotalCount = g.Count(),
+                    PendingCount = g.Count(r => r.Status == "Pending"),
+                    ResolvedCount = g.Count(r => r.Status == "Accepted" || r.Status == "Rejected"),
+                    Reports = g.OrderByDescending(r => r.CreatedAt).ToList()
+                })
+                .OrderByDescending(g => g.TotalCount)
+                .ToList();
+
+            return grouped;
+        }
+
         public async Task<string?> UpdateReportStatusAsync(Guid reportId, string newStatus)
         {
             var report = await _repository.GetByIdAsync(reportId);

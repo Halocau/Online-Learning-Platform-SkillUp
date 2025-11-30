@@ -1,14 +1,11 @@
 // src/pages/contentmoderator/CourseReportTab.jsx
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
   BookOpenIcon,
-  InformationCircleIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Modal, Spin } from "antd";
 import { toast } from "react-toastify";
@@ -21,15 +18,14 @@ export default function CourseReportTab() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolveLoading, setResolveLoading] = useState(false);
-  const [feedback, setFeedback] = useState("");
 
   const fetchReports = async () => {
     try {
       setLoading(true);
       const response = await getAllCourseReports();
       // Handle the double-wrapped array from API
-      const data = Array.isArray(response) && Array.isArray(response[0]) 
-        ? response[0] 
+      const data = Array.isArray(response) && Array.isArray(response[0])
+        ? response[0]
         : response;
       setReports(data || []);
     } catch (err) {
@@ -47,7 +43,6 @@ export default function CourseReportTab() {
   const handleView = (report) => {
     setSelectedReport(report);
     setIsModalOpen(true);
-    setFeedback("");
   };
 
   const handleResolve = async (status) => {
@@ -66,7 +61,8 @@ export default function CourseReportTab() {
 
       setIsModalOpen(false);
       toast.success("Xử lý báo cáo thành công!");
-    } catch (err) {
+    } catch (error) {
+      console.error("Error resolving report:", error);
       toast.error("Xử lý báo cáo thất bại!");
     } finally {
       setResolveLoading(false);
@@ -132,7 +128,7 @@ export default function CourseReportTab() {
               {reports.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="5"
                     className="text-center text-gray-400 py-8"
                   >
                     Không có báo cáo nào
@@ -249,11 +245,10 @@ export default function CourseReportTab() {
             {/* Show status message for resolved reports */}
             {selectedReport.status !== "Pending" && (
               <div
-                className={`p-3 rounded-lg text-sm ${
-                  selectedReport.status === "Accepted"
+                className={`p-3 rounded-lg text-sm ${selectedReport.status === "Accepted"
                     ? "bg-green-50 text-green-800"
                     : "bg-red-50 text-red-800"
-                }`}
+                  }`}
               >
                 Báo cáo này đã được xử lý:{" "}
                 {selectedReport.status === "Accepted" ? "Chấp nhận" : "Từ chối"}
