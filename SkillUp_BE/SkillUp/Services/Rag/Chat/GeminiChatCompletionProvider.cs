@@ -222,6 +222,7 @@ Lưu ý:
                     var candidate = candidates[0];
 
                     string? finishReasonText = null;
+                    bool isTruncated = false;
                     if (candidate.TryGetProperty("finishReason", out var finishReason))
                     {
                         finishReasonText = finishReason.GetString();
@@ -229,6 +230,13 @@ Lưu ý:
                         {
                             _logger.LogWarning("Gemini blocked response due to safety filter.");
                             return "Xin lỗi, câu hỏi này có thể vi phạm chính sách nội dung. Vui lòng thử lại với câu hỏi khác.";
+                        }
+                        
+                        // Kiểm tra nếu response bị cắt do đạt giới hạn token
+                        if (finishReasonText == "MAX_TOKENS")
+                        {
+                            isTruncated = true;
+                            _logger.LogWarning("Gemini response was truncated due to MAX_TOKENS limit. Consider increasing MaxOutputTokens or splitting the response.");
                         }
                     }
 
@@ -244,6 +252,11 @@ Lưu ý:
                                 var text = textElement.GetString();
                                 if (!string.IsNullOrWhiteSpace(text))
                                 {
+                                    // Thêm thông báo nếu response bị cắt
+                                    if (isTruncated)
+                                    {
+                                        return text + "\n\n[Lưu ý: Câu trả lời có thể đã bị cắt do giới hạn độ dài. Nếu cần thêm thông tin, vui lòng đặt câu hỏi cụ thể hơn.]";
+                                    }
                                     return text;
                                 }
                             }
