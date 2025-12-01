@@ -23,7 +23,7 @@ export default function AdminLayout() {
 
   const menuItems = [
     { label: "Dashboard", icon: <LayoutDashboard />, path: "/admin/" },
-    { label: "Manage Users", icon: <Users />, path: "/admin/users" },
+    { label: "Quản lý quản trị viên", icon: <Users />, path: "/admin/moderators" },
     { label: "Analytics", icon: <BarChart3 />, path: "/admin/analytics" },
     { label: "Settings", icon: <Settings />, path: "/admin/settings" },
   ];
