@@ -139,6 +139,8 @@ builder.Services.AddScoped<IAnswerBankRepository, AnswerBankRepository>();
 builder.Services.AddScoped<IStudentProgressRepository, StudentProgressRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<ILecturerDashRepository, LecturerDashRepository>();
+builder.Services.AddScoped<IPayrollRepository, PayrollRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -174,6 +176,9 @@ builder.Services.AddScoped<ILessonChatService, LessonChatService>();
 builder.Services.AddScoped<ICourseChatService, CourseChatService>();
 
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ILecturerDashboardService, LecturerDashboardService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
 
 // POST
 builder.Services.AddScoped<IPostRepository, PostRepository>();

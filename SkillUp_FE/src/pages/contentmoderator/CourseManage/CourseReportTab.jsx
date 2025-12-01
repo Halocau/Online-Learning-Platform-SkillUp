@@ -1,7 +1,6 @@
 // src/pages/contentmoderator/CourseReportTab.jsx
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -28,8 +27,8 @@ export default function CourseReportTab() {
       setLoading(true);
       const response = await getAllCourseReports();
       // Handle the double-wrapped array from API
-      const data = Array.isArray(response) && Array.isArray(response[0]) 
-        ? response[0] 
+      const data = Array.isArray(response) && Array.isArray(response[0])
+        ? response[0]
         : response;
       setReports(data || []);
     } catch (err) {
@@ -66,7 +65,8 @@ export default function CourseReportTab() {
 
       setIsModalOpen(false);
       toast.success("Xử lý báo cáo thành công!");
-    } catch (err) {
+    } catch (error) {
+      console.error("Error resolving report:", error);
       toast.error("Xử lý báo cáo thất bại!");
     } finally {
       setResolveLoading(false);
@@ -132,7 +132,7 @@ export default function CourseReportTab() {
               {reports.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="5"
                     className="text-center text-gray-400 py-8"
                   >
                     Không có báo cáo nào

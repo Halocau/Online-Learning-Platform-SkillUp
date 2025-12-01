@@ -7,14 +7,14 @@ import { Star, Users, PlayCircle, GraduationCap } from "lucide-react";
 export default function LecturerSection({ lecturer, rating, enrollmentCount }) {
   // Chỉ lấy accountId
   const accId = lecturer?.accountId;
-
+  
   return (
     <section aria-labelledby="lecturer-section">
       <h2 id="lecturer-section" className="text-xl sm:text-2xl font-semibold tracking-tight text-[#272343]">
         Giảng viên
       </h2>
       <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-[#e5e7eb] bg-[#fffffe] p-4 sm:flex-row sm:p-5">
-        <Link
+        <Link 
           to={`/lecturer-info/${accId}`}
           className="flex items-center sm:block group"
         >
@@ -28,9 +28,9 @@ export default function LecturerSection({ lecturer, rating, enrollmentCount }) {
             )}
           </div>
         </Link>
-
+        
         <div className="space-y-1 flex-1">
-          <Link
+          <Link 
             to={`/lecturer-info/${accId}`}
             className="text-base font-semibold tracking-tight text-[#272343] hover:text-[#FFD54F] transition-colors inline-block"
           >

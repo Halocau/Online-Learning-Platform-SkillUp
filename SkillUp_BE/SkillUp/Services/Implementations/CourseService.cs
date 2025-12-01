@@ -336,23 +336,8 @@ namespace SkillUp.Services.Implementations
 			var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
 			if (course == null) return null;
 
-			// Lấy StudentId từ current user (nếu có)
-			Guid? studentId = null;
-			Dictionary<Guid, bool?> progressDict = new Dictionary<Guid, bool?>();
-			var accountId = _currentUserService.UserId;
-			if (accountId.HasValue)
-			{
-				var student = await _studentRepository.GetByAccountIdAsync(accountId.Value);
-				if (student != null)
-				{
-					studentId = student.Id;
-					// Lấy tất cả progress của student cho course này
-					progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
-				}
-			}
-
-			// Sử dụng BuildCourseDetailDto để tránh duplicate code
-			return BuildCourseDetailDto(course, studentId, progressDict, includeProgress: studentId.HasValue);
+			// Public detail không cần progress
+			return BuildCourseDetailDto(course);
 		}
 		public async Task<CategoryPageDto> GetCategoryPageAsync(int categoryId)
 		{
@@ -592,7 +577,7 @@ namespace SkillUp.Services.Implementations
             throw new Exception("Khóa học này chưa có nội dung nào.");
         }
 
-        public async Task<CourseDetailDto?> GetCourseLearningContentAsync(Guid courseId, Guid accountId)
+        public async Task<CourseLearningDetailDto?> GetCourseLearningContentAsync(Guid courseId, Guid accountId)
         {
             var student = await _studentRepository.GetByAccountIdAsync(accountId);
             if (student == null)
@@ -614,17 +599,12 @@ namespace SkillUp.Services.Implementations
 
             var progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
 
-            return BuildCourseDetailDto(course, student.Id, progressDict, includeProgress: true);
+            return BuildCourseLearningDetailDto(course, student.Id, progressDict);
         }
 
-        private CourseDetailDto BuildCourseDetailDto(
-            Course course,
-            Guid? studentId,
-            Dictionary<Guid, bool?>? progressDict,
-            bool includeProgress)
+        // Build CourseDetailDto for public course detail (no progress info)
+        private CourseDetailDto BuildCourseDetailDto(Course course)
         {
-            progressDict ??= new Dictionary<Guid, bool?>();
-
             var detail = new CourseDetailDto
             {
                 Id = course.Id,
@@ -642,7 +622,6 @@ namespace SkillUp.Services.Implementations
                 subCategoryId = course.SubCategoryId,
                 CategoryName = course.SubCategory?.Category?.Name ?? "",
                 SubCategoryName = course.SubCategory?.Name ?? "",
-                IsAiSupport = course.IsAiSupport ?? false,
                 Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
                 {
                     AccountId = course.Lecturer.AccountId,
@@ -668,7 +647,111 @@ namespace SkillUp.Services.Implementations
                         Description = l.Description,
                         LessonType = l.Type,                 // "Video" | "Text"
                         IsFree = l.IsFree ?? false,
-                        IsCompleted = includeProgress && progressDict.ContainsKey(l.Id)
+                        Assets = l.Assets?
+                            .Where(a => a.IsActive)
+                            .Select(a => new AssetCourseDetailDto
+                            {
+                                Url = a.Url ?? "default-url",
+                                Content = a.Contents ?? "No content",
+                                FileUrl = a.FileUrl ?? "default-file-url"
+                            })
+                            .ToList() ?? new List<AssetCourseDetailDto>(),
+                        CreatedAt = l.CreatedAt,
+                        UpdatedAt = l.UpdatedAt
+                    });
+
+                // Map Quiz -> SectionItemDto (KHÔNG có Assets, không có IsCompleted và QuizSubmissionId)
+                // Only include active quizzes
+                var quizItems = section.Quizzes
+                    .Where(q => q.IsActive)
+                    .Select(q => new SectionItemDto
+                    {
+                        Kind = "Quiz",
+                        Id = q.Id,
+                        Orders = (double)q.Orders,
+                        Title = q.Title,
+                        Description = q.Description,
+                        PassPercent = q.PassPercent,
+                        Timer = q.Timer,
+                        CreatedAt = q.CreatedAt,
+                        UpdatedAt = q.UpdatedAt
+                    });
+
+                // Gộp & sort tăng dần theo Orders
+                var items = lessonItems
+                    .Concat(quizItems)
+                    .OrderBy(i => i.Orders)
+                    .ThenBy(i => i.Kind) // tie-break nếu Orders trùng
+                    .ToList();
+
+                return new SectionCourseDetailDto
+                {
+                    Id = section.Id,
+                    Orders = (double)section.Orders,
+                    Title = section.Title,
+                    Description = section.Description,
+                    CreatedAt = section.CreatedAt,
+                    UpdatedAt = section.UpdatedAt,
+                    Items = items
+                };
+            }).OrderBy(i => i.Orders)
+              .ToList();
+
+            return detail;
+        }
+
+        // Build CourseLearningDetailDto for learning content (with progress info: IsCompleted and QuizSubmissionId)
+        private CourseLearningDetailDto BuildCourseLearningDetailDto(
+            Course course,
+            Guid studentId,
+            Dictionary<Guid, bool?> progressDict)
+        {
+            progressDict ??= new Dictionary<Guid, bool?>();
+
+            var detail = new CourseLearningDetailDto
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                Price = course.Price,
+                Image = course.Image,
+                EnrollmentCount = course.EnrollmentCount,
+                Rating = (double)(course.Rating ?? 0),
+                Status = course.Status,
+                IsActive = course.IsActive,
+                CreatedAt = course.CreatedAt,
+                UpdatedAt = course.UpdatedAt,
+                categoryId = course.SubCategory?.CategoryId ?? 0,
+                subCategoryId = course.SubCategoryId,
+                CategoryName = course.SubCategory?.Category?.Name ?? "",
+                SubCategoryName = course.SubCategory?.Name ?? "",
+                IsAiSupport = course.IsAiSupport,
+                Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
+                {
+                    AccountId = course.Lecturer.AccountId,
+                    FullName = course.Lecturer.Account?.Fullname ?? "",
+                    Avartar = course.Lecturer.Account?.Avatar ?? "default-avatar.png",
+                    Title = course.Lecturer.Title ?? "",
+                    Profession = course.Lecturer.Profession ?? ""
+                } : null
+            };
+
+            detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
+            {
+                // Map Lesson -> SectionItemLearningDto (CÓ Assets và IsCompleted)
+                // Only include active lessons and their active assets
+                var lessonItems = section.Lessons
+                    .Where(l => l.IsActive)
+                    .Select(l => new SectionItemLearningDto
+                    {
+                        Kind = "Lesson",
+                        Id = l.Id,
+                        Orders = (double)l.Orders,
+                        Title = l.Title,
+                        Description = l.Description,
+                        LessonType = l.Type,                 // "Video" | "Text"
+                        IsFree = l.IsFree ?? false,
+                        IsCompleted = progressDict.ContainsKey(l.Id)
                             ? progressDict[l.Id]
                             : null,
                         Assets = l.Assets?
@@ -684,24 +767,21 @@ namespace SkillUp.Services.Implementations
                         UpdatedAt = l.UpdatedAt
                     });
 
-                // Map Quiz -> SectionItemDto (KHÔNG có Assets)
+                // Map Quiz -> SectionItemLearningDto (KHÔNG có Assets, nhưng CÓ IsCompleted và QuizSubmissionId)
                 // Only include active quizzes
                 var quizItems = section.Quizzes
                     .Where(q => q.IsActive)
                     .Select(q =>
                     {
-                        // Tìm Submission có EndedAt gần nhất của student hiện tại (nếu có)
+                        // Tìm Submission có EndedAt gần nhất của student hiện tại
                         Guid? quizSubmissionId = null;
-                        if (studentId.HasValue)
-                        {
-                            var latestSubmission = q.QuizSubmissions
-                                .Where(s => s.StudentId == studentId.Value && s.EndedAt != null)
-                                .OrderByDescending(s => s.EndedAt)
-                                .FirstOrDefault();
-                            quizSubmissionId = latestSubmission?.Id;
-                        }
+                        var latestSubmission = q.QuizSubmissions
+                            .Where(s => s.StudentId == studentId && s.EndedAt != null)
+                            .OrderByDescending(s => s.EndedAt)
+                            .FirstOrDefault();
+                        quizSubmissionId = latestSubmission?.Id;
 
-                        return new SectionItemDto
+                        return new SectionItemLearningDto
                         {
                             Kind = "Quiz",
                             Id = q.Id,
@@ -711,7 +791,7 @@ namespace SkillUp.Services.Implementations
                             PassPercent = q.PassPercent,
                             Timer = q.Timer,
                             QuizSubmissionId = quizSubmissionId,
-                            IsCompleted = includeProgress && progressDict.ContainsKey(q.Id)
+                            IsCompleted = progressDict.ContainsKey(q.Id)
                                 ? progressDict[q.Id]
                                 : null,
                             CreatedAt = q.CreatedAt,
@@ -726,7 +806,7 @@ namespace SkillUp.Services.Implementations
                     .ThenBy(i => i.Kind) // tie-break nếu Orders trùng
                     .ToList();
 
-                return new SectionCourseDetailDto
+                return new SectionLearningDetailDto
                 {
                     Id = section.Id,
                     Orders = (double)section.Orders,

@@ -10,5 +10,6 @@ namespace SkillUp.Services.Interfaces
         Task<bool> SendLecturerApplicationStatusEmailAsync(Account account, bool isApproved, string reason);
         Task<bool> SendCoursePublishedEmailAsync(string toEmail, string fullname, string courseName, string courseId);
 		Task<bool> SendCourseRejectedEmailAsync(string toEmail, string fullname, string courseName, string rejectReason, string courseId);
+        Task<bool> SendModAccountEmailAsync(string toEmail, string password, string fullname, int roleId);
 	}
 }
