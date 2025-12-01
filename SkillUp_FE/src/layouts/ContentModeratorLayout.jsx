@@ -10,6 +10,8 @@ import {
   BookOpen,
   MessageCircle,
   ChartBarStacked,
+  User,
+  Image
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -54,15 +56,19 @@ export default function ModeratorLayout() {
       icon: <ChartBarStacked size={18} />,
       path: "/contentmod/category",
     },
+    {
+      label: "Hình ảnh quảng bá",
+      icon: <Image size={18} />,
+      path: "/contentmod/banner",
+    },
   ];
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside
-        className={`${
-          collapsed ? "w-16" : "w-60"
-        } bg-white border-r flex flex-col transition-all duration-300`}
+        className={`${collapsed ? "w-16" : "w-60"
+          } bg-white border-r flex flex-col transition-all duration-300`}
       >
         <div className="flex items-center justify-between px-4 h-16 border-b">
           <span className="text-xl font-bold text-indigo-600">
@@ -84,10 +90,9 @@ export default function ModeratorLayout() {
               to={item.path}
               end
               className={({ isActive }) =>
-                `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? "bg-indigo-500 text-white shadow-md"
-                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+                `flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${isActive
+                  ? "bg-indigo-500 text-white shadow-md"
+                  : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
                 }`
               }
             >
@@ -97,6 +102,14 @@ export default function ModeratorLayout() {
           ))}
         </nav>
 
+        <Button
+          variant="ghost"
+          className="w-full flex items-center gap-2 justify-center text-gray-700 hover:text-blue-600"
+          onClick={() => navigate("/contentmod/profile")}
+        >
+          <User size={18} />
+          {!collapsed && <span>Hồ sơ của tôi</span>}
+        </Button>
         <div className="border-t p-3">
           <Button
             variant="ghost"
@@ -104,7 +117,7 @@ export default function ModeratorLayout() {
             onClick={handleLogout}
           >
             <LogOut size={18} />
-            {!collapsed && <span>Logout</span>}
+            {!collapsed && <span>Đăng xuất</span>}
           </Button>
         </div>
       </aside>

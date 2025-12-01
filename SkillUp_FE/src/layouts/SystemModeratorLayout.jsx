@@ -11,6 +11,7 @@ import {
   Users2,
   Tickets,
   FileUser,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -87,6 +88,14 @@ export default function SystemModeratorLayout() {
           ))}
         </nav>
 
+        <Button
+          variant="ghost"
+          className="w-full flex items-center gap-2 justify-center text-gray-700 hover:text-blue-600"
+          onClick={() => navigate("/sysmod/profile")}
+        >
+          <User size={18} />
+          {!collapsed && <span>Hồ sơ của tôi</span>}
+        </Button>
         {/* Logout */}
         <div className="border-t p-3">
           <Button
@@ -95,7 +104,7 @@ export default function SystemModeratorLayout() {
             onClick={handleLogout}
           >
             <LogOut size={18} />
-            {!collapsed && <span>Logout</span>}
+            {!collapsed && <span>Đăng xuất</span>}
           </Button>
         </div>
       </aside>

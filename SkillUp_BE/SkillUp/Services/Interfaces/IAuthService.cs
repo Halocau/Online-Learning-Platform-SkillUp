@@ -42,5 +42,8 @@ namespace SkillUp.Services.Interfaces
        
         public Task<bool> ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request);
 
-    }
+        public Task<bool> RegisterForModsAsync(RegisterRequestDto request);
+
+
+	}
 }
