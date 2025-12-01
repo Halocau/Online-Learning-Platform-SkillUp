@@ -4,6 +4,7 @@ import AdminLayout from "../layouts/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 import Dashboard from "../pages/admin/AdminDashboard";
+import ModeratorManage from "../pages/admin/ModeratorManage";
 
 const AdminRoutes = () => {
   return (
@@ -17,6 +18,8 @@ const AdminRoutes = () => {
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="moderators" element={<ModeratorManage />} />
+
         {/* Other admin routes */}
       </Route>
     </Routes>

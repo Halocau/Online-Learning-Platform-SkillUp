@@ -14,6 +14,7 @@ import CourseManage from "@/pages/contentmoderator/CourseManage/CourseManage";
 import CategoryManage from "@/pages/contentmoderator/CategoryManage";
 import ForumManage from "@/pages/contentmoderator/ForumManage";
 import BannerManage from "@/pages/contentmoderator/BannerManage";
+import ModProfile from "@/pages/Profile/ModProfile";
 
 const ContentModeratorRoutes = () => {
   return (
@@ -37,6 +38,8 @@ const ContentModeratorRoutes = () => {
         <Route path="category" element={<CategoryManage />} />
         <Route path="forum" element={<ForumManage />} />
         <Route path="banner" element={<BannerManage />} />
+        <Route path="profile" element={<ModProfile />} />
+
       </Route>
     </Routes>
   );

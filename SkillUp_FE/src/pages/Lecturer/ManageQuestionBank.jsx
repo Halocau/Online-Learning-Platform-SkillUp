@@ -43,6 +43,9 @@ export default function ManageQuestionBank() {
     const [detailCode, setDetailCode] = useState(null);
     const [questionBankObj, setQuestionBankObj] = useState(null);
 
+    // Track current fetch to prevent stale data
+    const fetchIdRef = React.useRef(0);
+
     const fetchCourses = useCallback(async () => {
         setLoading(true);
         try {
@@ -53,7 +56,7 @@ export default function ManageQuestionBank() {
             console.log('')
             console.error('Fetch courses failed:', err);
             setCourseId(null);
-            toast.error('Không thể tải danh sách khóa học');
+            toast.info('Bạn chưa có khoá học nào');
         } finally {
             setLoading(false);
         }
@@ -74,28 +77,44 @@ export default function ManageQuestionBank() {
         }
     }, [courseId]);
 
-    const fetchQuestionBank = useCallback(async () => {
+    const fetchQuestionBank = useCallback(async (sectionId) => {
+        // Guard: only fetch if we have a valid section ID
+        if (!sectionId) {
+            setQuestionBanks([]);
+            return;
+        }
+
+        // Create unique ID for this fetch
+        const currentFetchId = ++fetchIdRef.current;
+
         setLoading(true);
         try {
-            const url = API_ENDPOINTS.GET_BY_SECTION.replace('{sectionId}', selectedSectionId);
+            const url = API_ENDPOINTS.GET_BY_SECTION.replace('{sectionId}', sectionId);
 
             const response = await axiosInstance.get(url, {
                 params: {
                     courseId: courseId
                 }
             });
-            const activeQuestions = response.data.data.flat().filter(question => question.isActive);
-            setQuestionBanks(activeQuestions);
+
+            // Only update if this is the latest fetch
+            if (currentFetchId === fetchIdRef.current) {
+                const activeQuestions = response.data.data.flat().filter(question => question.isActive);
+                setQuestionBanks(activeQuestions);
+            }
 
         } catch (err) {
             console.error('Fetch question bank failed:', err);
-            setQuestionBanks([]);
-            toast.error('Không thể tải danh sách câu hỏi');
+            // Only clear if this is the latest fetch
+            if (currentFetchId === fetchIdRef.current) {
+                setQuestionBanks([]);
+                toast.error('Không thể tải danh sách câu hỏi');
+            }
         } finally {
             setLoading(false);
         }
 
-    }, [selectedSectionId, courseId]);
+    }, [courseId]);
 
     useEffect(() => {
         fetchCourses();
@@ -103,21 +122,28 @@ export default function ManageQuestionBank() {
 
     useEffect(() => {
         if (courseId) {
+            // Increment fetch ID to invalidate any pending requests
+            fetchIdRef.current++;
+            // Clear question banks and selected section when course changes
+            setSelectedSectionId(null);
+            setQuestionBanks([]);
             fetchSections();
         } else {
+            // Increment fetch ID to invalidate any pending requests
+            fetchIdRef.current++;
             setSections([]);
+            setSelectedSectionId(null);
+            setQuestionBanks([]);
         }
     }, [courseId, fetchSections]);
 
 
-    // This effect runs when 'fetchQuestionBank' (or sectionId/courseId) changes
+    // This effect runs when selectedSectionId changes
     useEffect(() => {
-        if (selectedSectionId) {
-            fetchQuestionBank();
-        } else {
-            setQuestionBanks([]);
-        }
-    }, [fetchQuestionBank, selectedSectionId]);
+        // Clear immediately when switching sections to avoid showing stale data
+        setQuestionBanks([]);
+        fetchQuestionBank(selectedSectionId);
+    }, [selectedSectionId, fetchQuestionBank]);
 
     useEffect(() => {
         if (courses.length > 0 && !courseId) {
@@ -130,7 +156,10 @@ export default function ManageQuestionBank() {
         if (sections.length > 0) {
             setSelectedSectionId(sections[0].id);
         } else {
+            // Increment fetch ID to invalidate any pending requests
+            fetchIdRef.current++;
             setSelectedSectionId(null);
+            setQuestionBanks([]); // Clear question banks when no sections
         }
     }, [sections]);
 
@@ -161,11 +190,12 @@ export default function ManageQuestionBank() {
             });
             if (response?.data?.code === 200) {
                 toast.success('Cập nhật câu hỏi thành công.');
-                fetchQuestionBank();
+                // Only refetch instead of calling fetchQuestionBank() which is now a function
+                fetchQuestionBank(selectedSectionId);
                 return;
             } else {
                 toast.error('Không thể cập nhật câu hỏi.');
-                fetchQuestionBank();
+                fetchQuestionBank(selectedSectionId);
                 return;
             }
         } catch (err) {
@@ -187,11 +217,11 @@ export default function ManageQuestionBank() {
             });
             if (response?.data?.code === 200) {
                 toast.success('Xóa câu hỏi thành công.');
-                fetchQuestionBank();
+                fetchQuestionBank(selectedSectionId);
                 return;
             } else {
                 toast.error('Không thể xóa câu hỏi.');
-                fetchQuestionBank();
+                fetchQuestionBank(selectedSectionId);
                 return;
             }
         } catch (err) {
@@ -211,11 +241,11 @@ export default function ManageQuestionBank() {
             });
             if (response?.data?.code === 200) {
                 toast.success('Tạo câu hỏi thành công.');
-                fetchQuestionBank();
+                fetchQuestionBank(selectedSectionId);
                 return;
             } else {
                 toast.error('Không thể tạo câu hỏi.');
-                fetchQuestionBank();
+                fetchQuestionBank(selectedSectionId);
                 return;
             }
         } catch (err) {
@@ -232,7 +262,7 @@ export default function ManageQuestionBank() {
             console.log("Nhập câu hỏi thành công!");
             toast.success('Nhập câu hỏi thành công từ file Excel.');
             setImportOpen(false);
-            fetchQuestionBank();
+            fetchQuestionBank(selectedSectionId);
         } catch (err) {
             console.log("Nhập thất bại!");
             console.log(err);
@@ -379,6 +409,7 @@ export default function ManageQuestionBank() {
                     </ul>
                 ) : (
                     <Button
+                        hidden={courseId ? false : true}
                         type="dashed"
                         icon={<PlusOutlined />}
                         onClick={() => navigate(`/lecturer/courses/${courseId}`)}

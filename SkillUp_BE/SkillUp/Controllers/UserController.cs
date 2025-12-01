@@ -225,7 +225,7 @@ namespace SkillUp.Controllers
 			}
 		}
 
-		[HttpPut("all-mod")]
+		[HttpGet("all-mod")]
 		[Authorize]
 		public async Task<IActionResult> GetAllModerators()
 		{
