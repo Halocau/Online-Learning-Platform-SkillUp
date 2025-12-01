@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.Models;
+﻿using SkillUp.BussinessObjects.DTOs.RevenueReport;
+using SkillUp.BussinessObjects.Models;
 
 namespace SkillUp.Repositories.Interfaces
 {
@@ -10,5 +11,9 @@ namespace SkillUp.Repositories.Interfaces
 
         Task<List<Course>> GetRecentActiveCoursesAsync(Guid lecturerId, int take);
         Task<decimal> CalculateCourseRevenueAsync(Guid courseId);
+
+        Task<decimal> CalculateLifetimeRevenueAsync(Guid lecturerId, Guid? courseId);
+        Task<List<RevenueChartDto>> GetRevenueChartAsync(Guid lecturerId, int? year, Guid? courseId);
+        Task<List<CourseRevenueDto>> GetCourseRevenueBreakdownAsync(Guid lecturerId);
     }
 }

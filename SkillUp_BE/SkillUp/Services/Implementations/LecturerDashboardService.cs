@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SkillUp.BussinessObjects.DTOs.LecturerDashboard;
+using SkillUp.BussinessObjects.DTOs.RevenueReport;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
@@ -58,6 +59,34 @@ namespace SkillUp.Services.Implementations
                 TotalStudents = totalStudents,
                 CurrentMonthEarnings = netRevenue,
                 Courses = courseDtos
+            };
+        }
+        public async Task<RevenueReportDto> GetRevenueReportAsync(Guid accountId, int? year, Guid? courseId)
+        {
+            var lecturer = await _context.Lecturers.FirstOrDefaultAsync(l => l.AccountId == accountId);
+
+            if (lecturer == null)
+            {
+                throw new Exception("Tài khoản này chưa được đăng ký thông tin Giảng viên.");
+            }
+
+            var lifetimeGross = await _lecturerDashRepository.CalculateLifetimeRevenueAsync(lecturer.Id, courseId);
+
+            var chartData = await _lecturerDashRepository.GetRevenueChartAsync(lecturer.Id, year, courseId);
+
+            var courseBreakdown = await _lecturerDashRepository.GetCourseRevenueBreakdownAsync(lecturer.Id);
+
+            chartData.ForEach(x => x.Revenue = x.Revenue * LECTURER_REVENUE_SHARE);
+
+            courseBreakdown.ForEach(x => x.TotalRevenue = x.TotalRevenue * LECTURER_REVENUE_SHARE);
+
+            var netLifetime = lifetimeGross * LECTURER_REVENUE_SHARE;
+
+            return new RevenueReportDto
+            {
+                TotalLifetimeEarnings = netLifetime,
+                RevenueChart = chartData,
+                CourseRevenues = courseBreakdown
             };
         }
     }

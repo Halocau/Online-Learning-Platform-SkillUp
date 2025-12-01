@@ -67,5 +67,40 @@ namespace SkillUp.Controllers
                 });
             }
         }
+        [HttpGet("revenue")]
+        [Authorize]
+        public async Task<IActionResult> GetRevenueReport([FromQuery] int? year, [FromQuery] Guid? courseId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ",
+                        data = null
+                    });
+                }
+                var result = await _dashboardService.GetRevenueReportAsync(accountId.Value, year, courseId);
+
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy báo cáo doanh thu thành công",
+                    data = new List<object> { result }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Lỗi Server: {ex.Message}",
+                    data = null
+                });
+            }
+        }
     }
 }

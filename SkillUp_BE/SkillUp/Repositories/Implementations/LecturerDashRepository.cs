@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.DTOs.RevenueReport;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 
@@ -70,6 +71,75 @@ namespace SkillUp.Repositories.Implementations
                 .Where(td => td.CourseId == courseId
                              && (td.Transaction.Status == "Success"))
                 .SumAsync(td => td.Price);
+        }
+        public async Task<decimal> CalculateLifetimeRevenueAsync(Guid lecturerId, Guid? courseId)
+        {
+            var query = _context.TransactionDetails
+                .Include(td => td.Transaction)
+                .Where(td => td.Transaction.Status == "Success");
+            if (courseId.HasValue)
+            {
+                query = query.Where(td => td.CourseId == courseId.Value);
+            }
+            else
+            {
+                var lecturerCourseIds = _context.Courses
+                    .Where(c => c.LecturerId == lecturerId)
+                    .Select(c => c.Id);
+                query = query.Where(td => lecturerCourseIds.Contains(td.CourseId));
+            }
+
+            return await query.SumAsync(td => td.Price);
+        }
+
+        public async Task<List<RevenueChartDto>> GetRevenueChartAsync(Guid lecturerId, int? year, Guid? courseId)
+        {
+            var query = _context.TransactionDetails
+                .Include(td => td.Transaction)
+                .Where(td => td.Transaction.Status == "Success");
+
+            if (courseId.HasValue)
+            {
+                query = query.Where(td => td.CourseId == courseId.Value);
+            }
+            else
+            {
+                var lecturerCourseIds = _context.Courses
+                    .Where(c => c.LecturerId == lecturerId)
+                    .Select(c => c.Id);
+                query = query.Where(td => lecturerCourseIds.Contains(td.CourseId));
+            }
+            int targetYear = year ?? DateTime.Now.Year;
+            query = query.Where(td => td.Transaction.CreatedAt.Year == targetYear);
+            return await query
+                .GroupBy(td => td.Transaction.CreatedAt.Month)
+                .Select(g => new RevenueChartDto
+                {
+                    OrderIndex = g.Key,
+                    Label = $"T{g.Key}",
+                    Revenue = g.Sum(td => td.Price)
+                })
+                .OrderBy(x => x.OrderIndex)
+                .ToListAsync();
+        }
+
+        public async Task<List<CourseRevenueDto>> GetCourseRevenueBreakdownAsync(Guid lecturerId)
+        {
+            return await _context.Courses
+                .Where(c => c.LecturerId == lecturerId && c.IsActive == true && c.Status == "Public")
+                .Select(c => new CourseRevenueDto
+                {
+                    CourseId = c.Id,
+                    Title = c.Title,
+                    Image = c.Image,
+                    TotalRevenue = _context.TransactionDetails
+                        .Where(td => td.CourseId == c.Id && td.Transaction.Status == "Success")
+                        .Sum(td => td.Price),
+                    TotalSales = _context.TransactionDetails
+                        .Count(td => td.CourseId == c.Id && td.Transaction.Status == "Success")
+                })
+                .OrderByDescending(c => c.TotalRevenue)
+                .ToListAsync();
         }
     }
 }
