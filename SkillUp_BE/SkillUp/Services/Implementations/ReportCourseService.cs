@@ -44,6 +44,7 @@ namespace SkillUp.Services.Implementations
             return reports.Select(r => new ReportCourseResponseDto
             {
                 Id = r.Id,
+                CourseId = r.CourseId,
                 Description = r.Description,
                 Status = r.Status,
                 CreatedAt = r.CreatedAt,
@@ -60,6 +61,7 @@ namespace SkillUp.Services.Implementations
             var reportDtos = reports.Select(r => new ReportCourseResponseDto
             {
                 Id = r.Id,
+                CourseId = r.CourseId,
                 Description = r.Description,
                 Status = r.Status,
                 CreatedAt = r.CreatedAt,
@@ -67,12 +69,13 @@ namespace SkillUp.Services.Implementations
                 StudentName = r.Student?.Account?.Fullname ?? "Unknown"
             }).ToList();
 
-            // Group by CourseName
+            // Group by CourseId + CourseName
             var grouped = reportDtos
-                .GroupBy(r => r.CourseName)
+                .GroupBy(r => new { r.CourseId, r.CourseName })
                 .Select(g => new CourseReportGroupDto
                 {
-                    CourseName = g.Key,
+                    CourseId = g.Key.CourseId,
+                    CourseName = g.Key.CourseName,
                     TotalCount = g.Count(),
                     PendingCount = g.Count(r => r.Status == "Pending"),
                     ResolvedCount = g.Count(r => r.Status == "Accepted" || r.Status == "Rejected"),
