@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 using SkillUp.BussinessObjects.DTOs.Subtitle;
@@ -46,11 +46,13 @@ namespace SkillUp.Services.Rag.Subtitle
                 request.LessonId,
                 request.SubtitleText.Length);
 
-            var chunkStart = DateTime.UtcNow;
+            //chunk sub
+            var chunkStart = DateTime.Now;
             var chunks = SubtitleChunker
                 .Chunk(request.SubtitleText, _ragOptions)
                 .ToList();
-            var chunkDuration = DateTime.UtcNow - chunkStart;
+
+            var chunkDuration = DateTime.Now - chunkStart;
 
             _logger.LogInformation(
                 "Chunked subtitle text for lesson {LessonId} into {ChunkCount} chunks in {Duration}ms",
@@ -59,13 +61,13 @@ namespace SkillUp.Services.Rag.Subtitle
                 chunkDuration.TotalMilliseconds);
 
             var vectors = new List<QdrantVectorPoint>();
-            var embeddingStart = DateTime.UtcNow;
+            var embeddingStart = DateTime.Now;
 
             foreach (var chunk in chunks)
             {
-                ct.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();//Kiểm tra hủy, nếu có thì throw
                 var vector = await _embeddingProvider.EmbedAsync(chunk.Text, ct);
-                await _qdrantService.EnsureCollectionAsync(vector.Length, ct);
+                await _qdrantService.EnsureCollectionAsync(vector.Length, ct); //Đảm bảo collection tồn tại với dimension đúng
 
                 var payload = new QdrantVectorPayload(
                     request.LessonId,
@@ -74,10 +76,10 @@ namespace SkillUp.Services.Rag.Subtitle
                     chunk.Text,
                     request.SourceVideoUrl);
 
-                vectors.Add(new QdrantVectorPoint(Guid.NewGuid().ToString(), vector, payload));
+                vectors.Add(new QdrantVectorPoint(Guid.NewGuid().ToString(), vector, payload));//payload chứa metadata
             }
 
-            var embeddingDuration = DateTime.UtcNow - embeddingStart;
+            var embeddingDuration = DateTime.Now - embeddingStart;
             _logger.LogInformation(
                 "Generated embeddings for {ChunkCount} chunks for lesson {LessonId} in {Duration}ms",
                 vectors.Count,
@@ -86,9 +88,9 @@ namespace SkillUp.Services.Rag.Subtitle
 
             if (vectors.Count > 0)
             {
-                var upsertStart = DateTime.UtcNow;
+                var upsertStart = DateTime.Now;
                 await _qdrantService.UpsertAsync(vectors, ct);
-                var upsertDuration = DateTime.UtcNow - upsertStart;
+                var upsertDuration = DateTime.Now - upsertStart;
 
                 _logger.LogInformation(
                     "Indexed {ChunkCount} chunks into Qdrant for lesson {LessonId} in {Duration}ms. Total indexing time: {TotalDuration}ms",
@@ -109,7 +111,7 @@ namespace SkillUp.Services.Rag.Subtitle
         public async Task<bool> HasSubtitlesAsync(Guid lessonId, CancellationToken ct = default)
         {
             // Use search with limit 1 to check if any vectors exist for this lesson
-            var dummyVector = new float[1]; // Placeholder vector for search
+            var dummyVector = new float[1]; 
             var results = await _qdrantService.SearchAsync(dummyVector, topK: 1, lessonId: lessonId, ct: ct);
             return results.Count > 0;
         }

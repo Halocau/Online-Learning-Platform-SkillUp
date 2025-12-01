@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
@@ -93,14 +93,14 @@ namespace SkillUp.Services.Common
             CancellationToken ct = default)
         {
             var name = _collectionName;
-            await EnsurePayloadIndexesAsync(ct);
+            await EnsurePayloadIndexesAsync(ct);//đánh index
             var limit = topK <= 0 ? 5 : topK;
-            var filter = BuildFilter(lessonId, courseId);
+            var filter = BuildFilter(lessonId, courseId);//filter by lessonId or courseId
             var body = new Dictionary<string, object?>
             {
                 ["vector"] = query,
                 ["limit"] = limit,
-                ["with_payload"] = true
+                ["with_payload"] = true //return metadata
             };
 
             if (filter is not null)
@@ -108,8 +108,10 @@ namespace SkillUp.Services.Common
                 body["filter"] = filter;
             }
 
+            //send qdrant search 
             var resp = await _httpClient.PostAsJsonAsync($"collections/{name}/points/search", body, ct);
-            await EnsureSuccessAsync(resp, "search", ct);
+            await EnsureSuccessAsync(resp, "search", ct);//check response
+
 
             var json = await resp.Content.ReadFromJsonAsync<QdrantSearchResponse>(cancellationToken: ct)
                        ?? new QdrantSearchResponse();
@@ -118,8 +120,8 @@ namespace SkillUp.Services.Common
                 .Select(hit => new QdrantVectorHit(
                     hit.Id,
                     hit.Score,
-                    hit.Payload.Text,
-                    new QdrantVectorPayload(
+                    hit.Payload.Text, //text gốc
+                    new QdrantVectorPayload( //metadata
                         hit.Payload.LessonId,
                         hit.Payload.CourseId,
                         hit.Payload.ChunkIndex,
@@ -207,8 +209,8 @@ namespace SkillUp.Services.Common
             CancellationToken ct = default)
         {
             var name = _collectionName;
-            await EnsurePayloadIndexesAsync(ct);
-            var filter = BuildFilter(lessonId, courseId);
+            await EnsurePayloadIndexesAsync(ct); //đánh index
+            var filter = BuildFilter(lessonId, courseId);//filter by lessonId or courseId
             var clampedLimit = Math.Clamp(limit, 1, 50);
             var body = new Dictionary<string, object?>
             {

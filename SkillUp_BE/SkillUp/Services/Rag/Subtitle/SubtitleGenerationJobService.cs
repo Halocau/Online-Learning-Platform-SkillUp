@@ -100,7 +100,7 @@ namespace SkillUp.Services.Rag.Subtitle
 
             return await GenerateAsync(lesson, videoAsset, courseId, ct);
         }
-
+        //create subtitle for lesson
         private async Task<SubtitleGenerationJobResult> GenerateAsync(
             Lesson lesson,
             Asset videoAsset,
@@ -114,13 +114,13 @@ namespace SkillUp.Services.Rag.Subtitle
                     lesson.Id,
                     videoAsset.Url);
 
-                var genSubStart = DateTime.UtcNow;
+                var genSubStart = DateTime.Now;
                 var subtitlePayload = await _genSubService.GenerateFromUrlAsync(
                     videoAsset.Url!,
                     format: "text",
                     aiCorrect: true,
                     cancellationToken: ct);
-                var genSubDuration = DateTime.UtcNow - genSubStart;
+                var genSubDuration = DateTime.Now - genSubStart;
 
                 _logger.LogInformation(
                     "GenSub completed for lesson {LessonId} in {Duration}ms. Starting Qdrant indexing...",
@@ -152,7 +152,7 @@ namespace SkillUp.Services.Rag.Subtitle
                     lesson.Id,
                     subtitleText.Length);
 
-                var indexStart = DateTime.UtcNow;
+                var indexStart = DateTime.Now;
                 var indexResult = await _subtitleService.IndexLessonAsync(
                     new SubtitleIndexRequest
                     {
@@ -163,7 +163,7 @@ namespace SkillUp.Services.Rag.Subtitle
                         SourceVideoUrl = videoAsset.Url
                     },
                     ct);
-                var indexDuration = DateTime.UtcNow - indexStart;
+                var indexDuration = DateTime.Now - indexStart;
 
                 _logger.LogInformation(
                     "Successfully indexed {ChunkCount} chunks into Qdrant for lesson {LessonId} in {Duration}ms. Total time: {TotalDuration}ms",

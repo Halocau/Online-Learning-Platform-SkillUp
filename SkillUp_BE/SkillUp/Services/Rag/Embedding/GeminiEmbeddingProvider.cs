@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -70,6 +70,8 @@ namespace SkillUp.Services.Rag.Embedding
                 : _options.EmbeddingModel;
 
             var endpoint = $"{BaseUrl}/models/{model}:embedContent";
+
+            //json format gemin
             var requestBody = new
             {
                 model = $"models/{model}",
@@ -83,12 +85,13 @@ namespace SkillUp.Services.Rag.Embedding
             };
 
             var payload = JsonSerializer.Serialize(requestBody, _jsonOptions);
-            using var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
+            using var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");//đóng gói
 
             // Retry with different keys if needed
             var maxAttempts = _apiKeys.Length;
             Exception? lastException = null;
 
+            //test key
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
                 var currentKey = _apiKeys[_currentKeyIndex];
@@ -97,6 +100,7 @@ namespace SkillUp.Services.Rag.Embedding
 
                 try
                 {
+                    // Send request gemini
                     var response = await _httpClient.PostAsync(endpoint, httpContent, ct);
                     var responseText = await response.Content.ReadAsStringAsync(ct);
 
@@ -123,7 +127,7 @@ namespace SkillUp.Services.Rag.Embedding
                         continue;
                     }
 
-                    // Final failure or non-retryable error
+                    // != 403 && 429 throw exception.
                     var message = ExtractErrorMessage(responseText, response.StatusCode);
                     throw new HttpRequestException(message);
                 }
@@ -170,16 +174,20 @@ namespace SkillUp.Services.Rag.Embedding
             return $"Gemini API returned {statusCode}: {payload}";
         }
 
+
+        //json -> float
         private static float[] ParseEmbedding(string payload)
         {
-            using var doc = JsonDocument.Parse(payload);
-            var root = doc.RootElement;
+            using var doc = JsonDocument.Parse(payload); //string -> object
+            var root = doc.RootElement;//lấy gốc
 
-            if (root.TryGetProperty("embedding", out var embedding))
+            //1
+            if (root.TryGetProperty("embedding", out var embedding))//tìm thấy true <> false
             {
                 return ExtractValues(embedding);
             }
 
+            //n
             if (root.TryGetProperty("embeddings", out var embeddingsArray)
                 && embeddingsArray.ValueKind == JsonValueKind.Array
                 && embeddingsArray.GetArrayLength() > 0)
@@ -201,11 +209,11 @@ namespace SkillUp.Services.Rag.Embedding
             var list = new List<float>();
             foreach (var value in valuesElement.EnumerateArray())
             {
-                if (value.ValueKind != JsonValueKind.Number)
+                if (value.ValueKind != JsonValueKind.Number) // check numeric
                 {
                     throw new JsonException("Gemini embedding value is not numeric.");
                 }
-                list.Add(value.GetSingle());
+                list.Add(value.GetSingle());//jsonelement -> float
             }
 
             return list.ToArray();

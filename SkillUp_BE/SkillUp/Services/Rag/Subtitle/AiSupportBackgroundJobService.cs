@@ -18,87 +18,130 @@ namespace SkillUp.Services.Rag.Subtitle
 
         public Task TriggerCourseSubtitleJobAsync(Guid courseId, bool force = false, CancellationToken ct = default)
         {
-            QueueWork(async scope =>
-            {
-                var courseJob = scope.ServiceProvider.GetRequiredService<ISubtitleCourseJobService>();
-                await courseJob.GenerateForCourseAsync(courseId, force, ct);
-            }, courseId, null);
-
+            QueueWork(courseId, null, force, ct);
             return Task.CompletedTask;
         }
 
         public Task TriggerLessonSubtitleJobAsync(Guid lessonId, bool force = false, CancellationToken ct = default)
         {
-            QueueWork(async scope =>
-            {
-                var lessonJob = scope.ServiceProvider.GetRequiredService<ISubtitleLessonJobService>();
-                await lessonJob.GenerateForLessonAsync(lessonId, force, ct);
-            }, null, lessonId);
-
+            QueueWork(null, lessonId, force, ct);
             return Task.CompletedTask;
         }
 
         private void QueueWork(
-            Func<IServiceScope, Task> work,
             Guid? courseId,
-            Guid? lessonId)
+            Guid? lessonId,
+            bool force,
+            CancellationToken cancellationToken)
         {
             var jobId = Guid.NewGuid();
-            var identifier = courseId.HasValue 
-                ? $"course {courseId.Value}" 
-                : lessonId.HasValue 
-                    ? $"lesson {lessonId.Value}" 
-                    : "unknown";
+            var identifier = GetJobIdentifier(courseId, lessonId);
 
             _logger.LogInformation(
                 "Queueing background subtitle job [{JobId}] for {Identifier}",
                 jobId,
                 identifier);
 
-            _ = Task.Run(async () =>
+            _ = Task.Run(() => ExecuteBackgroundWorkAsync(jobId, courseId, lessonId, identifier, force, cancellationToken));
+        }
+
+        private async Task ExecuteBackgroundWorkAsync(
+            Guid jobId,
+            Guid? courseId,
+            Guid? lessonId,
+            string identifier,
+            bool force,
+            CancellationToken cancellationToken)
+        {
+            try
             {
-                try
-                {
-                    _logger.LogInformation(
-                        "Background subtitle job [{JobId}] for {Identifier} started",
-                        jobId,
-                        identifier);
+                _logger.LogInformation(
+                    "Background subtitle job [{JobId}] for {Identifier} started",
+                    jobId,
+                    identifier);
 
-                    using var scope = _scopeFactory.CreateScope();
-                    await work(scope);
+                using var scope = _scopeFactory.CreateScope();
 
-                    _logger.LogInformation(
-                        "Background subtitle job [{JobId}] for {Identifier} completed successfully",
-                        jobId,
-                        identifier);
-                }
-                catch (Exception ex)
+                if (courseId.HasValue)
                 {
-                    if (courseId.HasValue)
-                    {
-                        _logger.LogError(
-                            ex,
-                            "Background subtitle job [{JobId}] failed for course {CourseId}",
-                            jobId,
-                            courseId.Value);
-                    }
-                    else if (lessonId.HasValue)
-                    {
-                        _logger.LogError(
-                            ex,
-                            "Background subtitle job [{JobId}] failed for lesson {LessonId}",
-                            jobId,
-                            lessonId.Value);
-                    }
-                    else
-                    {
-                        _logger.LogError(
-                            ex,
-                            "Background subtitle job [{JobId}] failed",
-                            jobId);
-                    }
+                    await ExecuteCourseSubtitleJobAsync(scope, courseId.Value, force, cancellationToken);
                 }
-            });
+                else if (lessonId.HasValue)
+                {
+                    await ExecuteLessonSubtitleJobAsync(scope, lessonId.Value, force, cancellationToken);
+                }
+
+                _logger.LogInformation(
+                    "Background subtitle job [{JobId}] for {Identifier} completed successfully",
+                    jobId,
+                    identifier);
+            }
+            catch (Exception ex)
+            {
+                LogJobError(jobId, courseId, lessonId, ex);
+            }
+        }
+
+        private async Task ExecuteCourseSubtitleJobAsync(
+            IServiceScope scope,
+            Guid courseId,
+            bool force,
+            CancellationToken cancellationToken)
+        {
+            var courseJob = scope.ServiceProvider.GetRequiredService<ISubtitleCourseJobService>();
+            await courseJob.GenerateForCourseAsync(courseId, force, cancellationToken);
+        }
+
+        private async Task ExecuteLessonSubtitleJobAsync(
+            IServiceScope scope,
+            Guid lessonId,
+            bool force,
+            CancellationToken cancellationToken)
+        {
+            var lessonJob = scope.ServiceProvider.GetRequiredService<ISubtitleLessonJobService>();
+            await lessonJob.GenerateForLessonAsync(lessonId, force, cancellationToken);
+        }
+
+        private string GetJobIdentifier(Guid? courseId, Guid? lessonId)
+        {
+            if (courseId.HasValue)
+            {
+                return $"course {courseId.Value}";
+            }
+            
+            if (lessonId.HasValue)
+            {
+                return $"lesson {lessonId.Value}";
+            }
+            
+            return "unknown";
+        }
+
+        private void LogJobError(Guid jobId, Guid? courseId, Guid? lessonId, Exception ex)
+        {
+            if (courseId.HasValue)
+            {
+                _logger.LogError(
+                    ex,
+                    "Background subtitle job [{JobId}] failed for course {CourseId}",
+                    jobId,
+                    courseId.Value);
+            }
+            else if (lessonId.HasValue)
+            {
+                _logger.LogError(
+                    ex,
+                    "Background subtitle job [{JobId}] failed for lesson {LessonId}",
+                    jobId,
+                    lessonId.Value);
+            }
+            else
+            {
+                _logger.LogError(
+                    ex,
+                    "Background subtitle job [{JobId}] failed",
+                    jobId);
+            }
         }
     }
 }

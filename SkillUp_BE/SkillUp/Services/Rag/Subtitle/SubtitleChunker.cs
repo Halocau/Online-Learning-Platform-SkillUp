@@ -10,7 +10,7 @@ namespace SkillUp.Services.Rag.Subtitle
             if (string.IsNullOrWhiteSpace(text))
                 yield break;
 
-            var chunkSize = Math.Max(100, options.ChunkSize);
+            var chunkSize = Math.Max(100, options.ChunkSize);//min 100 chars
             var overlap = Math.Clamp(options.ChunkOverlap, 0, chunkSize - 1);
             var step = chunkSize - overlap;
 
