@@ -53,7 +53,7 @@ export default function ManageQuestionBank() {
             console.log('')
             console.error('Fetch courses failed:', err);
             setCourseId(null);
-            toast.error('Không thể tải danh sách khóa học');
+            toast.info('Bạn chưa có khoá học nào');
         } finally {
             setLoading(false);
         }
@@ -379,6 +379,7 @@ export default function ManageQuestionBank() {
                     </ul>
                 ) : (
                     <Button
+                        hidden={courseId ? false : true}
                         type="dashed"
                         icon={<PlusOutlined />}
                         onClick={() => navigate(`/lecturer/courses/${courseId}`)}
