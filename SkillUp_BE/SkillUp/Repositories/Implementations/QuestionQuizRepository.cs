@@ -20,7 +20,14 @@ namespace SkillUp.Repositories.Implementations
                     qq.QuestionBankId == questionBankId);
         }
 
-        public void Update(QuestionQuiz questionQuiz)
+		public async Task<QuestionQuiz?> CheckQuestionUsed(Guid questionBankId)
+		{
+			return await _context.QuestionQuizzes
+				.FirstOrDefaultAsync(qq =>
+					qq.QuestionBankId == questionBankId);
+		}
+
+		public void Update(QuestionQuiz questionQuiz)
         {
             _context.QuestionQuizzes.Update(questionQuiz);
         }
