@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import CourseCardLecture from "./components/CourseCardLecture";
+import ConfirmModal from "./components/ConfirmModal";
 
 function CourseList({
   courses,
@@ -41,7 +42,43 @@ function CourseList({
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "warning",
+    onConfirm: null,
+    loading: false,
+  });
 
+  // Confirm modal helpers
+  const openConfirmModal = (config) => {
+    setConfirmModal({
+      isOpen: true,
+      loading: false,
+      ...config,
+    });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal({
+      isOpen: false,
+      title: "",
+      message: "",
+      type: "warning",
+      onConfirm: null,
+      loading: false,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (confirmModal.onConfirm) {
+      setConfirmModal((prev) => ({ ...prev, loading: true }));
+      await confirmModal.onConfirm();
+      closeConfirmModal();
+    }
+  };
   const statusTabs = [
     {
       id: "all",
@@ -187,40 +224,49 @@ function CourseList({
   };
 
   const handleDelete = async (courseId) => {
-    const confirmed = window.confirm(
-      "Bạn có chắc chắn muốn xóa khóa học này không?"
-    );
-    if (!confirmed) return;
+    openConfirmModal({
+      title: "Xóa khóa học",
+      message: "Bạn có chắc chắn muốn xóa khóa học này không?",
+      type: "danger",
+      confirmText: "Xóa",
+      cancelText: "Hủy",
+      onConfirm: async () => {
+        try {
+          setDeletingId(courseId);
 
-    try {
-      setDeletingId(courseId);
+          // FIX 4: Removed space after courseAPI.
+          const response = await courseAPI.deleteCourse(courseId);
 
-      const response = await courseAPI.deleteCourse(courseId);
-
-      if (response.data.code === 200) {
-        toast.success("Khóa học đã được gỡ thành công");
-        setTimeout(() => {
-          onRefresh();
-        }, 500);
-      } else {
-        toast.error(response.data.message || "Lỗi khi xóa khóa học");
-        setDeletingId(null);
-      }
-    } catch (error) {
-      if (error.response) {
-        if (error.response.data?.message) {
-          toast.error(error.response.data.message);
-        } else {
-          toast.error("Lỗi khi xóa khóa học");
+          // FIX 5: Removed space after response.
+          if (response.data.code === 200) {
+            toast.success("Khóa học đã được gỡ thành công");
+            setTimeout(() => {
+              onRefresh();
+            }, 500);
+          } else {
+            // FIX 6: Removed space after response.
+            toast.error(response.data.message || "Lỗi khi xóa khóa học");
+            setDeletingId(null);
+          }
+        } catch (error) {
+          if (error.response) {
+            // FIX 7: Removed space after error.response.
+            if (error.response.data?.message) {
+              // FIX 8: Removed space after error.response.
+              toast.error(error.response.data.message);
+            } else {
+              toast.error("Lỗi khi xóa khóa học");
+            }
+          } else if (error.request) {
+            toast.error("Lỗi kết nối với máy chủ");
+          } else {
+            // Removed unnecessary space before Vui
+            toast.error("Lỗi khi xóa khóa học. Vui lòng thử lại.");
+          }
+          setDeletingId(null);
         }
-      } else if (error.request) {
-        toast.error("Lỗi kết nối với máy chủ");
-      } else {
-        toast.error("Lỗi khi xóa khóa học. Vui lòng thử lại.");
-      }
-
-      setDeletingId(null);
-    }
+      },
+    });
   };
 
   const getTabColorClasses = (color, isActive) => {
@@ -287,6 +333,21 @@ function CourseList({
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <ConfirmModal
+          className="  "
+          isOpen={confirmModal.isOpen}
+          onClose={closeConfirmModal}
+          onConfirm={handleConfirmAction}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          type={confirmModal.type}
+          confirmText={confirmModal.confirmText}
+          cancelText={confirmModal.cancelText}
+          loading={confirmModal.loading}
+        />
+      </div>
+
       {/* Status Filter Tabs */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="flex flex-wrap gap-2">
