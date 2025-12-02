@@ -90,6 +90,7 @@ namespace SkillUp.Services.Common
             int topK,
             Guid? lessonId = null,
             Guid? courseId = null,
+            float? scoreThreshold = null,
             CancellationToken ct = default)
         {
             var name = _collectionName;
@@ -116,7 +117,7 @@ namespace SkillUp.Services.Common
             var json = await resp.Content.ReadFromJsonAsync<QdrantSearchResponse>(cancellationToken: ct)
                        ?? new QdrantSearchResponse();
 
-            return json.Result
+            var results = json.Result
                 .Select(hit => new QdrantVectorHit(
                     hit.Id,
                     hit.Score,
@@ -128,6 +129,16 @@ namespace SkillUp.Services.Common
                         hit.Payload.Text,
                         hit.Payload.Source)))
                 .ToList();
+
+            // Filter theo score threshold nếu có
+            if (scoreThreshold.HasValue)
+            {
+                results = results
+                    .Where(hit => hit.Score >= scoreThreshold.Value)
+                    .ToList();
+            }
+
+            return results;
         }
 
         public async Task<long> CountVectorsAsync(

@@ -169,7 +169,9 @@ Lưu ý:
 - Chỉ trả lời dựa trên nội dung phụ đề được cung cấp
 - Nếu câu hỏi không liên quan đến nội dung bài học, hãy lịch sự thông báo
 - Trả lời bằng tiếng Việt, ngắn gọn và dễ hiểu
-- Nếu câu trả lời dài hơn ~6 câu, hãy chia thành tối đa 2 phần, dùng định dạng ""Phần 1/2: ..."" và ""Phần 2/2: ..."" để học viên dễ theo dõi";
+- Trả lời liền mạch, không chia thành nhiều phần (không dùng ""Phần 1/2"", ""Phần 2/2"", v.v.)
+- Không sử dụng markdown formatting như **bold** hoặc các ký tự đặc biệt để làm nổi bật
+- Trả lời tự nhiên, dễ đọc như một đoạn văn bình thường";
         }
 
         private static string ExtractErrorMessage(string payload, System.Net.HttpStatusCode statusCode)

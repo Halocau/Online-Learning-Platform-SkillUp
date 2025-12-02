@@ -48,20 +48,25 @@ namespace SkillUp.Services.Rag.Chat
                 // 1. Embed câu hỏi
                 var questionVector = await _embeddingProvider.EmbedAsync(question, ct);
 
-                // 2. Search trong Qdrant với filter courseId
+                // 2. Search trong Qdrant với filter courseId và score threshold
                 var topK = _ragOptions.TopK ?? 10;
+                var scoreThreshold = _ragOptions.ScoreThreshold;
                 var hits = await _qdrantService.SearchAsync(
                     query: questionVector,
                     topK: topK,
                     courseId: courseId,
+                    scoreThreshold: scoreThreshold,
                     ct: ct);
 
                 if (hits.Count == 0)
                 {
+                    var thresholdMessage = scoreThreshold.HasValue 
+                        ? $" (score threshold: {scoreThreshold.Value:F2})" 
+                        : "";
                     return new ChatResponseDto
                     {
                         Success = false,
-                        Message = "Không tìm thấy nội dung liên quan trong khóa học này. Vui lòng đảm bảo phụ đề đã được tạo cho các bài học."
+                        Message = $"Không tìm thấy nội dung liên quan trong khóa học này. Vui lòng đảm bảo phụ đề đã được tạo cho các bài học."
                     };
                 }
 
