@@ -98,6 +98,7 @@ builder.Services.AddScoped<IAnswerBankRepository, AnswerBankRepository>();
 builder.Services.AddScoped<IStudentProgressRepository, StudentProgressRepository>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<ILecturerDashRepository, LecturerDashRepository>();
 builder.Services.AddScoped<IPayrollRepository, PayrollRepository>();
 
 // Register Services
@@ -123,6 +124,7 @@ builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ILecturerDashboardService, LecturerDashboardService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
 
 // POST
