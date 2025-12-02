@@ -20,7 +20,14 @@ import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import CourseCardLecture from "./components/CourseCardLecture";
 
-function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
+function CourseList({
+  courses,
+  loading,
+  onRefresh,
+  onCreateClick,
+  onEdit,
+  onPreview,
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState(null);
 
@@ -35,7 +42,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
-  // Status tabs configuration
   const statusTabs = [
     {
       id: "all",
@@ -95,7 +101,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Sort filtered courses
   const sortedCourses = [...filteredCourses].sort((a, b) => {
     switch (sortBy) {
       case "newest":
@@ -160,10 +165,9 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
   const handleEdit = (courseId) => {
     const courseToEdit = courses.find((c) => c.id === courseId);
 
-    // Check if course is pending - add extra validation
     if (courseToEdit && courseToEdit.status === "Pending") {
       toast.warning(
-        "Không thể chỉnh sửa khóa học đang chờ duyệt. Vui lòng chờ admin phê duyệt.",
+        "Không thể chỉnh sửa khóa học đang chờ duyệt. Vui lòng chờ phê duyệt.",
         {
           icon: "🔒",
         }
@@ -176,6 +180,10 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
     } else {
       toast.error("Không tìm thấy thông tin khóa học");
     }
+  };
+
+  const handlePreview = (course) => {
+    if (onPreview) onPreview(course);
   };
 
   const handleDelete = async (courseId) => {
@@ -328,10 +336,10 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
               </h4>
               <p className="text-sm text-yellow-800 leading-relaxed">
                 Các khóa học ở trạng thái <strong>"Chờ duyệt"</strong> đã được
-                gửi để xét duyệt. Bạn{" "}
-                <strong>không thể chỉnh sửa</strong> khóa học trong thời gian
-                này. Vui lòng chờ kết quả phê duyệt để có thể tiếp tục
-                chỉnh sửa, xuất bản khóa học.
+                gửi để xét duyệt. Bạn <strong>không thể chỉnh sửa</strong> khóa
+                học trong thời gian này. Nhấn nút{" "}
+                <Eye className="w-3 h-3 inline" /> <strong>Xem trước</strong> để
+                xem lại nội dung khóa học.
               </p>
             </div>
           </div>
@@ -340,7 +348,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
 
       {/* Search and Filter Bar */}
       <div className="space-y-4">
-        {/* Search */}
         <div>
           <input
             type="text"
@@ -354,7 +361,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
           />
         </div>
 
-        {/* Sort, Date Controls, and Items per page */}
         <div className="flex gap-3 flex-wrap items-center">
           {/* Sort Dropdown */}
           <div className="relative">
@@ -456,7 +462,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
             )}
           </div>
 
-          {/* Reset All Filters Button */}
           <button
             onClick={resetAllFilters}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
@@ -466,7 +471,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
             <span className="text-sm font-medium text-red-600">Đặt lại</span>
           </button>
 
-          {/* Items per page selector */}
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-sm text-gray-600">Hiển thị:</span>
             <select
@@ -486,7 +490,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
           </div>
         </div>
 
-        {/* Result count */}
         <div className="flex items-center justify-between px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
           <span className="text-sm text-gray-600">
             Hiển thị{" "}
@@ -534,6 +537,7 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
                 onView={handleView}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onPreview={handlePreview}
                 isDeleting={deletingId === course.id}
               />
             ))}
@@ -557,7 +561,6 @@ function CourseList({ courses, loading, onRefresh, onCreateClick, onEdit }) {
                   <span className="hidden sm:inline">Trước</span>
                 </button>
 
-                {/* Page numbers - Show max 7 pages */}
                 <div className="flex gap-1">
                   {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
                     let pageNum;
