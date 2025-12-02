@@ -31,13 +31,10 @@ function RevenueDashboard() {
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-
   const [isRefetching, setIsRefetching] = useState(false);
 
   useEffect(() => {
-
     loadRevenueData(true);
-
   }, []);
 
   useEffect(() => {
@@ -45,7 +42,6 @@ function RevenueDashboard() {
     if (revenueData !== null) {
       loadRevenueData(false);
     }
-
   }, [selectedYear, selectedCourse]);
 
   const loadRevenueData = async (firstLoad = false) => {

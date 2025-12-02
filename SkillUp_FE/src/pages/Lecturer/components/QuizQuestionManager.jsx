@@ -402,28 +402,29 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
                         <div className="flex gap-2 mt-1 flex-wrap">
                           {question.type && (
                             <span className="text-xs px-2 py-0.5 bg-[#FFD54F]/20 text-[#272343] rounded-full">
+                              Loại câu hỏi:{" "}
                               {question.type === "SingleChoice"
                                 ? "Một đáp án"
                                 : "Nhiều đáp án"}
                             </span>
                           )}
-                          {question.imageUrl && (
+                          {/* {question.imageUrl && (
                             <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#272343] rounded-full flex items-center gap-1">
                               <ImageIcon className="w-3 h-3" />
                               Có ảnh câu hỏi
                             </span>
-                          )}
+                          )} */}
                           {question.answers && (
                             <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#2d334a] rounded-full">
-                              {question.answers.length} đáp án
+                              {question.answers.length} câu trả lời
                             </span>
                           )}
-                          {answerImageCount > 0 && (
+                          {/* {answerImageCount > 0 && (
                             <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full flex items-center gap-1">
                               <ImageIcon className="w-3 h-3" />
                               {answerImageCount} ảnh đáp án
                             </span>
-                          )}
+                          )} */}
                         </div>
                       </div>
 

@@ -5,43 +5,81 @@ import {
   PlayCircle,
   FileText,
   HelpCircle,
-  Clock,
   BookOpen,
   Eye,
   AlertCircle,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { courseAPI } from "@/api/courseAPI";
+import { getQuizById } from "@/api/quizAPI";
 
 function CoursePreview() {
   const location = useLocation();
   const { courseId } = useParams();
   const navigate = useNavigate();
 
-  // USE location.state first!
   const [course, setCourse] = useState(location.state?.course || null);
-  const [loading, setLoading] = useState(!location.state?.course);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedSections, setExpandedSections] = useState(new Set());
   const [selectedItem, setSelectedItem] = useState(null);
+  const [previewQuiz, setPreviewQuiz] = useState(null);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
 
-  // Fallback loader if the course isn't present (e.g. refresh or external link)
   useEffect(() => {
-    if (!course) {
-      setLoading(true);
-      setError(null);
-      courseAPI
-        .getCourseById(courseId)
-        .then((res) => {
-          if (res.data.code === 200) setCourse(res.data.data);
-          else setError("Không thể tải khóa học");
-        })
-        .catch(() => setError("Không thể tải khóa học"))
-        .finally(() => setLoading(false));
-    }
-  }, [course, courseId]);
+    setLoading(true);
+    setError(null);
 
-  // expand all sections on first load
+    courseAPI
+      .getCourseDetail(courseId)
+      .then((res) => {
+        if (res.data.code === 200) {
+          const detail = Array.isArray(res.data.data)
+            ? res.data.data[0]
+            : res.data.data;
+          setCourse(detail);
+        } else {
+          setError("Không thể tải khóa học");
+        }
+      })
+      .catch(() => setError("Không thể tải khóa học"))
+      .finally(() => setLoading(false));
+  }, [courseId]);
+
+  useEffect(() => {
+    if (selectedItem && selectedItem.kind === "Quiz") {
+      setLoadingQuiz(true);
+      setPreviewQuiz(null);
+      getQuizById(selectedItem.id)
+        .then((res) => {
+          let quizData = null;
+
+          // Logic to parse the specific JSON structure you provided
+          if (Array.isArray(res)) {
+            quizData = res[0];
+          } else if (Array.isArray(res?.data)) {
+            quizData = res.data[0];
+          } else if (res?.data?.data && Array.isArray(res.data.data)) {
+            quizData = res.data.data[0];
+          } else if (res?.data) {
+            quizData = res.data;
+          } else {
+            quizData = res;
+          }
+
+          setPreviewQuiz(quizData);
+        })
+        .catch((err) => {
+          console.error("Error loading quiz:", err);
+          setPreviewQuiz(null);
+        })
+        .finally(() => setLoadingQuiz(false));
+    } else {
+      setPreviewQuiz(null);
+    }
+  }, [selectedItem]);
+
   useEffect(() => {
     if (course && course.sections && course.sections.length > 0) {
       const allSectionIds = new Set(course.sections.map((s) => s.id));
@@ -74,7 +112,7 @@ function CoursePreview() {
     if (item.kind === "Lesson") {
       return item.lessonType === "Video" ? "Video" : "Bài đọc";
     }
-    return "Quiz";
+    return "Câu hỏi";
   };
 
   const getItemColor = (item) => {
@@ -86,8 +124,6 @@ function CoursePreview() {
     }
     return "violet";
   };
-console.log("location.state:", location.state);
-console.log("course:", course);
 
   const calculateTotalDuration = () => {
     if (!course?.sections) return 0;
@@ -127,8 +163,12 @@ console.log("course:", course);
       <div className="flex flex-col items-center justify-center min-h-screen text-center">
         <div className="p-8 bg-white shadow-lg rounded-xl border border-gray-200">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <p className="text-xl font-bold text-gray-800 mb-2">Không thể tải khóa học</p>
-          <div className="text-gray-600 mb-4">{error || "Không tìm thấy khóa học hoặc không có dữ liệu."}</div>
+          <p className="text-xl font-bold text-gray-800 mb-2">
+            Không thể tải khóa học
+          </p>
+          <div className="text-gray-600 mb-4">
+            {error || "Không tìm thấy khóa học hoặc không có dữ liệu."}
+          </div>
           <button
             onClick={() => navigate("/lecturer/courses")}
             className="px-6 py-2 rounded-lg bg-yellow-500 text-white font-semibold hover:bg-yellow-600 transition"
@@ -140,15 +180,17 @@ console.log("course:", course);
     );
   }
 
-  const totalDuration = calculateTotalDuration();
   const totalLessons =
-    course.sections?.reduce((sum, section) => sum + (section.items?.length || 0), 0) || 0;
+    course.sections?.reduce(
+      (sum, section) => sum + (section.items?.length || 0),
+      0
+    ) || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 animate-fadeIn">
+    <div className="min-h-screen bg-gray-100">
       {/* Preview Banner */}
       <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 py-3 px-4 shadow-md sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-[1920px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Eye className="w-5 h-5" />
             <span className="font-semibold">
@@ -167,42 +209,36 @@ console.log("course:", course);
 
       {/* Course Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-8 animate-fadeIn-slow">
+        <div className="max-w-[1920px] mx-auto px-6 py-6">
           <div className="flex items-start gap-6">
             <img
               src={course.image}
               alt={course.title}
-              className="w-48 h-32 object-cover rounded-xl shadow-md"
+              className="w-40 h-28 object-cover rounded-xl shadow-md"
               onError={(e) => {
-                e.target.src = "https://via.placeholder.com/192x128";
+                e.target.src = "https://via.placeholder.com/160x112";
               }}
             />
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-3 mb-2">
                 <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full border border-yellow-200">
                   Đang chờ duyệt
                 </span>
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {course.title}
               </h1>
-              <p className="text-gray-600 mb-4 leading-relaxed">
+              <p className="text-gray-600 mb-3 leading-relaxed text-sm line-clamp-2">
                 {course.description}
               </p>
               <div className="flex items-center gap-6 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-blue-500" />
-                  <span>
-                    {course.sections?.length || 0} chương
-                  </span>
+                  <span>{course.sections?.length || 0} chương</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <PlayCircle className="w-4 h-4 text-green-500" />
                   <span>{totalLessons} bài học</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-purple-500" />
-                  <span>{formatDuration(totalDuration)}</span>
                 </div>
               </div>
             </div>
@@ -210,198 +246,333 @@ console.log("course:", course);
         </div>
       </div>
 
-      {/* Course Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Nội dung khóa học</h2>
-            <p className="text-gray-600 mt-1">
-              {course.sections?.length || 0} chương • {totalLessons} bài học
-            </p>
-          </div>
+      {/* Two Column Layout */}
+      <div className="max-w-[1920px] mx-auto p-6">
+        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-280px)]">
+          {/* Left Column - Course Content (Scrollable) */}
+          <div className="col-span-12 lg:col-span-5 xl:col-span-4">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col">
+              <div className="p-4 border-b border-gray-200 flex-shrink-0">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Nội dung khóa học
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  {course.sections?.length || 0} chương • {totalLessons} bài học
+                </p>
+              </div>
 
-          <div className="divide-y divide-gray-200">
-            {course.sections && course.sections.length > 0 ? (
-              course.sections
-                .sort((a, b) => a.orders - b.orders)
-                .map((section) => (
-                  <div key={section.id} className="bg-white">
-                    {/* Section Header */}
-                    <button
-                      onClick={() => toggleSection(section.id)}
-                      className="w-full px-6 py-5 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center text-white font-bold shadow-md">
-                          {section.orders}
-                        </div>
-                        <div className="text-left">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {section.title}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {section.items?.length || 0} bài học
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronLeft
-                        className={cn(
-                          "w-5 h-5 text-gray-400 transition-transform",
-                          expandedSections.has(section.id) ? "-rotate-90" : ""
-                        )}
-                      />
-                    </button>
+              <div className="flex-1 overflow-y-auto">
+                <div className="divide-y divide-gray-200">
+                  {course.sections && course.sections.length > 0 ? (
+                    course.sections
+                      .sort((a, b) => a.orders - b.orders)
+                      .map((section) => (
+                        <div key={section.id}>
+                          {/* Section Header */}
+                          <button
+                            onClick={() => toggleSection(section.id)}
+                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                {section.orders}
+                              </div>
+                              <div className="text-left">
+                                <h3 className="text-sm font-semibold text-gray-900">
+                                  {section.title}
+                                </h3>
+                                <p className="text-xs text-gray-600">
+                                  {section.items?.length || 0} bài học
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronLeft
+                              className={cn(
+                                "w-4 h-4 text-gray-400 transition-transform flex-shrink-0",
+                                expandedSections.has(section.id)
+                                  ? "-rotate-90"
+                                  : ""
+                              )}
+                            />
+                          </button>
 
-                    {/* Section Items */}
-                    {expandedSections.has(section.id) && (
-                      <div className="px-6 pb-4 space-y-2 bg-gray-50">
-                        {section.items && section.items.length > 0 ? (
-                          section.items
-                            .sort((a, b) => a.orders - b.orders)
-                            .map((item, index) => {
-                              const color = getItemColor(item);
-                              return (
-                                <button
-                                  key={item.id}
-                                  onClick={() => setSelectedItem(item)}
-                                  className={cn(
-                                    "w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left",
-                                    selectedItem?.id === item.id
-                                      ? "border-yellow-400 bg-yellow-50"
-                                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                                  )}
-                                >
-                                  <div
-                                    className={cn(
-                                      "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold",
-                                      color === "sky" &&
-                                        "bg-sky-100 text-sky-700",
-                                      color === "amber" &&
-                                        "bg-amber-100 text-amber-700",
-                                      color === "violet" &&
-                                        "bg-violet-100 text-violet-700"
-                                    )}
-                                  >
-                                    {index + 1}
-                                  </div>
-                                  <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">
-                                      {item.title}
-                                    </h4>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span
+                          {/* Section Items */}
+                          {expandedSections.has(section.id) && (
+                            <div className="px-4 pb-2 space-y-1 bg-gray-50">
+                              {section.items && section.items.length > 0 ? (
+                                section.items
+                                  .sort((a, b) => a.orders - b.orders)
+                                  .map((item, index) => {
+                                    const color = getItemColor(item);
+                                    const isSelected =
+                                      selectedItem?.id === item.id;
+                                    return (
+                                      <button
+                                        key={item.id}
+                                        onClick={() => setSelectedItem(item)}
                                         className={cn(
-                                          "text-xs px-2 py-0.5 rounded-full",
-                                          color === "sky" &&
-                                            "bg-sky-100 text-sky-700",
-                                          color === "amber" &&
-                                            "bg-amber-100 text-amber-700",
-                                          color === "violet" &&
-                                            "bg-violet-100 text-violet-700"
+                                          "w-full flex items-center gap-2 p-2.5 rounded-lg border transition-all text-left",
+                                          isSelected
+                                            ? "border-yellow-400 bg-yellow-50 shadow-sm"
+                                            : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                                         )}
                                       >
-                                        {getItemType(item)}
-                                      </span>
-                                      {item.duration && (
-                                        <span className="text-xs text-gray-500">
-                                          {formatDuration(item.duration)}
+                                        <div
+                                          className={cn(
+                                            "w-6 h-6 rounded flex items-center justify-center text-xs font-semibold flex-shrink-0",
+                                            color === "sky" &&
+                                              "bg-sky-100 text-sky-700",
+                                            color === "amber" &&
+                                              "bg-amber-100 text-amber-700",
+                                            color === "violet" &&
+                                              "bg-violet-100 text-violet-700"
+                                          )}
+                                        >
+                                          {index + 1}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                                            {item.title}
+                                          </h4>
+                                          <div className="flex items-center gap-2 mt-0.5">
+                                            <span
+                                              className={cn(
+                                                "text-xs px-1.5 py-0.5 rounded",
+                                                color === "sky" &&
+                                                  "bg-sky-100 text-sky-700",
+                                                color === "amber" &&
+                                                  "bg-amber-100 text-amber-700",
+                                                color === "violet" &&
+                                                  "bg-violet-100 text-violet-700"
+                                              )}
+                                            >
+                                              {getItemType(item)}
+                                            </span>
+                                            {item.duration && (
+                                              <span className="text-xs text-gray-500">
+                                                {formatDuration(item.duration)}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex-shrink-0">
+                                          {getItemIcon(item)}
+                                        </div>
+                                      </button>
+                                    );
+                                  })
+                              ) : (
+                                <div className="text-center py-6 text-gray-500">
+                                  <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                  <p className="text-xs">Chưa có bài học</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <h3 className="text-base font-semibold text-gray-900 mb-1">
+                        Chưa có chương nào
+                      </h3>
+                      <p className="text-sm">Khóa học này chưa có nội dung</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Preview Content */}
+          <div className="col-span-12 lg:col-span-7 xl:col-span-8">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col">
+              {selectedItem ? (
+                <>
+                  {/* Preview Header */}
+                  <div className="p-4 border-b border-gray-200 flex items-start justify-between flex-shrink-0">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
+                        {getItemIcon(selectedItem)}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">
+                          {selectedItem.title}
+                        </h3>
+                        <span className="inline-block mt-1 px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs rounded-full">
+                          {getItemType(selectedItem)}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedItem(null)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Đóng xem trước"
+                    >
+                      <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                  </div>
+
+                  {/* Preview Content (Scrollable) */}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    {/* VIDEO & TEXT PREVIEW (Hidden for brevity, logic remains the same) */}
+                    {selectedItem.kind === "Lesson" &&
+                      selectedItem.lessonType === "Video" && (
+                        <div className="bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center">
+                          {selectedItem.assets?.[0]?.url &&
+                          selectedItem.assets[0].url !== "default-url" ? (
+                            <video
+                              src={selectedItem.assets[0].url}
+                              controls
+                              className="w-full h-full"
+                            />
+                          ) : (
+                            <div className="text-center text-gray-300">
+                              <PlayCircle className="w-16 h-16 mx-auto mb-3" />
+                              <p>Video không khả dụng hoặc chưa có đường dẫn</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                    {selectedItem.kind === "Lesson" &&
+                      selectedItem.lessonType === "Text" && (
+                        <div
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{
+                            __html:
+                              selectedItem.assets?.[0]?.content ||
+                              "<p>Không có nội dung</p>",
+                          }}
+                        />
+                      )}
+
+                    {/* QUIZ PREVIEW - UPDATED SECTION */}
+                    {selectedItem.kind === "Quiz" && (
+                      <div>
+                        {loadingQuiz ? (
+                          <div className="flex items-center justify-center py-12">
+                            <div className="text-center">
+                              <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mb-3"></div>
+                              <p className="text-purple-600">
+                                Đang tải quiz...
+                              </p>
+                            </div>
+                          </div>
+                        ) : previewQuiz ? (
+                          <div className="space-y-6">
+                            {/* UPDATED QUIZ HEADER */}
+                            <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                <HelpCircle className="w-6 h-6 text-purple-600" />
+                                <h4 className="text-lg font-semibold text-purple-900 mr-2">
+                                  {previewQuiz.title || selectedItem.title}
+                                </h4>
+                                {/* Question Count Badge */}
+                                <span className="px-2.5 py-0.5 bg-purple-200 text-purple-800 text-xs font-semibold rounded-full border border-purple-300">
+                                  {previewQuiz.questions?.length || 0} Câu hỏi
+                                </span>
+                              </div>
+                              {previewQuiz.description && (
+                                <p className="text-sm text-purple-700 ml-9">
+                                  {previewQuiz.description}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Quiz Questions */}
+                            {previewQuiz.questions &&
+                            previewQuiz.questions.length > 0 ? (
+                              <div className="space-y-6">
+                                {previewQuiz.questions
+                                  .sort(
+                                    (a, b) => (a.orders || 0) - (b.orders || 0)
+                                  )
+                                  .map((q, idx) => (
+                                    <div
+                                      key={q.questionId || idx}
+                                      className="p-5 bg-white border-2 border-gray-200 rounded-xl"
+                                    >
+                                      <div className="font-semibold text-gray-900 mb-4 flex items-start gap-2">
+                                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold">
+                                          {idx + 1}
                                         </span>
-                                      )}
+                                        <div
+                                          className="flex-1 pt-1"
+                                          dangerouslySetInnerHTML={{
+                                            __html: q.title,
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="space-y-2 ml-10">
+                                        {q.answers &&
+                                          Array.isArray(q.answers) &&
+                                          q.answers.map((ans) => (
+                                            <label
+                                              key={ans.answerId}
+                                              className={cn(
+                                                "flex items-center gap-3 p-3 rounded-lg cursor-pointer border-2 transition-all",
+                                                ans.isCorrect
+                                                  ? "bg-green-50 border-green-300"
+                                                  : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                                              )}
+                                            >
+                                              <input
+                                                type="radio"
+                                                name={`question_${
+                                                  q.questionId || idx
+                                                }`}
+                                                value={ans.answerId}
+                                                disabled
+                                                className="w-4 h-4"
+                                              />
+                                              <span className="flex-1">
+                                                {ans.answerName}
+                                              </span>
+                                              {ans.isCorrect && (
+                                                <span className="px-2 py-1 bg-green-600 text-white text-xs font-semibold rounded">
+                                                  Đáp án đúng
+                                                </span>
+                                              )}
+                                            </label>
+                                          ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                  {getItemIcon(item)}
-                                </button>
-                              );
-                            })
+                                  ))}
+                              </div>
+                            ) : (
+                              <div className="text-center py-12 text-gray-500">
+                                <HelpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                <p>Quiz chưa có câu hỏi nào.</p>
+                              </div>
+                            )}
+                          </div>
                         ) : (
-                          <div className="text-center py-8 text-gray-500">
-                            <FileText className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                            <p className="text-sm">Chưa có bài học</p>
+                          <div className="text-center py-12">
+                            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+                            <p className="text-red-600 font-medium">
+                              Không tải được chi tiết Quiz.
+                            </p>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
-                ))
-            ) : (
-              <div className="text-center py-16 text-gray-500">
-                <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Chưa có chương nào
-                </h3>
-                <p>Khóa học này chưa có nội dung</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Selected Item Preview */}
-        {selectedItem && (
-          <div className="mt-8 bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 animate-fadeIn-fast">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
-                {getItemIcon(selectedItem)}
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {selectedItem.title}
-                </h3>
-                <span className="inline-block px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                  {getItemType(selectedItem)}
-                </span>
-              </div>
-            </div>
-            {selectedItem.kind === "Lesson" &&
-              selectedItem.lessonType === "Video" && (
-                <div className="bg-gray-900 rounded-xl overflow-hidden aspect-video flex items-center justify-center">
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-full">
                   <div className="text-center text-gray-400">
-                    <PlayCircle className="w-16 h-16 mx-auto mb-3" />
-                    <p>Video không khả dụng trong chế độ xem trước</p>
+                    <Eye className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                      Chọn một bài học để xem trước
+                    </h3>
+                    <p className="text-sm">
+                      Chọn video, bài đọc hoặc quiz từ danh sách bên trái
+                    </p>
                   </div>
                 </div>
-            )}
-            {selectedItem.kind === "Lesson" &&
-              selectedItem.lessonType === "Text" && (
-                <div
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      selectedItem.assets?.[0]?.content ||
-                      "<p>Không có nội dung</p>",
-                  }}
-                />
-            )}
-            {selectedItem.kind === "Quiz" && (
-              <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
-                <div className="flex items-center gap-3 mb-4">
-                  <HelpCircle className="w-6 h-6 text-purple-600" />
-                  <h4 className="font-semibold text-purple-900">
-                    Quiz: {selectedItem.title}
-                  </h4>
-                </div>
-                <p className="text-purple-700">
-                  Quiz không khả dụng trong chế độ xem trước
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Info Box */}
-        <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 animate-fadeIn-slow">
-          <div className="flex items-start gap-4">
-            <div className="p-3 rounded-xl bg-blue-500 text-white">
-              <AlertCircle className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-blue-900 mb-2">
-                Lưu ý về xem trước
-              </h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Video và Quiz không khả dụng trong chế độ xem trước</li>
-                <li>• Đây chỉ là bản xem trước nội dung khóa học của bạn</li>
-                <li>• Sau khi được duyệt, học viên sẽ có thể truy cập đầy đủ nội dung</li>
-              </ul>
+              )}
             </div>
           </div>
         </div>
