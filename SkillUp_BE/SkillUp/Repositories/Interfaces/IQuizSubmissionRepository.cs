@@ -15,5 +15,8 @@ namespace SkillUp.Repositories.Interfaces
         Task<QuizSubmission?> GetSubmissionWithDetailsAsync(Guid id, Guid studentId);
 
         Task<bool> SaveChangesAsync();
-    }
+
+        Task<List<QuizSubmission>> GetQuestionBanksInSubmission(Guid questionBankId);
+
+	}
 }
