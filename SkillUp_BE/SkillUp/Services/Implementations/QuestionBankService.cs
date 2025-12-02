@@ -1,5 +1,6 @@
 ﻿using CloudinaryDotNet;
 using Microsoft.Identity.Client;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using OfficeOpenXml;
 using OfficeOpenXml.Configuration;
@@ -23,7 +24,16 @@ namespace SkillUp.Services.Implementations
 		private readonly ICourseRepository _courseRepository;
 		private readonly CloudinaryService _cloudinaryService;
 		private readonly ISectionRepository _sectionRepository;
-		public QuestionBankService(IQuestionBankRepository questionBankRepository, ICurrentUserService currentUserService, ILecturerRepository lecturerRepository, ICourseRepository courseRepository, CloudinaryService cloudinaryService, ISectionRepository sectionRepository)
+		private readonly IQuestionQuizRepository _questionQuizRepository;
+		private readonly IQuizSubmissionRepository _quizSubmissionRepository;
+		public QuestionBankService(IQuestionBankRepository questionBankRepository, 
+			ICurrentUserService currentUserService, 
+			ILecturerRepository lecturerRepository, 
+			ICourseRepository courseRepository, 
+			CloudinaryService cloudinaryService, 
+			ISectionRepository sectionRepository, 
+			IQuestionQuizRepository questionQuizRepository, 
+			IQuizSubmissionRepository quizSubmissionRepository)
 		{
 			_questionBankRepository = questionBankRepository;
 			_currentUserService = currentUserService;
@@ -31,6 +41,8 @@ namespace SkillUp.Services.Implementations
 			_courseRepository = courseRepository;
 			_cloudinaryService = cloudinaryService;
 			_sectionRepository = sectionRepository;
+			_questionQuizRepository = questionQuizRepository;
+			_quizSubmissionRepository = quizSubmissionRepository;
 		}
 		public async Task<DetailQuestionBankDTO> CreateQuestionBankAsync(CreateQuestionBankDTO createQuestionBankDTO, Guid accountId, Guid courseId, string? imageUrl)
 		{
@@ -308,36 +320,100 @@ namespace SkillUp.Services.Implementations
 			{
 				throw new Exception("Không tìm thấy câu hỏi!");
 			}
-			existingQuestion.SectionId = updateQuestionBankDTO.SectionId;
-			existingQuestion.Title = updateQuestionBankDTO.Title;
-			existingQuestion.Type = updateQuestionBankDTO.Type;
-			existingQuestion.Image = updateQuestionBankDTO.Image;
-			existingQuestion.UpdatedAt = DateTime.Now;
-			foreach (var answerDTO in updateQuestionBankDTO.Answers)
+
+			var isUsed = await _quizSubmissionRepository.GetQuestionBanksInSubmission(questionBankId);
+
+			if (!isUsed.Any())
 			{
-				var answer = existingQuestion.AnswerBanks.FirstOrDefault(existingQuestion => existingQuestion.Id == answerDTO.AnswerId);
-				if (answer == null)
+				existingQuestion.SectionId = updateQuestionBankDTO.SectionId;
+				existingQuestion.Title = updateQuestionBankDTO.Title;
+				existingQuestion.Type = updateQuestionBankDTO.Type;
+				existingQuestion.Image = updateQuestionBankDTO.Image;
+				existingQuestion.UpdatedAt = DateTime.Now;
+				foreach (var answerDTO in updateQuestionBankDTO.Answers)
 				{
-					var newAnswer = new AnswerBank
+					var answer = existingQuestion.AnswerBanks.FirstOrDefault(existingQuestion => existingQuestion.Id == answerDTO.AnswerId);
+					if (answer == null)
+					{
+						var newAnswer = new AnswerBank
+						{
+							Id = Guid.NewGuid(),
+							AnswerName = answerDTO.AnswerName,
+							IsCorrect = answerDTO.IsCorrect,
+							IsActive = answerDTO.IsActive
+						};
+						existingQuestion.AnswerBanks.Add(newAnswer);
+					}
+					if (answer != null)
+					{
+						answer.AnswerName = answerDTO.AnswerName;
+						answer.IsCorrect = answerDTO.IsCorrect;
+						answer.IsActive = answerDTO.IsActive;
+						answer.Image = answerDTO.Image;
+					}
+				}
+
+				_questionBankRepository.Update(existingQuestion);
+				await _questionBankRepository.SaveChangesAsync();
+			}
+			else
+			{
+				var questionInQuiz = await _questionQuizRepository.CheckQuestionUsed(existingQuestion.Id);
+				if (questionInQuiz == null) throw new Exception("Không tìm thấy câu hỏi này trong cac quiz.");
+
+				var newQuestion = new QuestionBank
+				{
+					Id = Guid.NewGuid(),
+					SectionId = updateQuestionBankDTO.SectionId,
+					LecturerId = lecturer.Id,
+					Title = updateQuestionBankDTO.Title,
+					Description = "string",
+					CreatedAt = DateTime.Now,
+					UpdatedAt = DateTime.Now,
+					Image = updateQuestionBankDTO.Image,
+					Type = updateQuestionBankDTO.Type,
+					IsHidden = false,
+					IsActive = true
+				};
+				foreach (var answerDto in updateQuestionBankDTO.Answers)
+				{
+					var answer = new AnswerBank
 					{
 						Id = Guid.NewGuid(),
-						AnswerName = answerDTO.AnswerName,
-						IsCorrect = answerDTO.IsCorrect,
-						IsActive = answerDTO.IsActive
+						QuestionBankId = newQuestion.Id,
+						AnswerName = answerDto.AnswerName,
+						IsCorrect = answerDto.IsCorrect,
+						IsActive = true,
+						Image = answerDto.Image
 					};
-					existingQuestion.AnswerBanks.Add(newAnswer);
+					newQuestion.AnswerBanks.Add(answer);
 				}
-				if (answer != null)
-				{
-					answer.AnswerName = answerDTO.AnswerName;
-					answer.IsCorrect = answerDTO.IsCorrect;
-					answer.IsActive = answerDTO.IsActive;
-					answer.Image = answerDTO.Image;
-				}
-			}
 
-			_questionBankRepository.Update(existingQuestion);
-			await _questionBankRepository.SaveChangesAsync();
+				existingQuestion.IsHidden = true;
+
+				foreach(var question in questionInQuiz)
+				{
+					question.QuestionBankId = newQuestion.Id;
+				}
+
+				await _questionBankRepository.CreateAsync(newQuestion);
+				_questionBankRepository.Update(existingQuestion);
+				await _questionBankRepository.SaveChangesAsync();
+
+				return new UpdateQuestionBankDTO
+				{
+					SectionId = newQuestion.SectionId,
+					Title = newQuestion.Title,
+					Answers = newQuestion.AnswerBanks.Select(a => new UpdateAnswerBankDTO
+					{
+						AnswerId = (Guid)a.Id,
+						AnswerName = a.AnswerName,
+						IsCorrect = a.IsCorrect,
+						IsActive = a.IsActive,
+						Image = a.Image
+					}).ToList()
+				};
+			}
 
 			return new UpdateQuestionBankDTO
 			{
