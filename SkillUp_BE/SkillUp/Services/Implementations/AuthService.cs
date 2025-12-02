@@ -635,5 +635,36 @@ namespace SkillUp.Services.Implementations
 
 
         #endregion
+
+        public async Task<bool> RegisterForModsAsync(RegisterRequestDto request)
+        {
+			if (await _accountRepository.ExistsByEmailAsync(request.Email))
+			{
+				return false;
+			}
+
+			var hashedPassword = HashPassword(request.Password);
+
+			// Create account in pending state until email verification
+			var account = new Account
+			{
+				Id = Guid.NewGuid(),
+				Email = request.Email,
+				Password = hashedPassword,
+				Fullname = request.Fullname,
+				RoleId = request.RoleId,
+				Status = "Active",
+				CreatedAt = DateTime.Now
+			};
+
+			await _accountRepository.AddAsync(account);
+
+			if (!await _accountRepository.SaveChangesAsync())
+			{
+				return false;
+			}
+			await _emailService.SendModAccountEmailAsync(request.Email, request.Password, request.Fullname, request.RoleId);
+			return true;
+		}
     }
 }

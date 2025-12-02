@@ -472,5 +472,71 @@ namespace SkillUp.Services.Implementations
 
 			return await SendEmailCoreAsync(message);
 		}
+
+		public async Task<bool> SendModAccountEmailAsync(string toEmail, string password, string fullname, int roleId)
+		{
+			// 1. Xác định tên vai trò dựa trên RoleId
+			string roleName = roleId == 2 ? "Quản trị viên hệ thống" : "Quản trị viên nội dung";
+
+			// Link đăng nhập (giả sử đường dẫn là /login hoặc /admin/login)
+			var loginLink = $"{_frontendUrl}/login";
+
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(fullname, toEmail));
+
+			// Tiêu đề email rõ ràng
+			message.Subject = $"Thông tin tài khoản {roleName} - SkillUp";
+
+			var bodyBuilder = new BodyBuilder
+			{
+				HtmlBody = $@"
+    <html>
+    <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+        <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
+            <h2 style='color: #FF5252; text-align: center;'>SkillUp</h2>
+
+            <h3>Xin chào {fullname},</h3>
+
+            <p>Chúc mừng bạn! Bạn đã được cấp quyền truy cập vào hệ thống quản trị của SkillUp với vai trò: <strong>{roleName}</strong>.</p>
+
+            <p>Dưới đây là thông tin đăng nhập của bạn:</p>
+            
+            <div style='background: #f0f4f8; padding: 15px; border-radius: 5px; border-left: 4px solid #2196F3;'>
+                <p style='margin: 5px 0;'><strong>Email đăng nhập:</strong> {toEmail}</p>
+                <p style='margin: 5px 0;'><strong>Mật khẩu tạm thời:</strong> {password}</p>
+            </div>
+
+            <p style='color: #d9534f; font-size: 14px; margin-top: 15px;'>
+                * Vì lý do bảo mật, vui lòng đăng nhập và <strong>đổi mật khẩu ngay</strong> trong lần truy cập đầu tiên.
+            </p>
+
+            <div style='text-align: center; margin: 30px 0;'>
+                <a href='{loginLink}'
+                   style='background-color: #2196F3;
+                          color: white;
+                          padding: 12px 30px;
+                          text-decoration: none;
+                          border-radius: 5px;
+                          font-weight: bold;'>
+                     Truy cập trang Quản trị
+                </a>
+            </div>
+
+            <p>Nếu bạn gặp vấn đề khi đăng nhập, vui lòng liên hệ với quản trị viên cấp cao.</p>
+
+            <hr style='border: none; border-top: 1px solid #ddd; margin: 20px 0;'>
+            <p style='text-align: center; color: #666; font-size: 14px;'>
+                Email này chứa thông tin tài khoản quan trọng. Vui lòng không chia sẻ với người khác.
+            </p>
+        </div>
+    </body>
+    </html>"
+			};
+
+			message.Body = bodyBuilder.ToMessageBody();
+
+			return await SendEmailCoreAsync(message);
+		}
 	}
 }
