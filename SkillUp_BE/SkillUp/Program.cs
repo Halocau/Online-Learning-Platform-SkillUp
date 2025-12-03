@@ -100,6 +100,7 @@ builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ILecturerDashRepository, LecturerDashRepository>();
 builder.Services.AddScoped<IPayrollRepository, PayrollRepository>();
+builder.Services.AddScoped<IModDashRepository, ModDashRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -126,6 +127,7 @@ builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ILecturerDashboardService, LecturerDashboardService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IModeratorDashboardService, ModeratorDashboardService>();
 
 // POST
 builder.Services.AddScoped<IPostRepository, PostRepository>();
