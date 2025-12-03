@@ -172,17 +172,6 @@ export default function ForumLayout() {
                 >
                   Bài đăng của tôi
                 </NavLink>
-
-                <span className="block text-xs text-gray-400 mt-4 uppercase tracking-wide">
-                  Personal Navigator
-                </span>
-
-                <a className="block px-3 py-2 rounded-lg hover:bg-[#FFF3C4] hover:text-gray-900 transition-all duration-200">
-                  Bài đã lưu
-                </a>
-                <a className="block px-3 py-2 rounded-lg hover:bg-[#FFF3C4] hover:text-gray-900 transition-all duration-200">
-                  Đã thích
-                </a>
               </nav>
             </div>
           </aside>
