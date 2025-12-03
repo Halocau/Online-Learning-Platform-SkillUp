@@ -5,6 +5,7 @@ using SkillUp.BussinessObjects.DTOs.Section;
 using SkillUp.BussinessObjects.Models;
 //using SkillUp.Data.Repositories;
 using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Interfaces;
 
 namespace SkillUp.Bussiness.Services
 {
@@ -14,13 +15,15 @@ namespace SkillUp.Bussiness.Services
 		private readonly ILessonRepository _lessonRepository;
 		private readonly IQuizRepository _quizRepository;
 		private readonly SkillUpContext _context;
+		private readonly ICurrentUserService _currentUserService;
 
-		public SectionService(ISectionRepository sectionRepository, ILessonRepository lessonRepository, IQuizRepository quizRepository, SkillUpContext context)
+		public SectionService(ISectionRepository sectionRepository, ILessonRepository lessonRepository, IQuizRepository quizRepository, SkillUpContext context, ICurrentUserService currentUserService)
 		{
 			_sectionRepository = sectionRepository;
 			_lessonRepository = lessonRepository;
 			_quizRepository = quizRepository;
 			_context = context;
+			_currentUserService = currentUserService;
 		}
 
 
@@ -38,23 +41,48 @@ namespace SkillUp.Bussiness.Services
 			};
 		}
 
-		public async Task<SectionDto> CreateSectionAsync(SectionCreateDto createDto)
+	public async Task<SectionDto> CreateSectionAsync(SectionCreateDto createDto)
+	{
+		// Kiểm tra quyền: chỉ roleId = 4 mới được tạo section
+		if (_currentUserService.RoleId != 4)
 		{
-			// (Code từ trước... không đổi)
-			var section = new Section
-			{
-				Id = Guid.NewGuid(),
-				CourseId = createDto.CourseId,
-				Title = createDto.Title,
-				Description = createDto.Description,
-				CreatedAt = DateTime.Now,
-				UpdatedAt = DateTime.Now,
-				IsActive = true,
-				Orders = createDto.Orders
-			};
-			var createdSection = await _sectionRepository.CreateAsync(section);
-			return MapToDto(createdSection);
+			throw new UnauthorizedAccessException("Chỉ giảng viên mới được tạo section");
 		}
+
+		if (string.IsNullOrWhiteSpace(createDto.Title))
+		{
+			throw new ArgumentException("Title không được để trống", nameof(createDto.Title));
+		}
+
+		if (createDto.Description != null && string.IsNullOrWhiteSpace(createDto.Description))
+		{
+			throw new ArgumentException("Description không được để trống", nameof(createDto.Description));
+		}
+
+		if (createDto.Description != null && createDto.Description.Length > 1000)
+		{
+			throw new ArgumentException("Description không được vượt quá 1000 ký tự", nameof(createDto.Description));
+		}
+
+		if (createDto.Orders < 1 || createDto.Orders == null)
+		{
+			throw new ArgumentException("Orders không được để trống và phải lớn hơn 0", nameof(createDto.Orders));
+		}
+	
+		var section = new Section
+		{
+			Id = Guid.NewGuid(),
+			CourseId = createDto.CourseId,
+			Title = createDto.Title,
+			Description = createDto.Description,
+			CreatedAt = DateTime.Now,
+			UpdatedAt = DateTime.Now,
+			IsActive = true,
+			Orders = createDto.Orders
+		};
+		var createdSection = await _sectionRepository.CreateAsync(section);
+		return MapToDto(createdSection);
+	}
 
 		public async Task<SectionDto?> GetSectionByIdAsync(Guid id)
 		{
