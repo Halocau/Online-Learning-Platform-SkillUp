@@ -54,17 +54,12 @@ namespace SkillUp.Bussiness.Services
 			throw new ArgumentException("Title không được để trống", nameof(createDto.Title));
 		}
 
-		if (createDto.Description != null && string.IsNullOrWhiteSpace(createDto.Description))
+		if (createDto.Description == null)
 		{
 			throw new ArgumentException("Description không được để trống", nameof(createDto.Description));
 		}
 
-		if (createDto.Description != null && createDto.Description.Length > 1000)
-		{
-			throw new ArgumentException("Description không được vượt quá 1000 ký tự", nameof(createDto.Description));
-		}
-
-		if (createDto.Orders < 1 || createDto.Orders == null)
+		if (createDto.Orders == null || createDto.Orders < 1)
 		{
 			throw new ArgumentException("Orders không được để trống và phải lớn hơn 0", nameof(createDto.Orders));
 		}
@@ -100,27 +95,45 @@ namespace SkillUp.Bussiness.Services
 			return sections.Select(MapToDto); // Chuyển List<Section> thành List<SectionDto>
 		}
 
-		public async Task<SectionDto?> UpdateSectionAsync(Guid id, SectionUpdateDto updateDto)
+	public async Task<SectionDto?> UpdateSectionAsync(Guid id, SectionUpdateDto updateDto)
+	{
+		if (_currentUserService.RoleId != 4)
 		{
-			// SỬA: Dùng FindByIdAsync để cho phép sửa section đã bị vô hiệu hóa
-			var section = await _sectionRepository.FindByIdAsync(id);
-			if (section == null)
-			{
-				return null;
-			}
-
-			section.Title = updateDto.Title;
-			section.Description = updateDto.Description;
-			section.UpdatedAt = DateTime.UtcNow;
-
-			var updatedSection = await _sectionRepository.UpdateAsync(section);
-			return MapToDto(updatedSection);
+			throw new UnauthorizedAccessException("Chỉ giảng viên mới được cập nhật section");
 		}
+
+		var section = await _sectionRepository.FindByIdAsync(id);
+		if (section == null)
+		{
+			return null;
+		}
+
+		if (string.IsNullOrWhiteSpace(updateDto.Title))
+		{
+			throw new ArgumentException("Title không được để trống", nameof(updateDto.Title));
+		}
+
+		if (string.IsNullOrWhiteSpace(updateDto.Description))
+		{
+			throw new ArgumentException("Description không được để trống", nameof(updateDto.Description));
+		}
+
+		section.Title = updateDto.Title;
+		section.Description = updateDto.Description;
+		section.UpdatedAt = DateTime.Now;
+
+		var updatedSection = await _sectionRepository.UpdateAsync(section);
+		return MapToDto(updatedSection);
+	}
 
 		public async Task<bool> DeleteSectionAsync(Guid id)
 		{
-			// SỬA: Dùng FindByIdAsync để tìm (kể cả nó đang active hay inactive)
-			var section = await _sectionRepository.FindByIdAsync(id);
+            // Kiểm tra quyền: chỉ roleId = 4 mới được tạo section
+            if (_currentUserService.RoleId != 4)
+            {
+                throw new UnauthorizedAccessException("Chỉ giảng viên mới được xoá chương");
+            }
+            var section = await _sectionRepository.FindByIdAsync(id);
 			if (section == null)
 			{
 				return false; // Không tìm thấy section
@@ -132,7 +145,7 @@ namespace SkillUp.Bussiness.Services
 			}
 
 			section.IsActive = false;
-			section.UpdatedAt = DateTime.UtcNow;
+			section.UpdatedAt = DateTime.Now;
 
 			await _sectionRepository.UpdateAsync(section);
 			return true;
