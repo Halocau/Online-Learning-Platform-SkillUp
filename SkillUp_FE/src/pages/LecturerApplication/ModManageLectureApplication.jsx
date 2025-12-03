@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Table, Button, Space, Tag, Input, Segmented, Modal } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Tag, Input, Modal, Divider, Tooltip } from 'antd';
+import { SearchOutlined, ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined, FilePdfOutlined, TrophyOutlined } from '@ant-design/icons';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
 
@@ -54,7 +54,6 @@ const ModManageLectureApplication = () => {
     const [search, setSearch] = useState('');
     const [filteredInfo, setFilteredInfo] = useState({});
     const [sortedInfo, setSortedInfo] = useState({});
-    const [dataset, setDataset] = useState('all');
     const [refreshKey, setRefreshKey] = useState(0);
 
     // Preview (PDF/Ảnh)
@@ -102,7 +101,7 @@ const ModManageLectureApplication = () => {
 
     useEffect(() => {
         fetchApplications();
-    }, [dataset, refreshKey]);
+    }, [refreshKey]);
 
     const displayed = useMemo(() => {
         if (!search.trim()) return applications;
@@ -120,8 +119,7 @@ const ModManageLectureApplication = () => {
         setSortedInfo(sorter);
     };
 
-    const clearFilters = () => setFilteredInfo({});
-    const clearAll = () => {
+    const clearFilters = () => {
         setFilteredInfo({});
         setSortedInfo({});
         setSearch('');
@@ -207,6 +205,38 @@ const ModManageLectureApplication = () => {
             sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
             sortOrder: sortedInfo.columnKey === 'title' ? sortedInfo.order : null,
             ellipsis: true,
+            width: 150,
+        },
+        {
+            title: 'Mô tả',
+            dataIndex: 'description',
+            key: 'description',
+            ellipsis: { showTitle: false },
+            width: 300,
+            render: (text) => (
+                <div style={{
+                    maxWidth: 300,
+                    wordBreak: 'break-word',
+                    whiteSpace: 'normal'
+                }}>
+                    {text || '-'}
+                </div>
+            ),
+        },
+        {
+            title: 'Chức danh',
+            dataIndex: 'profession',
+            key: 'profession',
+            ellipsis: true,
+            width: 150,
+        },
+        {
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+            ellipsis: true,
+            width: 200,
+            render: (email) => email || '-',
         },
         {
             title: 'Trạng thái',
@@ -222,46 +252,53 @@ const ModManageLectureApplication = () => {
             sorter: (a, b) => (a.statusRaw || '').localeCompare(b.statusRaw || ''),
             sortOrder: sortedInfo.columnKey === 'statusRaw' ? sortedInfo.order : null,
             render: (_, r) => <Tag color={statusColor(r.statusRaw)}>{r.statusLabel}</Tag>,
-        },
-        {
-            title: 'Chức danh',
-            dataIndex: 'profession',
-            key: 'profession',
-            ellipsis: true,
-        },
-        {
-            title: 'Mô tả',
-            dataIndex: 'description',
-            key: 'description',
-            ellipsis: true,
-        },
-        {
-            title: 'CV',
-            dataIndex: 'cv',
-            key: 'cv',
-            render: (cv) => (
-                <Button type="link" onClick={() => handlePreview(cv, 'cv')}>
-                    Xem CV
-                </Button>
-            ),
-        },
-        {
-            title: 'Bằng cấp',
-            dataIndex: 'degree',
-            key: 'degree',
-            render: (degree) => (
-                <Button type="link" onClick={() => handlePreview(degree, 'degree')}>
-                    Xem bằng cấp
-                </Button>
-            ),
+            width: 130,
         },
         {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+            sorter: (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
             sortOrder: sortedInfo.columnKey === 'createdAt' ? sortedInfo.order : null,
+            defaultSortOrder: 'descend',
             render: (v) => <span>{formatDateTime(v)}</span>,
+            width: 150,
+        },
+        {
+            title: 'CV & Bằng cấp',
+            key: 'documents',
+            width: 120,
+            align: 'center',
+            render: (_, record) => (
+                <Space size="middle">
+                    <Tooltip title="Xem CV">
+                        <Button
+                            type="text"
+                            icon={<FilePdfOutlined />}
+                            size="large"
+                            onClick={() => handlePreview(record.cv, 'cv')}
+                            disabled={!record.cv}
+                            style={{
+                                color: record.cv ? '#ff4d4f' : '#d9d9d9',
+                                fontSize: '20px',
+                            }}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Xem bằng cấp">
+                        <Button
+                            type="text"
+                            icon={<TrophyOutlined />}
+                            size="large"
+                            onClick={() => handlePreview(record.degree, 'degree')}
+                            disabled={!record.degree}
+                            style={{
+                                color: record.degree ? '#faad14' : '#d9d9d9',
+                                fontSize: '20px',
+                            }}
+                        />
+                    </Tooltip>
+                </Space>
+            ),
         },
         {
             title: 'Thao tác',
@@ -297,16 +334,6 @@ const ModManageLectureApplication = () => {
         <div className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-3">
                 <div className="flex items-center gap-3">
-                    <Segmented
-                        value={dataset}
-                        onChange={(v) => {
-                            setDataset(v);
-                            // (tuỳ chọn) reset filter/sort khi đổi dataset
-                            setFilteredInfo({});
-                            setSortedInfo({});
-                        }}
-                        options={[{ label: 'Tất cả', value: 'all' }]}
-                    />
                     <Input
                         allowClear
                         prefix={<SearchOutlined />}
@@ -318,11 +345,7 @@ const ModManageLectureApplication = () => {
                 </div>
 
                 <Space wrap>
-                    <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>
-                        Sắp xếp mới nhất
-                    </Button>
                     <Button onClick={clearFilters}>Xoá bộ lọc</Button>
-                    <Button onClick={clearAll}>Xoá tất cả</Button>
                     <Button icon={<ReloadOutlined />} onClick={refresh}>
                         Tải lại
                     </Button>
@@ -338,7 +361,7 @@ const ModManageLectureApplication = () => {
                 dataSource={displayed}
                 onChange={handleChange}
                 pagination={{ pageSize: PAGE_SIZE, showSizeChanger: false, showTotal: (t) => `${t} bản ghi` }}
-                scroll={{ x: 1100 }}
+                scroll={{ x: 1400 }}
                 locale={{ emptyText: 'Không tìm thấy đơn ứng tuyển nào!' }}
             />
 
@@ -385,31 +408,104 @@ const ModManageLectureApplication = () => {
             {/* Update Status Modal */}
             <Modal
                 open={statusModalOpen}
-                title={`Cập nhật trạng thái — ${statusTarget?.title ?? ''}`}
+                title="Cập nhật trạng thái"
                 onCancel={() => setStatusModalOpen(false)}
                 onOk={submitStatusUpdate}
                 okText={targetAction === 'Accepted' ? 'Xác nhận duyệt' : 'Xác nhận từ chối'}
+                cancelText="Hủy"
+                okButtonProps={{
+                    type: 'primary',
+                    danger: targetAction === 'Rejected',
+                    icon: targetAction === 'Accepted' ? <CheckCircleOutlined /> : <CloseCircleOutlined />,
+                    style: {
+                        minWidth: 120,
+                    }
+                }}
+                cancelButtonProps={{
+                    style: {
+                        minWidth: 100,
+                    }
+                }}
                 confirmLoading={updating}
                 destroyOnClose
                 maskClosable={!updating}
+                width={520}
             >
-                <div style={{ marginBottom: 12 }}>
-                    <b>Hành động:</b> {targetAction === 'Accepted' ? 'Duyệt' : 'Từ chối'}
-                </div>
-                <div>
-                    <b>Lý do {targetAction === 'Rejected' ? '(bắt buộc)' : '(tuỳ chọn)'}:</b>
-                    <Input.TextArea
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        rows={4}
-                        placeholder={
-                            targetAction === 'Accepted'
-                                ? 'Ghi chú nội bộ (tuỳ chọn)...'
-                                : 'Nhập lý do từ chối...'
-                        }
-                        maxLength={500}
-                        style={{ marginTop: 6 }}
-                    />
+                <div style={{ padding: '8px 0' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        marginBottom: 20,
+                        padding: '12px 16px',
+                        backgroundColor: targetAction === 'Accepted' ? '#f6ffed' : '#fff2f0',
+                        borderRadius: 8,
+                        border: `1px solid ${targetAction === 'Accepted' ? '#b7eb8f' : '#ffccc7'}`
+                    }}>
+                        {targetAction === 'Accepted' ? (
+                            <CheckCircleOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                        ) : (
+                            <CloseCircleOutlined style={{ fontSize: 24, color: '#ff4d4f' }} />
+                        )}
+                        <div>
+                            <div style={{
+                                fontSize: 14,
+                                color: '#8c8c8c',
+                                marginBottom: 4
+                            }}>
+                                Hành động
+                            </div>
+                            <Tag
+                                color={targetAction === 'Accepted' ? 'success' : 'error'}
+                                style={{
+                                    fontSize: 15,
+                                    padding: '4px 12px',
+                                    fontWeight: 500,
+                                    margin: 0
+                                }}
+                            >
+                                {targetAction === 'Accepted' ? 'Duyệt đơn ứng tuyển' : 'Từ chối đơn ứng tuyển'}
+                            </Tag>
+                        </div>
+                    </div>
+
+                    <Divider style={{ margin: '20px 0' }} />
+
+                    <div>
+                        <div style={{
+                            fontSize: 14,
+                            fontWeight: 500,
+                            marginBottom: 8,
+                            color: '#262626'
+                        }}>
+                            Lý do {targetAction === 'Rejected' && <span style={{ color: '#ff4d4f' }}>*</span>}
+                            {targetAction === 'Rejected' ? (
+                                <span style={{ fontSize: 12, fontWeight: 400, color: '#8c8c8c', marginLeft: 4 }}>
+                                    (bắt buộc)
+                                </span>
+                            ) : (
+                                <span style={{ fontSize: 12, fontWeight: 400, color: '#8c8c8c', marginLeft: 4 }}>
+                                    (tuỳ chọn)
+                                </span>
+                            )}
+                        </div>
+                        <Input.TextArea
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            rows={5}
+                            placeholder={
+                                targetAction === 'Accepted'
+                                    ? 'Nhập ghi chú nội bộ (nếu có)...'
+                                    : 'Vui lòng nhập lý do từ chối đơn ứng tuyển này...'
+                            }
+                            maxLength={500}
+                            showCount
+                            style={{
+                                fontSize: 14,
+                                borderRadius: 6
+                            }}
+                        />
+                    </div>
                 </div>
             </Modal>
         </div>

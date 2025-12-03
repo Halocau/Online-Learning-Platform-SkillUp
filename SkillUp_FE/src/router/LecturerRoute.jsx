@@ -8,6 +8,8 @@ import MyApplications from "@/pages/Lecturer/MyApplications";
 import ManageCourses from "@/pages/Lecturer/ManageCourses";
 import ManageQuestionBank from "@/pages/Lecturer/ManageQuestionBank";
 import CourseDetailManagement from "@/pages/Lecturer/CourseDetailManagement";
+import LecturerTicketList from "@/pages/Lecturer/LecturerTicketList";
+import LecturerTicketDetail from "@/pages/Lecturer/LecturerTicketDetail";
 
 function LecturerRoutes() {
   return (
@@ -27,6 +29,8 @@ function LecturerRoutes() {
         <Route path="applications" element={<MyApplications />} />
         <Route path="question-bank" element={<ManageQuestionBank />} />
         <Route path="courses/:courseId" element={<CourseDetailManagement />} />
+        <Route path="ticket" element={<LecturerTicketList />} />
+        <Route path="ticket/:ticketCode" element={<LecturerTicketDetail />} />
       </Route>
     </Routes>
   );
