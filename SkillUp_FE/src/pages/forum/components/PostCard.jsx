@@ -20,8 +20,6 @@ export default function PostCard({ post }) {
   const preview =
     contents.length > 150 ? contents.slice(0, 150) + "..." : contents;
   const images = post.ImageUrls ?? post.imageUrls ?? [];
-  const commentCount = post.CommentCount ?? 0;
-  const likeCount = post.LikeCount ?? 0;
   const category = post.CategoryName ?? post.categoryName ?? "Chưa phân loại";
   const avatarUrl =
     post.AccountAvatarUrl ??
@@ -199,18 +197,6 @@ export default function PostCard({ post }) {
                 </div>
               </div>
             </div>
-
-            {/* Stats */}
-            <div className="flex items-center gap-4 flex-shrink-0">
-              <div className="flex items-center gap-1 text-gray-500 text-sm font-medium">
-                <Heart size={14} />
-                <span>{likeCount}</span>
-              </div>
-              <div className="flex items-center gap-1 text-gray-500 text-sm font-medium">
-                <MessageCircle size={14} />
-                <span>{commentCount}</span>
-              </div>
-            </div>
           </div>
 
           {/* Read More Button */}
@@ -218,11 +204,13 @@ export default function PostCard({ post }) {
             className="flex items-center gap-2 text-indigo-600 font-semibold text-sm group/btn"
             onClick={(e) => e.stopPropagation()}
           >
-            <span>Chi tiết</span>
-            <ArrowRight
-              size={14}
-              className="group-hover/btn:translate-x-1 transition-transform duration-200"
-            />
+            <Link to={`/forum/${postId}`} className="flex items-center gap-2">
+              <span>Chi tiết</span>
+              <ArrowRight
+                size={14}
+                className="group-hover/btn:translate-x-1 transition-transform duration-200"
+              />
+            </Link>
           </div>
         </div>
       </motion.div>

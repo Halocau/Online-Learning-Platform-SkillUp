@@ -202,10 +202,10 @@ export default function PostDetail() {
                     src={
                       post.avatarUrl ||
                       `https://api.dicebear.com/8.x/avataaars/svg?seed=${encodeURIComponent(
-                        post.accountName || "User"
+                        post.authorName || "User"
                       )}&background=random`
                     }
-                    alt={post.accountName}
+                    alt={post.authorName}
                     size={48}
                     className="border-2 border-gray-200"
                   />
@@ -213,7 +213,7 @@ export default function PostDetail() {
                     <div className="flex items-center gap-2">
                       <User size={14} className="text-gray-400" />
                       <h3 className="font-semibold text-gray-900">
-                        {post.accountName}
+                        {post.authorName}
                       </h3>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
