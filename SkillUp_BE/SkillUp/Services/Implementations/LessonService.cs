@@ -16,7 +16,7 @@ namespace SkillUp.Services.Implementations
         private readonly ICourseRepository _courseRepository;
         private readonly ILecturerRepository _lecturerRepository;
         private readonly FtpVideoUploadService _ftpVideoUploadService;
-        private readonly CloudinaryService _cloudinaryService;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly IStudentRepository _studentRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
         public LessonService(
@@ -25,7 +25,7 @@ namespace SkillUp.Services.Implementations
             ICourseRepository courseRepository,
             ILecturerRepository lecturerRepository,
             FtpVideoUploadService ftpVideoUploadService,
-            CloudinaryService cloudinaryService,
+            ICloudinaryService cloudinaryService,
             IStudentRepository studentRepository,
             IStudentProgressRepository studentProgressRepository)
         {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.RevenueReport;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
@@ -140,6 +141,40 @@ namespace SkillUp.Repositories.Implementations
                 })
                 .OrderByDescending(c => c.TotalRevenue)
                 .ToListAsync();
+        }
+        public async Task<List<EnrolledStudentDto>> GetEnrolledStudentsAsync(Guid lecturerId, Guid? courseId)
+        {
+            var query = _context.Enrollments
+                .Include(e => e.Course)
+                .Include(e => e.Student).ThenInclude(s => s.Account)
+                .Where(e => e.Course.LecturerId == lecturerId);
+
+            if (courseId.HasValue)
+            {
+                query = query.Where(e => e.CourseId == courseId.Value);
+            }
+
+            var result = await query
+                .Select(e => new EnrolledStudentDto
+                {
+                    StudentId = e.StudentId,
+                    StudentName = e.Student.Account.Fullname ?? "Unknown",
+                    Email = e.Student.Account.Email,
+                    Avatar = e.Student.Account.Avatar,
+                    CourseId = e.CourseId,
+                    CourseTitle = e.Course.Title,
+                    EnrolledAt = e.EnrolledAt,
+                    TotalLessons = _context.Lessons
+                        .Count(l => l.Section.CourseId == e.CourseId && l.IsActive == true),
+                    CompletedLessons = _context.StudentProgresses
+                        .Count(sp => sp.StudentId == e.StudentId
+                                     && sp.CourseId == e.CourseId
+                                     && sp.IsCompleted == true)
+                })
+                .OrderByDescending(e => e.EnrolledAt)
+                .ToListAsync();
+
+            return result;
         }
     }
 }

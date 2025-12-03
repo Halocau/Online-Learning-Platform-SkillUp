@@ -7,7 +7,7 @@ using SkillUp.Configuration;
 
 namespace SkillUp.Services.Common
 {
-    public class CloudinaryService
+    public class CloudinaryService : ICloudinaryService
     {
         private readonly Cloudinary _cloudinary;
 

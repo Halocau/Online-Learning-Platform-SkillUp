@@ -9,8 +9,8 @@ namespace SkillUp.Services.Implementations
 	public class UserService : IUserService
 	{
 		private readonly IAccountRepository _accountRepository;
-		private readonly CloudinaryService _cloudinaryService;
-		public UserService(IAccountRepository accountRepository, CloudinaryService cloudinaryService)
+		private readonly ICloudinaryService _cloudinaryService;
+		public UserService(IAccountRepository accountRepository, ICloudinaryService cloudinaryService)
 		{
 			_accountRepository = accountRepository;
 			_cloudinaryService = cloudinaryService;

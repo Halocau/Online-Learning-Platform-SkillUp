@@ -78,6 +78,26 @@ namespace SkillUp.API.Controllers
             }
         }
 
+        [HttpGet("view-grouped")]
+        [Authorize(Roles = "Content Morderator")] // Yêu cầu Role chính xác là "Moderator"
+        public async Task<IActionResult> GetGroupedReports()
+        {
+            try
+            {
+                var groupedReports = await _reportService.GetGroupedReportsAsync();
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Lấy danh sách nhóm báo cáo thành công",
+                    data = new List<object> { groupedReports }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn { code = 500, message = ex.Message, data = new List<object>() });
+            }
+        }
+
        
         [HttpPut("{id}/status")]
         [Authorize(Roles = "Content Morderator")] // Yêu cầu Role chính xác là "Moderator"
@@ -137,4 +157,4 @@ namespace SkillUp.API.Controllers
             }
         }
     }
-    }
+}

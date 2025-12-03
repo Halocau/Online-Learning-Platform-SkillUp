@@ -6,6 +6,7 @@ namespace SkillUp.Services.Interfaces
     {
         Task<string?> CreateReportAsync(Guid accountId, CreateReportCourseDto request);
         Task<List<ReportCourseResponseDto>> GetAllReportsAsync();
+        Task<List<CourseReportGroupDto>> GetGroupedReportsAsync();
         Task<string?> UpdateReportStatusAsync(Guid reportId, string newStatus);
     }
 }

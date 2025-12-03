@@ -1,4 +1,4 @@
-import { Edit2, Calendar, RefreshCw, EyeOff, Lock } from "lucide-react";
+import { Edit2, Calendar, RefreshCw, EyeOff, Lock, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 
@@ -7,14 +7,13 @@ function CourseCardLecture({
   onView,
   onEdit,
   onDelete,
+  onPreview,
   isDeleting = false,
 }) {
   const [imageError, setImageError] = useState(false);
 
-  // Check if course is pending and should be locked from editing
   const isPendingStatus = course.status === "Pending";
 
-  // Format date to DD/MM/YYYY
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     try {
@@ -47,27 +46,6 @@ function CourseCardLecture({
     }
   };
 
-  // Calculate course completion progress
-  const calculateProgress = () => {
-    let completed = 0;
-    const total = 4;
-    completed++;
-
-    if (course.sections && course.sections.length > 0) {
-      completed++;
-    }
-
-    if (course.price !== null && course.price !== undefined) {
-      completed++;
-    }
-
-    completed++;
-
-    return Math.round((completed / total) * 100);
-  };
-
-  const progress = calculateProgress();
-
   return (
     <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 border-l-blue-500 border-r-4 border-r-blue-500">
       <CardContent className="p-0">
@@ -91,7 +69,6 @@ function CourseCardLecture({
               </div>
             )}
 
-            {/* Pending Status Badge on Image */}
             {isPendingStatus && (
               <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-md flex items-center gap-1 shadow-md">
                 <Lock className="w-3 h-3" />
@@ -104,6 +81,17 @@ function CourseCardLecture({
           <div className="flex-1 p-5 md:p-6 flex flex-col justify-between relative">
             {/* Action Buttons - Top Right */}
             <div className="absolute top-4 right-4 flex gap-2 bg-white rounded-lg p-1.5 shadow-md border border-gray-200">
+              {/* Preview Button - Available for Pending courses */}
+              {isPendingStatus && (
+                <button
+                  onClick={() => onPreview(course)}
+                  className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-all duration-200 transform hover:scale-110"
+                  title="Xem trước khóa học"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              )}
+
               {/* Edit Button - Disabled for Pending status */}
               <div className="relative group">
                 <button
@@ -127,7 +115,6 @@ function CourseCardLecture({
                   )}
                 </button>
 
-                {/* Tooltip for disabled edit button */}
                 {isPendingStatus && (
                   <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-10">
                     <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
@@ -138,7 +125,6 @@ function CourseCardLecture({
                       <div className="text-gray-300 mt-1">
                         Vui lòng chờ admin phê duyệt
                       </div>
-                      {/* Arrow */}
                       <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                     </div>
                   </div>
@@ -180,7 +166,7 @@ function CourseCardLecture({
                     </span>
                   </div>
 
-                  {/* Date Information - Next to Title */}
+                  {/* Date Information */}
                   <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-blue-500" />
@@ -216,41 +202,12 @@ function CourseCardLecture({
                     </p>
                     <p className="text-xs text-yellow-700">
                       Bạn không thể chỉnh sửa khóa học trong khi đang chờ admin
-                      phê duyệt. Vui lòng chờ kết quả phê duyệt.
+                      phê duyệt. Nhấn nút{" "}
+                      <Eye className="w-3 h-3 inline" /> để xem trước khóa học.
                     </p>
                   </div>
                 </div>
               )}
-
-              {/* Progress Bar - Bottom of Card */}
-              {/* <div className="pt-3 border-t border-gray-100">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-600">
-                    Tiến độ hoàn thành khóa học
-                  </span>
-                  <span
-                    className={`text-xs font-bold ${getProgressTextColor()}`}
-                  >
-                    {progress === 100 ? "✓ Hoàn thành" : `${progress}%`}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`bg-gradient-to-r ${getProgressColor()} h-2 rounded-full transition-all duration-500 relative overflow-hidden`}
-                    style={{ width: `${progress}%` }}
-                  >
-                    {/* Shimmer effect for incomplete progress */}
-              {/* {progress < 100 && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
-                    )}
-                  </div>
-                </div>
-                {progress < 100 && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Còn {100 - progress}% để hoàn thiện khóa học
-                  </p>
-                )} */}
-              {/* </div> */}
             </div>
           </div>
         </div>

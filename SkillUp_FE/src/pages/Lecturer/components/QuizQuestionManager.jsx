@@ -12,6 +12,7 @@ import { getQuizById } from "@/api/quizAPI";
 import { toast } from "react-toastify";
 import QuestionForm from "./QuestionForm";
 import QuestionBankSelector from "./QuestionBankSelector";
+import ConfirmModal from "./ConfirmModal";
 import { extractCleanText } from "@/utils/htmlUtils";
 
 const getQuestionId = (question) =>
@@ -54,9 +55,47 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
   const [addingMode, setAddingMode] = useState(null);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
 
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "warning",
+    onConfirm: null,
+    loading: false,
+  });
+
   useEffect(() => {
     loadQuestions();
   }, [quiz.id]);
+
+  // Confirm modal helpers
+  const openConfirmModal = (config) => {
+    setConfirmModal({
+      isOpen: true,
+      loading: false,
+      ...config,
+    });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal({
+      isOpen: false,
+      title: "",
+      message: "",
+      type: "warning",
+      onConfirm: null,
+      loading: false,
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (confirmModal.onConfirm) {
+      setConfirmModal((prev) => ({ ...prev, loading: true }));
+      await confirmModal.onConfirm();
+      closeConfirmModal();
+    }
+  };
 
   const loadQuestions = async () => {
     try {
@@ -211,7 +250,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       answers:
         question.answers && question.answers.length > 0
           ? question.answers.map((ans) => ({
-              answerId: ans.answerId || ans.id, // CRITICAL: Include answerId for updates
+              answerId: ans.answerId || ans.id,
               answerName: ans.answerName || "",
               isCorrect: ans.isCorrect ?? false,
               imageUrl: ans.imageUrl || "",
@@ -281,28 +320,30 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
   const handleDeleteQuestion = async (questionId) => {
     if (!questionId) return;
 
-    if (!window.confirm("Bạn có chắc muốn xóa câu hỏi này?")) {
-      return;
-    }
+    openConfirmModal({
+      title: "Xóa câu hỏi",
+      message: "Bạn có chắc chắn muốn xóa câu hỏi này?",
+      type: "danger",
+      confirmText: "Xóa",
+      cancelText: "Hủy",
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await deleteQuestionFromQuiz(quiz.id, questionId);
 
-    try {
-      setLoading(true);
+          setQuestions((prev) =>
+            prev.filter((q) => getQuestionId(q) !== questionId)
+          );
 
-      // Call the actual delete API
-      await deleteQuestionFromQuiz(quiz.id, questionId);
-
-      // Remove from local state after successful API call
-      setQuestions((prev) =>
-        prev.filter((q) => getQuestionId(q) !== questionId)
-      );
-
-      toast.success("Câu hỏi đã được xóa!");
-    } catch (err) {
-      console.error("❌ Error deleting question:", err);
-      toast.error("Lỗi khi xóa câu hỏi");
-    } finally {
-      setLoading(false);
-    }
+          toast.success("Câu hỏi đã được xóa!");
+        } catch (err) {
+          console.error("❌ Error deleting question:", err);
+          toast.error("Lỗi khi xóa câu hỏi");
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
   };
 
   // Count answers with images
@@ -322,6 +363,19 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
   return (
     <div className="mt-3 space-y-3">
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirmModal}
+        onConfirm={handleConfirmAction}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        loading={confirmModal.loading}
+      />
+
       {/* Add Question Button */}
       {!addingMode && (
         <Button
@@ -377,7 +431,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
               const qId = getQuestionId(question) ?? index;
               const isEditing = editingQuestionId === qId;
 
-              // Extract clean text from HTML title
               const cleanTitle = extractCleanText(question.title, 100);
               const answerImageCount = countAnswerImages(question.answers);
 
@@ -402,26 +455,15 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
                         <div className="flex gap-2 mt-1 flex-wrap">
                           {question.type && (
                             <span className="text-xs px-2 py-0.5 bg-[#FFD54F]/20 text-[#272343] rounded-full">
+                              Loại câu hỏi:{" "}
                               {question.type === "SingleChoice"
                                 ? "Một đáp án"
                                 : "Nhiều đáp án"}
                             </span>
                           )}
-                          {question.imageUrl && (
-                            <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#272343] rounded-full flex items-center gap-1">
-                              <ImageIcon className="w-3 h-3" />
-                              Có ảnh câu hỏi
-                            </span>
-                          )}
                           {question.answers && (
                             <span className="text-xs px-2 py-0.5 bg-[#e3f6f5] text-[#2d334a] rounded-full">
-                              {question.answers.length} đáp án
-                            </span>
-                          )}
-                          {answerImageCount > 0 && (
-                            <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full flex items-center gap-1">
-                              <ImageIcon className="w-3 h-3" />
-                              {answerImageCount} ảnh đáp án
+                              {question.answers.length} câu trả lời
                             </span>
                           )}
                         </div>

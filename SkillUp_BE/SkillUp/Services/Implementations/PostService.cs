@@ -9,9 +9,9 @@ namespace SkillUp.Services.Implementations
     public class PostService : IPostService
     {
         private readonly IPostRepository _postRepository;
-        private readonly CloudinaryService _cloudinaryService;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public PostService(IPostRepository postRepository, CloudinaryService cloudinaryService)
+        public PostService(IPostRepository postRepository, ICloudinaryService cloudinaryService)
         {
             _postRepository = postRepository;
             _cloudinaryService = cloudinaryService;

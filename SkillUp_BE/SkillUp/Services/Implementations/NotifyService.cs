@@ -16,17 +16,20 @@ namespace SkillUp.Services.Implementations
         private readonly IHubContext<NotificationHub> _notifyHubContext;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAccountRepository _accountRepository;
+        private readonly IEnrollmentRepository _enrollmentRepo;
 
         public NotifyService(
             INotifyRepository notifyRepo,
             IHubContext<NotificationHub> notifyHubContext,
             ICurrentUserService currentUserService ,
-            IAccountRepository accountRepository)
+            IAccountRepository accountRepository,
+            IEnrollmentRepository enrollmentRepo)
         {
             _notifyRepo = notifyRepo;
             _notifyHubContext = notifyHubContext;
             _currentUserService = currentUserService;
             _accountRepository = accountRepository;
+            _enrollmentRepo = enrollmentRepo;
         }
 
         public async Task CreateNotificationAsync(Guid recipientAccountId, string title, string contents, string? hyperlink = null)
@@ -161,6 +164,30 @@ namespace SkillUp.Services.Implementations
             await _notifyRepo.AddRangeAsync(notificationList);
             await _notifyRepo.SaveChangesAsync();
             return notificationList.Count; 
+        }
+        public async Task SendCourseUpdateNotificationAsync(Guid courseId, string title, string message, string? link = null)
+        {
+            var studentAccountIds = await _enrollmentRepo.GetStudentAccountIdsByCourseIdAsync(courseId);
+
+            if (!studentAccountIds.Any()) return;
+            var notifications = new List<Notify>();
+            var now = DateTime.Now;
+            var targetLink = link ?? $"/course-detail/{courseId}";
+
+            foreach (var accId in studentAccountIds)
+            {
+                notifications.Add(new Notify
+                {
+                    Id = Guid.NewGuid(),
+                    AccountId = accId,
+                    Title = title,
+                    Contents = message,
+                    Status = "Unread",
+                    CreatedAt = now,
+                    Hyperlink = targetLink
+                });
+            }
+            await _notifyRepo.CreateRangeAsync(notifications);
         }
     }
 }

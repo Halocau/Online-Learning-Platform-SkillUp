@@ -9,10 +9,10 @@ namespace SkillUp.Controllers
 	[Route("api/[controller]")]
 	public class UploadController : ControllerBase
 	{
-		private readonly CloudinaryService _cloudinaryService;
+		private readonly ICloudinaryService _cloudinaryService;
 		private readonly FtpVideoUploadService _ftpVideoUploadService;
 
-		public UploadController(CloudinaryService cloudinaryService, FtpVideoUploadService ftpVideoUploadService)
+		public UploadController(ICloudinaryService cloudinaryService, FtpVideoUploadService ftpVideoUploadService)
 		{
 			_cloudinaryService = cloudinaryService;
 			_ftpVideoUploadService = ftpVideoUploadService;
