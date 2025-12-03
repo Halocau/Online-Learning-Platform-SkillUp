@@ -21,7 +21,7 @@ namespace SkillUp.Services.Implementations
 	{
 		private readonly ICourseRepository _courseRepository;
 		private readonly ILecturerRepository _lecturerRepository;
-		private readonly CloudinaryService _cloudinaryService;
+		private readonly ICloudinaryService _cloudinaryService;
 		private readonly IAccountRepository _accountRepository;
 		private readonly ICategoryRepository _categoryRepository;
 		private readonly IEmailService _emailService;
@@ -30,7 +30,7 @@ namespace SkillUp.Services.Implementations
 		private readonly IStudentRepository _studentRepository;
 		private readonly IStudentProgressRepository _studentProgressRepository;
 		private readonly ICurrentUserService _currentUserService;
-		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService)
+		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService)
 		{
 			_courseRepository = courseRepository;
 			_lecturerRepository = lecturerRepository;
