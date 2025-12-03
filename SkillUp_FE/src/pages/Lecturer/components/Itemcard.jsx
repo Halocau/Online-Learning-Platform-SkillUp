@@ -32,7 +32,6 @@ function ItemCard({
   const isLesson = item.kind === "Lesson";
   const isQuiz = item.kind === "Quiz";
 
-  // State to control quiz questions visibility
   const [showQuestions, setShowQuestions] = useState(false);
 
   // Lesson Display

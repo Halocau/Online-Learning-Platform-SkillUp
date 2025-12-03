@@ -543,7 +543,7 @@ function QuestionBankSelector({
                       }
                     >
                       <Check className="w-4 h-4 mr-1" />
-                      Chọn đầu
+                      Đầu tiên
                     </Button>
                     <Button
                       onClick={() => handleRandomSelect(quickSelectAmount)}
