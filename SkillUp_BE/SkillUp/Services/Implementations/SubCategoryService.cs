@@ -79,16 +79,31 @@ namespace SkillUp.Services.Implementations
 
 
 
-        public async Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request)
+        public async Task<APIReturn> UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request)
         {
-            var subCategory = await _repository.GetByIdAsync(id)
-                ?? throw new Exception("Không tìm thấy SubCategory.");
+            
+            var subCategory = await _repository.GetByIdAsync(id);
+            if (subCategory == null)
+            {
+                return new APIReturn(404, "Không tìm thấy SubCategory.", null);
+            }
+            var normalizedName = request.Name.Trim().ToLower();
 
-            subCategory.Name = request.Name;
+            var duplicateEntity = await _repository.GetByNameAndCategoryAsync(normalizedName, subCategory.CategoryId);
+
+            if (duplicateEntity != null && duplicateEntity.Id != id)
+            {
+                return new APIReturn(400, "Tên SubCategory mới đã tồn tại trong Category này.", null);
+            }
+
+            // 4. Nếu không trùng, tiến hành cập nhật
+            subCategory.Name = request.Name.Trim();
             subCategory.IsActive = request.IsActive;
 
             await _repository.UpdateAsync(subCategory);
             await _repository.SaveChangesAsync();
+
+            return new APIReturn(200, "Cập nhật SubCategory thành công.", null);
         }
 
         public async Task DeleteSubCategoryAsync(int id)

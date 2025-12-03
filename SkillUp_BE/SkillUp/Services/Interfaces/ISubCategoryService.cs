@@ -7,6 +7,7 @@ public interface ISubCategoryService
     Task<SubCategoryDto?> GetSubCategoryByIdAsync(int id);
 
     Task<APIReturn> CreateSubCategoryAsync(SubCategoryCreateRequest request); // sửa dòng này
-    Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request);
+    //Task UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request);
     Task DeleteSubCategoryAsync(int id);
+    Task<APIReturn> UpdateSubCategoryAsync(int id, SubCategoryUpdateRequest request);
 }
