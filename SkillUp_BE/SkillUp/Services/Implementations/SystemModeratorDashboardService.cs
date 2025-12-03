@@ -4,12 +4,12 @@ using SkillUp.Services.Interfaces;
 
 namespace SkillUp.Services.Implementations
 {
-	public class ModeratorDashboardService : IModeratorDashboardService
+	public class SystemModeratorDashboardService : ISystemModeratorDashboardService
 	{
-		private readonly IModDashRepository _modDashRepository;
+		private readonly ISysModDashRepository _modDashRepository;
 		private readonly ICurrentUserService _currentUserService;
 
-		public ModeratorDashboardService(IModDashRepository modDashRepository, ICurrentUserService currentUserService)
+		public SystemModeratorDashboardService(ISysModDashRepository modDashRepository, ICurrentUserService currentUserService)
 		{
 			_modDashRepository = modDashRepository;
 			_currentUserService = currentUserService;

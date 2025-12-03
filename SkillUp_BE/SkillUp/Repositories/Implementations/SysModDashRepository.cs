@@ -6,10 +6,10 @@ using System.Net.NetworkInformation;
 
 namespace SkillUp.Repositories.Implementations
 {
-	public class ModDashRepository : IModDashRepository
+	public class SysModDashRepository : ISysModDashRepository
 	{
 		private readonly SkillUpContext _context;
-		public ModDashRepository(SkillUpContext context)
+		public SysModDashRepository(SkillUpContext context)
 		{
 			_context = context;
 		}

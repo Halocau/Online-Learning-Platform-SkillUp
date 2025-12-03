@@ -8,10 +8,10 @@ namespace SkillUp.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ModeratorDashboardController : ControllerBase
+	public class SystemModeratorDashboardController : ControllerBase
 	{
-		private readonly IModeratorDashboardService _moderatorDashboardService;
-		public ModeratorDashboardController(IModeratorDashboardService moderatorDashboardService)
+		private readonly ISystemModeratorDashboardService _moderatorDashboardService;
+		public SystemModeratorDashboardController(ISystemModeratorDashboardService moderatorDashboardService)
 		{
 			_moderatorDashboardService = moderatorDashboardService;
 		}

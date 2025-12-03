@@ -2,7 +2,7 @@
 
 namespace SkillUp.Repositories.Interfaces
 {
-	public interface IModDashRepository
+	public interface ISysModDashRepository
 	{
 		Task<SysmodDashboardDto> GetDashboardStatisticsAsync();
 	}

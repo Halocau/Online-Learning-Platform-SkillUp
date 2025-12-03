@@ -3,7 +3,7 @@ using SkillUp.Repositories.Interfaces;
 
 namespace SkillUp.Services.Interfaces
 {
-	public interface IModeratorDashboardService
+	public interface ISystemModeratorDashboardService
 	{
 		Task<SysmodDashboardDto> GetSysModDashboardStatisticsAsync();
 	}
