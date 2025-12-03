@@ -1,37 +1,50 @@
 // src/pages/contentmoderator/CourseReportTab.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
   BookOpenIcon,
   UserIcon,
+  ExclamationTriangleIcon,
   ArrowLeftIcon,
   CalendarIcon,
   MagnifyingGlassIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import { Spin } from "antd";
 import { toast } from "react-toastify";
-import { updateCourseReportStatus } from "@/api/courseReportAPI";
+import { getAllCourseReports, updateCourseReportStatus } from "@/api/courseReportAPI";
 import dayjs from "dayjs";
 
-export default function CourseReportTab({ reports, fetchReports }) {
+export default function CourseReportTab() {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [resolveLoading, setResolveLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const response = await getAllCourseReports();
+      // Handle the double-wrapped array from API
+      const data = Array.isArray(response) && Array.isArray(response[0])
+        ? response[0]
+        : response;
+      setReports(data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Không thể tải danh sách báo cáo khóa học");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
   const handleResolve = async (status) => {
     if (!selectedReport) return;
@@ -39,6 +52,13 @@ export default function CourseReportTab({ reports, fetchReports }) {
     try {
       setResolveLoading(true);
       await updateCourseReportStatus(selectedReport.id, status);
+
+      // Update local data
+      setReports((prevData) =>
+        prevData.map((item) =>
+          item.id === selectedReport.id ?  { ...item, status } : item
+        )
+      );
 
       toast.success("Xử lý báo cáo thành công!");
       setSelectedReport(null);
@@ -86,23 +106,18 @@ export default function CourseReportTab({ reports, fetchReports }) {
   // Filter reports by search
   const filteredReports = reports.filter(
     (report) =>
-      report.courseName?. toLowerCase().includes(searchTerm. toLowerCase()) ||
+      report.courseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.studentName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       report.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Pagination
-  const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedReports = filteredReports.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  // Reset to page 1 when search or items per page changes
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, itemsPerPage]);
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   // Detail View
   if (selectedReport) {
@@ -134,24 +149,10 @@ export default function CourseReportTab({ reports, fetchReports }) {
               <StatusBadge status={selectedReport. status} />
             </div>
 
-            {/* Course Info with Image */}
+            {/* Course Info */}
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
               <div className="flex items-start gap-3">
-                {/* Course Image */}
-                <div className="w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                  {selectedReport.courseImage ? (
-                    <img
-                      src={selectedReport.courseImage}
-                      alt={selectedReport.courseName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <BookOpenIcon className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-                
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <BookOpenIcon className="h-5 w-5 text-red-700" />
@@ -176,7 +177,7 @@ export default function CourseReportTab({ reports, fetchReports }) {
                   </label>
                 </div>
                 <p className="text-gray-900 font-medium">
-                  {selectedReport. studentName}
+                  {selectedReport.studentName}
                 </p>
               </div>
 
@@ -230,7 +231,7 @@ export default function CourseReportTab({ reports, fetchReports }) {
                   className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
                   size="lg"
                 >
-                  {resolveLoading ?  (
+                  {resolveLoading ? (
                     <Spin size="small" />
                   ) : (
                     <>
@@ -284,58 +285,31 @@ export default function CourseReportTab({ reports, fetchReports }) {
             className="pl-10"
           />
         </div>
-        <div className="mt-3 flex items-center justify-between">
-          <div className="text-sm text-gray-600">
-            {filteredReports.length} báo cáo
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Hiển thị:</span>
-            <Select
-              value={itemsPerPage. toString()}
-              onValueChange={(value) => setItemsPerPage(Number(value))}
-            >
-              <SelectTrigger className="w-[80px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="mt-3 text-sm text-gray-600">
+          {filteredReports. length} báo cáo
         </div>
       </div>
 
       {/* Reports List */}
       <div className="bg-white rounded-b-xl shadow-sm">
-        {paginatedReports.length === 0 ? (
+        {filteredReports.length === 0 ? (
           <div className="text-center text-gray-400 py-12">
             Không có báo cáo nào
           </div>
         ) : (
           <div className="divide-y">
-            {paginatedReports.map((report) => (
+            {filteredReports.map((report) => (
               <div
                 key={report.id}
                 onClick={() => setSelectedReport(report)}
                 className="p-4 hover:bg-gray-50 transition cursor-pointer"
               >
                 <div className="flex gap-4">
-                  {/* Course Image */}
-                  <div className="w-20 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                    {report.courseImage ? (
-                      <img
-                        src={report.courseImage}
-                        alt={report.courseName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <BookOpenIcon className="h-8 w-8 text-gray-400" />
-                      </div>
-                    )}
+                  {/* Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                      <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+                    </div>
                   </div>
 
                   {/* Report Info */}
@@ -343,7 +317,7 @@ export default function CourseReportTab({ reports, fetchReports }) {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors">
-                          {report. courseName}
+                          {report.courseName}
                         </h3>
                         <p className="text-sm text-gray-500 line-clamp-2 mt-1">
                           {report. description}
@@ -369,73 +343,6 @@ export default function CourseReportTab({ reports, fetchReports }) {
           </div>
         )}
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm gap-4">
-          <div className="text-sm text-gray-600">
-            Trang {currentPage} / {totalPages}
-          </div>
-
-          <div className="flex gap-2 flex-wrap justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeftIcon className="h-4 w-4 mr-1" />
-              Trước
-            </Button>
-
-            <div className="flex gap-1">
-              {[...Array(totalPages)].map((_, index) => {
-                const pageNumber = index + 1;
-                if (
-                  pageNumber === 1 ||
-                  pageNumber === totalPages ||
-                  Math.abs(pageNumber - currentPage) <= 1
-                ) {
-                  return (
-                    <Button
-                      key={pageNumber}
-                      variant={
-                        currentPage === pageNumber ?  "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNumber)}
-                    >
-                      {pageNumber}
-                    </Button>
-                  );
-                } else if (
-                  pageNumber === currentPage - 2 ||
-                  pageNumber === currentPage + 2
-                ) {
-                  return (
-                    <span key={pageNumber} className="px-2 py-1">
-                      ... 
-                    </span>
-                  );
-                }
-                return null;
-              })}
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-            >
-              Sau
-              <ChevronRightIcon className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
     </>
   );
 }
