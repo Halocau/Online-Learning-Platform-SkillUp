@@ -13,12 +13,12 @@ namespace SkillUp.Services.Implementations
     {
         private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IAccountRepository _accountRepository;
-        private readonly CloudinaryService _cloudinaryService;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly ICurrentUserService _currentUserService;
         private readonly ILecturerService _lecturerService;
         private readonly IEmailService _emailService;
 
-        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, CloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService, IEmailService emailService)
+        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, ICloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService, IEmailService emailService)
         {
             _lecturerApplicationRepository = lecturerApplicationRepository;
             _accountRepository = accountRepository;
@@ -30,11 +30,21 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> ApplyCvAsync(Guid accountId, ApplyCvRequestDto request)
         {
-            // Check if user is a lecturer (roleId = 4)
+            // roleId = 4 (Giảng viên) , Status = "Pending" 
             var account = await _accountRepository.GetByIdAsync(accountId);
-            if (account == null || account.RoleId != 4)
+            if (account == null || account.RoleId != 4 || !string.Equals(account.Status, "Pending", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
+            }
+
+            if (request.CvFile == null)
+            {
+                throw new ArgumentException("Vui lòng tải hồ sơ lên.");
+            }
+
+            if (request.DegreeFile == null || request.DegreeFile.Count == 0)
+            {
+                throw new ArgumentException("Vui lòng tải bằng cấp lên.");
             }
 
             // Upload CV file to Cloudinary
@@ -259,6 +269,7 @@ namespace SkillUp.Services.Implementations
                 Title = app.Title ?? string.Empty,
                 Profession = app.Profession ?? string.Empty,
                 Description = app.Description,
+                Email = app.Account?.Email,
                 Status = app.Status,
                 RejectReason = app.Reason,
                 CreatedAt = app.CreatedAt,

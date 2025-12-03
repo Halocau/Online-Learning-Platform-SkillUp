@@ -15,9 +15,9 @@ namespace SkillUp.Services.Implementations
         private readonly IQuizRepository _quizRepository;
         private readonly ILecturerRepository _lecturerRepository;
         private readonly IQuestionBankRepository _questionBankRepository;
-        private readonly CloudinaryService _cloudinaryService;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly IQuestionQuizRepository _questionQuizRepository;
-        public QuestionService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, IQuestionBankRepository questionBankRepository, CloudinaryService cloudinaryService, IQuestionQuizRepository questionQuizRepository)
+        public QuestionService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, IQuestionBankRepository questionBankRepository, ICloudinaryService cloudinaryService, IQuestionQuizRepository questionQuizRepository)
         {
             _quizRepository = quizRepository;
             _lecturerRepository = lecturerRepository;

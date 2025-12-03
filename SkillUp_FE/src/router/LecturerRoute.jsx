@@ -9,6 +9,8 @@ import ManageCourses from "@/pages/Lecturer/ManageCourses";
 import ManageQuestionBank from "@/pages/Lecturer/ManageQuestionBank";
 
 import CourseDetailManagement from "@/pages/Lecturer/CourseDetailManagement";
+import LecturerTicketList from "@/pages/Lecturer/LecturerTicketList";
+import LecturerTicketDetail from "@/pages/Lecturer/LecturerTicketDetail";
 import CoursePreview from "@/pages/Lecturer/CoursePreview";
 import ManageStudents from "@/pages/Lecturer/LecturerBoard/ManageStudents";
 
@@ -32,6 +34,9 @@ function LecturerRoutes() {
         <Route path="apply-cv" element={<ApplyCV />} />
         <Route path="applications" element={<MyApplications />} />
         <Route path="question-bank" element={<ManageQuestionBank />} />
+        <Route path="courses/:courseId" element={<CourseDetailManagement />} />
+        <Route path="ticket" element={<LecturerTicketList />} />
+        <Route path="ticket/:ticketCode" element={<LecturerTicketDetail />} />
       </Route>
     </Routes>
   );
