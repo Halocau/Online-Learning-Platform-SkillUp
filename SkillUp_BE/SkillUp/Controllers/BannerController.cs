@@ -13,8 +13,8 @@ namespace SkillUp.Controllers
 	{
 		private readonly IBannerService _bannerService;
 		private readonly ICurrentUserService _currentUserService;
-		private readonly CloudinaryService _cloudinaryService;
-		public BannerController(IBannerService bannerService, ICurrentUserService currentUserService, CloudinaryService cloudinaryService)
+		private readonly ICloudinaryService _cloudinaryService;
+		public BannerController(IBannerService bannerService, ICurrentUserService currentUserService, ICloudinaryService cloudinaryService)
 		{
 			_bannerService = bannerService;
 			_currentUserService = currentUserService;

@@ -13,12 +13,12 @@ namespace SkillUp.Services.Implementations
     {
         private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IAccountRepository _accountRepository;
-        private readonly CloudinaryService _cloudinaryService;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly ICurrentUserService _currentUserService;
         private readonly ILecturerService _lecturerService;
         private readonly IEmailService _emailService;
 
-        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, CloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService, IEmailService emailService)
+        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, ICloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService, IEmailService emailService)
         {
             _lecturerApplicationRepository = lecturerApplicationRepository;
             _accountRepository = accountRepository;
