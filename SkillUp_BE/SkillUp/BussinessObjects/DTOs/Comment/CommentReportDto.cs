@@ -11,6 +11,6 @@ namespace SkillUp.BussinessObjects.DTOs.Comment
         public Guid AccountId { get; set; } // ID người report
         public Guid CommentPostId { get; set; } // ID comment bị report
         public string? ReporterName { get; set; } // Tên người report
-        public string CommentContent { get; set; }
+        public string CommentContents { get; set; }
     }
 }
