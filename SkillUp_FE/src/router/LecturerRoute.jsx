@@ -10,6 +10,7 @@ import ManageQuestionBank from "@/pages/Lecturer/ManageQuestionBank";
 import CourseDetailManagement from "@/pages/Lecturer/CourseDetailManagement";
 import LecturerTicketList from "@/pages/Lecturer/LecturerTicketList";
 import LecturerTicketDetail from "@/pages/Lecturer/LecturerTicketDetail";
+import CoursePreview from "@/pages/Lecturer/CoursePreview";
 
 function LecturerRoutes() {
   return (
@@ -25,6 +26,8 @@ function LecturerRoutes() {
         <Route index element={<LecturerDashboard />} />
         <Route path="dashboard" element={<LecturerDashboard />} />
         <Route path="courses" element={<ManageCourses />} />
+        <Route path="courses/:courseId" element={<CourseDetailManagement />} />
+        <Route path="courses/:courseId/preview" element={<CoursePreview />} />
         <Route path="apply-cv" element={<ApplyCV />} />
         <Route path="applications" element={<MyApplications />} />
         <Route path="question-bank" element={<ManageQuestionBank />} />

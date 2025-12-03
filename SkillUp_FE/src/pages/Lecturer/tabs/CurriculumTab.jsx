@@ -222,10 +222,10 @@ function CurriculumTab({ course, courseId, onUpdate }) {
           newCourse.sections = newCourse.sections.map((section) =>
             section.id === sectionId
               ? {
-                ...section,
-                title: sectionForm.title,
-                description: sectionForm.description,
-              }
+                  ...section,
+                  title: sectionForm.title,
+                  description: sectionForm.description,
+                }
               : section
           );
           return newCourse;
@@ -440,6 +440,17 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   const handleEditLessonClick = (lesson) => {
     setEditingLessonId(lesson.id);
+    const videoUrl =
+      lesson.lessonType === "Video" && lesson.assets?.[0]?.url
+        ? lesson.assets[0].url
+        : null;
+
+    const pdfUrl =
+      lesson.assets?.[0]?.fileUrl &&
+      lesson.assets[0].fileUrl !== "default-file-url"
+        ? lesson.assets[0].fileUrl
+        : null;
+
     setLessonForm({
       title: lesson.title,
       description: lesson.description || "",
@@ -449,6 +460,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       content: lesson.assets?.[0]?.content || "",
       videoFile: null,
       pdfFile: null,
+      existingVideoUrl: videoUrl,
+      existingPdfUrl: pdfUrl,
     });
   };
 
@@ -482,12 +495,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === lessonId
                 ? {
-                  ...item,
-                  title: lessonForm.title,
-                  description: lessonForm.description,
-                  isFree: lessonForm.isFree,
-                  orders: lessonForm.lessonOrder,
-                }
+                    ...item,
+                    title: lessonForm.title,
+                    description: lessonForm.description,
+                    isFree: lessonForm.isFree,
+                    orders: lessonForm.lessonOrder,
+                  }
                 : item
             ),
           }));
@@ -705,12 +718,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === quizId
                 ? {
-                  ...item,
-                  title: quizForm.title,
-                  description: quizForm.description,
-                  passPercent,
-                  timer,
-                }
+                    ...item,
+                    title: quizForm.title,
+                    description: quizForm.description,
+                    passPercent,
+                    timer,
+                  }
                 : item
             ),
           }));
@@ -769,8 +782,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   const sortedSections = displayCourse?.sections
     ? [...displayCourse.sections].sort(
-      (a, b) => (a.orders || 0) - (b.orders || 0)
-    )
+        (a, b) => (a.orders || 0) - (b.orders || 0)
+      )
     : [];
 
   return (
@@ -1054,10 +1067,13 @@ function SectionsList(props) {
         const payload = activeSection.items.map((item) => ({
           id: item.id,
           orders: item.orders,
-          type: item.kind
+          type: item.kind,
         }));
         // API call to save the new order
-        await axiosInstance.put(`http://localhost:5120/api/Sections/${activeSection.id}/reorder`, payload);
+        await axiosInstance.put(
+          `http://localhost:5120/api/Sections/${activeSection.id}/reorder`,
+          payload
+        );
 
         if (typeof onUpdate === "function") {
           await onUpdate({ showSuccess: false });
@@ -1075,9 +1091,10 @@ function SectionsList(props) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4"> {/* Container */}
+    <div className="max-w-4xl mx-auto p-4">
+      {" "}
+      {/* Container */}
       <DragDropContext onDragEnd={onDragEnd}>
-
         {/* 1. OUTER DROPPABLE: For the list of Sections */}
         <Droppable droppableId="all-sections" type="SECTION">
           {(provided) => (
@@ -1087,7 +1104,6 @@ function SectionsList(props) {
               className="space-y-3" // Move your spacing class here
             >
               {sections.map((section, index) => (
-
                 /* 2. OUTER DRAGGABLE: Each Section Card */
                 <Draggable
                   key={section.id}
@@ -1099,7 +1115,7 @@ function SectionsList(props) {
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       // We apply the drag handle to the whole card wrapper
-                      // Or you can pass dragHandleProps down into SectionCard 
+                      // Or you can pass dragHandleProps down into SectionCard
                       // if you only want a specific "grip" icon to work.
                       {...provided.dragHandleProps}
                       style={{
@@ -1151,7 +1167,6 @@ function SectionsList(props) {
             </div>
           )}
         </Droppable>
-
       </DragDropContext>
     </div>
   );

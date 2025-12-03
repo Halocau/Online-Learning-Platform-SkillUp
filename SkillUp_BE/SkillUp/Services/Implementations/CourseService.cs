@@ -280,6 +280,7 @@ namespace SkillUp.Services.Implementations
 				Price = course.Price,
 				EnrollmentCount = course.EnrollmentCount,
 				Rating = course.Rating,
+                Image = course.Image,
 				Status = course.Status,
 				IsActive = course.IsActive,
 				SubCategoryName = course.SubCategory.Name,

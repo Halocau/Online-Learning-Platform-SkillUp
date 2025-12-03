@@ -341,6 +341,7 @@ const QuizTakingPage = () => {
               )}
 
               {/* Answers with images */}
+              {/* Answers with images */}
               <div className="space-y-3">
                 {currentQuestion.answers.map((answer) => {
                   const isSelected = selectedAnswers.includes(answer.answerId);
@@ -367,19 +368,48 @@ const QuizTakingPage = () => {
                       )}
                     >
                       <div className="flex items-start gap-3">
-                        {/* Radio/Checkbox */}
-                        <div
-                          className={cn(
-                            "flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5",
-                            isSelected
-                              ? "border-[#272343] bg-[#ffd803]"
-                              : "border-[#272343]/40"
-                          )}
-                        >
-                          {isSelected && (
-                            <div className="w-2.5 h-2.5 rounded-full bg-[#272343]" />
-                          )}
-                        </div>
+                        {/* Radio (SingleChoice) or Checkbox (MultiChoice) */}
+                        {isMultiple ? (
+                          // Checkbox for MultiChoice (square)
+                          <div
+                            className={cn(
+                              "flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all mt-0.5",
+                              isSelected
+                                ? "border-[#272343] bg-[#ffd803]"
+                                : "border-[#272343]/40"
+                            )}
+                          >
+                            {isSelected && (
+                              <svg
+                                className="w-3. 5 h-3.5 text-[#272343]"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={3}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        ) : (
+                          // Radio for SingleChoice (circle)
+                          <div
+                            className={cn(
+                              "flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5",
+                              isSelected
+                                ? "border-[#272343] bg-[#ffd803]"
+                                : "border-[#272343]/40"
+                            )}
+                          >
+                            {isSelected && (
+                              <div className="w-2.5 h-2.5 rounded-full bg-[#272343]" />
+                            )}
+                          </div>
+                        )}
 
                         {/* Answer content */}
                         <div className="flex-1">

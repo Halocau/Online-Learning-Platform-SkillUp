@@ -82,10 +82,9 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
   });
   const [uploadingAnswerImage, setUploadingAnswerImage] = useState({});
 
-  // Track which answer editor is currently open
   const [activeAnswerEditor, setActiveAnswerEditor] = useState(null);
 
-  // Only use useEffect for setting editor content (CKEditor needs to be ready first)
+  // Only use useEffect for setting editor content
   useEffect(() => {
     if (titleEditorRef.current && initialData?.title) {
       setTimeout(() => {
