@@ -6,5 +6,6 @@ namespace SkillUp.Repositories.Interfaces
     {
         Task<List<Enrollment>> GetEnrolledCoursesWithDetailsAsync(Guid studentId);
         Task<bool> IsStudentEnrolledInCourseAsync(Guid studentId, Guid courseId);
+        Task<List<Guid>> GetStudentAccountIdsByCourseIdAsync(Guid courseId);
     }
 }

@@ -33,5 +33,13 @@ namespace SkillUp.Repositories.Implementations
             return await _context.Enrollments
                 .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
         }
+        public async Task<List<Guid>> GetStudentAccountIdsByCourseIdAsync(Guid courseId)
+        {
+            return await _context.Enrollments
+                .Where(e => e.CourseId == courseId)
+                .Select(e => e.Student.AccountId) 
+                .Distinct() 
+                .ToListAsync();
+        }
     }
 }
