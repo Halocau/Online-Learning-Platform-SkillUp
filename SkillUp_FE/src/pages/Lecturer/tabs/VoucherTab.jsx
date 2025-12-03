@@ -199,6 +199,11 @@ function VoucherTab({ course, courseId }) {
       return;
     }
 
+    if (formData.couponCode.trim().length < 6) {
+      toast.error("Mã voucher phải có ít nhất 6 ký tự");
+      return;
+    }
+
     if (!formData.startTime || !formData.endTime) {
       toast.error("Vui lòng chọn thời gian bắt đầu và kết thúc");
       return;
@@ -289,7 +294,7 @@ function VoucherTab({ course, courseId }) {
               className="bg-[#FCCD04] hover:bg-[#E6B800] text-black font-semibold"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Tạo voucher
+              Tạo phiếu giảm giá
             </Button>
           </div>
 
@@ -534,7 +539,7 @@ function VoucherTab({ course, courseId }) {
                           ? "Đang lưu..."
                           : editingVoucher
                             ? "Cập nhật"
-                            : "Tạo voucher"}
+                            : "Tạo phiếu giảm giá"}
                       </Button>
                       <Button
                         type="button"
@@ -564,7 +569,7 @@ function VoucherTab({ course, courseId }) {
                 className="bg-[#FCCD04] hover:bg-[#E6B800] text-black font-semibold"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Tạo voucher
+                Tạo phiếu giảm giá
               </Button>
             </div>
           ) : (

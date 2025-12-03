@@ -212,11 +212,7 @@ export default function ModAllTicket() {
                 </div>
 
                 <Space wrap>
-                    <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>
-                        Sắp xếp mới nhất
-                    </Button>
-                    <Button onClick={clearFilters}>Xoá bộ lọc</Button>
-                    <Button onClick={clearAll}>Xoá tất cả</Button>
+                    <Button onClick={clearAll}>Xoá bộ lọc</Button>
                     <Button icon={<ReloadOutlined />} onClick={refresh}>
                         Tải lại
                     </Button>
