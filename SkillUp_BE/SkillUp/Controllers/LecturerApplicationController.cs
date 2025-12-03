@@ -73,10 +73,8 @@ namespace SkillUp.Controllers
         {
             try
             {
-                // Kiểm tra và cập nhật trạng thái thông qua service
                 var result = await _lecturerApplicationService.UpdateStatusAsync(applicationId, request);
 
-                // Kiểm tra kết quả cập nhật
                 if (!result)
                 {
                     return BadRequest(new APIReturn
@@ -87,7 +85,6 @@ namespace SkillUp.Controllers
                     });
                 }
 
-                // Thành công
                 return Ok(new APIReturn
                 {
                     code = 200,
