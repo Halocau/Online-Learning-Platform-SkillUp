@@ -1,4 +1,5 @@
-﻿using SkillUp.BussinessObjects.DTOs.LecturerDashboard;
+﻿using SkillUp.BussinessObjects.DTOs.Lecturer;
+using SkillUp.BussinessObjects.DTOs.LecturerDashboard;
 using SkillUp.BussinessObjects.DTOs.RevenueReport;
 
 namespace SkillUp.Services.Interfaces
@@ -7,5 +8,6 @@ namespace SkillUp.Services.Interfaces
     {
          public Task<LecturerDashboardDto> GetLecturerDashboardAsync(Guid accountId);
         public Task<RevenueReportDto> GetRevenueReportAsync(Guid accountId, int? year, Guid? courseId);
+        Task<List<EnrolledStudentDto>> GetEnrolledStudentsAsync(Guid accountId, Guid? courseId);
     }
 }

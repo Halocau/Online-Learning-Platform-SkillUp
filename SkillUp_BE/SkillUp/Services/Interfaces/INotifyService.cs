@@ -13,5 +13,7 @@ namespace SkillUp.Services.Interfaces
         Task<bool> MarkAsReadAsync(Guid notificationId, Guid accountId);
         Task<bool> MarkAllAsReadAsync(Guid accountId);
         Task<int> CreateSystemNotificationAsync(CreateSystemNotificationDto dto);
+
+        Task SendCourseUpdateNotificationAsync(Guid courseId, string title, string message, string? link = null);
     }
 }

@@ -15,5 +15,6 @@ namespace SkillUp.Repositories.Interfaces
 
         Task AddRangeAsync(IEnumerable<Notify> notifications);
         Task<bool> SaveChangesAsync();
+        Task CreateRangeAsync(List<Notify> notifications);
     }
 }

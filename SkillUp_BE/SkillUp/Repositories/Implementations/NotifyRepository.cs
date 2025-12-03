@@ -62,9 +62,15 @@ namespace SkillUp.Repositories.Implementations
         {
             await _context.Notifies.AddRangeAsync(notifications);
         }
+
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;
+        }
+        public async Task CreateRangeAsync(List<Notify> notifications)
+        {
+            await _context.Notifies.AddRangeAsync(notifications);
+            await _context.SaveChangesAsync();
         }
     }
 }
