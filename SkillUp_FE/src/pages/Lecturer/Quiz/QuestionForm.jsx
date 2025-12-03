@@ -586,7 +586,7 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
             ))}
           </div>
 
-          {questionData.answers.length < 6 && (
+          {questionData.answers.length < 7 && (
             <Button
               onClick={handleAddAnswer}
               variant="outline"
@@ -594,14 +594,12 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
               className="mt-2 text-[#272343] border-[#272343]/15 hover:bg-[#e3f6f5]"
             >
               <Plus className="w-4 h-4 mr-1" />
-              Thêm đáp án
+              Thêm đáp án ({questionData.answers.length}/7)
             </Button>
           )}
 
           <p className="text-xs text-[#2d334a] mt-2">
-            {isSingle
-              ? "Chọn 1 đáp án đúng bằng cách nhấn vào nút radio"
-              : "Chọn nhiều đáp án đúng bằng cách tích vào checkbox"}
+            Tối đa 7 đáp án
           </p>
         </div>
 

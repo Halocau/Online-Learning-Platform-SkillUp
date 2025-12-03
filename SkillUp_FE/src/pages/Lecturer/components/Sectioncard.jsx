@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import ItemCard from "./ItemCard";
 import ContentTypeSelector from "./ContentTypeSelector";
 import LessonForm from "./LessonForm";
-import QuizForm from "./QuizForm";
+import QuizForm from "../Quiz/Quizform";
 import { Droppable, Draggable } from "@hello-pangea/dnd";
 
 function SectionCard({

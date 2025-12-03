@@ -157,7 +157,7 @@ function LecturerDashboard() {
                 <CardContent>
                   {dashboardData?.courses?.length > 0 ? (
                     <div className="space-y-4">
-                      {dashboardData.courses.slice(0, 5).map((course) => (
+                      {dashboardData.courses.map((course) => (
                         <div
                           key={course.id}
                           className="flex items-center justify-between gap-4 p-3 bg-gradient-to-r from-yellow-50 to-white border border-yellow-100 rounded-xl hover:shadow-lg transition hover:scale-[1.01]"

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { Spin } from "antd";
 import { courseAPI } from "@/api/courseAPI";
-import { getAllCourseReports } from "@/api/courseReportAPI";
+import { getGroupedCourseReports } from "@/api/courseReportAPI"; // Updated import
 import CoursePublicTab from "./CoursePublicTab";
 import CoursePendingTab from "./CoursePendingTab";
 import CourseReportTab from "./CourseReportTab";
@@ -25,14 +25,11 @@ export default function CourseManagement() {
       const courseResponse = await courseAPI.getAllCourses();
       setCourses(courseResponse.data?. data || []);
 
-      // Fetch reports
-      const reportResponse = await getAllCourseReports();
-      const reportData = Array.isArray(reportResponse) && Array.isArray(reportResponse[0])
-        ? reportResponse[0]
-        : reportResponse;
-      setReports(reportData || []);
+      // Fetch grouped reports
+      const reportResponse = await getGroupedCourseReports();
+      setReports(reportResponse.data || []);
     } catch (error) {
-      toast.error("Không thể tải danh sách khóa học");
+      toast.error("Không thể tải dữ liệu");
       console.error(error);
     } finally {
       setLoading(false);
@@ -49,10 +46,13 @@ export default function CourseManagement() {
     }
   };
 
-  // Get count for each tab
+  // Calculate total report count from grouped data
+  const reportCount = Array.isArray(reports) && Array.isArray(reports[0])
+    ? reports[0].reduce((sum, group) => sum + group.totalCount, 0)
+    : 0;
+
   const publicCount = courses.filter((c) => c.status === "Public").length;
   const pendingCount = courses.filter((c) => c.status === "Pending").length;
-  const reportCount = reports.length;
 
   if (loading) {
     return (
@@ -140,7 +140,9 @@ export default function CourseManagement() {
         {activeTab === "pending" && (
           <CoursePendingTab courses={courses} fetchCourses={fetchCourses} />
         )}
-        {activeTab === "reports" && <CourseReportTab reports={reports} fetchReports={fetchData} />}
+        {activeTab === "reports" && (
+          <CourseReportTab reports={reports} fetchReports={fetchData} />
+        )}
       </div>
     </div>
   );

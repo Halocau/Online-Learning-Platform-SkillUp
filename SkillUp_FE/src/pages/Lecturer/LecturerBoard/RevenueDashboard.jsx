@@ -193,7 +193,7 @@ function RevenueDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Each card: add fade/hover/bg improvement */}
         <Card className="rounded-2xl shadow-xl transition-transform duration-200 hover:scale-[1.025] bg-gradient-to-br from-lime-50 to-lime-100 border-l-4 border-l-green-400">
           <CardContent className="pt-7 pb-7">
@@ -249,27 +249,6 @@ function RevenueDashboard() {
               </div>
               <div className="p-4 rounded-full bg-yellow-400 shadow-lg">
                 <Calendar className="w-7 h-7 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-2xl shadow-xl transition-transform duration-200 hover:scale-[1.025] bg-gradient-to-br from-purple-50 to-purple-100 border-l-4 border-l-purple-400">
-          <CardContent className="pt-7 pb-7">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-purple-700 mb-2 font-semibold">
-                  Tổng bán ra
-                </p>
-                <p className="text-3xl font-bold text-purple-900">
-                  {revenueData?.courseRevenues?.reduce(
-                    (sum, c) => sum + c.totalSales,
-                    0
-                  ) || 0}
-                </p>
-                <p className="text-xs text-purple-600 mt-2">Tất cả khóa học</p>
-              </div>
-              <div className="p-4 rounded-full bg-purple-500 shadow-lg">
-                <ShoppingCart className="w-7 h-7 text-white" />
               </div>
             </div>
           </CardContent>
