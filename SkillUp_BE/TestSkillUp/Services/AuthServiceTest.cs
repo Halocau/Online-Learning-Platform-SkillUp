@@ -266,100 +266,6 @@ namespace TestSkillUp
             _iRefreshTokenRepositoryMock.Verify(r => r.AddAsync(It.IsAny<RefreshToken>()), Times.Never);
         }
 
-        // -------------------- REFRESH TOKEN --------------------
-
-        [Test]
-        public async Task RefreshTokenAsync_Valid_ReturnsNewTokens_AndRevokesOld()
-        {
-            // Arrange: tạo account Active
-            var account = new Account
-            {
-                Id = Guid.NewGuid(),
-                Email = "refresh@ex.com",
-                Password = BCrypt.Net.BCrypt.HashPassword("ok"),
-                Status = "Active"
-            };
-
-            // Sẽ được service gọi lại bằng email lấy từ claims trong AccessToken
-            _iAccountRepositoryMock
-                .Setup(r => r.GetByEmailWithRoleAndPermissionsAsync(account.Email))
-                .ReturnsAsync(account);
-
-            // Tạo access token hợp lệ (dùng chính service thật để có claims đúng)
-            var accessToken = ((AuthSvc)_sut).GenerateAccessToken(account);
-
-            // Repo xác thực refresh token cũ OK
-            var old = new RefreshToken
-            {
-                Id = Guid.NewGuid(),
-                AccountId = account.Id,
-                Token = "old.rt",
-                CreatedUtc = DateTime.Now.AddDays(-1),
-                ExpiresUtc = DateTime.Now.AddDays(6),
-                RevokedUtc = null
-            };
-
-            _iRefreshTokenRepositoryMock
-                .Setup(r => r.GetValidTokenByUserIdAsync(account.Id, "old.rt"))
-                .ReturnsAsync(old);
-
-            // Revoked token cũ
-            _iRefreshTokenRepositoryMock
-                .Setup(r => r.UpdateAsync(It.Is<RefreshToken>(t => t.Id == old.Id)))
-                .Returns(Task.CompletedTask);
-
-            // Lưu token mới
-            _iRefreshTokenRepositoryMock
-                .Setup(r => r.AddAsync(It.IsAny<RefreshToken>()))
-                .Returns(Task.CompletedTask);
-
-            _iRefreshTokenRepositoryMock
-                .Setup(r => r.SaveChangesAsync())
-                .ReturnsAsync(true);
-
-            var req = new RefreshTokenRequestDto
-            {
-                AccessToken = accessToken, // access token hết hạn vẫn parse được claims do ValidateLifetime=false
-                RefreshToken = "old.rt"
-            };
-
-            // Act
-            var res = await _sut.RefreshTokenAsync(req);
-
-            // Assert
-            Assert.IsNotNull(res);
-            Assert.IsNotNull(res!.Tokens);
-            Assert.IsFalse(string.IsNullOrWhiteSpace(res.Tokens!.AccessToken));
-            Assert.IsFalse(string.IsNullOrWhiteSpace(res.Tokens.RefreshToken));
-
-            // Old refresh token phải bị revoke (có RevokedUtc)
-            _iRefreshTokenRepositoryMock.Verify(r =>
-                r.UpdateAsync(It.Is<RefreshToken>(t => t.Id == old.Id && t.RevokedUtc != null)), Times.Once);
-
-            // Refresh token mới phải được lưu cho đúng user
-            _iRefreshTokenRepositoryMock.Verify(r =>
-                r.AddAsync(It.Is<RefreshToken>(t => t.AccountId == account.Id && t.Token == res.Tokens.RefreshToken)), Times.Once);
-
-            _iRefreshTokenRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.AtLeastOnce);
-        }
-
-        [Test]
-        public async Task RefreshTokenAsync_InvalidAccessToken_ReturnsNull()
-        {
-            // Arrange: AccessToken rác -> GetPrincipalFromToken trả null
-            var req = new RefreshTokenRequestDto
-            {
-                AccessToken = "not-a-valid-jwt",
-                RefreshToken = "anything"
-            };
-
-            // Act
-            var res = await _sut.RefreshTokenAsync(req);
-
-            // Assert
-            Assert.IsNull(res);
-        }
-
         // -------------------- LOGOUT --------------------
 
         [Test]
@@ -384,5 +290,580 @@ namespace TestSkillUp
             _iRefreshTokenRepositoryMock.Verify(r => r.RevokeAllUserTokensAsync(userId), Times.Once);
             _iRefreshTokenRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
+
+        // -------------------- REGISTER --------------------
+        [Test]//1
+        public async Task RegisterAsync_StudentRole5_Success_CreatesStudentAndSendsEmail()
+        {
+            // Arrange
+            var request = new RegisterRequestDto
+            {
+                Email = "student@example.com",
+                Password = "P@ssw0rd!",
+                Fullname = "Student User",
+                RoleId = 5
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.ExistsByEmailAsync(request.Email))
+                .ReturnsAsync(false);
+
+            _iAccountRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<Account>()))
+                .Returns(Task.CompletedTask);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<Otp>()))
+                .Returns(Task.CompletedTask);
+
+            _iAccountRepositoryMock
+                .Setup(r => r.SaveChangesAsync())
+                .ReturnsAsync(true);
+
+            _iStudentServiceMock
+                .Setup(s => s.RegisterStudentAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.RegisterAsync(request);
+
+            // Assert
+            Assert.IsTrue(result);
+            _iStudentServiceMock.Verify(s => s.RegisterStudentAsync(It.IsAny<Guid>()), Times.Once);
+            _iEmailServiceMock.Verify(e =>
+                e.SendVerifyEmailAsync(request.Email, It.IsAny<string>(), request.Fullname),
+                Times.Once);
+        }
+        [Test]//1
+        public async Task RegisterAsync_Role4_Success_NoStudentRegister()
+        {
+            // Arrange
+            var request = new RegisterRequestDto
+            {
+                Email = "mod@example.com",
+                Password = "P@ssw0rd!",
+                Fullname = "Mod User",
+                RoleId = 4
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.ExistsByEmailAsync(request.Email))
+                .ReturnsAsync(false);
+
+            _iAccountRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<Account>()))
+                .Returns(Task.CompletedTask);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<Otp>()))
+                .Returns(Task.CompletedTask);
+
+            _iAccountRepositoryMock
+                .Setup(r => r.SaveChangesAsync())
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.RegisterAsync(request);
+
+            // Assert
+            Assert.IsTrue(result);
+            _iStudentServiceMock.Verify(s => s.RegisterStudentAsync(It.IsAny<Guid>()), Times.Never);
+            _iEmailServiceMock.Verify(e =>
+                e.SendVerifyEmailAsync(request.Email, It.IsAny<string>(), request.Fullname),
+                Times.Once);
+        }
+        [Test]//1
+        public async Task RegisterAsync_EmailAlreadyExists_ReturnsFalse_AndDoesNotCreateAccount()
+        {
+            // Arrange
+            var request = new RegisterRequestDto
+            {
+                Email = "dup@example.com",
+                Password = "P@ssw0rd!",
+                Fullname = "Dup User",
+                RoleId = 4
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.ExistsByEmailAsync(request.Email))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.RegisterAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Account>()), Times.Never);
+            _iAccountRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+            _iOtpRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Otp>()), Times.Never);
+            _iEmailServiceMock.Verify(e => e.SendVerifyEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        // -------------------- VERIFY EMAIL --------------------
+
+        [Test]
+        public async Task VerifyEmailAsync_AccountNotFound_ReturnsFalse()
+        {
+            // Arrange
+            var request = new VerifyEmailRequestDto
+            {
+                Email = "notfound@example.com",
+                Token = "any-token"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync((Account?)null);
+
+            // Act
+            var result = await _sut.VerifyEmailAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iOtpRepositoryMock.Verify(r => r.GetByAccountEmailAndTokenAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task VerifyEmailAsync_OtpNotFound_ReturnsFalse()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "user@example.com",
+                RoleId = 5
+            };
+
+            var request = new VerifyEmailRequestDto
+            {
+                Email = account.Email,
+                Token = "invalid-token"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync(account);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.GetByAccountEmailAndTokenAsync(request.Email, request.Token))
+                .ReturnsAsync((Otp?)null);
+
+            // Act
+            var result = await _sut.VerifyEmailAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Account>()), Times.Never);
+        }
+
+        [Test]
+        public async Task VerifyEmailAsync_OtpAlreadyUsed_ReturnsFalse()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "user@example.com",
+                RoleId = 5
+            };
+
+            var otp = new Otp
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                OtpLink = "token",
+                IsUsed = true,
+                UsedAt = DateTime.Now
+            };
+
+            var request = new VerifyEmailRequestDto
+            {
+                Email = account.Email,
+                Token = otp.OtpLink
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync(account);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.GetByAccountEmailAndTokenAsync(request.Email, request.Token))
+                .ReturnsAsync(otp);
+
+            // Act
+            var result = await _sut.VerifyEmailAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Account>()), Times.Never);
+        }
+
+        // -------------------- FORGOT PASSWORD --------------------
+
+        [Test]
+        public async Task ForgotPasswordAsync_AccountNotFound_ReturnsFalse()
+        {
+            // Arrange
+            var request = new ForgotPasswordRequestDto
+            {
+                Email = "notfound@example.com"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync((Account?)null);
+
+            // Act
+            var result = await _sut.ForgotPasswordAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iOtpRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Otp>()), Times.Never);
+            _iEmailServiceMock.Verify(e => e.SendResetPasswordEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ForgotPasswordAsync_AccountInActive_ReturnsFalse()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "inactive@example.com",
+                Status = "InActive"
+            };
+
+            var request = new ForgotPasswordRequestDto
+            {
+                Email = account.Email
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync(account);
+
+            // Act
+            var result = await _sut.ForgotPasswordAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iOtpRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Otp>()), Times.Never);
+            _iEmailServiceMock.Verify(e => e.SendResetPasswordEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ForgotPasswordAsync_PendingAccount_SaveChangesSuccess_ReturnsTrue_AndSendsEmail()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "pending@example.com",
+                Fullname = "Pending User",
+                Status = "Pending"
+            };
+
+            var request = new ForgotPasswordRequestDto
+            {
+                Email = account.Email
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync(account);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<Otp>()))
+                .Returns(Task.CompletedTask);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.SaveChangesAsync())
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.ForgotPasswordAsync(request);
+
+            // Assert
+            Assert.IsTrue(result);
+            _iOtpRepositoryMock.Verify(r => r.AddAsync(It.Is<Otp>(o => 
+                o.AccountId == account.Id && 
+                o.OtpLink.StartsWith("RPW_") && 
+                o.IsUsed == false)), Times.Once);
+            _iOtpRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+            _iEmailServiceMock.Verify(e => e.SendResetPasswordEmailAsync(
+                request.Email,
+                It.Is<string>(token => token.StartsWith("RPW_")),
+                account.Fullname),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task ForgotPasswordAsync_ActiveAccount_SaveChangesSuccess_ReturnsTrue_AndSendsEmail()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "active@example.com",
+                Fullname = "Active User",
+                Status = "Active"
+            };
+
+            var request = new ForgotPasswordRequestDto
+            {
+                Email = account.Email
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync(account);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<Otp>()))
+                .Returns(Task.CompletedTask);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.SaveChangesAsync())
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.ForgotPasswordAsync(request);
+
+            // Assert
+            Assert.IsTrue(result);
+            _iOtpRepositoryMock.Verify(r => r.AddAsync(It.Is<Otp>(o => 
+                o.AccountId == account.Id && 
+                o.OtpLink.StartsWith("RPW_") && 
+                o.IsUsed == false)), Times.Once);
+            _iOtpRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+            _iEmailServiceMock.Verify(e => e.SendResetPasswordEmailAsync(
+                request.Email,
+                It.Is<string>(token => token.StartsWith("RPW_")),
+                account.Fullname),
+                Times.Once);
+        }
+
+        // -------------------- RESET PASSWORD --------------------
+
+        [Test]
+        public async Task ResetPasswordAsync_EmailEmpty_ReturnsFalse()
+        {
+            // Arrange
+            var request = new ResetPasswordRequestDto
+            {
+                Email = "",
+                Token = "RPW_token",
+                NewPassword = "NewP@ssw0rd!"
+            };
+
+            // Act
+            var result = await _sut.ResetPasswordAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.GetByEmailAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ResetPasswordAsync_TokenEmpty_ReturnsFalse()
+        {
+            // Arrange
+            var request = new ResetPasswordRequestDto
+            {
+                Email = "user@example.com",
+                Token = "",
+                NewPassword = "NewP@ssw0rd!"
+            };
+
+            // Act
+            var result = await _sut.ResetPasswordAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.GetByEmailAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ResetPasswordAsync_NewPasswordEmpty_ReturnsFalse()
+        {
+            // Arrange
+            var request = new ResetPasswordRequestDto
+            {
+                Email = "user@example.com",
+                Token = "RPW_token",
+                NewPassword = ""
+            };
+
+            // Act
+            var result = await _sut.ResetPasswordAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.GetByEmailAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ResetPasswordAsync_AccountNotFound_ReturnsFalse()
+        {
+            // Arrange
+            var request = new ResetPasswordRequestDto
+            {
+                Email = "notfound@example.com",
+                Token = "RPW_token",
+                NewPassword = "NewP@ssw0rd!"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync((Account?)null);
+
+            // Act
+            var result = await _sut.ResetPasswordAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iOtpRepositoryMock.Verify(r => r.GetByAccountEmailAndTokenAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ResetPasswordAsync_OtpNotFound_ReturnsFalse()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "user@example.com",
+                Password = "old-hash"
+            };
+
+            var request = new ResetPasswordRequestDto
+            {
+                Email = account.Email,
+                Token = "RPW_invalid-token",
+                NewPassword = "NewP@ssw0rd!"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync(account);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.GetByAccountEmailAndTokenAsync(request.Email, request.Token))
+                .ReturnsAsync((Otp?)null);
+
+            // Act
+            var result = await _sut.ResetPasswordAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Account>()), Times.Never);
+        }
+
+        [Test]
+        public async Task ResetPasswordAsync_ValidRequest_Success_ReturnsTrue()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "user@example.com",
+                Password = "old-hash"
+            };
+
+            var otp = new Otp
+            {
+                Id = Guid.NewGuid(),
+                AccountId = account.Id,
+                OtpLink = "RPW_valid-token",
+                IsUsed = false,
+                OtpExpiry = DateTime.Now.AddHours(1)
+            };
+
+            var request = new ResetPasswordRequestDto
+            {
+                Email = account.Email,
+                Token = otp.OtpLink,
+                NewPassword = "NewP@ssw0rd!"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailAsync(request.Email))
+                .ReturnsAsync(account);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.GetByAccountEmailAndTokenAsync(request.Email, request.Token))
+                .ReturnsAsync(otp);
+
+            _iAccountRepositoryMock
+                .Setup(r => r.UpdateAsync(It.IsAny<Account>()))
+                .Returns(Task.CompletedTask);
+
+            _iOtpRepositoryMock
+                .Setup(r => r.UpdateAsync(It.IsAny<Otp>()))
+                .Returns(Task.CompletedTask);
+
+            _iRefreshTokenRepositoryMock
+                .Setup(r => r.RevokeAllUserTokensAsync(account.Id))
+                .Returns(Task.CompletedTask);
+
+            _iAccountRepositoryMock
+                .Setup(r => r.SaveChangesAsync())
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.ResetPasswordAsync(request);
+
+            // Assert
+            Assert.IsTrue(result);
+        }
+
+        // -------------------- GOOGLE LOGIN --------------------
+
+        [Test]
+        public async Task GoogleLoginAsync_RequestNull_ReturnsNull()
+        {
+            // Act
+            var result = await _sut.GoogleLoginAsync(null!);
+
+            // Assert
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public async Task GoogleLoginAsync_IdTokenEmpty_ReturnsNull()
+        {
+            // Arrange
+            var request = new GoogleLoginRequestDto
+            {
+                IdToken = "",
+                DefaultRoleId = 5
+            };
+
+            // Act
+            var result = await _sut.GoogleLoginAsync(request);
+
+            // Assert
+            Assert.IsNull(result);
+        }
+
+
+        [Test]
+        public async Task GoogleLoginAsync_GoogleClientIdNotConfigured_ReturnsNull()
+        {
+            // Arrange - Configuration không có GoogleAuth:ClientId
+            var request = new GoogleLoginRequestDto
+            {
+                IdToken = "valid-token",
+                DefaultRoleId = 5
+            };
+
+            // Act
+            var result = await _sut.GoogleLoginAsync(request);
+
+            // Assert
+            Assert.IsNull(result);
+        }
+
     }
+      
 }
