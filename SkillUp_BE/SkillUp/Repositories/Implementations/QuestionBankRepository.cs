@@ -63,7 +63,7 @@ namespace SkillUp.Repositories.Implementations
         {
             return await _context.QuestionBanks
                 .Where(q => questionIds.Contains(q.Id))
-                .Include(q => q.AnswerBanks) 
+                .Include(q => q.AnswerBanks.Where(a => a.IsActive)) 
                 .ToListAsync();
         }
         public async Task<bool> SaveChangesAsync()
