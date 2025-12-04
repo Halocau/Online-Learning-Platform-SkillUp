@@ -7,10 +7,11 @@ import { toast } from "react-toastify";
 import { createSection, updateSection, deleteSection } from "@/api/sectionAPI";
 import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
-import SectionCard from "../components/SectionCard";
-import ConfirmModal from "../components/ConfirmModal";
+
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import axiosInstance from "@/lib/axios";
+import SectionCard from "../../components/Sectioncard";
+import ConfirmModal from "../../components/ConfirmModal";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
   const [expandedSections, setExpandedSections] = useState({});

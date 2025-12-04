@@ -23,7 +23,7 @@ export default function CourseManagement() {
       setLoading(true);
       // Fetch courses
       const courseResponse = await courseAPI.getAllCourses();
-      setCourses(courseResponse.data?. data || []);
+      setCourses(courseResponse.data?.data || []);
 
       // Fetch grouped reports
       const reportResponse = await getGroupedCourseReports();
@@ -47,9 +47,10 @@ export default function CourseManagement() {
   };
 
   // Calculate total report count from grouped data
-  const reportCount = Array.isArray(reports) && Array.isArray(reports[0])
-    ? reports[0].reduce((sum, group) => sum + group.totalCount, 0)
-    : 0;
+  const reportCount =
+    Array.isArray(reports) && Array.isArray(reports[0])
+      ? reports[0].reduce((sum, group) => sum + group.totalCount, 0)
+      : 0;
 
   const publicCount = courses.filter((c) => c.status === "Public").length;
   const pendingCount = courses.filter((c) => c.status === "Pending").length;
@@ -96,7 +97,7 @@ export default function CourseManagement() {
               onClick={() => setActiveTab("pending")}
               className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
                 activeTab === "pending"
-                  ?  "bg-amber-600 text-white shadow-sm"
+                  ? "bg-amber-600 text-white shadow-sm"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >
@@ -143,10 +144,6 @@ export default function CourseManagement() {
         {activeTab === "reports" && (
           <CourseReportTab reports={reports} fetchReports={fetchData} />
         )}
-        {activeTab === "pending" && (
-          <CoursePendingTab courses={courses} fetchCourses={fetchCourses} />
-        )}
-        {activeTab === "reports" && <CourseReportTab reports={reports} fetchReports={fetchData} />}
       </div>
     </div>
   );

@@ -33,7 +33,17 @@ export const courseAPI = {
       throw error;
     }
   },
-
+  reopenCourse: async (courseId) => {
+    try {
+      const response = await axiosInstance.put(
+        `${API_BASE_URL}/Open-Course/${courseId}`
+      );
+      return response;
+    } catch (error) {
+      console.error("Error reopening course:", error);
+      throw error;
+    }
+  },
   updateCourse: async (courseId, formData) => {
     try {
       const response = await axiosInstance.put(
@@ -99,7 +109,9 @@ export const courseAPI = {
   // Get course detail for learning (requires enrollment)
   getCourseLearningDetail: async (courseId) => {
     try {
-      const response = await axiosInstance.get(`${API_BASE_URL}/${courseId}/learning`);
+      const response = await axiosInstance.get(
+        `${API_BASE_URL}/${courseId}/learning`
+      );
       return response;
     } catch (error) {
       console.error("Error fetching learning course detail:", error);
@@ -141,9 +153,7 @@ export const courseAPI = {
 
   getStudentEnrolledCourses: async () => {
     try {
-      const response = await axiosInstance.get(
-        `${API_BASE_URL}/my-courses`
-      );
+      const response = await axiosInstance.get(`${API_BASE_URL}/my-courses`);
       return response;
     } catch (error) {
       console.error("Error fetching my courses:", error);
@@ -177,10 +187,7 @@ export const courseAPI = {
 
   reportCourse: async (reportData) => {
     try {
-      const response = await axiosInstance.post(
-        `/ReportCourse`,
-        reportData
-      );
+      const response = await axiosInstance.post(`/ReportCourse`, reportData);
       return response;
     } catch (error) {
       console.error("Error reporting course:", error);

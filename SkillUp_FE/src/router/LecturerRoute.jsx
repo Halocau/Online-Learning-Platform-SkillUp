@@ -8,11 +8,12 @@ import MyApplications from "@/pages/Lecturer/MyApplications";
 import ManageCourses from "@/pages/Lecturer/ManageCourses";
 import ManageQuestionBank from "@/pages/Lecturer/ManageQuestionBank";
 
-import CourseDetailManagement from "@/pages/Lecturer/CourseDetailManagement";
+
 import LecturerTicketList from "@/pages/Lecturer/LecturerTicketList";
 import LecturerTicketDetail from "@/pages/Lecturer/LecturerTicketDetail";
-import CoursePreview from "@/pages/Lecturer/CoursePreview";
+import CoursePreview from "@/pages/Lecturer/Course/CoursePreview";
 import ManageStudents from "@/pages/Lecturer/LecturerBoard/ManageStudents";
+import CourseDetailManagement from "@/pages/Lecturer/Course/DetailCourseTabs/CourseDetailManagement";
 
 function LecturerRoutes() {
   return (
