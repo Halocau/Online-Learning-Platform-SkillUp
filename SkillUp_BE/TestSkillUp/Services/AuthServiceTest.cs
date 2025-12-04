@@ -117,7 +117,82 @@ namespace TestSkillUp
             _iRefreshTokenRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
 
+        [Test]//1
+        public async Task LoginAsync_WrongPassword_ReturnsNull()
+        {
+            // Arrange
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "user@example.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("correct-password"),
+                Status = "Active"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailWithRoleAndPermissionsAsync(account.Email))
+                .ReturnsAsync(account);
+
+            var request = new LoginRequestDto
+            {
+                Email = account.Email,
+                Password = "wrong-password"
+            };
+
+            // Act
+            var result = await _sut.LoginAsync(request);
+
+            // Assert
+            Assert.IsNull(result);
+        }
+
         [Test]
+        public async Task LoginAsync_StatusPending()
+        {
+            // Arrange: account Pending nhưng service hiện tại KHÔNG chặn, nên hành vi như Active
+            var plain = "ok";
+            var hashed = BCrypt.Net.BCrypt.HashPassword(plain);
+
+            var account = new Account
+            {
+                Id = Guid.NewGuid(),
+                Email = "pending@ex.com",
+                Password = hashed,
+                Status = "Pending"
+            };
+
+            _iAccountRepositoryMock
+                .Setup(r => r.GetByEmailWithRoleAndPermissionsAsync(account.Email))
+                .ReturnsAsync(account);
+
+            _iRefreshTokenRepositoryMock
+                .Setup(r => r.AddAsync(It.IsAny<RefreshToken>()))
+                .Returns(Task.CompletedTask);
+
+            _iRefreshTokenRepositoryMock
+                .Setup(r => r.SaveChangesAsync())
+                .ReturnsAsync(true);
+
+            var req = new LoginRequestDto
+            {
+                Email = account.Email,
+                Password = plain
+            };
+
+            // Act
+            var res = await _sut.LoginAsync(req);
+
+            // Assert
+            Assert.IsNotNull(res);
+            Assert.False(string.IsNullOrWhiteSpace(res!.AccessToken));
+            Assert.False(string.IsNullOrWhiteSpace(res.RefreshToken));
+
+            _iAccountRepositoryMock.Verify(r => r.GetByEmailWithRoleAndPermissionsAsync(account.Email), Times.Once);
+            _iRefreshTokenRepositoryMock.Verify(r => r.AddAsync(It.IsAny<RefreshToken>()), Times.Once);
+            _iRefreshTokenRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        }
+
+        [Test]//1
         public async Task LoginAsync_AccountNotFound_ReturnsNull_AndDoesNotTouchRefreshRepo()
         {
             // Arrange: không tìm thấy account
@@ -135,31 +210,7 @@ namespace TestSkillUp
             _iRefreshTokenRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
         }
 
-        [Test]
-        public async Task LoginAsync_WrongPassword_ReturnsNull()
-        {
-            // Arrange: account Active nhưng mật khẩu sai
-            var account = new Account
-            {
-                Id = Guid.NewGuid(),
-                Email = "user@ex.com",
-                Password = BCrypt.Net.BCrypt.HashPassword("correct"), // DB lưu hash "correct"
-                Status = "Active"
-            };
-
-            _iAccountRepositoryMock
-                .Setup(r => r.GetByEmailWithRoleAndPermissionsAsync(account.Email))
-                .ReturnsAsync(account);
-
-            // Act
-            var res = await _sut.LoginAsync(new LoginRequestDto { Email = account.Email, Password = "wrong" });
-
-            // Assert
-            Assert.IsNull(res);
-            _iRefreshTokenRepositoryMock.Verify(r => r.AddAsync(It.IsAny<RefreshToken>()), Times.Never);
-        }
-
-        [Test]
+        [Test]//1
         public void LoginAsync_StatusInActive_Throws()
         {
             // Arrange: account InActive => phải ném Exception với message tương ứng
@@ -188,7 +239,7 @@ namespace TestSkillUp
             _iRefreshTokenRepositoryMock.Verify(r => r.AddAsync(It.IsAny<RefreshToken>()), Times.Never);
         }
 
-        [Test]
+        [Test]//1
         public void LoginAsync_StatusBanned_Throws()
         {
             // Arrange: account Banned => phải ném Exception với message tương ứng
@@ -307,6 +358,31 @@ namespace TestSkillUp
 
             // Assert
             Assert.IsNull(res);
+        }
+
+        // -------------------- LOGOUT --------------------
+
+        [Test]
+        public async Task LogoutAsync_RevokesAllTokens_AndReturnsTrueWhenSaveSucceeds()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+
+            _iRefreshTokenRepositoryMock
+                .Setup(r => r.RevokeAllUserTokensAsync(userId))
+                .Returns(Task.CompletedTask);
+
+            _iRefreshTokenRepositoryMock
+                .Setup(r => r.SaveChangesAsync())
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.LogoutAsync(userId);
+
+            // Assert
+            Assert.IsTrue(result);
+            _iRefreshTokenRepositoryMock.Verify(r => r.RevokeAllUserTokensAsync(userId), Times.Once);
+            _iRefreshTokenRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
     }
 }
