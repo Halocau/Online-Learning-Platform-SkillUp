@@ -138,7 +138,7 @@ function CourseDetailManagement() {
     return (
       courseData.price !== null &&
       courseData.price !== undefined &&
-      courseData.price > 0
+      courseData.price >= 0
     );
   };
 

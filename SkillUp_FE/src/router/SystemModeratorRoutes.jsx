@@ -3,11 +3,9 @@ import { Routes, Route } from "react-router-dom";
 import SystemModeratorLayout from "@/layouts/SystemModeratorLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
-// Import moderator pages
-import ModDashboard from "../pages/contentmoderator/ModDashboard";
 import TicketManage from "@/pages/systemModerator/TicketManage";
 import LecturerApplicationManage from "@/pages/systemModerator/LecturerApplicationManage";
-import SystemModeratorDashboard from "@/pages/systemModerator/ModDashboard";
+import SystemModeratorDashboard from "@/pages/systemModerator/SysModDashboard";
 import UserManage from "@/pages/systemModerator/UserManage";
 import ModProfile from "@/pages/Profile/ModProfile";
 
@@ -25,7 +23,10 @@ const SystemModeratorRoutes = () => {
         <Route index element={<SystemModeratorDashboard />} />
 
         <Route path="ticket" element={<TicketManage />} />
-        <Route path="lecturer-application" element={<LecturerApplicationManage />} />
+        <Route
+          path="lecturer-application"
+          element={<LecturerApplicationManage />}
+        />
         <Route path="manage-user" element={<UserManage />} />
         <Route path="profile" element={<ModProfile />} />
       </Route>

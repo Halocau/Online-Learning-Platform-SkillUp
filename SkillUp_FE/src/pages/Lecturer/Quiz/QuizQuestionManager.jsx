@@ -17,13 +17,13 @@ import QuestionDetailModal from "./QuestionDetailModal";
 import { extractCleanText } from "@/utils/htmlUtils";
 
 const getQuestionId = (question) =>
-  question?. id ??  question?.questionId ?? question?.questionID ?? null;
+  question?.id ?? question?.questionId ?? question?.questionID ?? null;
 
 const pickQuestionFromCreateResult = (result) => {
-  if (! result) return null;
+  if (!result) return null;
 
   if (Array.isArray(result)) {
-    return result[0] ??  null;
+    return result[0] ?? null;
   }
 
   if (typeof result === "object") {
@@ -41,7 +41,7 @@ const pickQuestionFromCreateResult = (result) => {
 const pickQuestionFromUpdateResult = (result) => {
   if (!result) return null;
 
-  const data = result.data ??  result. question ??  null;
+  const data = result.data ?? result.question ?? null;
 
   if (Array.isArray(data)) return data[0] ?? null;
   if (data && typeof data === "object") return data;
@@ -69,7 +69,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
   useEffect(() => {
     loadQuestions();
-  }, [quiz. id]);
+  }, [quiz.id]);
 
   // Confirm modal helpers
   const openConfirmModal = (config) => {
@@ -111,9 +111,9 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         if (quizData.length > 0) {
           questionsList = quizData[0]?.questions || [];
         }
-      } else if (quizData?. questions) {
+      } else if (quizData?.questions) {
         questionsList = quizData.questions;
-      } else if (Array.isArray(quizData?. data)) {
+      } else if (Array.isArray(quizData?.data)) {
         if (quizData.data.length > 0) {
           questionsList = quizData.data[0]?.questions || [];
         }
@@ -121,7 +121,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
       questionsList = questionsList.map((q) => ({
         id: q.questionId || q.id || q.questionID,
-        questionId: q.questionId || q. id || q.questionID,
+        questionId: q.questionId || q.id || q.questionID,
 
         title: q.title || "",
         description: q.description || "",
@@ -134,7 +134,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
           answerId: ans.answerId || ans.id,
           id: ans.answerId || ans.id,
           answerName: ans.answerName || "",
-          isCorrect: ans. isCorrect ??  false,
+          isCorrect: ans.isCorrect ?? false,
           imageUrl: ans.imageUrl || ans.image || "",
         })),
       }));
@@ -152,7 +152,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     try {
       const maxOrder =
         questions.length > 0
-          ? Math.max(...questions. map((q) => q.orders || 0))
+          ? Math.max(...questions.map((q) => q.orders || 0))
           : 0;
 
       const payload = {
@@ -161,10 +161,10 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         description: questionData.description,
         orders: maxOrder + 1,
         imageUrl: questionData.imageUrl || "",
-        type: questionData. type || "SingleChoice",
+        type: questionData.type || "SingleChoice",
         answers: questionData.answers.map((ans) => ({
           answerName: ans.answerName,
-          isCorrect: ans. isCorrect,
+          isCorrect: ans.isCorrect,
           imageUrl: ans.imageUrl || "",
         })),
       };
@@ -175,10 +175,10 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         const apiQuestion = pickQuestionFromCreateResult(result);
         const newQuestion = {
           ...(apiQuestion || {}),
-          ... payload,
+          ...payload,
         };
 
-        newQuestion.orders = newQuestion.orders ??  maxOrder + 1;
+        newQuestion.orders = newQuestion.orders ?? maxOrder + 1;
 
         setQuestions((prev) => [...prev, newQuestion]);
         setAddingMode(null);
@@ -225,7 +225,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
   const handleViewQuestion = (question) => {
     const id = getQuestionId(question);
-    if (! id) {
+    if (!id) {
       toast.error("Không thể xem chi tiết: Không tìm thấy ID câu hỏi");
       return;
     }
@@ -249,7 +249,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     const question = questions.find(
       (q) => getQuestionId(q) === viewingQuestionId
     );
-    
+
     return question || null;
   }, [viewingQuestionId, questions]);
 
@@ -267,7 +267,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     return {
       title: question.title || "",
       description: question.description || "",
-      type: question. type || "SingleChoice",
+      type: question.type || "SingleChoice",
       imageUrl: question.imageUrl || "",
       answers:
         question.answers && question.answers.length > 0
@@ -297,10 +297,11 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         quizId: quiz.id,
         title: questionData.title,
         description: questionData.description,
-        orders: questionData. orders,
+        orders: questionData.orders,
         imageUrl: questionData.imageUrl || "",
         type: questionData.type || "SingleChoice",
         answers: questionData.answers.map((ans) => ({
+          answerId: ans.answerId || ans.id,
           answerName: ans.answerName,
           isCorrect: ans.isCorrect,
           imageUrl: ans.imageUrl || "",
@@ -319,7 +320,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
             return {
               ...q,
               ...(apiQuestion || {}),
-              ... payload,
+              ...payload,
             };
           })
         );
@@ -379,19 +380,19 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         message={confirmModal.message}
         type={confirmModal.type}
         confirmText={confirmModal.confirmText}
-        cancelText={confirmModal. cancelText}
+        cancelText={confirmModal.cancelText}
         loading={confirmModal.loading}
       />
 
       {/* Question Detail Modal */}
       <QuestionDetailModal
-        isOpen={!! viewingQuestionId}
+        isOpen={!!viewingQuestionId}
         onClose={() => setViewingQuestionId(null)}
         question={viewingQuestionData}
       />
 
       {/* Add Question Button */}
-      {! addingMode && (
+      {!addingMode && (
         <Button
           onClick={() => setAddingMode("bank")}
           size="sm"
@@ -434,7 +435,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       )}
 
       {/* Questions List - Simple Udemy Style */}
-      {! loadingQuestions && questions.length > 0 && (
+      {!loadingQuestions && questions.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-semibold text-[#272343] tracking-tight">
             Câu hỏi ({questions.length})
@@ -442,7 +443,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
           {questions
             .sort((a, b) => (a.orders || 0) - (b.orders || 0))
             .map((question, index) => {
-              const qId = getQuestionId(question) ??  index;
+              const qId = getQuestionId(question) ?? index;
               const isEditing = editingQuestionId === qId;
 
               const cleanTitle = extractCleanText(question.title, 100);
@@ -532,7 +533,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       )}
 
       {/* Empty State */}
-      {! loadingQuestions && questions.length === 0 && ! addingMode && (
+      {!loadingQuestions && questions.length === 0 && !addingMode && (
         <div className="p-4 bg-[#e3f6f5]/40 rounded-2xl text-center border-2 border-dashed border-[#272343]/20">
           <p className="text-sm text-[#2d334a]">Chưa có câu hỏi nào</p>
           <p className="text-xs text-[#2d334a]/60 mt-1">
