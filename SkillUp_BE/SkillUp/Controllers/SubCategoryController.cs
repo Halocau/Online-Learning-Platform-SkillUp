@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs;
+using SkillUp.ExceptionHandling;
 using SkillUp.Services.Interfaces;
 
 namespace SkillUp.API.Controllers
@@ -36,11 +37,15 @@ namespace SkillUp.API.Controllers
             try
             {
                 var result = await _service.CreateSubCategoryAsync(request);
+                if (result.code != 200) 
+                {
+                    return StatusCode(result.code, result);
+                }
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, new APIReturn(500, "Lỗi hệ thống: " + ex.Message, null));
             }
         }
 
@@ -49,12 +54,18 @@ namespace SkillUp.API.Controllers
         {
             try
             {
-                await _service.UpdateSubCategoryAsync(id, request);
-                return Ok("Cập nhật thành công.");
+                var result = await _service.UpdateSubCategoryAsync(id, request);
+
+                if (result.code != 200) 
+                {
+                    return StatusCode(result.code, result);
+                }
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, new APIReturn(500, "Lỗi hệ thống: " + ex.Message, null));
             }
         }
 

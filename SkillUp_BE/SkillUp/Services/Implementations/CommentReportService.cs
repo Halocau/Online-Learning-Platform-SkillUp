@@ -59,6 +59,7 @@ namespace SkillUp.Services.Implementations
                 AccountId = savedReport.AccountId,
                 CommentPostId = savedReport.CommentPostId,
                 ReporterName = savedReport.Account?.Fullname ?? ""
+
             };
         }
 
@@ -120,8 +121,9 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = report.CreatedAt,
                 AccountId = report.AccountId,
                 CommentPostId = report.CommentPostId,
-                ReporterName = report.Account?.Fullname ?? "" // Lấy tên người report
-            });
+                ReporterName = report.Account?.Fullname ?? "" ,// Lấy tên người report
+                CommentContents = report.CommentPost?.Contents ?? "Nội dung không tồn tại hoặc đã bị xóa"
+            });
         }
 
         public async Task<IEnumerable<CommentReportDto>> GetPendingReportsAsync()
@@ -138,7 +140,8 @@ namespace SkillUp.Services.Implementations
                 CreatedAt = report.CreatedAt,
                 AccountId = report.AccountId,
                 CommentPostId = report.CommentPostId,
-                ReporterName = report.Account?.Fullname ?? ""
+                ReporterName = report.Account?.Fullname ?? "",
+                CommentContents = report.CommentPost?.Contents
             });
         }
     }

@@ -143,6 +143,10 @@ export default function CourseManagement() {
         {activeTab === "reports" && (
           <CourseReportTab reports={reports} fetchReports={fetchData} />
         )}
+        {activeTab === "pending" && (
+          <CoursePendingTab courses={courses} fetchCourses={fetchCourses} />
+        )}
+        {activeTab === "reports" && <CourseReportTab reports={reports} fetchReports={fetchData} />}
       </div>
     </div>
   );

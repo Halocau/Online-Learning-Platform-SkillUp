@@ -234,6 +234,70 @@ namespace SkillUp.Controllers
                 });
             }
         }
+
+        [HttpPut("Open-Course/{courseId}")]
+        [Authorize]
+        public async Task<IActionResult> OpenCourse(Guid courseId)
+        {
+            try
+            {
+                var accountId = _currentUserService.UserId;
+                if (!accountId.HasValue)
+                {
+                    return Unauthorized(new APIReturn
+                    {
+                        code = 401,
+                        message = "Token không hợp lệ hoặc không tìm thấy người dùng",
+                        data = new List<object>()
+                    });
+                }
+                var result = await _courseService.PublishCourseAsync(courseId, accountId.Value);
+
+                if (!result)
+                {
+                    return BadRequest(new APIReturn
+                    {
+                        code = 400,
+                        message = "Không thể mở khoá học.",
+                        data = new List<object>()
+                    });
+                }
+                return Ok(new APIReturn
+                {
+                    code = 200,
+                    message = "Mở lại khoá học thành công",
+                    data = new List<object>()
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new APIReturn
+                {
+                    code = 403,
+                    message = ex.Message,
+                    data = new List<object>()
+                });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Không tìm thấy"))
+                {
+                    return NotFound(new APIReturn
+                    {
+                        code = 404,
+                        message = ex.Message,
+                        data = new List<object>()
+                    });
+                }
+                return StatusCode(500, new APIReturn
+                {
+                    code = 500,
+                    message = $"Có lỗi xảy ra: {ex.Message}",
+                    data = new List<object>()
+                });
+            }
+        }
+
         [HttpPut("ban-unban-course/{courseId}")]
         [Authorize]
         public async Task<IActionResult> ToggleBanCourse(Guid courseId)

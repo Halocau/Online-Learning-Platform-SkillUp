@@ -175,7 +175,8 @@ const ManageUser = () => {
       <Row style={{ marginBottom: 16 }} justify="space-between" align="middle">
         <Col>
           <Input
-            placeholder="Search by name or email"
+            placeholder="Tìm theo tên hoặc email..."
+            maxLength={20}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={handleSearch}
