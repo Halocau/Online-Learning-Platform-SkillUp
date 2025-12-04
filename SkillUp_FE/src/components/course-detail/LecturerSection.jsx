@@ -48,10 +48,6 @@ export default function LecturerSection({ lecturer, rating, enrollmentCount }) {
               <Users className="h-3.5 w-3.5 text-[#272343]" />
               <span>{enrollmentCount.toLocaleString()}+ học viên</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <PlayCircle className="h-3.5 w-3.5 text-[#272343]" />
-              <span>Nhiều khóa học trên StudyTrack</span>
-            </div>
           </div>
           <p className="mt-2 text-sm text-[#2d334a]">
             {lecturer.bio || "Giảng viên nhiều kinh nghiệm, tập trung vào việc xây dựng nội dung chất lượng, dễ hiểu và thân thiện với người học mới."}

@@ -22,21 +22,22 @@ export default function AdminLayout() {
   };
 
   const menuItems = [
-    { label: "Dashboard", icon: <LayoutDashboard />, path: "/admin/" },
-    { label: "Quản lý quản trị viên", icon: <Users />, path: "/admin/moderators" },
-    { label: "Analytics", icon: <BarChart3 />, path: "/admin/analytics" },
-    { label: "Settings", icon: <Settings />, path: "/admin/settings" },
+    { label: "Bảng điều khiển", icon: <LayoutDashboard />, path: "/admin/" },
+    {
+      label: "Quản lý quản trị viên",
+      icon: <Users />,
+      path: "/admin/moderators",
+    },
+    { label: "Báo cáo tài chính", icon: <BarChart3 />, path: "/admin/salary-report" },
   ];
 
   return (
     <div className="flex h-screen bg-gray-50">
-      
       <aside
         className={`${
           collapsed ? "w-16" : "w-60"
         } bg-white border-r flex flex-col transition-all duration-300`}
       >
-        
         <div className="flex items-center justify-between px-4 h-16 border-b">
           <span className="text-xl font-bold text-blue-600">
             {collapsed ? "SU" : "SkillUp Admin"}
@@ -49,7 +50,6 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        
         <nav className="flex-1 overflow-y-auto px-2 py-4">
           {menuItems.map((item) => (
             <Link
@@ -63,7 +63,6 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        
         <div className="border-t p-3">
           <Button
             variant="ghost"
@@ -71,12 +70,11 @@ export default function AdminLayout() {
             onClick={handleLogout}
           >
             <LogOut size={18} />
-            {!collapsed && <span>Logout</span>}
+            {!collapsed && <span>Đăng xuất</span>}
           </Button>
         </div>
       </aside>
 
-      
       <main className="flex-1 overflow-y-auto">
         <div className="p-6">
           <Outlet />

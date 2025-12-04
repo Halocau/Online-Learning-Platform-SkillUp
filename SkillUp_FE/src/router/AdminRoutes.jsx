@@ -5,6 +5,7 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import Dashboard from "../pages/admin/AdminDashboard";
 import ModeratorManage from "../pages/admin/ModeratorManage";
+import AdminSalaryReport from "@/pages/admin/AdminSalaryReport";
 
 const AdminRoutes = () => {
   return (
@@ -19,7 +20,7 @@ const AdminRoutes = () => {
       >
         <Route index element={<Dashboard />} />
         <Route path="moderators" element={<ModeratorManage />} />
-
+        <Route path="salary-report" element={<AdminSalaryReport />} />
         {/* Other admin routes */}
       </Route>
     </Routes>
