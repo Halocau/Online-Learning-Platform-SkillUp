@@ -496,12 +496,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
                               {question.answers.length} câu trả lời
                             </span>
                           )}
-                          {answerImageCount > 0 && (
-                            <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full flex items-center gap-1">
-                              <ImageIcon className="w-3 h-3" />
-                              {answerImageCount} ảnh đáp án
-                            </span>
-                          )}
                         </div>
                       </div>
 

@@ -293,7 +293,7 @@ namespace SkillUp.Services.Implementations
                     }
                     catch (Exception ex)
                     {
-                        _ = ex;
+                        _ = ex; 
                     }
                 }
             }
@@ -389,6 +389,7 @@ namespace SkillUp.Services.Implementations
             _lessonRepository.UpdateLesson(lesson);
             var saved = await _lessonRepository.SaveChangesAsync();
 
+            
             if (!saved)
             {
                 throw new Exception("Không thể xóa bài học!");

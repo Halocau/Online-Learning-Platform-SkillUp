@@ -38,7 +38,6 @@ const ContentModeratorRoutes = () => {
         <Route path="forum" element={<ForumManage />} />
         <Route path="banner" element={<BannerManage />} />
         <Route path="profile" element={<ModProfile />} />
-
       </Route>
     </Routes>
   );
