@@ -231,7 +231,9 @@ export default function CourseDetail() {
               enrollmentCount={course.enrollmentCount}
             />
 
+            {/* Updated ReviewsSection with courseId prop */}
             <ReviewsSection
+              courseId={courseId}
               courseRating={course.rating}
               totalReviews={course.enrollmentCount}
             />
