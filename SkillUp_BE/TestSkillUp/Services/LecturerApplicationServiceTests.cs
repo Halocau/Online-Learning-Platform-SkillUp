@@ -1,15 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Moq;
 using NUnit.Framework;
-using SkillUp.Services.Implementations;
-using SkillUp.Repositories.Interfaces;
-using SkillUp.Services.Common;
-using SkillUp.Services.Interfaces;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.LecturerApplication;
 using SkillUp.BussinessObjects.Models;
+using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Common;
+using SkillUp.Services.Implementations;
+using SkillUp.Services.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace TestSkillUp
 {
@@ -521,12 +522,169 @@ namespace TestSkillUp
         [Test]
         public async Task UpdateStatusAsync_ReturnsFalse_WhenUserIsNull()
         {
-            _currentUserService.Setup(s => s.UserId).Returns((Guid?)null);
+            _currentUser.Setup(s => s.UserId).Returns((Guid?)null);
 
             var result = await _sut.UpdateStatusAsync(Guid.NewGuid(), new UpdateStatusRequestDto { Status = true, Reason = "reason" });
 
             Assert.IsFalse(result);
         }
+        [Test]
+        public async Task UpdateStatusAsync_ReturnsFalse_WhenApplicationNotFound()
+        {
+            _currentUser.Setup(s => s.UserId).Returns(Guid.NewGuid());
+
+            _appRepo.Setup(r => r.GetByIdAsync(It.IsAny<Guid>()))
+                    .ReturnsAsync((LecturerApplication)null);
+
+            var result = await _sut.UpdateStatusAsync(Guid.NewGuid(),
+                new UpdateStatusRequestDto { Status = true });
+
+            Assert.IsFalse(result);
+        }
+        [Test]
+        public async Task UpdateStatusAsync_ReturnsTrue_WhenStatusTrueAndAllConditionsMet()
+        {
+            var userId = Guid.NewGuid();
+            _currentUser.Setup(s => s.UserId).Returns(userId);
+
+            var applicationId = Guid.NewGuid();
+            var accountId = Guid.NewGuid();
+
+            var app = new LecturerApplication
+            {
+                Id = applicationId,
+                AccountId = accountId,
+                Title = "Title",
+                Profession = "Profession"
+            };
+
+            _appRepo.Setup(r => r.GetByIdAsync(applicationId))
+                   .ReturnsAsync(app);
+
+            _appRepo.Setup(r => r.UpdateStatusAsync(applicationId, true, "reason"))
+                   .ReturnsAsync(new LecturerApplication());
+
+            _appRepo.Setup(r => r.SaveChangesAsync())
+                   .ReturnsAsync(true);
+
+            _lecturerService.Setup(s => s.GetLecturerByAccountIdAsync(accountId))
+                            .ReturnsAsync((LecturerDto)null);
+
+            _lecturerService.Setup(s => s.CreateLecturerAsync(It.IsAny<Lecturer>()))
+                            .ReturnsAsync(true);
+
+            var account = new Account { Id = accountId };
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(account);
+
+            _accountRepo.Setup(r => r.UpdateStatusAsync(accountId, "Active"))
+                        .ReturnsAsync(true);
+
+            _emailService.Setup(e =>
+                e.SendLecturerApplicationStatusEmailAsync(account, true, "reason"))
+                .ReturnsAsync(true);
+
+            var result = await _sut.UpdateStatusAsync(
+                applicationId,
+                new UpdateStatusRequestDto { Status = true, Reason = "reason" }
+            );
+
+            Assert.IsTrue(result);
+        }
+        [Test]
+        public async Task UpdateStatusAsync_ReturnsTrue_WhenStatusTrue_AllConditionsMet_ReasonNull()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _currentUser.Setup(s => s.UserId).Returns(userId);
+
+            var applicationId = Guid.NewGuid();
+            var accountId = Guid.NewGuid();
+
+            var app = new LecturerApplication
+            {
+                Id = applicationId,
+                AccountId = accountId,
+                Title = "Some Title",
+                Profession = "Some Profession"
+            };
+
+            _appRepo.Setup(r => r.GetByIdAsync(applicationId))
+                   .ReturnsAsync(app);
+
+            _appRepo.Setup(r => r.UpdateStatusAsync(applicationId, true, null))
+                   .ReturnsAsync(new LecturerApplication());
+
+            _appRepo.Setup(r => r.SaveChangesAsync())
+                   .ReturnsAsync(true);
+
+            _lecturerService.Setup(s => s.GetLecturerByAccountIdAsync(accountId))
+                            .ReturnsAsync((LecturerDto)null);
+
+            _lecturerService.Setup(s => s.CreateLecturerAsync(It.IsAny<Lecturer>()))
+                            .ReturnsAsync(true);
+
+            var account = new Account { Id = accountId };
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(account);
+
+            _accountRepo.Setup(r => r.UpdateStatusAsync(accountId, "Active"))
+                        .ReturnsAsync(true);
+
+            _emailService.Setup(e =>
+                    e.SendLecturerApplicationStatusEmailAsync(account, true, null))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.UpdateStatusAsync(
+                applicationId,
+                new UpdateStatusRequestDto
+                {
+                    Status = true,
+                    Reason = null
+                }
+            );
+
+            // Assert
+            Assert.IsTrue(result);
+        }
+        [Test]
+        public async Task UpdateStatusAsync_ReturnsFalse_WhenStatusTrueButApplicationHasNoAccountId()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            _currentUser.Setup(s => s.UserId).Returns(userId);
+
+            var applicationId = Guid.NewGuid();
+
+            var app = new LecturerApplication
+            {
+                Id = applicationId,
+                AccountId = null,     
+                Title = "Title",
+                Profession = "Profession"
+            };
+
+            _appRepo.Setup(r => r.GetByIdAsync(applicationId))
+                    .ReturnsAsync(app);
+
+            _appRepo.Setup(r => r.UpdateStatusAsync(applicationId, true, "reason"))
+                    .ReturnsAsync(new LecturerApplication());
+
+            _appRepo.Setup(r => r.SaveChangesAsync())
+                    .ReturnsAsync(true);
+
+            // Act
+            var result = await _sut.UpdateStatusAsync(
+                applicationId,
+                new UpdateStatusRequestDto { Status = true, Reason = "reason" }
+            );
+
+            // Assert
+            Assert.IsFalse(result);
+        }
+
+
 
     }
 }
