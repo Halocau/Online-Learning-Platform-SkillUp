@@ -6,10 +6,21 @@ import { courseAPI } from "@/api/courseAPI";
 /**
  * Merge guest cart vào server cart khi user đăng nhập
  * @param {number} userId - ID của user vừa đăng nhập
+ * @param {object|null} user - User object để kiểm tra role
  * @returns {Promise<boolean>} true nếu merge thành công
  */
-export const mergeGuestCartToServer = async (userId) => {
+export const mergeGuestCartToServer = async (userId, user = null) => {
     try {
+        // Chỉ Student mới có cart
+        if (user) {
+            const isStudent = user.roleId === 5 || user.role === "Student";
+            if (!isStudent) {
+                // Giảng viên hoặc role khác không có cart, clear guest cart
+                clearGuestCart();
+                return true;
+            }
+        }
+
         const guestCart = getGuestCart();
 
         if (guestCart.length === 0) {
@@ -79,7 +90,16 @@ export const addToCartUnified = async (courseId, price, user = null) => {
             addToGuestCart(courseId, price); // Luôn return true (check trùng ở bên trong)
             return { success: true, message: "Đã thêm vào giỏ hàng" };
         } else {
-            // Logged-in user - check enrollment trước
+            // Chỉ Student mới có thể thêm vào cart (roleId = 5 hoặc role = "Student")
+            const isStudent = user.roleId === 5 || user.role === "Student";
+            if (!isStudent) {
+                return {
+                    success: false,
+                    message: "Chỉ học viên mới có thể thêm khóa học vào giỏ hàng."
+                };
+            }
+
+            // Logged-in Student - check enrollment trước
             const isEnrolled = await checkEnrollment(courseId);
             if (isEnrolled) {
                 return {
@@ -88,7 +108,7 @@ export const addToCartUnified = async (courseId, price, user = null) => {
                 };
             }
 
-            // Logged-in user - add to server
+            // Logged-in Student - add to server
             console.log('📡 Calling API with userId:', user.userId); // DEBUG
             const response = await cartAPI.addToCart(user.userId, courseId, price);
             if (response.data.code === 200) {
@@ -127,7 +147,14 @@ export const getCartCountUnified = async (user = null) => {
             // Guest user - count from localStorage
             return getGuestCartCount();
         } else {
-            // Logged-in user - fetch from server
+            // Chỉ Student mới có cart (roleId = 5 hoặc role = "Student")
+            const isStudent = user.roleId === 5 || user.role === "Student";
+            if (!isStudent) {
+                // Giảng viên hoặc role khác không có cart
+                return 0;
+            }
+
+            // Logged-in Student - fetch from server
             const response = await cartAPI.getCart(user.userId);
             if (response.data.code === 200) {
                 const items = response.data.data[0]?.cartItems || [];
@@ -136,7 +163,10 @@ export const getCartCountUnified = async (user = null) => {
             return 0;
         }
     } catch (error) {
-        console.error("Error getting cart count:", error);
+        // Không log error khi cart trống (404) - đây là trạng thái bình thường
+        if (error.response?.status !== 404) {
+            console.error("Error getting cart count:", error);
+        }
         return 0;
     }
 };
