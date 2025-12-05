@@ -141,6 +141,7 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> RegisterAsync(RegisterRequestDto request)
         {
+            if (request.RoleId != 4 && request.RoleId != 5) return false;
             if (await _accountRepository.ExistsByEmailAsync(request.Email))
             {
                 return false;
@@ -398,7 +399,7 @@ namespace SkillUp.Services.Implementations
         {
             // Kiểm tra email tồn tại và đã xác thực
             var account = await _accountRepository.GetByEmailAsync(request.Email);
-            if (account == null || account.Status != "Active")
+            if (account == null || !(account.Status == "Active" || account.Status == "Pending"))
             {
                 return false;
             }
