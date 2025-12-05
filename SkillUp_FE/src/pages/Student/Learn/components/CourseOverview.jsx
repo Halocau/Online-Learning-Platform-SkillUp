@@ -7,13 +7,23 @@ import {
   Award,
   ChevronRight,
   Trophy,
-  Lock,
   CheckCircle2,
   ArrowLeft,
+  Star,
+  Edit2,
+  Trash2,
+  MessageSquare,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const CourseOverview = ({ courseData, completedItems, courseId }) => {
+const CourseOverview = ({
+  courseData,
+  completedItems,
+  courseId,
+  userRating,
+  onOpenRatingModal,
+  onDeleteRating,
+}) => {
   const navigate = useNavigate();
 
   const getSectionProgress = (section) => {
@@ -50,6 +60,7 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
     (acc, s) => acc + (s.items?.length || 0),
     0
   );
+  const isCourseCompleted = overallProgress === 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
@@ -74,11 +85,11 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
             {/* Main Content */}
             <div className="relative flex-1 space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#FFD54F]/30 bg-[#FFD54F]/10 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-tight text-[#B8860B]">
-                <span className="inline-flex h-1.5 w-1.5 rounded-full bg-[#FFD54F]"></span>
+                <span className="inline-flex h-1. 5 w-1.5 rounded-full bg-[#FFD54F]"></span>
                 <span>Khóa học</span>
                 {overallProgress > 0 && (
-                  <span className="rounded-full bg-[#FFD54F]/20 px-2 py-0.5 text-[0.65rem] font-medium text-[#B8860B]">
-                    Đang học
+                  <span className="rounded-full bg-[#FFD54F]/20 px-2 py-0.5 text-[0. 65rem] font-medium text-[#B8860B]">
+                    {isCourseCompleted ? "Hoàn thành" : "Đang học"}
                   </span>
                 )}
               </div>
@@ -199,8 +210,8 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                   </div>
                 </div>
 
-                {overallProgress === 100 && (
-                  <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-emerald-700 ring-1 ring-emerald-200">
+                {isCourseCompleted && (
+                  <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2. 5 text-emerald-700 ring-1 ring-emerald-200">
                     <Trophy className="h-5 w-5" />
                     <span className="text-sm font-semibold">
                       Hoàn thành xuất sắc!
@@ -215,6 +226,105 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
 
       {/* Curriculum / Sections List */}
       <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-16 pt-8 sm:px-6">
+        {/* Rating Section - Show if course is completed */}
+        {isCourseCompleted && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6"
+          >
+            {userRating ? (
+              // Show existing rating
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#FFD54F] flex items-center justify-center">
+                      <Star className="w-6 h-6 text-gray-900 fill-gray-900" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Đánh giá của bạn
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Cảm ơn bạn đã đánh giá khóa học này
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={onOpenRatingModal}
+                      className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Chỉnh sửa</span>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={onDeleteRating}
+                      className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="text-sm font-medium">Xóa</span>
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Rating Display */}
+                <div className="bg-gradient-to-r from-[#FFF9E6] to-[#FFF3CD] p-4 rounded-lg border border-[#FFD54F]/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`w-5 h-5 ${
+                          star <= userRating.star
+                            ? "fill-[#FFD54F] text-[#FFD54F]"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  {userRating.contents && (
+                    <p className="text-gray-700 text-sm">
+                      {userRating.contents}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Prompt to add rating
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-[#FFD54F] flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6 text-gray-900" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Đánh giá khóa học này
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Chia sẻ trải nghiệm của bạn với học viên khác
+                    </p>
+                  </div>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onOpenRatingModal}
+                  className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-bold rounded-lg transition-colors shadow-sm"
+                >
+                  <Star className="w-4 h-4" />
+                  <span>Đánh giá ngay</span>
+                </motion.button>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         <div className="space-y-4">
           {/* Section Cards */}
           {courseData.sections.map((section, sectionIndex) => {
@@ -278,7 +388,7 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600">
                           {videos > 0 && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 ring-1 ring-gray-200">
-                              <PlayCircle className="h-3.5 w-3.5 text-sky-500" />
+                              <PlayCircle className="h-3. 5 w-3.5 text-sky-500" />
                               <span>{videos} video</span>
                             </span>
                           )}
@@ -306,16 +416,16 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                             `/student/learn/${courseId}/section/${section.id}`
                           );
                         }}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#FFD54F]/90 px-4 py-2 text-xs font-semibold tracking-tight text-gray-900 shadow-sm transition-all hover:bg-[#FFD54F] hover:shadow-md relative z-10"
+                        className="inline-flex items-center justify-center gap-1. 5 rounded-xl bg-[#FFD54F]/90 px-4 py-2 text-xs font-semibold tracking-tight text-gray-900 shadow-sm transition-all hover:bg-[#FFD54F] hover:shadow-md relative z-10"
                       >
                         {isStarted ? "Tiếp tục" : "Bắt đầu"}
-                        <ChevronRight className="h-3.5 w-3.5" />
+                        <ChevronRight className="h-3. 5 w-3.5" />
                       </motion.button>
                     </div>
 
                     {/* Progress Bar */}
                     {isStarted && (
-                      <div className="space-y-1.5">
+                      <div className="space-y-1. 5">
                         <div className="flex items-center justify-between text-[0.7rem] text-gray-600">
                           <span>Tiến độ chương</span>
                           <span className="font-semibold text-emerald-600">
@@ -327,7 +437,10 @@ const CourseOverview = ({ courseData, completedItems, courseId }) => {
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
-                            transition={{ duration: 0.5, delay: sectionIndex * 0.05 }}
+                            transition={{
+                              duration: 0.5,
+                              delay: sectionIndex * 0.05,
+                            }}
                             className={`h-full rounded-full ${
                               isCompleted
                                 ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600"

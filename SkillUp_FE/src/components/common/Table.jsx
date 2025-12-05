@@ -15,7 +15,7 @@ export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
               </th>
             ))}
             {(onEdit || onDelete) && (
-              <th className="p-3 text-right">Actions</th>
+              <th className="p-3 text-right">Hành động</th>
             )}
           </tr>
         </thead>
@@ -35,7 +35,7 @@ export default function Table({ columns, data, onEdit, onDelete, onRowClick }) {
               <tr
                 key={item.id}
                 className="border-b hover:bg-gray-50 cursor-pointer transition"
-                onClick={() => onRowClick && onRowClick(item)} // ✅ Click row to open modal
+                onClick={() => onRowClick && onRowClick(item)}
               >
                 {columns.map((col) => (
                   <td key={col.key} className="p-3">
