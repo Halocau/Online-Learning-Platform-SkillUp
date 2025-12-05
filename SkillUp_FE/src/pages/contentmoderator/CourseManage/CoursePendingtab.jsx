@@ -38,7 +38,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
 
   // Filter by search
   const filteredCourses = pendingCourses.filter((course) =>
-    course.title?. toLowerCase().includes(searchTerm. toLowerCase())
+    course.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Pagination
@@ -55,17 +55,18 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
   }, [searchTerm, itemsPerPage]);
 
   const handleReview = async (isApproved) => {
-    if (!isApproved && !feedback. trim()) {
+    if (!isApproved && !feedback.trim()) {
       toast.error("Vui lòng nhập lý do từ chối");
       return;
     }
 
     try {
       setLoading(true);
-      await courseAPI.reviewCourse(selectedCourse.id, {
+      await courseAPI.approveCourse(
+        selectedCourse.id,
         isApproved,
-        feedback: feedback.trim() || null,
-      });
+        feedback.trim()
+      );
 
       toast.success(
         isApproved
@@ -77,7 +78,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
       setFeedback("");
       fetchCourses();
     } catch (error) {
-      toast. error("Đã xảy ra lỗi. Vui lòng thử lại.");
+      toast.error("Đã xảy ra lỗi.  Vui lòng thử lại.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -149,7 +150,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                   <div className="flex items-center gap-2 text-gray-600">
                     <StarIcon className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     <span className="font-medium">Đánh giá:</span>
-                    <span>{selectedCourse.rating. toFixed(1)}/5</span>
+                    <span>{selectedCourse.rating.toFixed(1)}/5</span>
                   </div>
                 )}
 
@@ -184,7 +185,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                   </label>
                   <Textarea
                     value={feedback}
-                    onChange={(e) => setFeedback(e.target. value)}
+                    onChange={(e) => setFeedback(e.target.value)}
                     placeholder="Nhập lý do từ chối hoặc ghi chú..."
                     rows={6}
                     className="w-full"
@@ -199,7 +200,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                     disabled={loading}
                     className="flex-1 bg-green-600 hover:bg-green-700"
                   >
-                    {loading ?  <Spin size="small" /> : "Duyệt khóa học"}
+                    {loading ? <Spin size="small" /> : "Duyệt khóa học"}
                   </Button>
                   <Button
                     variant="outline"
@@ -276,7 +277,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                   <div className="w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                     <img
                       src={course.image}
-                      alt={course. title}
+                      alt={course.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -286,10 +287,10 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors">
-                          {course. title}
+                          {course.title}
                         </h3>
                         <p className="text-sm text-gray-500 line-clamp-2 mt-1">
-                          {course. description}
+                          {course.description}
                         </p>
                       </div>
                       <span className="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 whitespace-nowrap">
@@ -313,7 +314,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                       <span className="font-semibold text-green-600">
                         {course.price === 0
                           ? "Miễn phí"
-                          : `${course.price. toLocaleString()} VND`}
+                          : `${course.price.toLocaleString()} VND`}
                       </span>
                     </div>
                   </div>
@@ -354,7 +355,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                     <Button
                       key={pageNumber}
                       variant={
-                        currentPage === pageNumber ?  "default" : "outline"
+                        currentPage === pageNumber ? "default" : "outline"
                       }
                       size="sm"
                       onClick={() => setCurrentPage(pageNumber)}
