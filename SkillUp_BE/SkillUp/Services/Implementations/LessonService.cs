@@ -97,7 +97,7 @@ namespace SkillUp.Services.Implementations
             var section = await _sectionRepository.GetSectionByIdAsync(sectionId);
             if (section == null)
             {
-                throw new Exception("Không tìm thấy section!");
+                throw new NullReferenceException("Không tìm thấy section!");
             }
 
             var lessons = await _lessonRepository.GetLessonsBySectionIdAsync(sectionId);
@@ -108,7 +108,7 @@ namespace SkillUp.Services.Implementations
         {
             var lesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
             if (lesson == null)
-                return null;
+                throw new NullReferenceException("Không tìm thấy bài học!");
 
             return MapToResponseDto(lesson);
         }
@@ -116,7 +116,7 @@ namespace SkillUp.Services.Implementations
         public async Task<LessonResponseDto> CreateLessonAsync(CreateLessonDto dto, Guid accountId)
         {
             ValidateCreate(dto);
-            // 1. Kiểm tra section tồn tại
+
             var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId)
                 ?? throw new Exception("Không tìm thấy section!");
 

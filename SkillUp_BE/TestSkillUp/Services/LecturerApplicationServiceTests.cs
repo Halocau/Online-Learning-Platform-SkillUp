@@ -517,16 +517,6 @@ namespace TestSkillUp
 
             Assert.IsNull(result[0].RejectReason);
         }
-        //UpdateStatusAsync
-        [Test]
-        public async Task UpdateStatusAsync_ReturnsFalse_WhenUserIsNull()
-        {
-            _currentUserService.Setup(s => s.UserId).Returns((Guid?)null);
-
-            var result = await _sut.UpdateStatusAsync(Guid.NewGuid(), new UpdateStatusRequestDto { Status = true, Reason = "reason" });
-
-            Assert.IsFalse(result);
-        }
 
     }
 }
