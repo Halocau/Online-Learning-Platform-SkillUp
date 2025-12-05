@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillUp.BussinessObjects.DTOs.Rating;
+using SkillUp.ExceptionHandling;
 using SkillUp.Services.Interfaces;
 
 namespace SkillUp.Controllers
@@ -24,6 +25,33 @@ namespace SkillUp.Controllers
         {
             var ratings = await _ratingService.GetRatingsByCourseIdAsync(courseId);
             return Ok(new { code = 200, message = "Lấy danh sách đánh giá thành công", data = ratings });
+        }
+
+        // GET: /api/Rating/account?courseId={courseId}
+        [Authorize]
+        [HttpGet("account")]
+        public async Task<IActionResult> GetRatingsByAccount([FromQuery] Guid? courseId = null)
+        {
+            var accountId = _currentUserService.UserId;
+            if (accountId == null)
+            {
+                return Unauthorized(new APIReturn(401, "Người dùng chưa đăng nhập", new List<object>()));
+            }
+
+            try
+            {
+                var ratings = await _ratingService.GetRatingsByAccountIdAsync(accountId.Value, courseId);
+                var dataList = ratings.Select(r => (object)r).ToList();
+                return Ok(new APIReturn(200, "Lấy danh sách đánh giá thành công", dataList));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new APIReturn(400, ex.Message, new List<object>()));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn(500, ex.Message, new List<object>()));
+            }
         }
 
         // POST: /api/Rating/create

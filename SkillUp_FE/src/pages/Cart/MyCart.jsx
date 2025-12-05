@@ -73,11 +73,13 @@ function MyCart() {
                 throw new Error(response.data?.message || "Không thể tải giỏ hàng");
             }
         } catch (err) {
-            console.error("Lỗi khi tải giỏ hàng:", err);
             if (err.response?.status === 404) {
+                // Cart trống - không log error, chỉ set empty cart
                 setCart({ cartItems: [] });
                 setError(null);
             } else {
+                // Lỗi thực sự - log và hiển thị error
+                console.error("Lỗi khi tải giỏ hàng:", err);
                 setError("Lỗi khi tải giỏ hàng. Vui lòng thử lại.");
                 message.error(err.message || "Lỗi khi tải giỏ hàng");
             }

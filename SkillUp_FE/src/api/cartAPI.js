@@ -10,7 +10,10 @@ export const cartAPI = {
             const response = await axiosInstance.get(`${API_BASE_URL}/${accountId}`);
             return response;
         } catch (error) {
-            console.error("Error getting cart:", error);
+            // Không log error khi cart trống (404) - đây là trạng thái bình thường
+            if (error.response?.status !== 404) {
+                console.error("Error getting cart:", error);
+            }
             throw error;
         }
     },

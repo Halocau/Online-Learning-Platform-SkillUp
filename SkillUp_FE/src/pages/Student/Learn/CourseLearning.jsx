@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { courseAPI } from "@/api/courseAPI";
 import { markLessonComplete, trackLessonView } from "@/api/lessonAPI";
+import { ratingAPI } from "@/api/ratingAPI";
 import { toast } from "react-toastify";
 import { BookOpen, Loader2 } from "lucide-react";
 import CourseSidebar from "./components/CourseSidebar";
-import LessonContent from "./components/LessonContent";
+import LessonContent from "./components/Lesson/LessonContent";
 import CourseOverview from "./components/CourseOverview";
 import SectionDetail from "./components/SectionDetail";
-import RatingModal from "./components/RatingModal";
+import RatingModal from "./components/Rating/RatingModal";
 
 const CourseLearning = () => {
   const { courseId, sectionId, lessonId } = useParams();
@@ -22,6 +23,8 @@ const CourseLearning = () => {
   const [currentSection, setCurrentSection] = useState(null);
   const [completedItems, setCompletedItems] = useState(new Set());
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [userRating, setUserRating] = useState(null);
+  const [hasShownCompletionModal, setHasShownCompletionModal] = useState(false);
 
   useEffect(() => {
     window.scrollTo({
@@ -33,6 +36,7 @@ const CourseLearning = () => {
 
   useEffect(() => {
     fetchCourseDetail();
+    checkUserRating();
   }, [courseId, sectionId, lessonId]);
 
   // Track lesson view khi vào lesson
@@ -41,6 +45,25 @@ const CourseLearning = () => {
       trackLessonView(lessonId);
     }
   }, [lessonId, currentItem]);
+
+  const checkUserRating = async () => {
+    try {
+      const response = await ratingAPI.getCourseRatings(courseId);
+      const ratings = response.data || response || [];
+
+      const currentUserId = localStorage.getItem("userId");
+
+      const existingRating = ratings.find(
+        (r) =>
+          r.userId === currentUserId || r.userId === parseInt(currentUserId)
+      );
+
+      setUserRating(existingRating || null);
+    } catch (error) {
+      console.error("Error checking user rating:", error);
+      setUserRating(null);
+    }
+  };
 
   const fetchCourseDetail = async () => {
     try {
@@ -172,41 +195,57 @@ const CourseLearning = () => {
     );
   };
 
+  // Calculate if course will be complete after this item
+  const checkIfCourseWillBeComplete = useCallback(
+    (newCompletedItems) => {
+      if (!courseData) return false;
+
+      const total = courseData.sections.reduce(
+        (a, s) => a + (s.items?.length || 0),
+        0
+      );
+
+      return newCompletedItems.size >= total && total > 0;
+    },
+    [courseData]
+  );
+
   const handleItemComplete = async (itemId) => {
     try {
-      // Call API to mark complete
       await markLessonComplete(itemId);
 
-      // Optimistic update
-      setCompletedItems((prev) => new Set([...prev, itemId]));
+      const newCompletedItems = new Set([...completedItems, itemId]);
+      setCompletedItems(newCompletedItems);
 
-      // Refetch to get updated progress from server
+      const willBeComplete = checkIfCourseWillBeComplete(newCompletedItems);
+
+      if (willBeComplete && !hasShownCompletionModal) {
+        setHasShownCompletionModal(true);
+
+        toast.success("Chúc mừng! Bạn đã hoàn thành khóa học!", {
+          autoClose: 3000,
+        });
+
+        // Navigate to overview
+        setTimeout(() => {
+          navigate(`/student/learn/${courseId}`);
+        }, 1500);
+      } else {
+        toast.success("Đã đánh dấu hoàn thành");
+      }
+
+      // Refresh course data in background
       await fetchCourseDetail();
-
-      // Check if course is now complete
-      checkCourseCompletion();
-
-      toast.success("Đã đánh dấu hoàn thành");
     } catch (error) {
       console.error("Error marking lesson complete:", error);
-      toast.error("Không thể đánh dấu hoàn thành. Vui lòng thử lại.");
+      toast.error("Không thể đánh dấu hoàn thành.  Vui lòng thử lại.");
 
-      // Rollback optimistic update on error
+      // Revert optimistic update
       setCompletedItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(itemId);
         return newSet;
       });
-    }
-  };
-
-  const checkCourseCompletion = () => {
-    const total = courseData.sections.reduce(
-      (a, s) => a + (s.items?.length || 0),
-      0
-    );
-    if (completedItems.size >= total && total > 0) {
-      setShowRatingModal(true);
     }
   };
 
@@ -219,8 +258,51 @@ const CourseLearning = () => {
   };
 
   const handleQuizComplete = async () => {
-    // Refetch course detail to get updated completion status
     await fetchCourseDetail();
+  };
+
+  const handleRatingSubmit = async (data) => {
+    try {
+      if (userRating) {
+        // Update existing rating
+        await ratingAPI.updateRating({
+          ratingId: userRating.ratingId,
+          star: data.star,
+          contents: data.contents,
+        });
+      } else {
+        // Create new rating
+        await ratingAPI.createRating({
+          courseId: data.courseId,
+          star: data.star,
+          contents: data.contents,
+        });
+      }
+
+      await checkUserRating();
+      setShowRatingModal(false);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      throw error;
+    }
+  };
+
+  const handleDeleteRating = async () => {
+    if (!userRating) return;
+
+    if (!window.confirm("Bạn có chắc chắn muốn xóa đánh giá của mình?")) {
+      return;
+    }
+
+    try {
+      await ratingAPI.deleteRating(userRating.ratingId);
+      toast.success("Đã xóa đánh giá");
+      setUserRating(null);
+      await checkUserRating();
+    } catch (error) {
+      console.error("Error deleting rating:", error);
+      toast.error("Không thể xóa đánh giá");
+    }
   };
 
   if (loading)
@@ -265,11 +347,16 @@ const CourseLearning = () => {
           courseData={courseData}
           completedItems={completedItems}
           courseId={courseId}
+          userRating={userRating}
+          onOpenRatingModal={() => setShowRatingModal(true)}
+          onDeleteRating={handleDeleteRating}
         />
         {showRatingModal && (
           <RatingModal
             courseName={courseData.title}
-            onSubmit={() => {}}
+            courseId={courseId}
+            existingRating={userRating}
+            onSubmit={handleRatingSubmit}
             onClose={() => setShowRatingModal(false)}
           />
         )}
@@ -288,13 +375,6 @@ const CourseLearning = () => {
           completedItems={completedItems}
           courseData={courseData}
         />
-        {showRatingModal && (
-          <RatingModal
-            courseName={courseData.title}
-            onSubmit={() => {}}
-            onClose={() => setShowRatingModal(false)}
-          />
-        )}
         <TransitionOverlay />
       </div>
     );
@@ -332,13 +412,6 @@ const CourseLearning = () => {
           />
         </div>
 
-        {showRatingModal && (
-          <RatingModal
-            courseName={courseData.title}
-            onSubmit={() => {}}
-            onClose={() => setShowRatingModal(false)}
-          />
-        )}
         <TransitionOverlay />
       </div>
     );

@@ -32,23 +32,26 @@ namespace SkillUp.Services.Implementations
         private readonly IStudentProgressRepository _studentProgressRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
-        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IAiSupportBackgroundJobService aiSupportBackgroundJobService)
-		{
-			_courseRepository = courseRepository;
-			_lecturerRepository = lecturerRepository;
-			_cloudinaryService = cloudinaryService;
-			_accountRepository = accountRepository;
-			_categoryRepository = categoryRepository;
-			_emailService = emailService;
-			_notifyService = notifyService;
-			_enrollmentRepository = enrollmentRepository;
+        private readonly IRatingRepository _ratingRepository;
+
+        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService, IEnrollmentRepository enrollmentRepository, IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IAiSupportBackgroundJobService aiSupportBackgroundJobService, IRatingRepository ratingRepository)
+        {
+            _courseRepository = courseRepository;
+            _lecturerRepository = lecturerRepository;
+            _cloudinaryService = cloudinaryService;
+            _accountRepository = accountRepository;
+            _categoryRepository = categoryRepository;
+            _emailService = emailService;
+            _notifyService = notifyService;
+            _enrollmentRepository = enrollmentRepository;
             _studentRepository = studentRepository;
             _studentProgressRepository = studentProgressRepository;
             _currentUserService = currentUserService;
             _aiSupportBackgroundJobService = aiSupportBackgroundJobService;
-		}
+            _ratingRepository = ratingRepository;
+        }
 
-		public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
+        public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
 		{
 			var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image, "skillup/courses");
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accId);
@@ -628,7 +631,11 @@ namespace SkillUp.Services.Implementations
 
             var progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
 
-            return BuildCourseLearningDetailDto(course, student.Id, progressDict);
+
+            var rating = await _ratingRepository.GetByStudentAndCourseAsync(student.Id, courseId);
+            int? ratingId = rating?.Id;
+
+            return BuildCourseLearningDetailDto(course, student.Id, progressDict, ratingId);
         }
 
         // Build CourseDetailDto for public course detail (no progress info)
@@ -733,7 +740,8 @@ namespace SkillUp.Services.Implementations
         private CourseLearningDetailDto BuildCourseLearningDetailDto(
             Course course,
             Guid studentId,
-            Dictionary<Guid, bool?> progressDict)
+            Dictionary<Guid, bool?> progressDict,
+            int? ratingId = null)
         {
             progressDict ??= new Dictionary<Guid, bool?>();
 
@@ -762,7 +770,8 @@ namespace SkillUp.Services.Implementations
                     Avartar = course.Lecturer.Account?.Avatar ?? "default-avatar.png",
                     Title = course.Lecturer.Title ?? "",
                     Profession = course.Lecturer.Profession ?? ""
-                } : null
+                } : null,
+                RatingId = ratingId
             };
 
             detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
