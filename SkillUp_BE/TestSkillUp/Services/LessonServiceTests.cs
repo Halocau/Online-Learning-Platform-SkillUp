@@ -70,7 +70,7 @@ namespace TestSkillUp.Services
 
         // -------- GetAllLessonsAsync --------
 
-        [Test]
+        [Test]//1
         public async Task GetAllLessonsAsync_ReturnsMappedDtos()
         {
             // Arrange
@@ -120,9 +120,26 @@ namespace TestSkillUp.Services
             Assert.AreEqual("video-url", list[0].Assets[0].Url);
         }
 
+        [Test]//1
+        public async Task GetAllLessonsAsync_NullRepositoryResponse_ReturnsEmptyList()
+        {
+            // Arrange
+            _lessonRepositoryMock
+                .Setup(r => r.GetAllLessonsAsync())
+                .ReturnsAsync((IEnumerable<Lesson>?)null);
+
+            // Act
+            var result = await _sut.GetAllLessonsAsync();
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsEmpty(result);
+            _lessonRepositoryMock.Verify(r => r.GetAllLessonsAsync(), Times.Once);
+        }
+
         // -------- GetLessonByIdAsync --------
 
-        [Test]
+        [Test]//1
         public async Task GetLessonByIdAsync_LessonNotFound_ReturnsNull()
         {
             // Arrange
@@ -139,7 +156,7 @@ namespace TestSkillUp.Services
             _lessonRepositoryMock.Verify(r => r.GetLessonWithDetailsAsync(id), Times.Once);
         }
 
-        [Test]
+        [Test]//1
         public async Task GetLessonByIdAsync_LessonFound_ReturnsMappedDto()
         {
             // Arrange
@@ -193,7 +210,7 @@ namespace TestSkillUp.Services
 
         // -------- GetLessonsBySectionIdAsync --------
 
-        [Test]
+        [Test]//1
         public void GetLessonsBySectionIdAsync_SectionNotFound_Throws()
         {
             // Arrange
@@ -210,6 +227,65 @@ namespace TestSkillUp.Services
             StringAssert.Contains("Không tìm thấy section", ex!.Message);
 
             _lessonRepositoryMock.Verify(r => r.GetLessonsBySectionIdAsync(It.IsAny<Guid>()), Times.Never);
+        }
+
+        [Test]//1
+        public async Task GetLessonsBySectionIdAsync_SectionExists_ReturnsMappedLessons()
+        {
+            // Arrange
+            var sectionId = Guid.NewGuid();
+            var lessonId = Guid.NewGuid();
+            var section = new Section { Id = sectionId, Title = "Section title" };
+            var lessons = new List<Lesson>
+            {
+                new Lesson
+                {
+                    Id = lessonId,
+                    SectionId = sectionId,
+                    Section = section,
+                    Title = "Lesson title",
+                    Type = "Text",
+                    Description = "Desc",
+                    Orders = 2,
+                    IsFree = true,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now.AddDays(-3),
+                    UpdatedAt = DateTime.Now.AddDays(-1),
+                    Assets = new List<Asset>
+                    {
+                        new Asset
+                        {
+                            Id = Guid.NewGuid(),
+                            Contents = "content",
+                            FileUrl = "file",
+                            IsActive = true
+                        }
+                    }
+                }
+            };
+
+            _sectionRepositoryMock
+                .Setup(r => r.GetSectionByIdAsync(sectionId))
+                .ReturnsAsync(section);
+
+            _lessonRepositoryMock
+                .Setup(r => r.GetLessonsBySectionIdAsync(sectionId))
+                .ReturnsAsync(lessons);
+
+            // Act
+            var result = await _sut.GetLessonsBySectionIdAsync(sectionId);
+
+            // Assert
+            var list = result.ToList();
+            Assert.AreEqual(1, list.Count);
+            Assert.AreEqual(lessonId, list[0].Id);
+            Assert.AreEqual(sectionId, list[0].SectionId);
+            Assert.AreEqual("Section title", list[0].SectionTitle);
+            Assert.AreEqual("Lesson title", list[0].Title);
+            Assert.AreEqual("content", list[0].TextContent);
+
+            _sectionRepositoryMock.Verify(r => r.GetSectionByIdAsync(sectionId), Times.Once);
+            _lessonRepositoryMock.Verify(r => r.GetLessonsBySectionIdAsync(sectionId), Times.Once);
         }
 
         // -------- CreateLessonAsync (Text) --------
@@ -659,6 +735,49 @@ namespace TestSkillUp.Services
 
             _studentProgressRepositoryMock.Verify(r => r.AddAsync(It.IsAny<StudentProgress>()), Times.Once);
             _studentProgressRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        }
+
+        // -------- GetActiveLessonsAsync --------
+
+        [Test]
+        public async Task GetActiveLessonsAsync_FiltersInactiveAssets()
+        {
+            // Arrange
+            var lessons = new List<Lesson>
+            {
+                new Lesson
+                {
+                    Id = Guid.NewGuid(),
+                    Title = "Active lesson",
+                    Type = "Video",
+                    Description = "Desc",
+                    Orders = 1,
+                    IsFree = true,
+                    CreatedAt = DateTime.Now.AddDays(-2),
+                    UpdatedAt = DateTime.Now.AddDays(-1),
+                    Assets = new List<Asset>
+                    {
+                        new Asset { Id = Guid.NewGuid(), Url = "keep-url", IsActive = true },
+                        new Asset { Id = Guid.NewGuid(), Url = "drop-url", IsActive = false }
+                    }
+                }
+            };
+
+            _lessonRepositoryMock
+                .Setup(r => r.GetActiveLessonsAsync())
+                .ReturnsAsync(lessons);
+
+            // Act
+            var result = await _sut.GetActiveLessonsAsync();
+
+            // Assert
+            var list = result.ToList();
+            Assert.AreEqual(1, list.Count);
+            Assert.AreEqual("Active lesson", list[0].Title);
+            Assert.AreEqual(1, list[0].Assets.Count); // inactive asset filtered out
+            Assert.AreEqual("keep-url", list[0].Assets[0].Url);
+
+            _lessonRepositoryMock.Verify(r => r.GetActiveLessonsAsync(), Times.Once);
         }
     }
 }

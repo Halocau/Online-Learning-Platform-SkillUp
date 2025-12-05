@@ -84,47 +84,6 @@ export default function CourseDetailHero({ course }) {
                   {new Date(course.updatedAt).toLocaleDateString("vi-VN")}
                 </span>
               </div>
-              <div className="h-3 w-px bg-[#cbd5e1]"></div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#e3f6f5] px-3 py-1 text-xs font-medium tracking-tight text-[#272343]">
-                  <svg
-                    className="h-3.5 w-3.5 text-[#272343]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="6"></circle>
-                    <circle cx="12" cy="12" r="2"></circle>
-                  </svg>
-                  Trình độ: {course.level || "Beginner → Intermediate"}
-                </span>
-              </div>
-              {course.subtitles && course.subtitles.length > 0 && (
-                <>
-                  <div className="h-3 w-px bg-[#cbd5e1]"></div>
-                  <span>Phụ đề: {course.subtitles.join(", ")}</span>
-                </>
-              )}
-            </div>
-
-            {/* Badges */}
-            <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-              {course.isTopSeller && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#272343] px-3 py-1 text-xs font-medium tracking-tight text-[#fffffe]">
-                  <svg
-                    className="h-3.5 w-3.5 text-[#FFD54F]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M8 14c0 2.2 1.8 4 4 4s4-1.8 4-4c0-1.9-1.3-3.2-2.6-4.6C12.6 8 12 7.3 12 6c-1 1.2-2 2.4-2 4 0 1 .4 1.7 1 2.4"></path>
-                  </svg>
-                  Bán chạy
-                </span>
-              )}
             </div>
           </div>
 

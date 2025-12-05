@@ -382,7 +382,7 @@ function QuestionBankSelector({
                 className="bg-yellow-500 hover:bg-yellow-600 text-white border-0"
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Tạo mới
+                Tạo mới thủ công
               </Button>
             </div>
 

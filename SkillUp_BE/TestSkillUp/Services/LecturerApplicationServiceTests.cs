@@ -44,6 +44,17 @@ namespace TestSkillUp
                 _emailService.Object
             );
         }
+        private static IFormFile CreateFormFile(string fileName = "file.txt", string content = "test")
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+            var stream = new MemoryStream(bytes);
+            return new FormFile(stream, 0, bytes.Length, "file", fileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "application/octet-stream"
+            };
+        }
+
         //method : ApplyCvAsync 
         [Test]
         public async Task ApplyCvAsync_ReturnsTrue_WhenAccountIsLecturer_AndSaveSucceeds()
@@ -51,10 +62,10 @@ namespace TestSkillUp
             var accountId = Guid.NewGuid();
 
             _accountRepo.Setup(r => r.GetByIdAsync(accountId))
-                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4, Status = "Pending" });
 
-            var mockCvFile = new Mock<IFormFile>().Object;
-            var mockDegreeFile = new Mock<IFormFile>().Object;
+            var mockCvFile = CreateFormFile("cv.pdf", "cv-content");
+            var mockDegreeFile = CreateFormFile("degree.jpg", "degree-content");
 
             _cloudinary.Setup(c => c.UploadPdfAsync(It.IsAny<IFormFile>(), "skillup/lecturers/cv"))
                         .ReturnsAsync("https://cloudinary.com/cv.pdf");
@@ -79,6 +90,12 @@ namespace TestSkillUp
             var result = await _sut.ApplyCvAsync(accountId, req);
 
             Assert.IsTrue(result);
+
+            _accountRepo.Verify(r => r.GetByIdAsync(accountId), Times.Once);
+            _cloudinary.Verify(c => c.UploadPdfAsync(It.IsAny<IFormFile>(), "skillup/lecturers/cv"), Times.Once);
+            _cloudinary.Verify(c => c.UploadImageAsync(It.IsAny<IFormFile>(), "skillup/lecturers/degrees"), Times.Once);
+            _appRepo.Verify(r => r.AddAsync(It.IsAny<LecturerApplication>()), Times.Once);
+            _appRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
 
         [Test]
@@ -89,8 +106,8 @@ namespace TestSkillUp
             _accountRepo.Setup(r => r.GetByIdAsync(accountId))
                         .ReturnsAsync((Account)null);
 
-            var mockCvFile = new Mock<IFormFile>().Object;
-            var mockDegreeFile = new Mock<IFormFile>().Object;
+            var mockCvFile = CreateFormFile();
+            var mockDegreeFile = CreateFormFile();
 
             var req = new ApplyCvRequestDto
             {
@@ -110,16 +127,16 @@ namespace TestSkillUp
             _cloudinary.VerifyNoOtherCalls();
             _appRepo.VerifyNoOtherCalls();
         }
+
         [Test]
         public async Task ApplyCvAsync_ReturnsFalse_WhenAccountIsNotLecturer()
         {
             var accountId = Guid.NewGuid();
-
             _accountRepo.Setup(r => r.GetByIdAsync(accountId))
-                        .ReturnsAsync(new Account { Id = accountId, RoleId = 2 });
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 2, Status = "Active" });
 
-            var mockCvFile = new Mock<IFormFile>().Object;
-            var mockDegreeFile = new Mock<IFormFile>().Object;
+            var mockCvFile = CreateFormFile();
+            var mockDegreeFile = CreateFormFile();
 
             var req = new ApplyCvRequestDto
             {
@@ -138,16 +155,16 @@ namespace TestSkillUp
             _cloudinary.VerifyNoOtherCalls();
             _appRepo.VerifyNoOtherCalls();
         }
-        //cv null
+
         [Test]
         public async Task ApplyCvAsync_ThrowsException_WhenCvFileIsNull()
         {
             var accountId = Guid.NewGuid();
 
             _accountRepo.Setup(r => r.GetByIdAsync(accountId))
-                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4, Status = "Pending" });
 
-            var mockDegreeFile = new Mock<IFormFile>().Object;
+            var mockDegreeFile = CreateFormFile("degree.jpg", "degree-content");
 
             var req = new ApplyCvRequestDto
             {
@@ -157,8 +174,7 @@ namespace TestSkillUp
                 Title = "title",
                 Profession = "prof"
             };
-
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            Assert.ThrowsAsync<ArgumentException>(async () =>
                 await _sut.ApplyCvAsync(accountId, req)
             );
 
@@ -166,73 +182,53 @@ namespace TestSkillUp
             _cloudinary.VerifyNoOtherCalls();
             _appRepo.VerifyNoOtherCalls();
         }
+
         [Test]
         public async Task ApplyCvAsync_ThrowsException_WhenDegreeFileIsNull()
         {
             var accountId = Guid.NewGuid();
 
             _accountRepo.Setup(r => r.GetByIdAsync(accountId))
-                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4, Status = "Pending" });
 
             var req = new ApplyCvRequestDto
             {
-                CvFile = new Mock<IFormFile>().Object,
+                CvFile = CreateFormFile("cv.pdf", "cv-content"),
                 DegreeFile = null,
                 Description = "desc",
                 Title = "title",
                 Profession = "prof"
             };
 
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            Assert.ThrowsAsync<ArgumentException>(async () =>
                 await _sut.ApplyCvAsync(accountId, req)
             );
 
             _accountRepo.Verify(r => r.GetByIdAsync(accountId), Times.Once);
-        }
-        [Test]
-        public async Task ApplyCvAsync_ThrowsException_WhenDegreeFileIsEmpty()
-        {
-            var accountId = Guid.NewGuid();
+            _cloudinary.VerifyNoOtherCalls();
+            _appRepo.VerifyNoOtherCalls();
+        }    
 
-            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
-                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
-
-            var req = new ApplyCvRequestDto
-            {
-                CvFile = new Mock<IFormFile>().Object,
-                DegreeFile = new List<IFormFile>(),
-                Description = "desc",
-                Title = "title",
-                Profession = "prof"
-            };
-
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
-                await _sut.ApplyCvAsync(accountId, req)
-            );
-
-            _accountRepo.Verify(r => r.GetByIdAsync(accountId), Times.Once);
-        }
         [Test]
         public async Task ApplyCvAsync_ReturnsTrue_WhenMultipleDegreeFilesProvided()
         {
             var accountId = Guid.NewGuid();
 
             _accountRepo.Setup(r => r.GetByIdAsync(accountId))
-                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4, Status = "Pending" });
 
-            var mockCvFile = new Mock<IFormFile>().Object;
+            var mockCvFile = CreateFormFile("cv.pdf", "cv-content");
 
             var degreeFiles = new List<IFormFile>();
             for (int i = 0; i < 10; i++)
             {
-                degreeFiles.Add(new Mock<IFormFile>().Object);
+                degreeFiles.Add(CreateFormFile($"deg{i + 1}.jpg", $"content{i + 1}"));
             }
 
-            _cloudinary.Setup(c => c.UploadPdfAsync(mockCvFile, "skillup/lecturers/cv"))
+            _cloudinary.Setup(c => c.UploadPdfAsync(It.IsAny<IFormFile>(), "skillup/lecturers/cv"))
                         .ReturnsAsync("https://cloudinary.com/cv.pdf");
-
             _cloudinary.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), "skillup/lecturers/degrees"))
-                        .ReturnsAsync((IFormFile f, string folder) => $"https://cloudinary.com/degree{degreeFiles.IndexOf(f) + 1}.jpg");
+                        .ReturnsAsync("https://cloudinary.com/degree.jpg");
 
             _appRepo.Setup(r => r.AddAsync(It.IsAny<LecturerApplication>()))
                     .ReturnsAsync((LecturerApplication a) => a);
@@ -253,12 +249,274 @@ namespace TestSkillUp
             Assert.IsTrue(result);
 
             _accountRepo.Verify(r => r.GetByIdAsync(accountId), Times.Once);
-            _cloudinary.Verify(c => c.UploadPdfAsync(mockCvFile, "skillup/lecturers/cv"), Times.Once);
+            _cloudinary.Verify(c => c.UploadPdfAsync(It.IsAny<IFormFile>(), "skillup/lecturers/cv"), Times.Once);
             _cloudinary.Verify(c => c.UploadImageAsync(It.IsAny<IFormFile>(), "skillup/lecturers/degrees"), Times.Exactly(10));
             _appRepo.Verify(r => r.AddAsync(It.IsAny<LecturerApplication>()), Times.Once);
             _appRepo.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
+
         //method : GetMyApplicationsAsync 
+        [Test]
+        public async Task ReturnsEmptyList_WhenAccountNotExist()
+        {
+            var accountId = Guid.NewGuid();
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId)).ReturnsAsync((Account)null);
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.IsNotNull(result);
+            Assert.IsEmpty(result);
+        }
+        [Test]
+        public async Task ReturnsEmptyList_WhenAccountIsNotLecturer()
+        {
+            var accountId = Guid.NewGuid();
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 2 });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.IsNotNull(result);
+            Assert.IsEmpty(result);
+        }
+        [Test]
+        public async Task ReturnsEmptyList_WhenNoApplicationsExist()
+        {
+            var accountId = Guid.NewGuid();
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication>());
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.IsNotNull(result);
+            Assert.IsEmpty(result);
+        }
+        [Test]
+        public async Task ReturnsApplicationsMappedToDto_WhenApplicationsExist()
+        {
+            var accountId = Guid.NewGuid();
+            var now = DateTime.Now;
+
+            var app = new LecturerApplication
+            {
+                Cv = "cv.pdf",
+                Degree = "degree.jpg",
+                Title = "Title",
+                Profession = "Prof",
+                Description = "Desc",
+                Status = "Accepted",
+                Reason = "None",
+                CreatedAt = now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.AreEqual(1, result.Count);
+            var dto = result[0];
+            Assert.AreEqual("cv.pdf", dto.Cv);
+            Assert.AreEqual("degree.jpg", dto.Degree);
+            Assert.AreEqual("Title", dto.Title);
+            Assert.AreEqual("Prof", dto.Profession);
+            Assert.AreEqual("Desc", dto.Description);
+            Assert.AreEqual("Accepted" , dto.Status);
+            Assert.AreEqual("None", dto.RejectReason);
+            Assert.AreEqual(now, dto.CreatedAt);
+            Assert.IsNull(dto.UpdatedAt);
+        }
+        [Test]
+        public async Task ReturnsApplicationsWithEmptyStrings_WhenApplicationFieldsAreNull()
+        {
+            var accountId = Guid.NewGuid();
+            var now = DateTime.Now;
+
+            var app = new LecturerApplication
+            {
+                Cv = null,
+                Degree = null,
+                Title = null,
+                Profession = null,
+                Description = null,
+                Status = "Pending",
+                Reason = null,
+                CreatedAt = now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.AreEqual(1, result.Count);
+            var dto = result[0];
+            Assert.AreEqual(string.Empty, dto.Cv);
+            Assert.AreEqual(string.Empty, dto.Degree);
+            Assert.AreEqual(string.Empty, dto.Title);
+            Assert.AreEqual(string.Empty, dto.Profession);
+            Assert.AreEqual(null, dto.Description);
+            Assert.AreEqual("Pending", dto.Status);
+            Assert.AreEqual(null, dto.RejectReason);
+            Assert.AreEqual(now, dto.CreatedAt);
+            Assert.IsNull(dto.UpdatedAt);
+        }
+        [Test]
+        public async Task ReturnsEmptyStringForCv_WhenCvIsNull()
+        {
+            var accountId = Guid.NewGuid();
+            var app = new LecturerApplication
+            {
+                Cv = null,
+                Degree = "degree.jpg",
+                Title = "Title",
+                Profession = "Prof",
+                Description = "Desc",
+                Status = "Pending",
+                Reason = "None",
+                CreatedAt = DateTime.Now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.AreEqual(string.Empty, result[0].Cv);
+        }
+        [Test]
+        public async Task ReturnsEmptyStringForDegree_WhenDegreeIsNull()
+        {
+            var accountId = Guid.NewGuid();
+            var app = new LecturerApplication
+            {
+                Cv = "cv.pdf",
+                Degree = null,
+                Title = "Title",
+                Profession = "Prof",
+                Description = "Desc",
+                Status = "Pending",
+                Reason = "None",
+                CreatedAt = DateTime.Now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.AreEqual(string.Empty, result[0].Degree);
+        }
+        [Test]
+        public async Task ReturnsEmptyStringForTitle_WhenTitleIsNull()
+        {
+            var accountId = Guid.NewGuid();
+            var app = new LecturerApplication
+            {
+                Cv = "cv.pdf",
+                Degree = "degree.jpg",
+                Title = null,
+                Profession = "Prof",
+                Description = "Desc",
+                Status = "Pending",
+                Reason = "None",
+                CreatedAt = DateTime.Now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.AreEqual(string.Empty, result[0].Title);
+        }
+        [Test]
+        public async Task ReturnsEmptyStringForProfession_WhenProfessionIsNull()
+        {
+            var accountId = Guid.NewGuid();
+            var app = new LecturerApplication
+            {
+                Cv = "cv.pdf",
+                Degree = "degree.jpg",
+                Title = "Title",
+                Profession = null,
+                Description = "Desc",
+                Status = "Pending",
+                Reason = "None",
+                CreatedAt = DateTime.Now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.AreEqual(string.Empty, result[0].Profession);
+        }
+        [Test]
+        public async Task ReturnsNullForDescription_WhenDescriptionIsNull()
+        {
+            var accountId = Guid.NewGuid();
+            var app = new LecturerApplication
+            {
+                Cv = "cv.pdf",
+                Degree = "degree.jpg",
+                Title = "Title",
+                Profession = "Prof",
+                Description = null,
+                Status = "Pending",
+                Reason = "None",
+                CreatedAt = DateTime.Now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.IsNull(result[0].Description);
+        }
+        [Test]
+        public async Task ReturnsNullForRejectReason_WhenReasonIsNull()
+        {
+            var accountId = Guid.NewGuid();
+            var app = new LecturerApplication
+            {
+                Cv = "cv.pdf",
+                Degree = "degree.jpg",
+                Title = "Title",
+                Profession = "Prof",
+                Description = "Desc",
+                Status = "Pending",
+                Reason = null,
+                CreatedAt = DateTime.Now
+            };
+
+            _accountRepo.Setup(r => r.GetByIdAsync(accountId))
+                        .ReturnsAsync(new Account { Id = accountId, RoleId = 4 });
+            _appRepo.Setup(r => r.GetAllByAccountIdAsync(accountId))
+                    .ReturnsAsync(new List<LecturerApplication> { app });
+
+            var result = await _sut.GetMyApplicationsAsync(accountId);
+
+            Assert.IsNull(result[0].RejectReason);
+        }
 
     }
 }

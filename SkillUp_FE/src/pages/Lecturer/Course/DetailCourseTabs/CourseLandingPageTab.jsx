@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
-import CategorySelector from "../components/CategorySelector";
+import CategorySelector from "../../components/CategorySelector";
+
 
 function CourseLandingPageTab({ course, courseId, onUpdate }) {
   const [formData, setFormData] = useState({

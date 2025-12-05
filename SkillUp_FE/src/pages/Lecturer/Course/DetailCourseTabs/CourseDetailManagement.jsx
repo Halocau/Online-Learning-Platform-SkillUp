@@ -12,10 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
-import CourseLandingPageTab from "./tabs/CourseLandingPageTab";
-import CurriculumTab from "./tabs/CurriculumTab";
-import PricingTab from "./tabs/PricingTab";
-import VoucherTab from "./tabs/VoucherTab";
+import CourseLandingPageTab from "./CourseLandingPageTab";
+import CurriculumTab from "./CurriculumTab";
+import PricingTab from "./PricingTab";
+import VoucherTab from "./VoucherTab";
 
 function CourseDetailManagement() {
   const { courseId } = useParams();
@@ -135,7 +135,11 @@ function CourseDetailManagement() {
       return true;
     }
 
-    return courseData.price !== null && courseData.price !== undefined;
+    return (
+      courseData.price !== null &&
+      courseData.price !== undefined &&
+      courseData.price >= 0
+    );
   };
 
   const handleBackToCourses = () => {

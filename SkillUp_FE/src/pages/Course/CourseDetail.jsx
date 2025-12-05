@@ -237,7 +237,8 @@ export default function CourseDetail() {
             />
 
             <MoreCoursesByLecturerSection
-              lecturerName={course.lecturer.fullName}
+              lecturer={course.lecturer}
+              currentCourseId={course.id}
             />
           </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2, Edit2, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Edit2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -12,7 +12,8 @@ import { getQuizById } from "@/api/quizAPI";
 import { toast } from "react-toastify";
 import QuestionForm from "./QuestionForm";
 import QuestionBankSelector from "./QuestionBankSelector";
-import ConfirmModal from "./ConfirmModal";
+import ConfirmModal from "../components/ConfirmModal";
+import QuestionDetailModal from "./QuestionDetailModal";
 import { extractCleanText } from "@/utils/htmlUtils";
 
 const getQuestionId = (question) =>
@@ -54,6 +55,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
   const [questions, setQuestions] = useState([]);
   const [addingMode, setAddingMode] = useState(null);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [viewingQuestionId, setViewingQuestionId] = useState(null);
 
   // Confirm modal state
   const [confirmModal, setConfirmModal] = useState({
@@ -221,6 +223,15 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     }
   };
 
+  const handleViewQuestion = (question) => {
+    const id = getQuestionId(question);
+    if (!id) {
+      toast.error("Không thể xem chi tiết: Không tìm thấy ID câu hỏi");
+      return;
+    }
+    setViewingQuestionId(id);
+  };
+
   const handleEditQuestion = (question) => {
     const id = getQuestionId(question);
     if (!id) {
@@ -230,6 +241,17 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
     setEditingQuestionId(id);
   };
+
+  // Memoize the viewing question data
+  const viewingQuestionData = useMemo(() => {
+    if (!viewingQuestionId) return null;
+
+    const question = questions.find(
+      (q) => getQuestionId(q) === viewingQuestionId
+    );
+
+    return question || null;
+  }, [viewingQuestionId, questions]);
 
   // Memoize the initial data for the editing question to prevent unnecessary re-renders
   const editingQuestionData = useMemo(() => {
@@ -279,6 +301,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         imageUrl: questionData.imageUrl || "",
         type: questionData.type || "SingleChoice",
         answers: questionData.answers.map((ans) => ({
+          answerId: ans.answerId || ans.id,
           answerName: ans.answerName,
           isCorrect: ans.isCorrect,
           imageUrl: ans.imageUrl || "",
@@ -346,21 +369,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     });
   };
 
-  // Count answers with images
-  const countAnswerImages = (answers) => {
-    if (!answers || !Array.isArray(answers)) return 0;
-    return answers.filter((ans) => ans.imageUrl || ans.image).length;
-  };
-
-  // Debug log when editingQuestionId changes
-  useEffect(() => {
-    if (editingQuestionId) {
-      const question = questions.find(
-        (q) => getQuestionId(q) === editingQuestionId
-      );
-    }
-  }, [editingQuestionId, questions]);
-
   return (
     <div className="mt-3 space-y-3">
       {/* Confirm Modal */}
@@ -374,6 +382,13 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         confirmText={confirmModal.confirmText}
         cancelText={confirmModal.cancelText}
         loading={confirmModal.loading}
+      />
+
+      {/* Question Detail Modal */}
+      <QuestionDetailModal
+        isOpen={!!viewingQuestionId}
+        onClose={() => setViewingQuestionId(null)}
+        question={viewingQuestionData}
       />
 
       {/* Add Question Button */}
@@ -432,7 +447,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
               const isEditing = editingQuestionId === qId;
 
               const cleanTitle = extractCleanText(question.title, 100);
-              const answerImageCount = countAnswerImages(question.answers);
 
               return (
                 <Card
@@ -471,6 +485,13 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
                       {/* Actions */}
                       <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => handleViewQuestion(question)}
+                          className="p-2 hover:bg-blue-100 rounded-full text-blue-600 transition-colors"
+                          title="Xem chi tiết"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleEditQuestion(question)}
                           className="p-2 hover:bg-[#FFD54F]/20 rounded-full text-[#272343] transition-colors"

@@ -31,7 +31,7 @@ function PricingTab({ course, courseId, onUpdate }) {
     try {
       setRefreshing(true);
       const response = await courseAPI.getCourseDetail(courseId);
-      
+
       if (response.data.code === 200 && response.data.data.length > 0) {
         const courseData = response.data.data[0];
         updatePriceState(courseData.price);
@@ -69,15 +69,15 @@ function PricingTab({ course, courseId, onUpdate }) {
 
       if (response.data.code === 200) {
         toast.success("Cập nhật giá khóa học thành công!");
-        
+
         // Update local state
         setCurrentPrice(finalPrice);
-        
+
         // Notify parent component to refresh course data and mark pricing as completed
         if (onUpdate) {
           onUpdate({ pricingCompleted: true });
         }
-        
+
         // Fetch fresh data to ensure sync
         await fetchCoursePrice();
       }
@@ -148,9 +148,16 @@ function PricingTab({ course, courseId, onUpdate }) {
                 <p className="text-sm text-green-700 mb-1 font-medium">
                   Giá hiện tại
                 </p>
-                <p className="text-3xl font-bold text-green-900">
-                  {formatPrice(currentPrice)}
-                </p>
+                {currentPrice < 0 && (
+                  <p className="text-xs text-green-600 mt-2">
+                    Khóa học chưa được định giá
+                  </p>
+                )}
+                {currentPrice >= 0 && (
+                  <p className="text-3xl font-bold text-green-900">
+                    {formatPrice(currentPrice)}
+                  </p>
+                )}
                 {currentPrice === 0 && (
                   <p className="text-xs text-green-600 mt-2">
                     Học viên có thể đăng ký miễn phí
@@ -174,8 +181,9 @@ function PricingTab({ course, courseId, onUpdate }) {
             <div className="text-sm text-blue-700">
               <p className="font-medium mb-1">Lưu ý về giá khóa học:</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Khóa học miễn phí sẽ thu hút nhiều học viên hơn</li>
-                <li>Khóa học trả phí nên có giá trị rõ ràng và nội dung chất lượng</li>
+                <li>
+                  Khóa học trả phí nên có giá trị rõ ràng và nội dung chất lượng
+                </li>
                 <li>Bạn có thể thay đổi giá sau khi xuất bản</li>
               </ul>
             </div>
@@ -212,7 +220,7 @@ function PricingTab({ course, courseId, onUpdate }) {
                   </div>
                 </div>
               </button>
-              
+
               <button
                 type="button"
                 className={`p-4 border-2 rounded-lg transition-all text-left ${
@@ -263,7 +271,10 @@ function PricingTab({ course, courseId, onUpdate }) {
               </div>
               {price > 0 && (
                 <p className="text-sm text-gray-500 mt-2">
-                  Giá hiển thị: <span className="font-semibold text-gray-700">{formatPrice(price)}</span>
+                  Giá hiển thị:{" "}
+                  <span className="font-semibold text-gray-700">
+                    {formatPrice(price)}
+                  </span>
                 </p>
               )}
               {priceType === "paid" && (!price || price <= 0) && (
@@ -281,16 +292,18 @@ function PricingTab({ course, courseId, onUpdate }) {
                 Gợi ý mức giá phổ biến:
               </p>
               <div className="flex flex-wrap gap-2">
-                {[99000, 199000, 299000, 499000, 999000].map((suggestedPrice) => (
-                  <button
-                    key={suggestedPrice}
-                    type="button"
-                    onClick={() => setPrice(suggestedPrice)}
-                    className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all"
-                  >
-                    {formatPrice(suggestedPrice)}
-                  </button>
-                ))}
+                {[99000, 199000, 299000, 499000, 999000].map(
+                  (suggestedPrice) => (
+                    <button
+                      key={suggestedPrice}
+                      type="button"
+                      onClick={() => setPrice(suggestedPrice)}
+                      className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all"
+                    >
+                      {formatPrice(suggestedPrice)}
+                    </button>
+                  )
+                )}
               </div>
             </div>
           )}
@@ -299,7 +312,7 @@ function PricingTab({ course, courseId, onUpdate }) {
           {hasChanges() && (
             <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800">
-                ⚠️ Bạn có thay đổi chưa lưu. Nhấn nút bên dưới để lưu thay đổi.
+                ⚠️ Bạn chưa lưu giá khóa học. Nhấn nút bên dưới để lưu thay đổi.
               </p>
             </div>
           )}
@@ -307,7 +320,11 @@ function PricingTab({ course, courseId, onUpdate }) {
           {/* Save Button */}
           <Button
             onClick={handleSavePrice}
-            disabled={loading || refreshing || (priceType === "paid" && (!price || price <= 0))}
+            disabled={
+              loading ||
+              refreshing ||
+              (priceType === "paid" && (!price || price <= 0))
+            }
             className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3"
           >
             {loading ? (
