@@ -13,8 +13,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LessonForm from "./LessonForm";
-import QuizForm from "./QuizForm";
-import QuizQuestionManager from "./QuizQuestionManager";
+import QuizForm from "../Quiz/Quizform";
+import QuizQuestionManager from "../Quiz/QuizQuestionManager";
 
 function ItemCard({
   item,
@@ -32,7 +32,6 @@ function ItemCard({
   const isLesson = item.kind === "Lesson";
   const isQuiz = item.kind === "Quiz";
 
-  // State to control quiz questions visibility
   const [showQuestions, setShowQuestions] = useState(false);
 
   // Lesson Display

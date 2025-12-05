@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.LecturerDashboard;
 using SkillUp.BussinessObjects.DTOs.RevenueReport;
 using SkillUp.BussinessObjects.Models;
@@ -88,6 +89,31 @@ namespace SkillUp.Services.Implementations
                 RevenueChart = chartData,
                 CourseRevenues = courseBreakdown
             };
+        }
+        public async Task<List<EnrolledStudentDto>> GetEnrolledStudentsAsync(Guid accountId, Guid? courseId)
+        {
+            var lecturer = await _context.Lecturers.FirstOrDefaultAsync(l => l.AccountId == accountId);
+            if (lecturer == null)
+            {
+                throw new Exception("Tài khoản này chưa được đăng ký thông tin Giảng viên.");
+            }
+
+            var students = await _lecturerDashRepository.GetEnrolledStudentsAsync(lecturer.Id, courseId);
+
+            foreach (var student in students)
+            {
+                if (student.TotalLessons > 0)
+                {
+                    double percent = ((double)student.CompletedLessons / student.TotalLessons) * 100;
+                    student.ProgressPercent = Math.Min(100, Math.Round(percent, 2));
+                }
+                else
+                {
+                    student.ProgressPercent = student.CompletedLessons > 0 ? 100 : 0;
+                }
+            }
+
+            return students;
         }
     }
 }

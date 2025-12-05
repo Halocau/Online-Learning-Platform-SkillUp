@@ -43,3 +43,8 @@ export const updateCourseReportStatus = async (reportId, status) => {
     return handleAPIError(err, "Không thể cập nhật trạng thái báo cáo!");
   }
 };
+
+export const getGroupedCourseReports = async () => {
+  const response = await axiosInstance.get(`${API_URL}/view-grouped`);
+  return response.data;
+};

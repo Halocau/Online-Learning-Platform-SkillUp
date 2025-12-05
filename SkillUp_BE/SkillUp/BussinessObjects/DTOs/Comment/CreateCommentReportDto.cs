@@ -9,7 +9,7 @@ namespace SkillUp.BussinessObjects.DTOs.Comment
         public Guid CommentPostId { get; set; }
 
         [Required(ErrorMessage = "Lý do là bắt buộc")]
-        [StringLength(500, MinimumLength = 10, ErrorMessage = "Lý do phải từ 10 đến 500 ký tự")]
+        [StringLength(500, MinimumLength = 1, ErrorMessage = "Lý do phải từ 10 đến 500 ký tự")]
         public string Reason { get; set; } = null!;
     }
 }

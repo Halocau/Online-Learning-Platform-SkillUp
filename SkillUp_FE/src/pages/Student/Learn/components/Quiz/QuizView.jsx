@@ -176,7 +176,7 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
                   >
                     {resultData?.score
                       ? `${resultData.score.toFixed(1)}%`
-                      : "N/A"}
+                      : "0.00%"}
                   </p>
                   <p
                     className={`mt-1 text-xs font-medium ${

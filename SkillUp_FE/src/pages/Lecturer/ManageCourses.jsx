@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import CreateCourseForm from "./CreateCourseForm";
-import CourseList from "./CourseList";
+import CourseList from "./Course/CourseList";
 
 function ManageCourses() {
   const navigate = useNavigate();
@@ -13,19 +13,14 @@ function ManageCourses() {
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  // Load courses on mount
   useEffect(() => {
     loadCourses();
   }, []);
 
-  /**
-   * Load all courses for the lecturer
-   */
   const loadCourses = async () => {
     try {
       setLoading(true);
       const response = await courseAPI.getCoursesOfLecturer();
-
       if (response.data.code === 200) {
         setCourses(response.data.data || []);
         toast.success("Đã tải danh sách khóa học");
@@ -48,9 +43,12 @@ function ManageCourses() {
     loadCourses();
   };
 
-
   const handleEditCourse = (courseId) => {
     navigate(`/lecturer/courses/${courseId}`);
+  };
+
+  const handlePreviewCourse = (course) => {
+    navigate(`/lecturer/courses/${course.id}/preview`, { state: { course } });
   };
 
   return (
@@ -81,6 +79,7 @@ function ManageCourses() {
         onRefresh={loadCourses}
         onCreateClick={() => setShowCreateForm(true)}
         onEdit={handleEditCourse}
+        onPreview={handlePreviewCourse}
       />
     </div>
   );

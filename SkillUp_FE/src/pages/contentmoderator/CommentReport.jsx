@@ -29,20 +29,18 @@ import { commentLessonApi } from "@/api/commentLesson";
 
 export default function CommentReport() {
   // Tab state
-  const [activeTab, setActiveTab] = useState("forum"); // "forum" or "lesson"
-  
+  const [activeTab, setActiveTab] = useState("forum");
+
   // Data state
   const [forumData, setForumData] = useState([]);
   const [lessonData, setLessonData] = useState([]);
   const [loading, setLoading] = useState(false);
-  
   // Filter/Search state
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [currentPage, setCurrentPage] = useState(1);
-  
   // Modal state
   const [selectedReport, setSelectedReport] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,7 +60,8 @@ export default function CommentReport() {
           setForumData([]);
         });
 
-      const lessonPromise = commentLessonApi.getPendingReports()
+      const lessonPromise = commentLessonApi
+        .getPendingReports()
         .then((reports) => setLessonData(Array.isArray(reports) ? reports : []))
         .catch((err) => {
           console.error(err);
@@ -231,7 +230,10 @@ export default function CommentReport() {
   };
 
   // Table columns
-  let baseColumns = [
+  // Update the table columns section (around line 210-245)
+
+  // Table columns
+  const baseColumns = [
     {
       key: "reporterName",
       title: (
@@ -252,6 +254,15 @@ export default function CommentReport() {
       render: (value) => (
         <p className="max-w-[300px] truncate" title={value}>
           {value}
+        </p>
+      ),
+    },
+    {
+      key: "commentContents",
+      title: "Nội dung bình luận",
+      render: (value) => (
+        <p className="max-w-[300px] truncate" title={value || "N/A"}>
+          {value || "N/A"}
         </p>
       ),
     },
@@ -287,22 +298,8 @@ export default function CommentReport() {
     },
   ];
 
-  let columns = baseColumns;
-  if (activeTab === "lesson") {
-    columns = [
-      ...baseColumns.slice(0, 2),
-      {
-        key: "commentContents",
-        title: "Nội dung bình luận",
-        render: (value) => (
-          <p className="max-w-[300px] truncate" title={value}>
-            {value}
-          </p>
-        ),
-      },
-      ...baseColumns.slice(2),
-    ];
-  }
+  const columns = baseColumns;
+  
 
   if (loading) {
     return (
@@ -503,6 +500,7 @@ export default function CommentReport() {
         )}
 
         {/* Report Detail & Resolve Modal */}
+
         <Modal
           title={
             <div className="flex items-center gap-2">
@@ -535,6 +533,18 @@ export default function CommentReport() {
                 </p>
               </div>
 
+              {/* Show comment contents for BOTH tabs */}
+              {selectedReport.commentContents && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Nội dung bình luận:
+                  </label>
+                  <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-lg">
+                    {selectedReport.commentContents}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   Ngày báo cáo:
@@ -544,26 +554,16 @@ export default function CommentReport() {
                 </p>
               </div>
 
-              {activeTab === "lesson" && (
-                <>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Tác giả bình luận:
-                    </label>
-                    <p className="mt-1 text-gray-900">
-                      {selectedReport.commentAuthorName}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">
-                      Nội dung bình luận:
-                    </label>
-                    <p className="mt-1 text-gray-900 bg-gray-50 p-3 rounded-lg">
-                      {selectedReport.commentContents}
-                    </p>
-                  </div>
-                </>
+              {/* Show comment author name only for lesson tab */}
+              {activeTab === "lesson" && selectedReport.commentAuthorName && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Tác giả bình luận:
+                  </label>
+                  <p className="mt-1 text-gray-900">
+                    {selectedReport.commentAuthorName}
+                  </p>
+                </div>
               )}
 
               {/* Action buttons - only show for Pending status */}

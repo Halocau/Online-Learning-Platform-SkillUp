@@ -22,7 +22,7 @@ namespace SkillUp.Services.Implementations
 	{
 		private readonly ICourseRepository _courseRepository;
 		private readonly ILecturerRepository _lecturerRepository;
-		private readonly CloudinaryService _cloudinaryService;
+		private readonly ICloudinaryService _cloudinaryService;
 		private readonly IAccountRepository _accountRepository;
 		private readonly ICategoryRepository _categoryRepository;
 		private readonly IEmailService _emailService;
@@ -32,7 +32,7 @@ namespace SkillUp.Services.Implementations
         private readonly IStudentProgressRepository _studentProgressRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
-        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, CloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IAiSupportBackgroundJobService aiSupportBackgroundJobService)
+        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IAiSupportBackgroundJobService aiSupportBackgroundJobService)
 		{
 			_courseRepository = courseRepository;
 			_lecturerRepository = lecturerRepository;
@@ -66,7 +66,7 @@ namespace SkillUp.Services.Implementations
 				SubCategoryId = request.SubCategoryId,
 				LecturerId = lecturer.Id,
 				IsAiSupport = request.IsAiSupport ?? false,
-				Price = 0,
+				Price = -1,
 				EnrollmentCount = 0,
 				Rating = 0,
 				Status = "Draft",
@@ -122,6 +122,34 @@ namespace SkillUp.Services.Implementations
 			return await _courseRepository.SaveChangesAsync();
 		}
 
+        public async Task<bool> PublishCourseAsync(Guid courseId, Guid accountId)
+        {
+
+            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+            if (lecturer == null)
+            {
+                throw new Exception("Không tìm thấy giảng viên cho tài khoản này!");
+            }
+
+
+            var course = await _courseRepository.GetCourseByIdAsync(courseId);
+            if (course == null)
+            {
+                throw new Exception("Không tìm thấy khoá học!");
+            }
+
+
+            if (course.LecturerId != lecturer.Id)
+            {
+                throw new UnauthorizedAccessException("Bạn không có quyền mở lại khoá học này!");
+            }
+
+            course.Status = "Public";
+            course.UpdatedAt = DateTime.Now;
+
+            _courseRepository.UpdateCourse(course);
+            return await _courseRepository.SaveChangesAsync();
+        }
 
 
         public async Task<CourseResponseDto?> UpdateCourseAsync(UpdateCourseDto request, Guid courseId, Guid accountId)
@@ -300,6 +328,7 @@ namespace SkillUp.Services.Implementations
 				Price = course.Price,
 				EnrollmentCount = course.EnrollmentCount,
 				Rating = course.Rating,
+                Image = course.Image,
 				Status = course.Status,
 				IsActive = course.IsActive,
 				SubCategoryName = course.SubCategory.Name,

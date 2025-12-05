@@ -26,7 +26,7 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
     const content = (
       <>
         <Icon className="w-5 h-5 flex-shrink-0" />
-        {!isCollapsed && (
+        {! isCollapsed && (
           <>
             <span className="flex-1">{label}</span>
             {badge && (
@@ -77,11 +77,12 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:static top-0 left-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-50 ${isOpen ? "w-64" : "w-0 md:w-0"
-          } ${isCollapsed ? "md:w-20" : "md:w-64"}`}
+        className={`fixed md:static top-0 left-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-50 flex flex-col ${
+          isOpen ? "w-64" : "w-0 md:w-0"
+        } ${isCollapsed ? "md:w-20" : "md:w-64"}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 flex-shrink-0">
           {!isCollapsed && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg flex items-center justify-center">
@@ -97,17 +98,17 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
             <X className="w-5 h-5" />
           </button>
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => setIsCollapsed(! isCollapsed)}
             className="hidden md:block p-1 hover:bg-gray-100 rounded-lg"
           >
             <Menu className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - This will grow to fill available space */}
         <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-2">
           {/* Main Section */}
-          <div className={`px-2 ${isCollapsed ? "text-center" : ""}`}>
+          <div className={`px-2 ${isCollapsed ?  "text-center" : ""}`}>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
               {!isCollapsed && "Menu"}
             </p>
@@ -153,20 +154,10 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
             path="/lecturer/ticket"
             disabled={isPending}
           />
-
-          {/* Other Section */}
-          <div className={`px-2 mt-6 ${isCollapsed ? "text-center" : ""}`}>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              {!isCollapsed && "Khác"}
-            </p>
-          </div>
-
-          {/* Settings */}
-          <NavItem icon={Settings} label="Cài đặt" path="/lecturer/settings" />
         </nav>
 
-        {/* Footer - Logout */}
-        <div className="border-t border-gray-200 p-2">
+        {/* Footer - Logout - This stays at the bottom */}
+        <div className="border-t p-3 flex-shrink-0">
           <button
             onClick={() => {
               localStorage.removeItem("accessToken");
@@ -174,8 +165,9 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
               localStorage.removeItem("user");
               window.location.href = "/login";
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ${isCollapsed ? "justify-center" : ""
-              }`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ${
+              isCollapsed ?  "justify-center" : ""
+            }`}
             title={isCollapsed ? "Đăng xuất" : ""}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />

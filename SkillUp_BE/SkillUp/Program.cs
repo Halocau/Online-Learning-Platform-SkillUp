@@ -141,13 +141,15 @@ builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ILecturerDashRepository, LecturerDashRepository>();
 builder.Services.AddScoped<IPayrollRepository, PayrollRepository>();
+builder.Services.AddScoped<IModeratorContentRepository, ModeratorContentRepository>();
+builder.Services.AddScoped<ISysModDashRepository, SysModDashRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<FtpVideoUploadService>();
 builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<INewsService, NewsService>();
@@ -179,6 +181,11 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ILecturerDashboardService, LecturerDashboardService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ILecturerDashboardService, LecturerDashboardService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
+builder.Services.AddScoped<IModeratorContentService, ModeratorContentService>();
+builder.Services.AddScoped<ISystemModeratorDashboardService, SystemModeratorDashboardService>();
 
 // POST
 builder.Services.AddScoped<IPostRepository, PostRepository>();

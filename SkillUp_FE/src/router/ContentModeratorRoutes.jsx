@@ -3,8 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import ModeratorLayout from "../layouts/ContentModeratorLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
-// Import moderator pages
-import ContentModeratorDashboard from "../pages/contentmoderator/ModDashboard";
+import ContentModeratorDashboard from "../pages/contentmoderator/ContentModDashboard";
 import NewsManage from "@/pages/contentmoderator/NewsFeature/NewsManage";
 import CommentReport from "@/pages/contentmoderator/CommentReport";
 import CreateNews from "@/pages/contentmoderator/NewsFeature/CreateNews";

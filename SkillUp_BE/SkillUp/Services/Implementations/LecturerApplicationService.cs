@@ -13,12 +13,12 @@ namespace SkillUp.Services.Implementations
     {
         private readonly ILecturerApplicationRepository _lecturerApplicationRepository;
         private readonly IAccountRepository _accountRepository;
-        private readonly CloudinaryService _cloudinaryService;
+        private readonly ICloudinaryService _cloudinaryService;
         private readonly ICurrentUserService _currentUserService;
         private readonly ILecturerService _lecturerService;
         private readonly IEmailService _emailService;
 
-        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, CloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService, IEmailService emailService)
+        public LecturerApplicationService(ILecturerApplicationRepository lecturerApplicationRepository, IAccountRepository accountRepository, ICloudinaryService cloudinaryService, ICurrentUserService currentUserService, ILecturerService lecturerService, IEmailService emailService)
         {
             _lecturerApplicationRepository = lecturerApplicationRepository;
             _accountRepository = accountRepository;
@@ -30,11 +30,21 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> ApplyCvAsync(Guid accountId, ApplyCvRequestDto request)
         {
-            // Check if user is a lecturer (roleId = 4)
+            // roleId = 4 (Giảng viên) , Status = "Pending" 
             var account = await _accountRepository.GetByIdAsync(accountId);
-            if (account == null || account.RoleId != 4)
+            if (account == null || account.RoleId != 4 || !string.Equals(account.Status, "Pending", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
+            }
+
+            if (request.CvFile == null)
+            {
+                throw new ArgumentException("Vui lòng tải hồ sơ lên.");
+            }
+
+            if (request.DegreeFile == null || request.DegreeFile.Count == 0)
+            {
+                throw new ArgumentException("Vui lòng tải bằng cấp lên.");
             }
 
             // Upload CV file to Cloudinary
@@ -166,27 +176,27 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> UpdateStatusAsync(Guid applicationId, UpdateStatusRequestDto request)
         {
-            // 1) Kiểm tra user hiện tại
             var userId = _currentUserService.UserId;
             if (userId == null) return false;
 
-            // 2) Lấy application
+            if (_currentUserService.RoleId != 2)
+            {
+                return false;
+            }
+
             var application = await _lecturerApplicationRepository.GetByIdAsync(applicationId);
             if (application == null) return false;
 
-            // 3) Cập nhật trạng thái application
             var updateResult = await _lecturerApplicationRepository.UpdateStatusAsync(
                 applicationId, request.Status, request.Reason
             );
             if (updateResult == null || !await _lecturerApplicationRepository.SaveChangesAsync())
                 return false;
 
-            // 4) Accepted → tạo Lecturer nếu CHƯA tồn tại, đồng thời cập nhật Account = Active
             if (request.Status == true)
             {
                 if (!application.AccountId.HasValue) return false;
 
-                // ⚠️ Kiểm tra tồn tại lecturer theo AccountId
                 var existLecturer = await _lecturerService.GetLecturerByAccountIdAsync(application.AccountId.Value);
                 if (existLecturer == null)
                 {
@@ -202,7 +212,6 @@ namespace SkillUp.Services.Implementations
                     if (!created) return false;
 
                 }
-                // Nếu đã tồn tại thì bỏ qua tạo mới (có thể cập nhật Title/Profession nếu cần)
 
                 var account = await _accountRepository.GetByIdAsync(application.AccountId.Value);
                 if (account != null)
@@ -212,7 +221,6 @@ namespace SkillUp.Services.Implementations
                 }
             }
 
-            // 5) Rejected → cập nhật Account = Pending (không động đến Lecturer)
             if (request.Status == false)
             {
                 if (!application.AccountId.HasValue) return false;
@@ -224,7 +232,6 @@ namespace SkillUp.Services.Implementations
                     if (!accountUpdateResult) return false;
                 }
             }
-            // 6) Gửi Email thông báo(THÊM MỚI)
             try
             {
                 var account = await _accountRepository.GetByIdAsync(application.AccountId.Value);
@@ -232,13 +239,10 @@ namespace SkillUp.Services.Implementations
             }
             catch (Exception)
             {
-                // Tùy chọn: Log lỗi gửi email, nhưng không làm hỏng toàn bộ giao dịch
-                // Việc gửi mail thất bại không nên làm cho request `UpdateStatusAsync` trả về false
+                throw new Exception("Lỗi cập nhật trạng thái đơn ứng tuyển giảng viên !");
             }
             return true;
         }
-
-
 
 
         public async Task<List<LecturerApplicationResponseDto>> GetAllLecturerApplicationsAsync()
