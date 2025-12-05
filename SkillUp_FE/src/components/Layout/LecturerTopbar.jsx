@@ -1,27 +1,29 @@
-import { useState, useRef, useEffect } from 'react';
-import { Bell, ChevronDown, User, LogOut, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Bell, ChevronDown, User, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 
-/**
- * LecturerTopbar - Top navigation bar for lecturer dashboard
- * Displays user profile, notifications, and quick actions
- */
 function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    window.location.href = "/login";
+  };
+
+  const handleNavigateToProfile = () => {
+    navigate("/lecturer/profile");
   };
 
   return (
@@ -62,8 +64,12 @@ function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
                       key={index}
                       className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <p className="font-medium text-gray-900 text-sm">{notif.title}</p>
-                      <p className="text-gray-600 text-xs mt-1">{notif.message}</p>
+                      <p className="font-medium text-gray-900 text-sm">
+                        {notif.title}
+                      </p>
+                      <p className="text-gray-600 text-xs mt-1">
+                        {notif.message}
+                      </p>
                       <p className="text-gray-500 text-xs mt-2">{notif.time}</p>
                     </div>
                   ))
@@ -80,10 +86,10 @@ function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
               className="flex items-center gap-2 hover:bg-gray-100"
             >
               <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                {user?.fullname?.[0]?.toUpperCase() || 'U'}
+                {user?.fullname?.[0]?.toUpperCase() || "U"}
               </div>
               <span className="text-sm font-medium text-gray-900 hidden sm:inline">
-                {user?.fullname || 'User'}
+                {user?.fullname || "User"}
               </span>
               <ChevronDown className="w-4 h-4 text-gray-500" />
             </Button>
@@ -103,14 +109,14 @@ function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem className="cursor-pointer">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={handleNavigateToProfile}
+            >
               <User className="w-4 h-4 mr-2" />
-              <span>Hồ sơ cá nhân</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem className="cursor-pointer">
-              <Settings className="w-4 h-4 mr-2" />
-              <span>Cài đặt</span>
+              <Button variant="ghost" className="p-0">
+                <Link to="/lecturer/profile">Hồ sơ của tôi</Link>
+              </Button>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

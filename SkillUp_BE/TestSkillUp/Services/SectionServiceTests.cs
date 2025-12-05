@@ -9,8 +9,9 @@ using SkillUp.BussinessObjects.Dtos.Section;
 using SkillUp.BussinessObjects.DTOs.Section;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
+using SkillUp.Services.Interfaces;
 
-namespace TestSkillUp.Services
+namespace TestSkillUp
 {
     [TestFixture]
     public class SectionServiceTests
@@ -18,6 +19,7 @@ namespace TestSkillUp.Services
         private Mock<ISectionRepository> _sectionRepositoryMock = null!;
         private Mock<ILessonRepository> _lessonRepositoryMock = null!;
         private Mock<IQuizRepository> _quizRepositoryMock = null!;
+        private Mock<ICurrentUserService> _currentUserServiceMock = null!;
 
         private ISectionService _iSectionService = null!; // System Under Test
 
@@ -27,53 +29,171 @@ namespace TestSkillUp.Services
             _sectionRepositoryMock = new Mock<ISectionRepository>(MockBehavior.Strict);
             _lessonRepositoryMock = new Mock<ILessonRepository>(MockBehavior.Strict);
             _quizRepositoryMock = new Mock<IQuizRepository>(MockBehavior.Strict);
+            _currentUserServiceMock = new Mock<ICurrentUserService>(MockBehavior.Loose);
+
+            // Mặc định setup RoleId = 4 (giảng viên) để các test case hiện có pass
+            _currentUserServiceMock.Setup(s => s.RoleId).Returns(4);
 
             _iSectionService = new SectionService(
                 _sectionRepositoryMock.Object,
                 _lessonRepositoryMock.Object,
                 _quizRepositoryMock.Object,
-                context: null!
+                context: null!,
+                _currentUserServiceMock.Object
             );
         }
 
         // -------- CreateSectionAsync --------
-        // Kiểm tra tạo Section với Title trống thì ném ArgumentException
-        [Test]
-        public void CreateSectionAsync_EmptyTitle_ThrowsArgumentException()
-        {
-            var dto = new SectionCreateDto
-            {
-                CourseId = Guid.NewGuid(),
-                Title = "",
-                Description = "Desc",
-                Orders = 1
-            };
 
-            Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.CreateSectionAsync(dto));
-            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Never);
-        }
-
-        // Khi repository CreateAsync ném exception thì service cũng ném ra (không nuốt lỗi)
+        // Test 1: Tạo Section thành công với dữ liệu hợp lệ
         [Test]
-        public void CreateSectionAsync_RepositoryThrows_PropagatesException()
+        public async Task CreateSectionAsync_ValidData_ReturnsCreatedDto()
         {
             // Arrange
+            var courseId = Guid.NewGuid();
             var createDto = new SectionCreateDto
             {
-                CourseId = Guid.NewGuid(),
-                Title = "Section 1",
-                Description = "Desc",
+                CourseId = courseId,
+                Title = "Introduction to Programming",
+                Description = "Valid Description",
                 Orders = 1
             };
 
             _sectionRepositoryMock
                 .Setup(r => r.CreateAsync(It.IsAny<Section>()))
-                .ThrowsAsync(new Exception("DB error"));
+                .ReturnsAsync((Section s) => s);
+
+            // Act
+            var result = await _iSectionService.CreateSectionAsync(createDto);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(createDto.Title, result.Title);
+            Assert.AreEqual(createDto.CourseId, result.CourseId);
+            Assert.AreEqual(createDto.Orders, result.Orders);
+            Assert.IsTrue(result.IsActive);
+            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Once);
+        }
+
+        // Test 2: Tạo Section với roleId != 4 - ném UnauthorizedAccessException
+        [Test]
+        public void CreateSectionAsync_RoleIdNotFour_ThrowsUnauthorizedAccessException()
+        {
+            // Arrange
+            _currentUserServiceMock.Setup(s => s.RoleId).Returns(3);
+            var createDto = new SectionCreateDto
+            {
+                CourseId = Guid.NewGuid(),
+                Title = "Valid Title",
+                Description = null,
+                Orders = 1
+            };
 
             // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(() => _iSectionService.CreateSectionAsync(createDto));
-            StringAssert.Contains("DB error", ex!.Message);
+            var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(() => _iSectionService.CreateSectionAsync(createDto));
+            Assert.That(ex!.Message, Does.Contain("Chỉ giảng viên mới được tạo section"));
+            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Never);
         }
+
+        // Test 3: Tạo Section với Title trống - ném ArgumentException
+        [Test]
+        public void CreateSectionAsync_EmptyTitle_ThrowsArgumentException()
+        {
+            // Arrange
+            var dto = new SectionCreateDto
+            {
+                CourseId = Guid.NewGuid(),
+                Title = "",
+                Description = null,
+                Orders = 1
+            };
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.CreateSectionAsync(dto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Title"));
+            StringAssert.Contains("không được để trống", ex.Message);
+            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
+        // Test 4: Tạo Section với Title null - ném ArgumentException
+        [Test]
+        public void CreateSectionAsync_NullTitle_ThrowsArgumentException()
+        {
+            // Arrange
+            var dto = new SectionCreateDto
+            {
+                CourseId = Guid.NewGuid(),
+                Title = null!,
+                Description = null,
+                Orders = 1
+            };
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.CreateSectionAsync(dto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Title"));
+            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
+        // Test 5: Tạo Section với Description trống - ném ArgumentException
+        [Test]
+        public void CreateSectionAsync_EmptyDescription_ThrowsArgumentException()
+        {
+            // Arrange
+            var dto = new SectionCreateDto
+            {
+                CourseId = Guid.NewGuid(),
+                Title = "Valid Title",
+                Description = null,
+                Orders = 1
+            };
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.CreateSectionAsync(dto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Description"));
+            StringAssert.Contains("không được để trống", ex.Message);
+            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
+        // Test 6: Tạo Section với Orders null - ném ArgumentException
+        [Test]
+        public void CreateSectionAsync_NullOrders_ThrowsArgumentException()
+        {
+            // Arrange
+            var dto = new SectionCreateDto
+            {
+                CourseId = Guid.NewGuid(),
+                Title = "Valid Title",
+                Description = "Valid Description",
+                Orders = null
+            };
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.CreateSectionAsync(dto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Orders"));
+            StringAssert.Contains("không được để trống", ex.Message);
+            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
+        // Test 7: Tạo Section với Orders = 0 - ném ArgumentException
+        [Test]
+        public void CreateSectionAsync_ZeroOrders_ThrowsArgumentException()
+        {
+            // Arrange
+            var dto = new SectionCreateDto
+            {
+                CourseId = Guid.NewGuid(),
+                Title = "Valid Title",
+                Description = "Valid Description",
+                Orders = 0
+            };
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.CreateSectionAsync(dto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Orders"));
+            StringAssert.Contains("phải lớn hơn 0", ex.Message);
+            _sectionRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
 
         // -------- GetSectionByIdAsync --------
 
@@ -129,6 +249,8 @@ namespace TestSkillUp.Services
             Assert.AreEqual(entity.Orders, result.Orders);
         }
 
+
+
         // -------- GetSectionsByCourseIdAsync --------
 
         [Test]
@@ -174,79 +296,48 @@ namespace TestSkillUp.Services
             Assert.AreEqual("S2", list[1].Title);
         }
 
-        // -------- UpdateSectionAsync --------
-
-        // Khi không tìm thấy Section để cập nhật thì trả về null
+        // Khi courseId không có section nào thì trả về danh sách rỗng
         [Test]
-        public async Task UpdateSectionAsync_NotFound_ReturnsNull()
+        public async Task GetSectionsByCourseIdAsync_EmptyList_ReturnsEmpty()
         {
             // Arrange
-            var id = Guid.NewGuid();
-            var updateDto = new SectionUpdateDto
-            {
-                Title = "Updated",
-                Description = "Updated desc"
-            };
-
+            var courseId = Guid.NewGuid();
             _sectionRepositoryMock
-                .Setup(r => r.FindByIdAsync(id))
-                .ReturnsAsync((Section?)null);
+                .Setup(r => r.GetByCourseIdAsync(courseId))
+                .ReturnsAsync(new List<Section>());
 
             // Act
-            var result = await _iSectionService.UpdateSectionAsync(id, updateDto);
+            var result = await _iSectionService.GetSectionsByCourseIdAsync(courseId);
 
             // Assert
-            Assert.IsNull(result);
+            var list = result.ToList();
+            Assert.AreEqual(0, list.Count);
+            Assert.IsEmpty(list);
+            _sectionRepositoryMock.Verify(r => r.GetByCourseIdAsync(courseId), Times.Once);
         }
 
-        // Khi repository UpdateAsync ném exception thì service cũng ném ra
+        // -------- UpdateSectionAsync --------
+
+        // Test 1: Cập nhật Section thành công
         [Test]
-        public void UpdateSectionAsync_RepositoryThrows_PropagatesException()
+        public async Task UpdateSectionAsync_ValidData_UpdatesAndReturnsDto()
         {
             // Arrange
             var id = Guid.NewGuid();
-            var updateDto = new SectionUpdateDto
-            {
-                Title = "New Title",
-                Description = "New Desc"
-            };
-
-            _sectionRepositoryMock
-                .Setup(r => r.FindByIdAsync(id))
-                .ReturnsAsync(new Section { Id = id });
-
-            _sectionRepositoryMock
-                .Setup(r => r.UpdateAsync(It.IsAny<Section>()))
-                .ThrowsAsync(new Exception("Update failed"));
-
-            // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(() => _iSectionService.UpdateSectionAsync(id, updateDto));
-            StringAssert.Contains("Update failed", ex!.Message);
-        }
-
-        // Khi cập nhật Section thành công: Title/Description thay đổi và UpdatedAt được cập nhật
-        [Test]
-        public async Task UpdateSectionAsync_Found_UpdatesAndReturnsDto()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var originalUpdatedAt = DateTime.UtcNow.AddDays(-2);
             var entity = new Section
             {
                 Id = id,
                 CourseId = Guid.NewGuid(),
-                Title = "Old",
-                Description = "Old desc",
-                CreatedAt = DateTime.UtcNow.AddDays(-3),
+                Title = "Old Title",
+                Description = "Old Description",
                 IsActive = true,
-                Orders = 1,
-                UpdatedAt = originalUpdatedAt
+                Orders = 1
             };
 
             var updateDto = new SectionUpdateDto
             {
                 Title = "New Title",
-                Description = "New Desc"
+                Description = "New Description"
             };
 
             _sectionRepositoryMock
@@ -264,38 +355,131 @@ namespace TestSkillUp.Services
             Assert.IsNotNull(result);
             Assert.AreEqual(updateDto.Title, result!.Title);
             Assert.AreEqual(updateDto.Description, result.Description);
-
-            // Đảm bảo entity đã được cập nhật đúng và UpdatedAt thay đổi
             Assert.AreEqual(updateDto.Title, entity.Title);
             Assert.AreEqual(updateDto.Description, entity.Description);
-            Assert.That(entity.UpdatedAt, Is.Not.EqualTo(originalUpdatedAt));
-
             _sectionRepositoryMock.Verify(r => r.FindByIdAsync(id), Times.Once);
             _sectionRepositoryMock.Verify(r => r.UpdateAsync(entity), Times.Once);
         }
 
-        // -------- DeleteSectionAsync --------
-
-        // Xóa Section khi không tìm thấy Id: trả về false
+        // Test 2: Cập nhật Section với roleId != 4 - ném UnauthorizedAccessException
         [Test]
-        public async Task DeleteSectionAsync_NotFound_ReturnsFalse()
+        public void UpdateSectionAsync_RoleIdNotFour_ThrowsUnauthorizedAccessException()
+        {
+            // Arrange
+            _currentUserServiceMock.Setup(s => s.RoleId).Returns(3);
+            var id = Guid.NewGuid();
+            var updateDto = new SectionUpdateDto
+            {
+                Title = "New Title",
+                Description = "New Description"
+            };
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(() => _iSectionService.UpdateSectionAsync(id, updateDto));
+            Assert.That(ex!.Message, Does.Contain("Chỉ giảng viên mới được cập nhật section"));
+            _sectionRepositoryMock.Verify(r => r.FindByIdAsync(It.IsAny<Guid>()), Times.Never);
+        }
+
+        // Test 3: Cập nhật Section khi không tìm thấy - trả về null
+        [Test]
+        public async Task UpdateSectionAsync_NotFound_ReturnsNull()
         {
             // Arrange
             var id = Guid.NewGuid();
+            var updateDto = new SectionUpdateDto
+            {
+                Title = "New Title",
+                Description = "New Description"
+            };
+
             _sectionRepositoryMock
                 .Setup(r => r.FindByIdAsync(id))
                 .ReturnsAsync((Section?)null);
 
             // Act
-            var result = await _iSectionService.DeleteSectionAsync(id);
+            var result = await _iSectionService.UpdateSectionAsync(id, updateDto);
 
             // Assert
-            Assert.IsFalse(result);
+            Assert.IsNull(result);
+            _sectionRepositoryMock.Verify(r => r.FindByIdAsync(id), Times.Once);
         }
 
-        // Khi repository UpdateAsync trong DeleteSectionAsync ném exception thì service cũng ném ra
+        // Test 4: Cập nhật Section với Title trống - ném ArgumentException
         [Test]
-        public void DeleteSectionAsync_RepositoryThrows_PropagatesException()
+        public void UpdateSectionAsync_EmptyTitle_ThrowsArgumentException()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var entity = new Section { Id = id };
+            var updateDto = new SectionUpdateDto
+            {
+                Title = "",
+                Description = "Valid Description"
+            };
+
+            _sectionRepositoryMock
+                .Setup(r => r.FindByIdAsync(id))
+                .ReturnsAsync(entity);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.UpdateSectionAsync(id, updateDto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Title"));
+            StringAssert.Contains("không được để trống", ex.Message);
+            _sectionRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
+        // Test 5: Cập nhật Section với Title null - ném ArgumentException
+        [Test]
+        public void UpdateSectionAsync_NullTitle_ThrowsArgumentException()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var entity = new Section { Id = id };
+            var updateDto = new SectionUpdateDto
+            {
+                Title = null!,
+                Description = "Valid Description"
+            };
+
+            _sectionRepositoryMock
+                .Setup(r => r.FindByIdAsync(id))
+                .ReturnsAsync(entity);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.UpdateSectionAsync(id, updateDto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Title"));
+            _sectionRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
+        // Test 6: Cập nhật Section với Description trống - ném ArgumentException
+        [Test]
+        public void UpdateSectionAsync_EmptyDescription_ThrowsArgumentException()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var entity = new Section { Id = id };
+            var updateDto = new SectionUpdateDto
+            {
+                Title = "Valid Title",
+                Description = ""
+            };
+
+            _sectionRepositoryMock
+                .Setup(r => r.FindByIdAsync(id))
+                .ReturnsAsync(entity);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentException>(() => _iSectionService.UpdateSectionAsync(id, updateDto));
+            Assert.That(ex!.ParamName, Is.EqualTo("Description"));
+            StringAssert.Contains("không được để trống", ex.Message);
+            _sectionRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Section>()), Times.Never);
+        }
+
+        // -------- DeleteSectionAsync --------
+
+        // Test 1: Xóa Section thành công khi section đang active
+        [Test]
+        public async Task DeleteSectionAsync_Active_SetsInactiveAndReturnsTrue()
         {
             // Arrange
             var id = Guid.NewGuid();
@@ -303,57 +487,6 @@ namespace TestSkillUp.Services
             {
                 Id = id,
                 IsActive = true
-            };
-
-            _sectionRepositoryMock
-                .Setup(r => r.FindByIdAsync(id))
-                .ReturnsAsync(entity);
-
-            _sectionRepositoryMock
-                .Setup(r => r.UpdateAsync(entity))
-                .ThrowsAsync(new Exception("Delete failed"));
-
-            // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(() => _iSectionService.DeleteSectionAsync(id));
-            StringAssert.Contains("Delete failed", ex!.Message);
-        }
-
-        // Xóa Section đã inactive từ trước: trả về true và không gọi UpdateAsync
-        [Test]
-        public async Task DeleteSectionAsync_AlreadyInactive_ReturnsTrueWithoutUpdating()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var entity = new Section
-            {
-                Id = id,
-                IsActive = false
-            };
-
-            _sectionRepositoryMock
-                .Setup(r => r.FindByIdAsync(id))
-                .ReturnsAsync(entity);
-
-            // Act
-            var result = await _iSectionService.DeleteSectionAsync(id);
-
-            // Assert
-            Assert.IsTrue(result);
-            _sectionRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Section>()), Times.Never);
-        }
-
-        // Xóa Section đang active: đặt IsActive=false, UpdatedAt thay đổi và trả về true
-        [Test]
-        public async Task DeleteSectionAsync_Active_SetsInactiveAndReturnsTrue()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var originalUpdatedAt = DateTime.MinValue;
-            var entity = new Section
-            {
-                Id = id,
-                IsActive = true,
-                UpdatedAt = originalUpdatedAt
             };
 
             _sectionRepositoryMock
@@ -370,15 +503,27 @@ namespace TestSkillUp.Services
             // Assert
             Assert.IsTrue(result);
             Assert.IsFalse(entity.IsActive);
-            Assert.That(entity.UpdatedAt, Is.Not.EqualTo(originalUpdatedAt));
+            _sectionRepositoryMock.Verify(r => r.FindByIdAsync(id), Times.Once);
             _sectionRepositoryMock.Verify(r => r.UpdateAsync(entity), Times.Once);
         }
 
-        // -------- RestoreSectionAsync --------
-
-        // Khôi phục Section khi không tìm thấy: trả về null
+        // Test 2: Xóa Section với roleId != 4 - ném UnauthorizedAccessException
         [Test]
-        public async Task RestoreSectionAsync_NotFound_ReturnsNull()
+        public void DeleteSectionAsync_RoleIdNotFour_ThrowsUnauthorizedAccessException()
+        {
+            // Arrange
+            _currentUserServiceMock.Setup(s => s.RoleId).Returns(3);
+            var id = Guid.NewGuid();
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(() => _iSectionService.DeleteSectionAsync(id));
+            Assert.That(ex!.Message, Does.Contain("Chỉ giảng viên mới được xoá chương"));
+            _sectionRepositoryMock.Verify(r => r.FindByIdAsync(It.IsAny<Guid>()), Times.Never);
+        }
+
+        // Test 3: Xóa Section khi không tìm thấy - trả về false
+        [Test]
+        public async Task DeleteSectionAsync_NotFound_ReturnsFalse()
         {
             // Arrange
             var id = Guid.NewGuid();
@@ -387,79 +532,12 @@ namespace TestSkillUp.Services
                 .ReturnsAsync((Section?)null);
 
             // Act
-            var result = await _iSectionService.RestoreSectionAsync(id);
+            var result = await _iSectionService.DeleteSectionAsync(id);
 
             // Assert
-            Assert.IsNull(result);
+            Assert.IsFalse(result);
+            _sectionRepositoryMock.Verify(r => r.FindByIdAsync(id), Times.Once);
         }
-
-        // Khôi phục Section đã active sẵn: trả về DTO hiện tại, không gọi UpdateAsync
-        [Test]
-        public async Task RestoreSectionAsync_AlreadyActive_ReturnsCurrentDto()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var entity = new Section
-            {
-                Id = id,
-                CourseId = Guid.NewGuid(),
-                Title = "S1",
-                Description = "D1",
-                IsActive = true,
-                Orders = 1
-            };
-
-            _sectionRepositoryMock
-                .Setup(r => r.FindByIdAsync(id))
-                .ReturnsAsync(entity);
-
-            // Act
-            var result = await _iSectionService.RestoreSectionAsync(id);
-
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.AreEqual(entity.Id, result!.Id);
-            Assert.AreEqual(entity.Title, result.Title);
-
-            _sectionRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Section>()), Times.Never);
-        }
-
-        // Khôi phục Section đang inactive: đặt IsActive=true, gọi UpdateAsync và trả về DTO
-        [Test]
-        public async Task RestoreSectionAsync_Inactive_ActivatesAndReturnsDto()
-        {
-            // Arrange
-            var id = Guid.NewGuid();
-            var entity = new Section
-            {
-                Id = id,
-                CourseId = Guid.NewGuid(),
-                Title = "S1",
-                Description = "D1",
-                IsActive = false,
-                UpdatedAt = DateTime.MinValue,
-                Orders = 1
-            };
-
-            _sectionRepositoryMock
-                .Setup(r => r.FindByIdAsync(id))
-                .ReturnsAsync(entity);
-
-            _sectionRepositoryMock
-                .Setup(r => r.UpdateAsync(entity))
-                .ReturnsAsync(entity);
-
-            // Act
-            var result = await _iSectionService.RestoreSectionAsync(id);
-
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsTrue(entity.IsActive);
-            _sectionRepositoryMock.Verify(r => r.UpdateAsync(entity), Times.Once);
-        }
-
-        // Các test cho 2 hàm ReorderSectionContentAsync và ReorderSectionsAsync
-        // được bỏ qua trong version đơn giản này để không cần DbContext, giống pattern của LessonServiceTests.
     }
 }
 

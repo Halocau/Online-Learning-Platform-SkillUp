@@ -40,6 +40,7 @@ namespace SkillUp.Repositories.Implementations
             return await _context.CommentReportPosts
                 .Include(r => r.CommentPost)
                 .Include(r => r.Account) // Lấy luôn tên người report
+
                 .FirstOrDefaultAsync(r => r.Id == reportId);
         }
 
@@ -55,6 +56,7 @@ namespace SkillUp.Repositories.Implementations
             // Sắp xếp theo ngày tạo mới nhất để dễ theo dõi
             return await _context.CommentReportPosts
         .Include(r => r.Account)
+        .Include(r => r.CommentPost)
         .OrderByDescending(r => r.CreatedAt)
         .ToListAsync();
         }
@@ -63,8 +65,9 @@ namespace SkillUp.Repositories.Implementations
         {
             // Thêm .Where(r => r.Status == "Pending")
             return await _context.CommentReportPosts
-        .Include(r => r.Account) // Vẫn lấy tên người report
-                .Where(r => r.Status == "Pending")
+        .Include(r => r.Account)
+        .Include(r => r.CommentPost)
+        .Where(r => r.Status == "Pending")
         .OrderByDescending(r => r.CreatedAt) // Sắp xếp cái mới nhất lên đầu
                 .ToListAsync();
         }

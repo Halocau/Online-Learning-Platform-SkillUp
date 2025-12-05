@@ -121,12 +121,11 @@ export const addQuestionToQuiz = async (questionData) => {
   }
 };
 
-// Update question - API requires answerId for each answer
+// Update question
 export const updateQuestion = async (questionId, questionData) => {
   try {
-    // Format answers with answerId (required by API)
     const formattedAnswers = questionData.answers.map((answer) => ({
-      answerId: answer.answerId || answer.id, // Include answerId from original data
+      answerId: answer.answerId || answer.id,
       answerName: answer.answerName,
       isCorrect: answer.isCorrect,
       imageUrl: answer.imageUrl || "",

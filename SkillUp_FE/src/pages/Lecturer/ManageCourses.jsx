@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import CreateCourseForm from "./CreateCourseForm";
-import CourseList from "./CourseList";
+import CourseList from "./Course/CourseList";
 
 function ManageCourses() {
   const navigate = useNavigate();

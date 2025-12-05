@@ -130,13 +130,6 @@ export default function UserPosts() {
                   </div>
                   <p className="text-sm text-gray-600 mt-1">Bài viết</p>
                 </div>
-                <div className="text-center">
-                  <div className="flex items-center gap-1 text-3xl font-bold text-pink-500 justify-center">
-                    <Heart size={24} />
-                    {totalLikes}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-1">Lượt thích</p>
-                </div>
               </div>
             </div>
           </div>

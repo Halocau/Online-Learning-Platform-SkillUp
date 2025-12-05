@@ -13,8 +13,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LessonForm from "./LessonForm";
-import QuizForm from "./QuizForm";
-import QuizQuestionManager from "./QuizQuestionManager";
+import QuizForm from "../Quiz/Quizform";
+import QuizQuestionManager from "../Quiz/QuizQuestionManager";
 
 function ItemCard({
   item,

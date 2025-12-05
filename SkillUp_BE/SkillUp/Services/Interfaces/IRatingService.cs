@@ -8,6 +8,7 @@ namespace SkillUp.Services.Interfaces
         Task<RatingDto> UpdateRatingAsync(UpdateRatingDto dto, Guid accountId);
         Task DeleteRatingAsync(int ratingId, Guid accountId);
         Task<RatingResponseDto> GetRatingsByCourseIdAsync(Guid courseId);
+        Task<IEnumerable<RatingDto>> GetRatingsByAccountIdAsync(Guid accountId, Guid? courseId = null);
 
     }
 }

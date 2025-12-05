@@ -172,17 +172,6 @@ export default function ForumLayout() {
                 >
                   Bài đăng của tôi
                 </NavLink>
-
-                <span className="block text-xs text-gray-400 mt-4 uppercase tracking-wide">
-                  Personal Navigator
-                </span>
-
-                <a className="block px-3 py-2 rounded-lg hover:bg-[#FFF3C4] hover:text-gray-900 transition-all duration-200">
-                  Bài đã lưu
-                </a>
-                <a className="block px-3 py-2 rounded-lg hover:bg-[#FFF3C4] hover:text-gray-900 transition-all duration-200">
-                  Đã thích
-                </a>
               </nav>
             </div>
           </aside>
@@ -193,21 +182,26 @@ export default function ForumLayout() {
 
           <aside className="hidden lg:block col-span-2">
             <div className="sticky top-24 space-y-4">
+              {/* Section 1: Must-read posts (Thông Tin Cốt Lõi) */}
               <div className="bg-white p-4 rounded-2xl shadow-sm">
-                <h3 className="font-semibold mb-2">Must-read posts</h3>
+                <h3 className="font-semibold mb-2">Thông Tin Cốt Lõi</h3>{" "}
+                {/* Core Information */}
                 <ul className="text-sm text-blue-600 space-y-1">
                   <li>
-                    • Please read rules before you start working on a platform
+                    • Vui lòng đọc quy tắc trước khi bạn bắt đầu làm việc trên
+                    nền tảng
                   </li>
-                  <li>• Vision & Strategy of SkillUp</li>
+                  <li>• Tầm nhìn & Chiến lược của SkillUp</li>
                 </ul>
               </div>
 
+              {/* Section 2: Featured links (Đường Dẫn Nhanh) */}
               <div className="bg-white p-4 rounded-2xl shadow-sm">
-                <h3 className="font-semibold mb-2">Featured links</h3>
+                <h3 className="font-semibold mb-2">Đường Dẫn Nhanh</h3>{" "}
+                {/* Quick Paths/Links */}
                 <ul className="text-sm text-blue-600 space-y-1">
-                  <li>• SkillUp docs</li>
-                  <li>• Community</li>
+                  <li>• Tài liệu SkillUp</li>
+                  <li>• Cộng đồng</li>
                 </ul>
               </div>
             </div>
