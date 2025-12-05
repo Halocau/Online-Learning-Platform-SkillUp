@@ -22,7 +22,7 @@ namespace SkillUp.BussinessObjects.DTOs.Course
         public DateTime UpdatedAt { get; set; }
         public LecturerCourseDetailDto Lecturer { get; set; }
         public List<SectionLearningDetailDto> Sections { get; set; }
-        public int? FeedbackId { get; set; }
+        public int? RatingId { get; set; }
     }
 }
 

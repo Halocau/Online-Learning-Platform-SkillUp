@@ -612,11 +612,11 @@ namespace SkillUp.Services.Implementations
 
             var progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
 
-            // Lấy feedbackId nếu có rating của student cho course này
-            var rating = await _ratingRepository.GetByStudentAndCourseAsync(student.Id, courseId);
-            int? feedbackId = rating?.Id;
 
-            return BuildCourseLearningDetailDto(course, student.Id, progressDict, feedbackId);
+            var rating = await _ratingRepository.GetByStudentAndCourseAsync(student.Id, courseId);
+            int? ratingId = rating?.Id;
+
+            return BuildCourseLearningDetailDto(course, student.Id, progressDict, ratingId);
         }
 
         // Build CourseDetailDto for public course detail (no progress info)
@@ -722,7 +722,7 @@ namespace SkillUp.Services.Implementations
             Course course,
             Guid studentId,
             Dictionary<Guid, bool?> progressDict,
-            int? feedbackId = null)
+            int? ratingId = null)
         {
             progressDict ??= new Dictionary<Guid, bool?>();
 
@@ -751,7 +751,7 @@ namespace SkillUp.Services.Implementations
                     Title = course.Lecturer.Title ?? "",
                     Profession = course.Lecturer.Profession ?? ""
                 } : null,
-                FeedbackId = feedbackId
+                RatingId = ratingId
             };
 
             detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>
