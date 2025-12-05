@@ -1,21 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Star, X, Award, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "react-toastify";
 
-const RatingModal = ({ courseName, onSubmit, onClose }) => {
-  const [rating, setRating] = useState(0);
+const RatingModal = ({ 
+  courseName, 
+  courseId, 
+  existingRating = null,
+  onSubmit, 
+  onClose 
+}) => {
+  const [rating, setRating] = useState(existingRating?. star || 0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [review, setReview] = useState("");
+  const [review, setReview] = useState(existingRating?.contents || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isEditMode = !!existingRating;
+
+  useEffect(() => {
+    if (existingRating) {
+      setRating(existingRating.star);
+      setReview(existingRating.contents || "");
+    }
+  }, [existingRating]);
+
   const handleSubmit = async () => {
-    if (rating === 0) return;
+    if (rating === 0) {
+      toast.error("Vui lòng chọn số sao đánh giá");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await onSubmit(rating, review);
+      await onSubmit({
+        courseId,
+        star: rating,
+        contents: review,
+        ratingId: existingRating?. ratingId,
+      });
+      
+      toast.success(
+        isEditMode 
+          ? "Cập nhật đánh giá thành công!" 
+          : "Gửi đánh giá thành công!"
+      );
+      onClose();
     } catch (error) {
       console.error("Error submitting rating:", error);
+      toast.error(
+        isEditMode 
+          ?  "Không thể cập nhật đánh giá.  Vui lòng thử lại."
+          : "Không thể gửi đánh giá. Vui lòng thử lại."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -47,9 +83,13 @@ const RatingModal = ({ courseName, onSubmit, onClose }) => {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                Chúc mừng!
+                {isEditMode ? "Chỉnh sửa đánh giá" : "Chúc mừng! "}
               </h2>
-              <p className="text-gray-600">Bạn đã hoàn thành khóa học</p>
+              <p className="text-gray-600">
+                {isEditMode 
+                  ? "Cập nhật đánh giá của bạn" 
+                  : "Bạn đã hoàn thành khóa học"}
+              </p>
             </div>
           </div>
         </div>
@@ -58,7 +98,9 @@ const RatingModal = ({ courseName, onSubmit, onClose }) => {
         <div className="p-6 space-y-6">
           {/* Course Name */}
           <div className="bg-gradient-to-r from-[#FFF9E6] to-[#FFF3CD] p-4 rounded-lg border border-[#FFD54F]/30">
-            <p className="text-sm text-gray-600 mb-1">Khóa học đã hoàn thành</p>
+            <p className="text-sm text-gray-600 mb-1">
+              {isEditMode ?  "Khóa học" : "Khóa học đã hoàn thành"}
+            </p>
             <h3 className="font-semibold text-gray-900">{courseName}</h3>
           </div>
 
@@ -109,7 +151,7 @@ const RatingModal = ({ courseName, onSubmit, onClose }) => {
             <textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
-              placeholder="Bạn thích gì ở khóa học này? Điều gì có thể cải thiện?"
+              placeholder="Bạn thích gì ở khóa học này?  Điều gì có thể cải thiện?"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFD54F] focus:border-transparent resize-none"
               rows={5}
               maxLength={500}
@@ -125,17 +167,19 @@ const RatingModal = ({ courseName, onSubmit, onClose }) => {
           </div>
 
           {/* Benefits of Rating */}
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
-              <Award className="w-4 h-4" />
-              Tại sao nên đánh giá khóa học này?
-            </h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Giúp học viên khác tìm khóa học chất lượng</li>
-              <li>• Cung cấp phản hồi có giá trị cho giảng viên</li>
-              <li>• Góp phần cải thiện nội dung khóa học</li>
-            </ul>
-          </div>
+          {! isEditMode && (
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+              <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                Tại sao nên đánh giá khóa học này?
+              </h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Giúp học viên khác tìm khóa học chất lượng</li>
+                <li>• Cung cấp phản hồi có giá trị cho giảng viên</li>
+                <li>• Góp phần cải thiện nội dung khóa học</li>
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -144,7 +188,7 @@ const RatingModal = ({ courseName, onSubmit, onClose }) => {
             onClick={onClose}
             className="px-6 py-3 text-gray-700 hover:text-gray-900 font-medium transition-colors"
           >
-            Bỏ qua
+            {isEditMode ? "Hủy" : "Bỏ qua"}
           </button>
 
           <button
@@ -155,12 +199,12 @@ const RatingModal = ({ courseName, onSubmit, onClose }) => {
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
-                Đang gửi...
+                {isEditMode ? "Đang cập nhật..." : "Đang gửi..."}
               </>
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                Gửi đánh giá
+                {isEditMode ? "Cập nhật đánh giá" : "Gửi đánh giá"}
               </>
             )}
           </button>

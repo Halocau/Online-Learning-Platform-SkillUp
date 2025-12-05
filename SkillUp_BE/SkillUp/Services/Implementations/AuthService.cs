@@ -23,8 +23,9 @@ namespace SkillUp.Services.Implementations
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
         private readonly IStudentService _studentService;
+        private readonly ICartService _cartService;
 
-        public AuthService(IAccountRepository accountRepository, IRefreshTokenRepository refreshTokenRepository, IOtpRepository otpRepository, IConfiguration configuration, IEmailService emailService, IStudentService studentService)
+        public AuthService(IAccountRepository accountRepository, IRefreshTokenRepository refreshTokenRepository, IOtpRepository otpRepository, IConfiguration configuration, IEmailService emailService, IStudentService studentService, ICartService cartService)
         {
             _accountRepository = accountRepository;
             _refreshTokenRepository = refreshTokenRepository;
@@ -32,6 +33,7 @@ namespace SkillUp.Services.Implementations
             _configuration = configuration;
             _emailService = emailService;
             _studentService = studentService;
+            _cartService = cartService;
         }
 
         public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto request)
@@ -51,6 +53,12 @@ namespace SkillUp.Services.Implementations
             if (string.Equals(account.Status, "Banned"))
             {
                 throw new Exception("Tài khoản của bạn đã bị cấm !");
+            }
+
+            // Tạo cart cho Student nếu chưa có (roleId = 5 và status = Active)
+            if (account.RoleId == 5 && string.Equals(account.Status, "Active"))
+            {              
+                    await _cartService.CreateCartIfNotExistsAsync(account.Id);
             }
 
             // generate access tokens and refresh token
@@ -141,6 +149,7 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> RegisterAsync(RegisterRequestDto request)
         {
+            if (request.RoleId != 4 && request.RoleId != 5) return false;
             if (await _accountRepository.ExistsByEmailAsync(request.Email))
             {
                 return false;
@@ -218,7 +227,15 @@ namespace SkillUp.Services.Implementations
             await _accountRepository.UpdateAsync(account);
             await _otpRepository.UpdateAsync(otp);
 
-            return await _accountRepository.SaveChangesAsync();
+            var saveResult = await _accountRepository.SaveChangesAsync();
+
+            // Tạo cart cho Student khi verify email thành công (roleId = 5 và status = Active)
+            if (saveResult && account.RoleId == 5 && !isLecturer)
+            {
+                await _cartService.CreateCartIfNotExistsAsync(account.Id);
+            }
+
+            return saveResult;
         }
 
         public async Task<bool> ResendVerifyEmailAsync(ResendOtpRequestDto request)
@@ -368,6 +385,12 @@ namespace SkillUp.Services.Implementations
                     }
                 }
 
+                // Tạo cart cho Student nếu chưa có (roleId = 5 và status = Active)
+                if (account.RoleId == 5 && string.Equals(account.Status, "Active"))
+                {
+                        await _cartService.CreateCartIfNotExistsAsync(account.Id);
+                }
+
                 var token = await GenerateAndSaveTokensAsync(account);
                 if (token == null) return null;
                 return new GoogleLoginResponseDto
@@ -398,7 +421,7 @@ namespace SkillUp.Services.Implementations
         {
             // Kiểm tra email tồn tại và đã xác thực
             var account = await _accountRepository.GetByEmailAsync(request.Email);
-            if (account == null || account.Status != "Active")
+            if (account == null || !(account.Status == "Active" || account.Status == "Pending"))
             {
                 return false;
             }

@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import VideoPlayer from "./VideoPlayer";
 import TextLesson from "./TextLesson";
-import QuizView from "./Quiz/QuizView";
+import QuizView from "../Quiz/QuizView";
 import LearningTabs from "./LearningTabs";
+
 
 const LessonContent = ({
   item,
@@ -35,12 +36,23 @@ const LessonContent = ({
 
   const handleMarkComplete = async () => {
     if (isCompleted || marking) return;
-    
+
     setMarking(true);
     try {
       await onComplete(item.id);
     } finally {
       setMarking(false);
+    }
+  };
+
+  // Handle quiz completion
+  const handleQuizCompletion = async (passed) => {
+    if (passed && !isCompleted) {
+      await onComplete(item.id);
+
+      if (onQuizComplete) {
+        await onQuizComplete();
+      }
     }
   };
 
@@ -58,7 +70,7 @@ const LessonContent = ({
                 <span className="text-gray-300">•</span>
                 <span
                   className={cn(
-                    "px-2.5 py-0.5 rounded-full text-xs font-medium",
+                    "px-2. 5 py-0.5 rounded-full text-xs font-medium",
                     item.kind === "Lesson"
                       ? item.lessonType === "Video"
                         ? "bg-blue-100 text-blue-700"
@@ -94,7 +106,7 @@ const LessonContent = ({
           <div className="mb-8">
             {item.assets?.[0]?.url ? (
               <VideoPlayer
-                videoUrl={item.assets[0].url}
+                videoUrl={item.assets?.[0]?.url}
                 onVideoEnd={handleVideoComplete}
                 onProgress={setVideoProgress}
               />
@@ -122,7 +134,7 @@ const LessonContent = ({
             <QuizView
               quiz={item}
               isCompleted={isCompleted}
-              onComplete={(passed) => passed && onComplete(item.id)}
+              onComplete={handleQuizCompletion}
               onQuizComplete={onQuizComplete}
             />
           </div>
@@ -140,25 +152,27 @@ const LessonContent = ({
 
           <div className="flex items-center gap-3">
             {/* Mark Complete Button - Only for Video Lessons */}
-            {item.kind === "Lesson" && item.lessonType === "Video" && !isCompleted && (
-              <button
-                onClick={handleMarkComplete}
-                disabled={marking}
-                className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-              >
-                {marking ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Đang xử lý...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-5 h-5" />
-                    Đánh dấu hoàn thành
-                  </>
-                )}
-              </button>
-            )}
+            {item.kind === "Lesson" &&
+              item.lessonType === "Video" &&
+              !isCompleted && (
+                <button
+                  onClick={handleMarkComplete}
+                  disabled={marking}
+                  className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                >
+                  {marking ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Đánh dấu hoàn thành
+                    </>
+                  )}
+                </button>
+              )}
 
             <button
               onClick={onNext}
@@ -173,8 +187,8 @@ const LessonContent = ({
         {/* Learning Tabs - Only for Video Lessons */}
         {item.kind === "Lesson" && item.lessonType === "Video" && (
           <div className="mt-8">
-            <LearningTabs 
-              lessonId={lessonId} 
+            <LearningTabs
+              lessonId={lessonId}
               item={item}
               description={item.description}
             />

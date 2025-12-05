@@ -1,25 +1,31 @@
+import { useState } from 'react';
+import ProfileSidebar from './ProfileSidebar';
+import BasicInfoForm from './BasicInfoForm';
+import LecturerInfoForm from './LecturerInfoForm';
+import PasswordChangeForm from './PasswordChangeForm';
+import { useProfileData } from './useProfileData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Lock } from "lucide-react";
-import ProfileSidebar from "../Lecturer/components/Profile/ProfileSideBar";
-import BasicInfoForm from "../Lecturer/components/Profile/BasicInfoForm";
-import PasswordChangeForm from "../Lecturer/components/Profile/PasswordChangeForm";
-import { useBasicProfile } from "./useBasicProfile";
+import { User, Briefcase, Lock } from 'lucide-react';
 
-function ModProfile() {
+function LecturerProfile() {
   const {
     loading,
     profile,
+    lecturerProfile,
     formData,
     setFormData,
+    lecturerFormData,
+    setLecturerFormData,
     passwordData,
     setPasswordData,
     updateProfile,
+    updateLecturerProfile,
     changePassword,
     uploadAvatar,
-  } = useBasicProfile();
+  } = useProfileData();
 
   // Loading state
-  if (loading && !profile) {
+  if (loading && ! profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -33,14 +39,14 @@ function ModProfile() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-32"></div>
-
+      
       <div className="max-w-6xl mx-auto px-4 -mt-20 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Sidebar */}
           <div className="lg:col-span-1">
-            <ProfileSidebar
+            <ProfileSidebar 
               profile={profile}
-              lecturerProfile={null}
+              lecturerProfile={lecturerProfile}
               onUploadAvatar={uploadAvatar}
             />
           </div>
@@ -48,24 +54,26 @@ function ModProfile() {
           {/* Right Side - Tabbed Forms */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="basic" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
                   <span className="hidden sm:inline">Thông tin cơ bản</span>
                   <span className="sm:hidden">Cơ bản</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="password"
-                  className="flex items-center gap-2"
-                >
+                <TabsTrigger value="lecturer" className="flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  <span className="hidden sm:inline">Giảng viên</span>
+                  <span className="sm:hidden">GV</span>
+                </TabsTrigger>
+                <TabsTrigger value="password" className="flex items-center gap-2">
                   <Lock className="w-4 h-4" />
-                  <span className="hidden sm:inline">Đổi mật khẩu</span>
-                  <span className="sm:hidden">Mật khẩu</span>
+                  <span className="hidden sm:inline">Mật khẩu</span>
+                  <span className="sm:hidden">MK</span>
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="basic">
-                <BasicInfoForm
+                <BasicInfoForm 
                   profile={profile}
                   formData={formData}
                   setFormData={setFormData}
@@ -74,8 +82,17 @@ function ModProfile() {
                 />
               </TabsContent>
 
+              <TabsContent value="lecturer">
+                <LecturerInfoForm 
+                  lecturerFormData={lecturerFormData}
+                  setLecturerFormData={setLecturerFormData}
+                  onSubmit={updateLecturerProfile}
+                  loading={loading}
+                />
+              </TabsContent>
+
               <TabsContent value="password">
-                <PasswordChangeForm
+                <PasswordChangeForm 
                   passwordData={passwordData}
                   setPasswordData={setPasswordData}
                   onSubmit={changePassword}
@@ -90,4 +107,4 @@ function ModProfile() {
   );
 }
 
-export default ModProfile;
+export default LecturerProfile;

@@ -30,7 +30,9 @@ namespace SkillUp.Services.Implementations
 		private readonly IStudentRepository _studentRepository;
 		private readonly IStudentProgressRepository _studentProgressRepository;
 		private readonly ICurrentUserService _currentUserService;
-		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService)
+        private readonly IRatingService _ratingService;
+		private readonly IRatingRepository _ratingRepository;
+		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IRatingService ratingService, IRatingRepository ratingRepository)
 		{
 			_courseRepository = courseRepository;
 			_lecturerRepository = lecturerRepository;
@@ -43,7 +45,9 @@ namespace SkillUp.Services.Implementations
 			_studentRepository = studentRepository;
 			_studentProgressRepository = studentProgressRepository;
 			_currentUserService = currentUserService;
-		}
+            _ratingService= ratingService;
+			_ratingRepository = ratingRepository;
+        }
 
 		public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
 		{
@@ -608,7 +612,11 @@ namespace SkillUp.Services.Implementations
 
             var progressDict = await _studentProgressRepository.GetProgressByCourseAndStudentAsync(courseId, student.Id);
 
-            return BuildCourseLearningDetailDto(course, student.Id, progressDict);
+
+            var rating = await _ratingRepository.GetByStudentAndCourseAsync(student.Id, courseId);
+            int? ratingId = rating?.Id;
+
+            return BuildCourseLearningDetailDto(course, student.Id, progressDict, ratingId);
         }
 
         // Build CourseDetailDto for public course detail (no progress info)
@@ -713,7 +721,8 @@ namespace SkillUp.Services.Implementations
         private CourseLearningDetailDto BuildCourseLearningDetailDto(
             Course course,
             Guid studentId,
-            Dictionary<Guid, bool?> progressDict)
+            Dictionary<Guid, bool?> progressDict,
+            int? ratingId = null)
         {
             progressDict ??= new Dictionary<Guid, bool?>();
 
@@ -741,7 +750,8 @@ namespace SkillUp.Services.Implementations
                     Avartar = course.Lecturer.Account?.Avatar ?? "default-avatar.png",
                     Title = course.Lecturer.Title ?? "",
                     Profession = course.Lecturer.Profession ?? ""
-                } : null
+                } : null,
+                RatingId = ratingId
             };
 
             detail.Sections = course.Sections.Where(l => l.IsActive).Select(section =>

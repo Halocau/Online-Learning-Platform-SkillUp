@@ -19,6 +19,7 @@ namespace SkillUp.Services.Implementations
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IStudentRepository _studentRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
+
         public LessonService(
             ILessonRepository lessonRepository,
             ISectionRepository sectionRepository,
@@ -108,7 +109,7 @@ namespace SkillUp.Services.Implementations
         {
             var lesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
             if (lesson == null)
-                throw new NullReferenceException("Không tìm thấy bài học!");
+                return null;
 
             return MapToResponseDto(lesson);
         }
@@ -124,7 +125,7 @@ namespace SkillUp.Services.Implementations
             var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);
             if (course == null)
             {
-                throw new Exception("Không tìm thấy khóa học!");
+                throw new Exception("Bạn không sở hữu khóa học này!");
             }
 
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
@@ -160,23 +161,12 @@ namespace SkillUp.Services.Implementations
 
             if (dto.Type == "Video")
             {
-                if (dto.VideoFile == null)
-                {
-                    throw new Exception("Video file là bắt buộc cho bài học loại Video!");
-                }
-
                 // Upload video lên VPS qua FTP
-                var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
+                var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile!, "lessons");
                 asset.Url = videoUrl;
-                asset.FileUrl = null; // Video không dùng FileUrl trong Asset
             }
             else if (dto.Type == "Text")
             {
-                if (string.IsNullOrEmpty(dto.Content))
-                {
-                    throw new Exception("Content là bắt buộc cho bài học loại Text!");
-                }
-
                 // Lưu content vào database
                 asset.Contents = dto.Content;
             }
@@ -209,66 +199,96 @@ namespace SkillUp.Services.Implementations
             if (!isVideo && !isText) throw new ValidationException("Type chỉ có thể là 'Text' hoặc 'Video'.");
 
             if (isVideo && (dto.VideoFile == null || dto.VideoFile.Length == 0))
-                throw new ValidationException("VideoFile bắt buộc khi Type = 'Video'.");
+                throw new ValidationException("Bạn phải tải video lên khi Type='Video'.");
 
             if (isText && string.IsNullOrEmpty(dto.Content))
-                throw new ValidationException("Content bắt buộc khi Type = 'Text'.");
+                throw new ValidationException("Bạn không được để trống nội dung khi Type='Text'.");
         }
 
         public async Task<LessonResponseDto> UpdateLessonAsync(Guid id, UpdateLessonDto dto, Guid accountId)
         {
-            // 1. Lấy lesson
             var lesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
             if (lesson == null)
             {
                 throw new Exception("Không tìm thấy bài học!");
             }
 
-            // 2. Kiểm tra quyền
+            // Kiểm tra section và course tồn tại
             var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);
-            var course = await _courseRepository.GetCourseByIdAsync(section!.CourseId);//ko dc null
-            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+            if (section == null)
+            {
+                throw new Exception("Không tìm thấy section!");
+            }
 
-            if (lecturer == null || course!.LecturerId != lecturer.Id)
+            var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);
+            if (course == null)
+            {
+                throw new Exception("Không tìm thấy khóa học!");
+            }
+
+            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+            if (lecturer == null || course.LecturerId != lecturer.Id)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa bài học này!");
             }
 
-            // 3. Update lesson info
+            // Update lesson info
             lesson.Title = dto.Title;
             lesson.Description = dto.Description;
             lesson.Orders = dto.LessonOrder;
             lesson.IsFree = dto.IsFree;
             lesson.UpdatedAt = DateTime.Now;
 
-            // 4. Update asset
-            var asset = lesson.Assets.FirstOrDefault();
-            if (asset != null)
+            // Update asset
+            var asset = lesson.Assets?.FirstOrDefault();
+            if (asset == null)
             {
-                if (lesson.Type == "Video" && dto.VideoFile != null)
+                // Tạo asset mới nếu chưa có
+                asset = new Asset
                 {
-                    // Xóa video cũ trên VPS nếu có
-                    if (!string.IsNullOrEmpty(asset.Url))
+                    Id = Guid.NewGuid(),
+                    LessonId = lesson.Id,
+                    IsActive = true
+                };
+                lesson.Assets ??= new List<Asset>();
+                lesson.Assets.Add(asset);
+            }
+
+            if (lesson.Type == "Video" && dto.VideoFile != null)
+            {
+                // Xóa video cũ trên VPS nếu có (trước khi upload mới để tránh lỗi)
+                string? oldVideoUrl = null;
+                if (!string.IsNullOrEmpty(asset.Url))
+                {
+                    oldVideoUrl = asset.Url;
+                }
+
+                // Upload video mới lên VPS qua FTP
+                var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
+                asset.Url = videoUrl;
+
+                // Xóa video cũ sau khi upload thành công
+                if (!string.IsNullOrEmpty(oldVideoUrl))
+                {
+                    try
                     {
-                        await _ftpVideoUploadService.DeleteVideoAsync(asset.Url);
+                        await _ftpVideoUploadService.DeleteVideoAsync(oldVideoUrl);
                     }
+                    catch (Exception ex)
+                    {
+                        _ = ex; 
+                    }
+                }
+            }
+            else if (lesson.Type == "Text" && !string.IsNullOrEmpty(dto.Content))
+            {
+                asset.Contents = dto.Content;
+            }
 
-                    // Upload video mới lên VPS qua FTP
-                    var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
-                    asset.Url = videoUrl;
-                }
-                else if (lesson.Type == "Text" && !string.IsNullOrEmpty(dto.Content))
-                {
-                    // Cập nhật content
-                    asset.Contents = dto.Content;
-                }
-
-                // Upload tài liệu khóa học mới nếu có (dùng cho cả Video và Text)
-                if (dto.FileUrl != null && dto.FileUrl.Length > 0)
-                {
-                    var documentUrl = await _cloudinaryService.UploadDocumentAsync(dto.FileUrl, "skillup/lesson-documents");
-                    asset.FileUrl = documentUrl;
-                }
+            if (dto.FileUrl != null && dto.FileUrl.Length > 0)
+            {
+                var documentUrl = await _cloudinaryService.UploadDocumentAsync(dto.FileUrl, "skillup/lesson-documents");
+                asset.FileUrl = documentUrl;
             }
 
             _lessonRepository.UpdateLesson(lesson);
@@ -285,8 +305,8 @@ namespace SkillUp.Services.Implementations
 
         public async Task<bool> DeleteLessonAsync(Guid id, Guid accountId)
         {
-            // 1. Lấy lesson
-            var lesson = await _lessonRepository.GetLessonByIdAsync(id);
+            // 1. Lấy lesson với đầy đủ thông tin (bao gồm Assets)
+            var lesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
             if (lesson == null)
             {
                 throw new Exception("Không tìm thấy bài học!");
@@ -295,26 +315,50 @@ namespace SkillUp.Services.Implementations
             {
                 throw new Exception("Bài học đã được xoá từ trước!");
             }
-            // 2. Kiểm tra quyền
-            var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);
-            var course = await _courseRepository.GetCourseByIdAsync(section!.CourseId);
-            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
 
-            if (lecturer == null || course!.LecturerId != lecturer.Id)
+            // 2. Kiểm tra quyền
+            var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);       
+            var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);     
+            var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
+            if (lecturer == null || course.LecturerId != lecturer.Id)
             {
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa bài học này!");
             }
-            if (!lesson.IsActive) return true;
-            lesson.IsActive = false;
-            lesson.UpdatedAt = DateTime.Now;
-            // 3. Soft delete
+
+            // 3. Xóa video và file từ server trước khi soft delete
             if (lesson.Assets != null)
             {
-                foreach (var a in lesson.Assets) a.IsActive = false;
+                foreach (var asset in lesson.Assets)
+                {
+                    // Xóa video từ FTP server nếu lesson type là Video
+                    if (lesson.Type == "Video" && !string.IsNullOrEmpty(asset.Url))
+                    {
+                        try
+                        {
+                            await _ftpVideoUploadService.DeleteVideoAsync(asset.Url);
+                        }
+                        catch (Exception ex)
+                        {
+                            _ = ex; // Suppress unused variable warning
+                        }
+                    }
+                    asset.IsActive = false;
+                }
             }
 
+            // 4. Soft delete lesson
+            lesson.IsActive = false;
+            lesson.UpdatedAt = DateTime.Now;
+
             _lessonRepository.UpdateLesson(lesson);
-            return await _lessonRepository.SaveChangesAsync();
+            var saved = await _lessonRepository.SaveChangesAsync();
+            
+            if (!saved)
+            {
+                throw new Exception("Không thể xóa bài học!");
+            }
+
+            return true;
         }
 
         // Helper method to map Lesson to DTO

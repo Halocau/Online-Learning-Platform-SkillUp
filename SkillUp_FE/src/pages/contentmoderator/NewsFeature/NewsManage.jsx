@@ -1,3 +1,4 @@
+// src/pages/contentmod/NewsManage.jsx
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import dayjs from "dayjs";
 import { toast } from "sonner";
 import NewsDetailModal from "./DetailNewsMod";
 import { extractCleanText, extractFirstImage } from "@/utils/htmlUtils";
+
 export default function NewsManage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,13 +34,12 @@ export default function NewsManage() {
   const [sortColumn, setSortColumn] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Now stateful
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [selectedNews, setSelectedNews] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-
-  const itemsPerPage = 10;
 
   const fetchNews = async () => {
     try {
@@ -129,6 +130,12 @@ export default function NewsManage() {
     }
   };
 
+  // Handle items per page change
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1); // Reset to first page
+  };
+
   const columns = [
     {
       key: "title",
@@ -137,7 +144,7 @@ export default function NewsManage() {
           Tiêu đề
           <button
             onClick={() => handleSort("title")}
-            className="hover:text-blue-600"
+            className="hover:text-blue-600 transition-colors"
           >
             <ArrowsUpDownIcon className="h-4 w-4" />
           </button>
@@ -151,7 +158,7 @@ export default function NewsManage() {
           Email tác giả
           <button
             onClick={() => handleSort("email")}
-            className="hover:text-blue-600"
+            className="hover:text-blue-600 transition-colors"
           >
             <ArrowsUpDownIcon className="h-4 w-4" />
           </button>
@@ -165,7 +172,7 @@ export default function NewsManage() {
           Ngày đăng
           <button
             onClick={() => handleSort("date")}
-            className="hover:text-blue-600"
+            className="hover:text-blue-600 transition-colors"
           >
             <ArrowsUpDownIcon className="h-4 w-4" />
           </button>
@@ -213,7 +220,7 @@ export default function NewsManage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-gray-50">
         <Spin size="large" />
       </div>
     );
@@ -225,18 +232,19 @@ export default function NewsManage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold text-gray-900">Quản lý tin tức</h2>
-          <Button>
+          <Button className="bg-blue-600 hover:bg-blue-700" asChild>
             <Link
               to="/contentmod/createnews"
               className="flex items-center gap-2"
             >
-              Thêm tin tức <PlusCircle size={18} />
+              <PlusCircle size={18} />
+              Thêm tin tức
             </Link>
           </Button>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white p-4 rounded-xl shadow-sm">
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
@@ -257,8 +265,10 @@ export default function NewsManage() {
             <div className="w-full lg:w-48">
               <Select value={dateFilter} onValueChange={setDateFilter}>
                 <SelectTrigger>
-                  <FunnelIcon className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Lọc theo ngày" />
+                  <div className="flex items-center gap-2">
+                    <FunnelIcon className="h-4 w-4" />
+                    <SelectValue placeholder="Lọc theo ngày" />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tất cả</SelectItem>
@@ -284,34 +294,63 @@ export default function NewsManage() {
             )}
           </div>
 
-          {/* Results count */}
-          <div className="mt-3 text-sm text-gray-600">
-            Đang hiện {paginatedData.length} / {sortedData.length} tin tức
+          {/* Results count and Items per page */}
+          <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="text-sm text-gray-600">
+              Đang hiện{" "}
+              <span className="font-semibold">{paginatedData.length}</span> /{" "}
+              <span className="font-semibold">{sortedData.length}</span> tin tức
+            </div>
+
+            {/* Items per page selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Hiển thị:</span>
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={handleItemsPerPageChange}
+              >
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-gray-600">mục/trang</span>
+            </div>
           </div>
         </div>
 
         {/* Table */}
-        <Table
-          columns={columns}
-          data={paginatedData}
-          onEdit={(item) => navigate(`/contentmod/editnews/${item.id}`)}
-          onDelete={(itemId) => handleDelete(itemId)}
-          onRowClick={handleView}
-        />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <Table
+            columns={columns}
+            data={paginatedData}
+            onEdit={(item) => navigate(`/contentmod/editnews/${item.id}`)}
+            onDelete={(itemId) => handleDelete(itemId)}
+            onRowClick={handleView}
+          />
+        </div>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-200 gap-4">
             <div className="text-sm text-gray-600">
-              Trang {currentPage} / {totalPages}
+              Trang <span className="font-semibold">{currentPage}</span> /{" "}
+              <span className="font-semibold">{totalPages}</span>
             </div>
 
-            <div className="flex gap-2 flex-wrap justify-center">
+            <div className="flex gap-2 flex-wrap justify-center items-center">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
+                className="min-w-[80px]"
               >
                 <ChevronLeftIcon className="h-4 w-4 mr-1" />
                 Trước
@@ -334,6 +373,7 @@ export default function NewsManage() {
                         }
                         size="sm"
                         onClick={() => setCurrentPage(pageNumber)}
+                        className="min-w-[40px]"
                       >
                         {pageNumber}
                       </Button>
@@ -343,7 +383,10 @@ export default function NewsManage() {
                     pageNumber === currentPage + 2
                   ) {
                     return (
-                      <span key={pageNumber} className="px-2 py-1">
+                      <span
+                        key={pageNumber}
+                        className="px-2 py-1 text-gray-400"
+                      >
                         ...
                       </span>
                     );
@@ -359,11 +402,29 @@ export default function NewsManage() {
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
+                className="min-w-[80px]"
               >
                 Sau
                 <ChevronRightIcon className="h-4 w-4 ml-1" />
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {sortedData.length === 0 && !loading && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MagnifyingGlassIcon className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Không tìm thấy tin tức
+            </h3>
+            <p className="text-gray-500">
+              {searchTerm || dateFilter !== "all"
+                ? "Thử điều chỉnh bộ lọc hoặc tìm kiếm của bạn"
+                : "Chưa có tin tức nào được tạo"}
+            </p>
           </div>
         )}
 
@@ -377,7 +438,10 @@ export default function NewsManage() {
           cancelText="Hủy"
           okButtonProps={{ danger: true }}
         >
-          Bạn có chắc chắn muốn xóa tin tức này không?
+          <p>Bạn có chắc chắn muốn xóa tin tức này không?</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Hành động này không thể hoàn tác.
+          </p>
         </Modal>
 
         {/* News Detail Modal */}

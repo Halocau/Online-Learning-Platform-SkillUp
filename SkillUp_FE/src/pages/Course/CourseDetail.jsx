@@ -17,6 +17,7 @@ import MoreCoursesByLecturerSection from "@/components/course-detail/MoreCourseB
 import LecturerSection from "@/components/course-detail/LecturerSection";
 import RelatedTopicsSection from "@/components/course-detail/RelatedTopic";
 import CourseEnrollmentCard from "@/components/course-detail/CourseEnrollmentCard";
+import { useUserRole } from "../Auth/useUserRole";
 
 export default function CourseDetail() {
   const { courseId } = useParams();
@@ -30,7 +31,7 @@ export default function CourseDetail() {
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [isReporting, setIsReporting] = useState(false);
-
+  const { isStudent, isLecturer, userRole } = useUserRole();
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -231,7 +232,9 @@ export default function CourseDetail() {
               enrollmentCount={course.enrollmentCount}
             />
 
+            {/* Updated ReviewsSection with courseId prop */}
             <ReviewsSection
+              courseId={courseId}
               courseRating={course.rating}
               totalReviews={course.enrollmentCount}
             />
@@ -243,11 +246,13 @@ export default function CourseDetail() {
           </div>
 
           <div className="hidden lg:block">
-            <CourseEnrollmentCard
-              course={course}
-              isEnrolled={isEnrolled}
-              checkingEnrollment={checkingEnrollment}
-            />
+            {isStudent && (
+              <CourseEnrollmentCard
+                course={course}
+                isEnrolled={isEnrolled}
+                checkingEnrollment={checkingEnrollment}
+              />
+            )}
           </div>
         </div>
       </div>
