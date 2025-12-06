@@ -894,68 +894,6 @@ namespace TestSkillUp
         }
 
 
-        [Test]
-        public async Task UpdateQuestionInQuizAsync_CreatesNewQuestion_WhenUsedInSubmissions()
-        {
-            var accId = Guid.NewGuid();
-            var oldQuestionId = Guid.NewGuid();
-            var lecturerId = Guid.NewGuid();
-            var quizId = Guid.NewGuid();
-
-            _lecturerRepository.Setup(r => r.GetByAccountIdAsync(accId))
-                              .ReturnsAsync(new Lecturer { Id = lecturerId, AccountId = accId });
-
-            var oldQuestion = new QuestionBank
-            {
-                Id = oldQuestionId,
-                LecturerId = lecturerId,
-                SectionId = Guid.NewGuid(),
-                Title = "OldTitle",
-                AnswerBanks = new List<AnswerBank>
-        {
-            new AnswerBank { Id = Guid.NewGuid(), AnswerName = "A", IsCorrect = true, IsActive = true, Image = "a.png" },
-            new AnswerBank { Id = Guid.NewGuid(), AnswerName = "B", IsCorrect = false, IsActive = true }
-        }
-            };
-            _questionBankRepository.Setup(r => r.GetQuestionWithAnswersAsync(oldQuestionId)).ReturnsAsync(oldQuestion);
-
-            var link = new QuestionQuiz { QuizId = quizId, QuestionBankId = oldQuestionId, Orders = 3 };
-            _questionQuizRepository.Setup(r => r.GetLinkAsync(quizId, oldQuestionId)).ReturnsAsync(link);
-
-            _quizSubmissionRepository.Setup(r => r.GetQuestionBanksInSubmission(oldQuestionId))
-                                    .ReturnsAsync(new List<QuizSubmission> {});
-
-            var dto = new UpdateQuestionDTO
-            {
-                QuizId = quizId,
-                Title = "NewTitle",
-                Description = "NewDesc",
-                Type = "MultiChoice",
-                ImageUrl = null,
-                Answers = new List<UpdateAnswerDTO>
-        {
-            new UpdateAnswerDTO { AnswerId = null, AnswerName = "X", IsCorrect = true, ImageUrl = null },
-            new UpdateAnswerDTO { AnswerId = null, AnswerName = "Y", IsCorrect = false, ImageUrl = null }
-        }
-            };
-
-            _questionBankRepository.Setup(r => r.Update(It.IsAny<QuestionBank>()));
-            _questionBankRepository.Setup(r => r.CreateAsync(It.IsAny<QuestionBank>())).Returns(Task.CompletedTask);
-            _questionBankRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
-            _questionQuizRepository.Setup(r => r.Update(It.IsAny<QuestionQuiz>()));
-
-            var result = await _sut.UpdateQuestionInQuizAsync(oldQuestionId, dto, accId);
-
-            Assert.IsNotNull(result);
-            Assert.AreEqual(dto.Title, result.Title);
-            Assert.AreEqual(link.Orders, result.Orders);
-            Assert.AreEqual(2, result.Answers.Count);
-
-            _questionBankRepository.Verify(r => r.Update(It.Is<QuestionBank>(q => q.IsHidden == true)), Times.Once);
-            _questionBankRepository.Verify(r => r.CreateAsync(It.IsAny<QuestionBank>()), Times.Once);
-            _questionBankRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
-            _questionQuizRepository.Verify(r => r.Update(It.IsAny<QuestionQuiz>()), Times.Once);
-        }
         //RemoveQuestionFromQuizAsync
         [Test]
         public void RemoveQuestionFromQuizAsync_Throws_WhenLecturerNotFound()

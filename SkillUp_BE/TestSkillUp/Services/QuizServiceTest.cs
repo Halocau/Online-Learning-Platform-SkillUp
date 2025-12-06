@@ -199,4 +199,51 @@ public class QuizServiceTest
         Assert.That(captured.CreatedAt, Is.InRange(before.AddSeconds(-1), after.AddSeconds(1)));
         Assert.That(captured.UpdatedAt, Is.InRange(before.AddSeconds(-1), after.AddSeconds(1)));
     }
+    [TestCase(-1)]
+    [TestCase(101)]
+    public void CreateQuizAsync_ShouldThrowException_WhenPassPercentIsInvalid(int invalidPercent)
+    {
+        var accountId = Guid.NewGuid();
+        var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accountId };
+        var section = new Section
+        {
+            Id = Guid.NewGuid(),
+            Course = new Course { LecturerId = lecturer.Id }
+        };
+
+        var dto = new CreateQuizDTO
+        {
+            SectionId = section.Id,
+            Title = "Invalid Percent Quiz",
+            PassPercent = invalidPercent
+        };
+
+        _mockLecturerRepo.Setup(x => x.GetByAccountIdAsync(accountId)).ReturnsAsync(lecturer);
+        _mockSectionRepo.Setup(x => x.GetSectionByIdAsync(dto.SectionId)).ReturnsAsync(section);
+
+        Assert.Throws<Exception>(() => _service.CreateQuizAsync(dto, accountId).GetAwaiter().GetResult());
+    }
+    [Test]
+    public void CreateQuizAsync_ShouldThrowException_WhenTimerIsInvalid()
+    {
+        var accountId = Guid.NewGuid();
+        var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accountId };
+        var section = new Section
+        {
+            Id = Guid.NewGuid(),
+            Course = new Course { LecturerId = lecturer.Id }
+        };
+
+        var dto = new CreateQuizDTO
+        {
+            SectionId = section.Id,
+            Title = "Invalid Timer Quiz",
+            Timer = -5
+        };
+
+        _mockLecturerRepo.Setup(x => x.GetByAccountIdAsync(accountId)).ReturnsAsync(lecturer);
+        _mockSectionRepo.Setup(x => x.GetSectionByIdAsync(dto.SectionId)).ReturnsAsync(section);
+
+        Assert.Throws<Exception>(() => _service.CreateQuizAsync(dto, accountId).GetAwaiter().GetResult());
+    }
 }
