@@ -90,9 +90,9 @@ namespace SkillUp.Services.Rag.Chat
                 },
                 generationConfig = new
                 {
-                    temperature = _options.Temperature,
-                    maxOutputTokens = _options.MaxOutputTokens,
-                    topP = _options.TopP
+                    temperature = _options.Temperature, // Độ sáng tạo (0-1)
+                    maxOutputTokens = _options.MaxOutputTokens, // Số token tối đa
+                    topP = _options.TopP   // Độ đa dạng
                 }
             };
 
