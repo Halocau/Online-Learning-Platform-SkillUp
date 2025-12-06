@@ -33,6 +33,9 @@ namespace TestSkillUp.Services
         private Mock<INotifyService> _notifyServiceMock = null!;
         private Mock<ICurrentUserService> _currentUserServiceMock = null!;
 
+        private Mock<IRatingService> _ratingServiceMock = null!;    
+        private Mock<IRatingRepository> _ratingRepoMock = null!;
+
         private CourseService _sut = null!;
 
         [SetUp]
@@ -51,11 +54,16 @@ namespace TestSkillUp.Services
             _notifyServiceMock = new Mock<INotifyService>(MockBehavior.Loose);
             _currentUserServiceMock = new Mock<ICurrentUserService>(MockBehavior.Loose);
 
+            _ratingRepoMock = new Mock<IRatingRepository>(MockBehavior.Strict); 
+            _ratingServiceMock = new Mock<IRatingService>(MockBehavior.Loose);
+
             _sut = new CourseService(
                 _courseRepoMock.Object, _lecturerRepoMock.Object, _cloudinaryServiceMock.Object,
                 _accountRepoMock.Object, _categoryRepoMock.Object, _emailServiceMock.Object,
                 _notifyServiceMock.Object, _enrollmentRepoMock.Object, _studentRepoMock.Object,
-                _studentProgressRepoMock.Object, _currentUserServiceMock.Object
+                _studentProgressRepoMock.Object, _currentUserServiceMock.Object,
+                _ratingServiceMock.Object,
+                _ratingRepoMock.Object
             );
         }
 
