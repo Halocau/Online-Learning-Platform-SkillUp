@@ -66,7 +66,6 @@ function Header() {
     };
   }, [accessToken]);
 
-
   const handleLogout = async () => {
     try {
       await axiosInstance.post(API_ENDPOINTS.LOGOUT);
@@ -83,7 +82,6 @@ function Header() {
       navigate("/");
     }
   };
-
 
   return (
     <header className="border-b border-[#272343]/15 bg-[#fffffe]/80 backdrop-blur-xl sticky top-0 z-50">
@@ -119,18 +117,10 @@ function Header() {
           >
             Diễn đàn
           </Link>
-          {isAuthenticated && user?.role === "Student" && (
-            <Link
-              to="/student/dashboard"
-              className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-3 py-1.5 rounded-full transition-all text-sm tracking-tight"
-            >
-              Dashboard
-            </Link>
-          )}
           {isAuthenticated && (
             <Link
               to="/ticket"
-              className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-3 py-1.5 rounded-full transition-all text-sm tracking-tight"
+              className="text-[#2d334a] hover:text-[#272343] hover:bg-[#e3f6f5] font-medium px-0.5 py-1.5 rounded-full transition-all text-sm tracking-tight"
             >
               Phiếu hỗ trợ
             </Link>
@@ -138,7 +128,7 @@ function Header() {
         </nav>
 
         {/* Right Menu */}
-        <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+        <div className="flex items-center space-x-3 sm:space-x-3 flex-shrink-0">
           {/* News Link */}
           <Link
             to="/news"
@@ -180,13 +170,13 @@ function Header() {
                   }, 80);
                 }}
               >
-                <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <div className="flex items-center space-x-2 hover:opacity-80 transition-opacity cursor-pointer ">
                   <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-[#e3f6f5] to-[#bae8e8] rounded-full flex items-center justify-center overflow-hidden ring-2 ring-[#272343]/10">
                     {user?.avatar ? (
                       <img
                         src={user.avatar}
-                        alt={user.fullname}
-                        className="w-full h-full object-cover"
+                        alt={user?.fullname || "User"}
+                        className="w-full h-full object-cover rounded-full"
                       />
                     ) : (
                       <span className="text-[#272343] font-semibold text-sm">

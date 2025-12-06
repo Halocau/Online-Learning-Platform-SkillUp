@@ -85,8 +85,18 @@ function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
               variant="ghost"
               className="flex items-center gap-2 hover:bg-gray-100"
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                {user?.fullname?.[0]?.toUpperCase() || "U"}
+              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ring-2 ring-gray-200">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user?.fullname || "User"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
+                    {user?.fullname?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
               </div>
               <span className="text-sm font-medium text-gray-900 hidden sm:inline">
                 {user?.fullname || "User"}
