@@ -22,6 +22,7 @@ namespace TestSkillUp
         private Mock<IOtpRepository> _iOtpRepositoryMock = null!;
         private Mock<IEmailService> _iEmailServiceMock = null!;
         private Mock<IStudentService> _iStudentServiceMock = null!;
+        private Mock<ICartService> _iCartServiceMock = null!;
         private IConfiguration _configuration = null!;
         private IAuthService _sut = null!; // System Under Test
 
@@ -34,6 +35,7 @@ namespace TestSkillUp
             _iOtpRepositoryMock = new Mock<IOtpRepository>(MockBehavior.Loose);
             _iEmailServiceMock = new Mock<IEmailService>(MockBehavior.Loose);
             _iStudentServiceMock = new Mock<IStudentService>(MockBehavior.Loose);
+            _iCartServiceMock = new Mock<ICartService>(MockBehavior.Loose);
 
             // IConfiguration thật để hàm GenerateAccessToken() tạo JWT hợp lệ
             var dict = new Dictionary<string, string?>
@@ -53,7 +55,8 @@ namespace TestSkillUp
                 _iOtpRepositoryMock.Object,
                 _configuration,
                 _iEmailServiceMock.Object,
-                _iStudentServiceMock.Object
+                _iStudentServiceMock.Object,
+                _iCartServiceMock.Object
             );
         }
 
