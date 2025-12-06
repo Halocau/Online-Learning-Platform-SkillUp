@@ -26,7 +26,7 @@ namespace SkillUp.Repositories.Implementations
                     rt.Token == token
                     && rt.AccountId == userId
                     && rt.RevokedUtc == null
-                    && rt.ExpiresUtc > DateTime.UtcNow);
+                    && rt.ExpiresUtc > DateTime.Now);
         }
 
         public async Task<List<RefreshToken>> GetActiveTokensByUserIdAsync(Guid userId)
@@ -52,7 +52,7 @@ namespace SkillUp.Repositories.Implementations
             var tokens = await GetActiveTokensByUserIdAsync(userId);
             foreach (var token in tokens)
             {
-                token.RevokedUtc = DateTime.UtcNow;
+                token.RevokedUtc = DateTime.Now;
             }
             await Task.CompletedTask;
         }

@@ -59,6 +59,24 @@ namespace SkillUp.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Rating>> GetRatingsByStudentIdAsync(Guid studentId, Guid? courseId = null)
+        {
+            var query = _context.Ratings
+                .Include(r => r.Student)
+                    .ThenInclude(s => s.Account)
+                .Include(r => r.Course)
+                .Where(r => r.StudentId == studentId);
+
+            if (courseId.HasValue)
+            {
+                query = query.Where(r => r.CourseId == courseId.Value);
+            }
+
+            return await query
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
+
         // --- HÀM ĐÃ TỐI ƯU ---
         public async Task<double?> CalculateAverageRatingAsync(Guid courseId)
         {

@@ -201,5 +201,37 @@ namespace SkillUp.Services.Implementations
             await _cartRepository.ClearCartAsync(student.Id);
             return await _cartRepository.SaveChangesAsync();
         }
+
+        public async Task<bool> CreateCartIfNotExistsAsync(Guid accountId)
+        {
+            try
+            {
+                var student = await GetStudentByAccountIdAsync(accountId);
+                
+                var existingCart = await _cartRepository.GetCartByStudentIdAsync(student.Id);
+                if (existingCart != null)
+                {
+                    return true;
+                }
+
+
+                var cart = new Cart
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = student.Id
+                };
+                
+                await _cartRepository.AddCart(cart);
+                return await _cartRepository.SaveChangesAsync();
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }

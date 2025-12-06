@@ -1,4 +1,12 @@
-import { Edit2, Calendar, RefreshCw, EyeOff, Lock, Eye } from "lucide-react";
+import {
+  Edit2,
+  Calendar,
+  RefreshCw,
+  EyeOff,
+  Lock,
+  Eye,
+  Unlock,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 
@@ -8,11 +16,13 @@ function CourseCardLecture({
   onEdit,
   onDelete,
   onPreview,
+  onReopen,
   isDeleting = false,
 }) {
   const [imageError, setImageError] = useState(false);
 
   const isPendingStatus = course.status === "Pending";
+  const isUnpublishStatus = course.status === "Unpublish";
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -38,7 +48,7 @@ function CourseCardLecture({
       case "Public":
         return "Xuất bản";
       case "Unpublish":
-        return "Chưa xuất bản";
+        return "Đã ẩn";
       case "Pending":
         return "Đang chờ duyệt";
       default:
@@ -80,7 +90,7 @@ function CourseCardLecture({
           {/* Content Section */}
           <div className="flex-1 p-5 md:p-6 flex flex-col justify-between relative">
             {/* Action Buttons - Top Right */}
-            <div className="absolute top-4 right-4 flex gap-2 bg-white rounded-lg p-1.5 shadow-md border border-gray-200">
+            <div className="absolute top-4 right-4 flex gap-2 bg-white rounded-lg p-1. 5 shadow-md border border-gray-200">
               {/* Preview Button - Available for Pending courses */}
               {isPendingStatus && (
                 <button
@@ -92,53 +102,39 @@ function CourseCardLecture({
                 </button>
               )}
 
-              {/* Edit Button - Disabled for Pending status */}
-              <div className="relative group">
+              {/* Edit Button  */}
+              {!isPendingStatus && (
                 <button
-                  onClick={() => !isPendingStatus && onEdit(course.id)}
-                  className={`p-2 rounded-md transition-all duration-200 ${
-                    isPendingStatus
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "hover:bg-yellow-50 text-yellow-600 transform hover:scale-110"
-                  }`}
-                  title={
-                    isPendingStatus
-                      ? "Không thể chỉnh sửa khóa học đang chờ duyệt"
-                      : "Chỉnh sửa"
-                  }
-                  disabled={isPendingStatus || isDeleting}
+                  onClick={() => onEdit(course.id)}
+                  className="p-2 hover:bg-yellow-50 rounded-md text-yellow-600 transition-all duration-200 transform hover:scale-110"
+                  title="Chỉnh sửa"
+                  disabled={isDeleting}
                 >
-                  {isPendingStatus ? (
-                    <Lock className="w-4 h-4" />
-                  ) : (
-                    <Edit2 className="w-4 h-4" />
-                  )}
+                  <Edit2 className="w-4 h-4" />
                 </button>
-
-                {isPendingStatus && (
-                  <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
-                      <div className="flex items-center gap-2">
-                        <Lock className="w-3 h-3" />
-                        <span>Không thể chỉnh sửa khi đang chờ duyệt</span>
-                      </div>
-                      <div className="text-gray-300 mt-1">
-                        Vui lòng chờ admin phê duyệt
-                      </div>
-                      <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => onDelete(course.id)}
-                className="p-2 hover:bg-red-50 rounded-md text-red-600 transition-all duration-200 transform hover:scale-110 disabled:opacity-50"
-                title="Ẩn khóa học"
-                disabled={isDeleting}
-              >
-                <EyeOff className="w-4 h-4" />
-              </button>
+              )}
+              {/* Reopen Button */}
+              {isUnpublishStatus && onReopen && (
+                <button
+                  onClick={() => onReopen(course.id)}
+                  className="p-2 hover:bg-green-50 rounded-md text-green-600 transition-all duration-200 transform hover:scale-110"
+                  title="Mở lại khóa học"
+                  disabled={isDeleting}
+                >
+                  <Unlock className="w-4 h-4" />
+                </button>
+              )}
+              {/* Delete/Hide Button */}
+              {!isUnpublishStatus && (
+                <button
+                  onClick={() => onDelete(course.id)}
+                  className="p-2 hover:bg-red-50 rounded-md text-red-600 transition-all duration-200 transform hover:scale-110 disabled:opacity-50"
+                  title="Ẩn khóa học"
+                  disabled={isDeleting}
+                >
+                  <EyeOff className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Header with title and status */}
@@ -189,21 +185,21 @@ function CourseCardLecture({
 
               {/* Description */}
               <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-3">
-                {course.description || "Chưa có mô tả cho khóa học này."}
+                {course.description || "Chưa có mô tả cho khóa học này. "}
               </p>
 
               {/* Pending Status Warning Message */}
               {isPendingStatus && (
                 <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-                  <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0. 5" />
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-yellow-800 mb-1">
                       Khóa học đang chờ duyệt
                     </p>
                     <p className="text-xs text-yellow-700">
-                      Bạn không thể chỉnh sửa khóa học trong khi đang chờ admin
-                      phê duyệt. Nhấn nút{" "}
-                      <Eye className="w-3 h-3 inline" /> để xem trước khóa học.
+                      Bạn không thể chỉnh sửa khóa học trong khi đang chờ phê
+                      duyệt. Nhấn nút <Eye className="w-3 h-3 inline" /> để xem
+                      trước khóa học.
                     </p>
                   </div>
                 </div>

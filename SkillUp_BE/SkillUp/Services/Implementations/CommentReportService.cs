@@ -122,7 +122,7 @@ namespace SkillUp.Services.Implementations
                 AccountId = report.AccountId,
                 CommentPostId = report.CommentPostId,
                 ReporterName = report.Account?.Fullname ?? "" ,// Lấy tên người report
-                CommentContent = report.CommentPost?.Contents ?? "Nội dung không tồn tại hoặc đã bị xóa"
+                CommentContents = report.CommentPost?.Contents ?? "Nội dung không tồn tại hoặc đã bị xóa"
             });
         }
 
@@ -141,7 +141,7 @@ namespace SkillUp.Services.Implementations
                 AccountId = report.AccountId,
                 CommentPostId = report.CommentPostId,
                 ReporterName = report.Account?.Fullname ?? "",
-                CommentContent = report.CommentPost?.Contents
+                CommentContents = report.CommentPost?.Contents
             });
         }
     }

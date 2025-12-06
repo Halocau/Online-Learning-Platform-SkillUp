@@ -22,15 +22,15 @@ namespace SkillUp.Controllers
             try
             {
                 var cart = await _cartService.GetCartByAccountIdAsync(accountId);
-                if (cart == null || !cart.CartItems.Any())
-                {
-                    return NotFound(new APIReturn
-                    {
-                        code = 404,
-                        message = "Giỏ hàng trống",
-                        data = new List<object>()
-                    });
-                }
+                //if (cart == null || !cart.CartItems.Any())
+                //{
+                //    return NotFound(new APIReturn
+                //    {
+                //        code = 404,
+                //        message = "Giỏ hàng trống",
+                //        data = new List<object>()
+                //    });
+                //}
                 return Ok(new APIReturn
                 {
                     code = 200,

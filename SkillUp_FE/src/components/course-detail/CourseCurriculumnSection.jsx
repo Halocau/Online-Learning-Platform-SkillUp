@@ -174,7 +174,7 @@ function LessonItem({ lesson, onPreview }) {
   const isVideo = lesson.lessonType === "Video";
   const isFree = lesson.isFree;
   const canPreview = isFree && isVideo;
-  const duration = "07:32"; // You can get this from lesson data if available
+
 
   return (
     <li className="flex items-center justify-between gap-2 py-2 hover:text-[#272343] transition-colors">
@@ -211,7 +211,6 @@ function LessonItem({ lesson, onPreview }) {
         ) : (
           <Lock className="w-3 h-3 text-[#9ca3af]" />
         )}
-        {isVideo && <span className="text-xs text-[#6b7280]">{duration}</span>}
       </div>
     </li>
   );

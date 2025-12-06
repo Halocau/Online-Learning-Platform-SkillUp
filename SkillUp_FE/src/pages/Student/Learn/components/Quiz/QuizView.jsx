@@ -20,7 +20,7 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
   const [resultData, setResultData] = useState(null);
   const [loadingResult, setLoadingResult] = useState(false);
 
-  // Check if quiz has been completed (has submissionId from course API)
+  // Check if quiz has been completed
   const hasSubmission = !!quiz.quizSubmissionId;
 
   // Fetch actual quiz results when there's a submission
@@ -29,7 +29,53 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
       fetchQuizResult();
     }
   }, [hasSubmission, quiz.quizSubmissionId]);
+  // ... keep all the previous code until handleQuizComplete
 
+  const handleQuizComplete = async () => {
+    try {
+      // Refresh course data
+      await fetchCourseDetail();
+
+      setTimeout(() => {
+        const total = courseData.sections.reduce(
+          (a, s) => a + (s.items?.length || 0),
+          0
+        );
+
+        courseAPI.getCourseLearningDetail(courseId).then((response) => {
+          const course = response.data.data[0];
+          const completed = new Set();
+          course.sections.forEach((section) => {
+            section.items?.forEach((item) => {
+              if (item.isCompleted === true) {
+                completed.add(item.id);
+              }
+            });
+          });
+
+          if (
+            completed.size >= total &&
+            total > 0 &&
+            !hasShownCompletionModal
+          ) {
+            setHasShownCompletionModal(true);
+
+            toast.success("Chúc mừng!  Bạn đã hoàn thành khóa học!", {
+              autoClose: 3000,
+            });
+
+            setTimeout(() => {
+              navigate(`/student/learn/${courseId}`);
+            }, 1500);
+          }
+        });
+      }, 500);
+    } catch (error) {
+      console.error("Error in quiz complete:", error);
+    }
+  };
+
+  // ... rest of the code remains the same
   const fetchQuizResult = async () => {
     try {
       setLoadingResult(true);
@@ -176,7 +222,7 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
                   >
                     {resultData?.score
                       ? `${resultData.score.toFixed(1)}%`
-                      : "N/A"}
+                      : "0.00%"}
                   </p>
                   <p
                     className={`mt-1 text-xs font-medium ${

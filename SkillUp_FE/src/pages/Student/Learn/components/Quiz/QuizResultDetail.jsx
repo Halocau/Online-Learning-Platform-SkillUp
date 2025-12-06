@@ -115,7 +115,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                       </span>
                       <span className="text-sm font-semibold tracking-tight text-[#272343]">
                         {correctCount} / {totalQuestions} ·{" "}
-                        {scorePercent.toFixed(0)}%
+                        {scorePercent.toFixed(1)}%
                       </span>
                     </div>
                   </div>
@@ -134,7 +134,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                       <div className="relative">
                         <div className="w-16 h-16 rounded-2xl border-2 border-[#272343] bg-[#e3f6f5] flex items-center justify-center">
                           <span className="text-lg font-semibold tracking-tight text-[#272343]">
-                            {scorePercent.toFixed(0)}%
+                            {scorePercent.toFixed(1)}%
                           </span>
                         </div>
                         <div

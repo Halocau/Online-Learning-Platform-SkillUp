@@ -10,6 +10,7 @@ namespace SkillUp.Repositories.Interfaces
         Task DeleteAsync(Rating rating);
         Task<Rating?> GetByStudentAndCourseAsync(Guid studentId, Guid courseId);
         Task<IEnumerable<Rating>> GetRatingsByCourseIdAsync(Guid courseId);
+        Task<IEnumerable<Rating>> GetRatingsByStudentIdAsync(Guid studentId, Guid? courseId = null);
         Task<double?> CalculateAverageRatingAsync(Guid courseId);
     }
 }

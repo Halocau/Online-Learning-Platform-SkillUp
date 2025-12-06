@@ -19,12 +19,15 @@ export const CartProvider = ({ children }) => {
   const fetchCartCount = async () => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
-      
+
       // Sử dụng helper để lấy count (tự động phân biệt guest/logged-in)
       const count = await getCartCountUnified(user);
       setCartCount(count);
     } catch (error) {
-      console.error("Error fetching cart count:", error);
+      // Không log error khi cart trống (404) - đây là trạng thái bình thường
+      if (error.response?.status !== 404) {
+        console.error("Error fetching cart count:", error);
+      }
     }
   };
 
@@ -33,16 +36,16 @@ export const CartProvider = ({ children }) => {
       setLoading(true);
       const userStr = localStorage.getItem("user");
       const user = userStr && userStr !== 'null' ? JSON.parse(userStr) : null;
-      
+
       console.log('🛒 Adding to cart - User:', user); // DEBUG
-      
+
       // Sử dụng helper để add (tự động phân biệt guest/logged-in)
       const result = await addToCartUnified(courseId, price, user);
-      
+
       if (result.success) {
         await fetchCartCount();
       }
-      
+
       return result;
     } catch (error) {
       console.error("Error adding to cart:", error);
