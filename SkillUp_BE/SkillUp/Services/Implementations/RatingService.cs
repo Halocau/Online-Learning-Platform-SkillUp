@@ -10,16 +10,16 @@ namespace SkillUp.Services.Implementations
         private readonly IRatingRepository _ratingRepo;
         private readonly ICourseRepository _courseRepo;
         private readonly IStudentRepository _studentRepo; // Dịch vụ sửa lỗi FK
+        private readonly ICurrentUserService _userService;
 
-        public RatingService(
-            IRatingRepository ratingRepo,
-            ICourseRepository courseRepo,
-            IStudentRepository studentRepo)
+        public RatingService(IRatingRepository ratingRepo, ICourseRepository courseRepo, IStudentRepository studentRepo, ICurrentUserService userService)
         {
             _ratingRepo = ratingRepo;
             _courseRepo = courseRepo;
             _studentRepo = studentRepo;
+           _userService = userService;
         }
+
 
         // --- CREATE ---
         public async Task<RatingDto> CreateRatingAsync(CreateRatingDto dto, Guid accountId)
@@ -133,6 +133,22 @@ namespace SkillUp.Services.Implementations
 
                 Ratings = ratingDtos
             };
+        }
+
+        public async Task<IEnumerable<RatingDto>> GetRatingsByAccountIdAsync(Guid accountId, Guid? courseId = null)
+        {
+            // Tìm StudentId từ AccountId
+            var student = await _studentRepo.GetStudentByAccountIdAsync(accountId);
+            if (student == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy thông tin học viên cho tài khoản này.");
+            }
+
+            // Lấy ratings theo studentId (và optional courseId)
+            var ratings = await _ratingRepo.GetRatingsByStudentIdAsync(student.Id, courseId);
+
+            // Map sang DTO
+            return ratings.Select(MapToDto);
         }
 
         // --- HÀM HELPER TÍNH TOÁN ---

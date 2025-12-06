@@ -44,15 +44,15 @@ export function LoginForm({ className, ...props }) {
         }
 
         const user = JSON.parse(localStorage.getItem("user"));
-        
+
         // Merge guest cart vào server cart
-        await handlePostLogin(user.userId);
-        
+        await handlePostLogin(user.userId, user);
+
         // Dispatch event để các component khác biết user đã thay đổi
         window.dispatchEvent(new Event('storage'));
-        
+
         const redirectPath = getRedirectPath(user.role);
-        
+
         setTimeout(() => {
           navigate(redirectPath, { replace: true });
         }, 1000);
@@ -87,15 +87,15 @@ export function LoginForm({ className, ...props }) {
         toast.success("Đăng nhập thành công!");
 
         const user = JSON.parse(localStorage.getItem("user"));
-        
+
         // Merge guest cart vào server cart
-        await handlePostLogin(user.userId);
-        
+        await handlePostLogin(user.userId, user);
+
         // Dispatch event để các component khác biết user đã thay đổi
         window.dispatchEvent(new Event('storage'));
-        
+
         const redirectPath = getRedirectPath(user.role);
-        
+
         setTimeout(() => {
           navigate(redirectPath, { replace: true });
         }, 1000);
