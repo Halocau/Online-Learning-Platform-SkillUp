@@ -28,6 +28,7 @@ namespace TestSkillUp
         private Mock<ILecturerRepository> _lecturerRepositoryMock = null!;
         private Mock<IStudentRepository> _studentRepositoryMock = null!;
         private Mock<IStudentProgressRepository> _studentProgressRepositoryMock = null!;
+        private Mock<INotifyService> _notifyServiceMock = null!;
 
         private Mock<FtpVideoUploadService> _ftpVideoUploadServiceMock = null!;
         private Mock<CloudinaryService> _cloudinaryServiceMock = null!;
@@ -43,6 +44,7 @@ namespace TestSkillUp
             _lecturerRepositoryMock = new Mock<ILecturerRepository>(MockBehavior.Strict);
             _studentRepositoryMock = new Mock<IStudentRepository>(MockBehavior.Strict);
             _studentProgressRepositoryMock = new Mock<IStudentProgressRepository>(MockBehavior.Strict);
+            _notifyServiceMock = new Mock<INotifyService>(MockBehavior.Loose);
 
             // Các service này là class thường, nên dùng Mock với MockBehavior.Loose
             _ftpVideoUploadServiceMock =
@@ -66,7 +68,8 @@ namespace TestSkillUp
                 _ftpVideoUploadServiceMock.Object,
                 _cloudinaryServiceMock.Object,
                 _studentRepositoryMock.Object,
-                _studentProgressRepositoryMock.Object
+                _studentProgressRepositoryMock.Object,
+                _notifyServiceMock.Object
             );
         }
 

@@ -172,7 +172,7 @@ namespace SkillUp.Services.Implementations
             if (!studentAccountIds.Any()) return;
             var notifications = new List<Notify>();
             var now = DateTime.Now;
-            var targetLink = link ?? $"/course-detail/{courseId}";
+            var targetLink = link ?? $"/course/{courseId}";
 
             foreach (var accId in studentAccountIds)
             {

@@ -19,6 +19,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
     categoryId: 0,
     subCategoryId: undefined,
     image: null,
+    isAiSupport: false,
   });
 
   const [creating, setCreating] = useState(false);
@@ -86,6 +87,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
       form.append("title", formData.title);
       form.append("description", formData.description);
       form.append("categoryId", formData.categoryId.toString());
+      form.append("IsAiSupport", formData.isAiSupport ? "true" : "false");
 
       if (formData.subCategoryId) {
         form.append("subCategoryId", formData.subCategoryId.toString());
@@ -107,6 +109,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
           categoryId: 0,
           subCategoryId: undefined,
           image: null,
+          isAiSupport: false,
         });
         setPreviewImage(null);
 
@@ -188,6 +191,42 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               selectedCategoryId={formData.categoryId}
               selectedSubCategoryId={formData.subCategoryId}
             />
+          </div>
+
+          {/* AI Support Toggle */}
+          <div className="p-4 border border-gray-200 rounded-lg bg-white shadow-sm space-y-2">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900">
+                  AI hỗ trợ học viên
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Bật tùy chọn này để hệ thống tự động tạo phụ đề và chatbot tư
+                  vấn cho từng bài học video.
+                </p>
+              </div>
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={formData.isAiSupport}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isAiSupport: e.target.checked,
+                    }))
+                  }
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-yellow-400 relative transition-colors">
+                  <div className="absolute top-[2px] left-[2px] h-5 w-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+                </div>
+              </label>
+            </div>
+            {formData.isAiSupport && (
+              <div className="text-xs text-green-600 flex items-center gap-2">
+                ✅ Phụ đề sẽ được tạo ngay sau khi bạn tải video lên.
+              </div>
+            )}
           </div>
 
           {/* Image Upload */}

@@ -16,7 +16,6 @@ namespace SkillUp.BussinessObjects.DTOs.Lesson
         [RegularExpression("^(Video|Text)$", ErrorMessage = "Type chỉ có thể là 'Video' hoặc 'Text'")]
         public string Type { get; set; } = null!;
 
-        [StringLength(1000, ErrorMessage = "Mô tả không được vượt quá 1000 ký tự")]
         public string? Description { get; set; }
 
         [Range(1, double.MaxValue, ErrorMessage = "Thứ tự bài học phải lớn hơn 0")]

@@ -17,7 +17,7 @@ export const lecturerAPI = {
     }
   },
 
-  // Get lecturer application profile by account ID
+  // Get lecturer application profile
   getLecturerProfileByAccount: async (accountId) => {
     try {
       const response = await axiosInstance.get(
@@ -43,4 +43,16 @@ export const lecturerAPI = {
       throw error;
     }
   },
+};
+export const isLecturerProfileComplete = (lecturerData) => {
+  if (!lecturerData) return false;
+  
+  // Check if all required fields are filled and not empty strings
+  const hasTitle = lecturerData.title && lecturerData.title.trim() !== '';
+  const hasProfession = lecturerData.profession && lecturerData.profession.trim() !== '';
+  const hasBankName = lecturerData.bankName && lecturerData.bankName.trim() !== '';
+  const hasBankNumber = lecturerData.bankNumber && lecturerData.bankNumber.trim() !== '';
+  const hasReceiverName = lecturerData.receiverName && lecturerData.receiverName.trim() !== '';
+  
+  return hasTitle && hasProfession && hasBankName && hasBankNumber && hasReceiverName;
 };
