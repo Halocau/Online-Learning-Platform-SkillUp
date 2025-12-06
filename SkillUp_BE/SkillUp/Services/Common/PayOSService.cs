@@ -17,7 +17,7 @@ namespace SkillUp.Services.Common
         private readonly string _checksumKey;
         private readonly IConfiguration _config;
 
-        public PayOSService(SkillUpContext context, IConfiguration config)
+        public PayOSService(SkillUpContext context, IConfiguration config, HttpClient httpClient = null)
         {
             _context = context;
             _config = config;
@@ -25,10 +25,15 @@ namespace SkillUp.Services.Common
             _apiKey = config["PayOS:ApiKey"] ?? throw new ArgumentNullException("PayOS:ApiKey");
             _checksumKey = config["PayOS:ChecksumKey"] ?? throw new ArgumentNullException("PayOS:ChecksumKey");
 
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Add("x-client-id", _clientId);
-            _httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
-        }
+			_httpClient = httpClient ?? new HttpClient();
+
+			// Ensure headers are added safely
+			if (!_httpClient.DefaultRequestHeaders.Contains("x-client-id"))
+				_httpClient.DefaultRequestHeaders.Add("x-client-id", _clientId);
+
+			if (!_httpClient.DefaultRequestHeaders.Contains("x-api-key"))
+				_httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
+		}
 
         public async Task<CoursePaymentResponseDto> CreateCoursePaymentAsync(Guid accountId, CoursePaymentRequestDto request)
         {
