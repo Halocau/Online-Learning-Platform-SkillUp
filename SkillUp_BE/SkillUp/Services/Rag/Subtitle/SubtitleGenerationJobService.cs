@@ -12,14 +12,14 @@ namespace SkillUp.Services.Rag.Subtitle
         private readonly ILessonRepository _lessonRepository;
         private readonly GenSubService _genSubService;
         private readonly ISubtitleService _subtitleService;
-        private readonly QdrantService _qdrantService;
+        private readonly IQdrantService _qdrantService;
         private readonly ILogger<SubtitleLessonJobService> _logger;
 
         public SubtitleLessonJobService(
             ILessonRepository lessonRepository,
             GenSubService genSubService,
             ISubtitleService subtitleService,
-            QdrantService qdrantService,
+            IQdrantService qdrantService,
             ILogger<SubtitleLessonJobService> logger)
         {
             _lessonRepository = lessonRepository;

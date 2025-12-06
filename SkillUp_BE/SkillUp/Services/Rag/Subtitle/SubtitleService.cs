@@ -11,13 +11,13 @@ namespace SkillUp.Services.Rag.Subtitle
     public class SubtitleService : ISubtitleService
     {
         private readonly RagOptions _ragOptions;
-        private readonly QdrantService _qdrantService;
+        private readonly IQdrantService _qdrantService;
         private readonly IEmbeddingProvider _embeddingProvider;
         private readonly ILogger<SubtitleService> _logger;
 
         public SubtitleService(
             IOptions<RagOptions> ragOptions,
-            QdrantService qdrantService,
+            IQdrantService qdrantService,
             IEmbeddingProvider embeddingProvider,
             ILogger<SubtitleService> logger)
         {

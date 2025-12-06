@@ -10,14 +10,14 @@ namespace SkillUp.Services.Rag.Chat
     public class CourseChatService : ICourseChatService
     {
         private readonly IEmbeddingProvider _embeddingProvider;
-        private readonly QdrantService _qdrantService;
+        private readonly IQdrantService _qdrantService;
         private readonly IChatCompletionProvider _chatProvider;
         private readonly RagOptions _ragOptions;
         private readonly ILogger<CourseChatService> _logger;
 
         public CourseChatService(
             IEmbeddingProvider embeddingProvider,
-            QdrantService qdrantService,
+            IQdrantService qdrantService,
             IChatCompletionProvider chatProvider,
             IOptions<RagOptions> ragOptions,
             ILogger<CourseChatService> logger)

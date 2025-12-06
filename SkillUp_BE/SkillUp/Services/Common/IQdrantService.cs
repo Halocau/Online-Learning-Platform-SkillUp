@@ -1,6 +1,6 @@
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 
-namespace SkillUp.Services.Interfaces
+namespace SkillUp.Services.Common
 {
     public interface IQdrantService
     {
