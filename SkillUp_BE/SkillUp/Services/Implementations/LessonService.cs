@@ -20,7 +20,7 @@ namespace SkillUp.Services.Implementations
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IStudentRepository _studentRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
-        private readonly QdrantService _qdrantService;
+        private readonly IQdrantService _qdrantService;
         private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
         private readonly INotifyService _notifyService;
 
@@ -33,7 +33,7 @@ namespace SkillUp.Services.Implementations
             ICloudinaryService cloudinaryService,
             IStudentRepository studentRepository,
             IStudentProgressRepository studentProgressRepository,
-            QdrantService qdrantService,
+            IQdrantService qdrantService,
             IAiSupportBackgroundJobService aiSupportBackgroundJobService,
             INotifyService notifyService)
         {

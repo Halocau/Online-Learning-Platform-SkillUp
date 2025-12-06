@@ -5,10 +5,11 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 using SkillUp.Configuration;
+using SkillUp.Services.Interfaces;
 
 namespace SkillUp.Services.Common
 {
-    public class QdrantService
+    public class QdrantService : IQdrantService
     {
         private readonly HttpClient _httpClient;
         private readonly QdrantOptions _options;
