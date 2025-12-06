@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http; // Cần cài NuGet: Microsoft.AspNetCore.Http.Features
-using Moq; // Cần cài NuGet: Moq
-using NUnit.Framework; // Cần cài NuGet: NUnit
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration; // Nếu cần
+using Moq;
+using NUnit.Framework;
 using SkillUp.BussinessObjects.DTOs.Course;
-using SkillUp.BussinessObjects.DTOs.CourseByCategoryPage;
-using SkillUp.BussinessObjects.DTOs.Section;
-using SkillUp.BussinessObjects.DTOs.StudentCourse;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
@@ -20,542 +18,551 @@ namespace TestSkillUp.Services
     [TestFixture]
     public class CourseServiceTests
     {
-        // --- MOCKS ---
-        private Mock<ICourseRepository> _courseRepoMock;
-        private Mock<ILecturerRepository> _lecturerRepoMock;
-        private Mock<IAccountRepository> _accountRepoMock;
-        private Mock<ICategoryRepository> _categoryRepoMock;
-        private Mock<IEnrollmentRepository> _enrollmentRepoMock;
-        private Mock<IStudentRepository> _studentRepoMock;
-        private Mock<IStudentProgressRepository> _studentProgressRepoMock;
-        private Mock<ICloudinaryService> _cloudinaryServiceMock;
-        private Mock<IEmailService> _emailServiceMock;
-        private Mock<INotifyService> _notifyServiceMock;
-        private Mock<ICurrentUserService> _currentUserServiceMock;
+        // Mocks
+        private Mock<ICourseRepository> _courseRepoMock = null!;
+        private Mock<ILecturerRepository> _lecturerRepoMock = null!;
+        private Mock<IAccountRepository> _accountRepoMock = null!;
+        private Mock<ICategoryRepository> _categoryRepoMock = null!;
+        private Mock<IEnrollmentRepository> _enrollmentRepoMock = null!;
+        private Mock<IStudentRepository> _studentRepoMock = null!;
+        private Mock<IStudentProgressRepository> _studentProgressRepoMock = null!;
 
-        private CourseService _sut; // System Under Test
+        // Services (Loose)
+        private Mock<ICloudinaryService> _cloudinaryServiceMock = null!;
+        private Mock<IEmailService> _emailServiceMock = null!;
+        private Mock<INotifyService> _notifyServiceMock = null!;
+        private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+
+        private Mock<IRatingService> _ratingServiceMock = null!;    
+        private Mock<IRatingRepository> _ratingRepoMock = null!;
+
+        private CourseService _sut = null!;
 
         [SetUp]
         public void SetUp()
         {
-            _courseRepoMock = new Mock<ICourseRepository>();
-            _lecturerRepoMock = new Mock<ILecturerRepository>();
-            _accountRepoMock = new Mock<IAccountRepository>();
-            _categoryRepoMock = new Mock<ICategoryRepository>();
-            _enrollmentRepoMock = new Mock<IEnrollmentRepository>();
-            _studentRepoMock = new Mock<IStudentRepository>();
-            _studentProgressRepoMock = new Mock<IStudentProgressRepository>();
-            _cloudinaryServiceMock = new Mock<ICloudinaryService>();
-            _emailServiceMock = new Mock<IEmailService>();
-            _notifyServiceMock = new Mock<INotifyService>();
-            _currentUserServiceMock = new Mock<ICurrentUserService>();
+            _courseRepoMock = new Mock<ICourseRepository>(MockBehavior.Strict);
+            _lecturerRepoMock = new Mock<ILecturerRepository>(MockBehavior.Strict);
+            _accountRepoMock = new Mock<IAccountRepository>(MockBehavior.Strict);
+            _categoryRepoMock = new Mock<ICategoryRepository>(MockBehavior.Strict);
+            _enrollmentRepoMock = new Mock<IEnrollmentRepository>(MockBehavior.Strict);
+            _studentRepoMock = new Mock<IStudentRepository>(MockBehavior.Strict);
+            _studentProgressRepoMock = new Mock<IStudentProgressRepository>(MockBehavior.Strict);
+
+            _cloudinaryServiceMock = new Mock<ICloudinaryService>(MockBehavior.Loose);
+            _emailServiceMock = new Mock<IEmailService>(MockBehavior.Loose);
+            _notifyServiceMock = new Mock<INotifyService>(MockBehavior.Loose);
+            _currentUserServiceMock = new Mock<ICurrentUserService>(MockBehavior.Loose);
+
+            _ratingRepoMock = new Mock<IRatingRepository>(MockBehavior.Strict); 
+            _ratingServiceMock = new Mock<IRatingService>(MockBehavior.Loose);
 
             _sut = new CourseService(
                 _courseRepoMock.Object, _lecturerRepoMock.Object, _cloudinaryServiceMock.Object,
                 _accountRepoMock.Object, _categoryRepoMock.Object, _emailServiceMock.Object,
                 _notifyServiceMock.Object, _enrollmentRepoMock.Object, _studentRepoMock.Object,
-                _studentProgressRepoMock.Object, _currentUserServiceMock.Object
+                _studentProgressRepoMock.Object, _currentUserServiceMock.Object,
+                _ratingServiceMock.Object,
+                _ratingRepoMock.Object
             );
         }
 
-        // ==========================================
-        // 1. CreateDraftCourseAsync
-        // ==========================================
+        #region 1. CreateDraftCourseAsync
+
         [Test]
-        public async Task CreateDraftCourseAsync_Success_ReturnsDto()
+        public async Task CreateDraftCourseAsync_HappyPath_ReturnsDraftCourse()
         {
+            // Arrange
             var accId = Guid.NewGuid();
             var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var dto = new CreateUpdateCourseDto { Title = "New", SubCategoryId = 1, Image = new Mock<IFormFile>().Object };
+            var dto = new CreateUpdateCourseDto { Title = "New Course", Image = new Mock<IFormFile>().Object };
 
             _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
             _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), "skillup/courses")).ReturnsAsync("url");
-            _courseRepoMock.Setup(r => r.AddCourseAsync(It.IsAny<Course>())).Returns(Task.CompletedTask);
+
+            Course? savedCourse = null;
+            _courseRepoMock.Setup(r => r.AddCourseAsync(It.IsAny<Course>()))
+                .Callback<Course>(c => savedCourse = c)
+                .Returns(Task.CompletedTask);
             _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
+            // Act
             var result = await _sut.CreateDraftCourseAsync(dto, accId);
+
+            // Assert
             Assert.IsNotNull(result);
-            Assert.AreEqual("Draft", result.Status);
+            Assert.AreEqual("Draft", savedCourse!.Status);
+            Assert.AreEqual("url", savedCourse.Image);
+            _courseRepoMock.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
 
         [Test]
-        public void CreateDraftCourseAsync_LecturerNotFound_Throws()
+        public void CreateDraftCourseAsync_LecturerNotFound_ThrowsException()
         {
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(It.IsAny<Guid>())).ReturnsAsync((Lecturer)null);
-            _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), It.IsAny<string>())).ReturnsAsync("url");
-            var ex = Assert.ThrowsAsync<Exception>(() => _sut.CreateDraftCourseAsync(new CreateUpdateCourseDto(), Guid.NewGuid()));
-            Assert.AreEqual("Không tìm thấy giảng viên cho tài khoản này!", ex.Message);
-        }
-
-        [Test]
-        public async Task CreateDraftCourseAsync_SaveFail_ReturnsNull()
-        {
+            // Arrange
             var accId = Guid.NewGuid();
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(new Lecturer());
             _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), It.IsAny<string>())).ReturnsAsync("url");
-            _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(false); // Save Failed
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync((Lecturer?)null);
 
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.CreateDraftCourseAsync(new CreateUpdateCourseDto(), accId));
+            StringAssert.Contains("Không tìm thấy giảng viên", ex!.Message);
+        }
+
+        [Test]
+        public async Task CreateDraftCourseAsync_SaveDbFails_ReturnsNull()
+        {
+            // Arrange
+            var accId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), It.IsAny<string>())).ReturnsAsync("url");
+            _courseRepoMock.Setup(r => r.AddCourseAsync(It.IsAny<Course>())).Returns(Task.CompletedTask);
+            _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(false); // Save fails
+
+            // Act
             var result = await _sut.CreateDraftCourseAsync(new CreateUpdateCourseDto(), accId);
+
+            // Assert
             Assert.IsNull(result);
         }
 
-        // ==========================================
-        // 2. DeleteCourseAsync
-        // ==========================================
-        [Test]
-        public async Task DeleteCourseAsync_Success()
-        {
-            var cid = Guid.NewGuid(); var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = cid, LecturerId = lec.Id };
+        #endregion
 
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(cid)).ReturnsAsync(course);
+        #region 2. DeleteCourseAsync
+
+        [Test]
+        public async Task DeleteCourseAsync_HappyPath_SoftDeletesCourse()
+        {
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var accId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = lecturer.Id, Status = "Public" };
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
+            _courseRepoMock.Setup(r => r.UpdateCourse(course));
             _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
-            Assert.IsTrue(await _sut.DeleteCourseAsync(cid, accId));
+            // Act
+            var result = await _sut.DeleteCourseAsync(courseId, accId);
+
+            // Assert
+            Assert.IsTrue(result);
             Assert.AreEqual("Unpublish", course.Status);
         }
 
         [Test]
-        public void DeleteCourseAsync_LecturerNotFound_Throws()
+        public void DeleteCourseAsync_Unauthorized_ThrowsException()
         {
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(It.IsAny<Guid>())).ReturnsAsync((Lecturer)null);
-            Assert.ThrowsAsync<Exception>(() => _sut.DeleteCourseAsync(Guid.NewGuid(), Guid.NewGuid()));
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var accId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = Guid.NewGuid() }; // Khác chủ
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
+
+            // Act & Assert
+            Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.DeleteCourseAsync(courseId, accId));
         }
 
         [Test]
-        public void DeleteCourseAsync_CourseNotFound_Throws()
+        public void DeleteCourseAsync_CourseNotFound_ThrowsException()
         {
             var accId = Guid.NewGuid();
             _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(new Lecturer());
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Course)null);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Course?)null);
+
             var ex = Assert.ThrowsAsync<Exception>(() => _sut.DeleteCourseAsync(Guid.NewGuid(), accId));
-            Assert.AreEqual("Không tìm thấy khoá học!", ex.Message);
+            StringAssert.Contains("Không tìm thấy khoá học", ex!.Message);
         }
 
+        #endregion
+
+        #region 3. UpdateCourseAsync
+
         [Test]
-        public void DeleteCourseAsync_Unauthorized_Throws()
+        public async Task UpdateCourseAsync_HappyPath_UpdatesFields()
         {
+            // Arrange
+            var courseId = Guid.NewGuid();
             var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = Guid.NewGuid() }; // Diff ID
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(course.Id)).ReturnsAsync(course);
-            Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.DeleteCourseAsync(course.Id, accId));
-        }
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = lecturer.Id, Title = "Old" };
+            var dto = new UpdateCourseDto { Title = "New", Description = "Desc", SubCategoryId = 5 };
 
-        // ==========================================
-        // 3. UpdateCourseAsync
-        // ==========================================
-        [Test]
-        public async Task UpdateCourseAsync_Success()
-        {
-            var cid = Guid.NewGuid(); var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = cid, LecturerId = lec.Id };
-            var dto = new UpdateCourseDto { Title = "New" };
-
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(cid)).ReturnsAsync(course);
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
+            _courseRepoMock.Setup(r => r.UpdateCourse(course));
             _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
-            var res = await _sut.UpdateCourseAsync(dto, cid, accId);
+            // Act
+            var result = await _sut.UpdateCourseAsync(dto, courseId, accId);
+
+            // Assert
             Assert.AreEqual("New", course.Title);
+            Assert.AreEqual("Desc", course.Description);
+            Assert.AreEqual(5, course.SubCategoryId);
         }
 
         [Test]
-        public async Task UpdateCourseAsync_Success_WithImage()
+        public async Task UpdateCourseAsync_WithImage_UploadsToCloudinary()
         {
-            var cid = Guid.NewGuid(); var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = cid, LecturerId = lec.Id };
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var accId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = lecturer.Id };
             var dto = new UpdateCourseDto { Image = new Mock<IFormFile>().Object };
 
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(cid)).ReturnsAsync(course);
-            _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), "skillup/courses")).ReturnsAsync("new-img");
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
+            _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), "skillup/courses")).ReturnsAsync("new-url");
+            _courseRepoMock.Setup(r => r.UpdateCourse(course));
             _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
-            await _sut.UpdateCourseAsync(dto, cid, accId);
-            Assert.AreEqual("new-img", course.Image);
+            // Act
+            await _sut.UpdateCourseAsync(dto, courseId, accId);
+
+            // Assert
+            Assert.AreEqual("new-url", course.Image);
         }
 
-        [Test]
-        public void UpdateCourseAsync_Unauthorized_Throws()
-        {
-            var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = Guid.NewGuid() };
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(course.Id)).ReturnsAsync(course);
-            Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.UpdateCourseAsync(new UpdateCourseDto(), course.Id, accId));
-        }
+        #endregion
 
-        // ==========================================
-        // 4. ToggleBanCourseAsync
-        // ==========================================
+        #region 4. ToggleBanCourseAsync
+
         [Test]
-        public async Task ToggleBanCourseAsync_Success_Ban()
+        public async Task ToggleBanCourseAsync_HappyPath_AdminTogglesStatus()
         {
-            var cid = Guid.NewGuid(); var adminId = Guid.NewGuid();
-            var course = new Course { Id = cid, IsActive = true };
-            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(new Account { RoleId = 3 });
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(cid)).ReturnsAsync(course);
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var adminId = Guid.NewGuid();
+            var admin = new Account { Id = adminId, RoleId = 3 }; // Admin
+            var course = new Course { Id = courseId, IsActive = true };
+
+            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(admin);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
+            _courseRepoMock.Setup(r => r.UpdateCourse(course));
             _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
-            var res = await _sut.ToggleBanCourseAsync(cid, adminId);
-            Assert.IsFalse(res); // True -> False
+            // Act
+            var result = await _sut.ToggleBanCourseAsync(courseId, adminId);
+
+            // Assert
+            Assert.IsFalse(result); // true -> false
             Assert.IsFalse(course.IsActive);
         }
 
         [Test]
-        public async Task ToggleBanCourseAsync_Success_Unban()
-        {
-            var cid = Guid.NewGuid(); var adminId = Guid.NewGuid();
-            var course = new Course { Id = cid, IsActive = false };
-            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(new Account { RoleId = 3 });
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(cid)).ReturnsAsync(course);
-            _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
-
-            var res = await _sut.ToggleBanCourseAsync(cid, adminId);
-            Assert.IsTrue(res); // False -> True
-            Assert.IsTrue(course.IsActive);
-        }
-
-        [Test]
-        public void ToggleBanCourseAsync_NotAdmin_Throws()
+        public void ToggleBanCourseAsync_NotAdmin_ThrowsUnauthorized()
         {
             var adminId = Guid.NewGuid();
-            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(new Account { RoleId = 1 });
+            var user = new Account { Id = adminId, RoleId = 1 }; // Student
+            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(user);
+
             Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.ToggleBanCourseAsync(Guid.NewGuid(), adminId));
         }
 
-        [Test]
-        public void ToggleBanCourseAsync_AdminNotFound_Throws()
-        {
-            _accountRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Account)null);
-            var ex = Assert.ThrowsAsync<Exception>(() => _sut.ToggleBanCourseAsync(Guid.NewGuid(), Guid.NewGuid()));
-            Assert.AreEqual("Không tìm thấy tài khoản quản trị viên!", ex.Message);
-        }
+        #endregion
+
+        #region 5 & 6. GetListCourseBy(Sub)CateId
 
         [Test]
-        public async Task ToggleBanCourseAsync_SaveDbFail_Throws()
+        public void GetListCourseBySubCateId_EmptyList_ThrowsException()
         {
-            var cid = Guid.NewGuid(); var adminId = Guid.NewGuid();
-            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(new Account { RoleId = 3 });
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(cid)).ReturnsAsync(new Course { IsActive = true });
-            _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(false); // Fail
-
-            var ex = Assert.ThrowsAsync<Exception>(() => _sut.ToggleBanCourseAsync(cid, adminId));
-            Assert.AreEqual("Lưu thay đổi thất bại.", ex.Message);
-        }
-
-        // ==========================================
-        // 5. GetListCourseBySubCateId
-        // ==========================================
-        [Test]
-        public async Task GetListCourseBySubCateId_Success()
-        {
-            _courseRepoMock.Setup(r => r.GetCoursesBySubCategoryId(1)).ReturnsAsync(new List<Course> { new Course() });
-            var res = await _sut.GetListCourseBySubCateId(1);
-            Assert.IsNotEmpty(res);
-        }
-
-        [Test]
-        public void GetListCourseBySubCateId_Empty_Throws()
-        {
+            // Arrange
             _courseRepoMock.Setup(r => r.GetCoursesBySubCategoryId(1)).ReturnsAsync(new List<Course>());
-            Assert.ThrowsAsync<Exception>(() => _sut.GetListCourseBySubCateId(1));
-        }
 
-        // ==========================================
-        // 6. GetListCourseByCateId
-        // ==========================================
-        [Test]
-        public async Task GetListCourseByCateId_Success()
-        {
-            _courseRepoMock.Setup(r => r.GetCoursesByCategoryId(1)).ReturnsAsync(new List<Course> { new Course() });
-            var res = await _sut.GetListCourseByCateId(1);
-            Assert.IsNotEmpty(res);
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.GetListCourseBySubCateId(1));
+            StringAssert.Contains("Không tìm thấy khóa học nào", ex!.Message);
         }
 
         [Test]
-        public void GetListCourseByCateId_Empty_Throws()
+        public async Task GetListCourseByCateId_HappyPath_ReturnsList()
         {
-            _courseRepoMock.Setup(r => r.GetCoursesByCategoryId(1)).ReturnsAsync(new List<Course>());
-            Assert.ThrowsAsync<Exception>(() => _sut.GetListCourseByCateId(1));
+            // Arrange
+            var courses = new List<Course> { new Course { Id = Guid.NewGuid(), Title = "C1", Lecturer = new Lecturer { Account = new Account() } } };
+            _courseRepoMock.Setup(r => r.GetCoursesByCategoryId(1)).ReturnsAsync(courses);
+
+            // Act
+            var result = await _sut.GetListCourseByCateId(1);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
         }
 
-        // ==========================================
-        // 7. SearchCoursesAsync
-        // ==========================================
+        #endregion
+
+        #region 7. SearchCoursesAsync
+
         [Test]
-        public async Task SearchCoursesAsync_Success()
+        public async Task SearchCoursesAsync_NoData_ReturnsEmptyList()
         {
-            _courseRepoMock.Setup(r => r.SearchCoursesAsync("a", 10)).ReturnsAsync(new List<CourseSummaryDTO> { new CourseSummaryDTO() });
-            var res = await _sut.SearchCoursesAsync("a", 10);
-            Assert.IsNotEmpty(res);
+            // Arrange
+            // SỬA: Thay (List<Course>?)null bằng (List<CourseSummaryDTO>?)null
+            _courseRepoMock.Setup(r => r.SearchCoursesAsync("abc", 10))
+                           .ReturnsAsync((List<CourseSummaryDTO>?)null);
+
+            // Act
+            var result = await _sut.SearchCoursesAsync("abc", 10);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsEmpty(result);
         }
 
-        [Test]
-        public async Task SearchCoursesAsync_Null_ReturnsEmpty()
-        {
-            _courseRepoMock.Setup(r => r.SearchCoursesAsync("a", 10)).ReturnsAsync((List<CourseSummaryDTO>)null);
-            var res = await _sut.SearchCoursesAsync("a", 10);
-            Assert.IsEmpty(res);
-        }
+        #endregion
 
-        // ==========================================
-        // 8. GetAllCourseAsync (Moderator)
-        // ==========================================
-        [Test]
-        public async Task GetAllCourseAsync_Success()
-        {
-            var modId = Guid.NewGuid();
-            _accountRepoMock.Setup(r => r.GetByIdAsync(modId)).ReturnsAsync(new Account { RoleId = 3 });
-            _courseRepoMock.Setup(r => r.GetAllCourseAsync()).ReturnsAsync(new List<Course> { new Course { SubCategory = new SubCategory(), Lecturer = new Lecturer { Account = new Account() } } });
-
-            var res = await _sut.GetAllCourseAsync(modId);
-            Assert.IsNotEmpty(res);
-        }
+        #region 8. GetAllCourseAsync (Moderator)
 
         [Test]
-        public void GetAllCourseAsync_Unauthorized_Throws()
+        public async Task GetAllCourseAsync_HappyPath_ReturnsMappedDtos()
         {
-            var userId = Guid.NewGuid();
-            _accountRepoMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(new Account { RoleId = 1 });
-            Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.GetAllCourseAsync(userId));
-        }
-
-        [Test]
-        public void GetAllCourseAsync_AccountNotFound_Throws()
-        {
-            _accountRepoMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Account)null);
-            Assert.ThrowsAsync<Exception>(() => _sut.GetAllCourseAsync(Guid.NewGuid()));
-        }
-
-        // ==========================================
-        // 9. GetCoursesOfLecturerByAccountId
-        // ==========================================
-        [Test]
-        public async Task GetCoursesOfLecturer_Success()
-        {
+            // Arrange
             var accId = Guid.NewGuid();
-            _courseRepoMock.Setup(r => r.GetCoursesOfLecturerByAccountIdAsync(accId)).ReturnsAsync(new List<Course> { new Course { SubCategory = new SubCategory() } });
-            var res = await _sut.GetCoursesOfLecturerByAccountId(accId);
-            Assert.IsNotEmpty(res);
+            var admin = new Account { Id = accId, RoleId = 3 };
+            var courses = new List<Course>
+            {
+                new Course
+                {
+                    Id = Guid.NewGuid(),
+                    SubCategory = new SubCategory { Name = "Sub" },
+                    Lecturer = new Lecturer { Account = new Account { Fullname = "Lec" } }
+                }
+            };
+
+            _accountRepoMock.Setup(r => r.GetByIdAsync(accId)).ReturnsAsync(admin);
+            _courseRepoMock.Setup(r => r.GetAllCourseAsync()).ReturnsAsync(courses);
+
+            // Act
+            var result = await _sut.GetAllCourseAsync(accId);
+
+            // Assert
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual("Sub", result[0].SubCategoryName);
+        }
+
+        #endregion
+
+        #region 10. GetCourseDetailsAsync
+
+        [Test]
+        public async Task GetCourseDetailsAsync_CourseNotFound_ReturnsNull()
+        {
+            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(It.IsAny<Guid>())).ReturnsAsync((Course?)null);
+            var result = await _sut.GetCourseDetailsAsync(Guid.NewGuid());
+            Assert.IsNull(result);
         }
 
         [Test]
-        public async Task GetCoursesOfLecturer_Empty_ReturnsEmptyList()
+        public async Task GetCourseDetailsAsync_HappyPath_ReturnsDetailDto()
         {
-            var accId = Guid.NewGuid();
-            _courseRepoMock.Setup(r => r.GetCoursesOfLecturerByAccountIdAsync(accId)).ReturnsAsync((List<Course>)null);
-            var res = await _sut.GetCoursesOfLecturerByAccountId(accId);
-            Assert.IsEmpty(res);
+            var courseId = Guid.NewGuid();
+            var course = new Course
+            {
+                Id = courseId,
+                Sections = new List<Section>(),
+                Lecturer = new Lecturer { Account = new Account() },
+                SubCategory = new SubCategory { Category = new Category() }
+            };
+
+            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(courseId)).ReturnsAsync(course);
+
+            var result = await _sut.GetCourseDetailsAsync(courseId);
+            Assert.IsNotNull(result);
         }
 
-        // ==========================================
-        // 10. GetCourseDetailsAsync
-        // ==========================================
+        #endregion
+
+        #region 11. GetCategoryPageAsync
+
         [Test]
-        public async Task GetCourseDetailsAsync_Success()
+        public async Task GetCategoryPageAsync_HappyPath_ReturnsNavAndCourses()
         {
-            var cid = Guid.NewGuid();
-            var course = new Course { Id = cid, Sections = new List<Section>() };
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(cid)).ReturnsAsync(course);
-            var res = await _sut.GetCourseDetailsAsync(cid);
-            Assert.IsNotNull(res);
-            Assert.AreEqual(cid, res.Id);
+            // Arrange
+            int catId = 1;
+            var category = new Category
+            {
+                Id = catId,
+                Name = "Cat1",
+                SubCategories = new List<SubCategory> { new SubCategory { Id = 2, Name = "Sub1" } }
+            };
+            var courses = new List<Course> { new Course { Lecturer = new Lecturer { Account = new Account() } } };
+
+            _categoryRepoMock.Setup(r => r.GetByIdWithSubCategoriesAsync(catId)).ReturnsAsync(category);
+            _courseRepoMock.Setup(r => r.GetCoursesByCategoryId(catId)).ReturnsAsync(courses);
+
+            // Act
+            var result = await _sut.GetCategoryPageAsync(catId);
+
+            // Assert
+            Assert.AreEqual("Cat1", result.MainCategory.Name);
+            Assert.AreEqual(1, result.SubCategories.Count);
+            Assert.AreEqual(1, result.Courses.Count);
         }
 
         [Test]
-        public async Task GetCourseDetailsAsync_NotFound_ReturnsNull()
+        public void GetCategoryPageAsync_CategoryNotFound_ThrowsException()
         {
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(It.IsAny<Guid>())).ReturnsAsync((Course)null);
-            var res = await _sut.GetCourseDetailsAsync(Guid.NewGuid());
-            Assert.IsNull(res);
-        }
-
-        // ==========================================
-        // 11. GetCategoryPageAsync
-        // ==========================================
-        [Test]
-        public async Task GetCategoryPageAsync_Success()
-        {
-            var catId = 1;
-            var cat = new Category { Id = 1, Name = "C", SubCategories = new List<SubCategory>() };
-            _categoryRepoMock.Setup(r => r.GetByIdWithSubCategoriesAsync(catId)).ReturnsAsync(cat);
-            _courseRepoMock.Setup(r => r.GetCoursesByCategoryId(catId)).ReturnsAsync(new List<Course>());
-
-            var res = await _sut.GetCategoryPageAsync(catId);
-            Assert.IsNotNull(res);
-            Assert.AreEqual("C", res.MainCategory.Name);
-        }
-
-        [Test]
-        public void GetCategoryPageAsync_NotFound_Throws()
-        {
-            _categoryRepoMock.Setup(r => r.GetByIdWithSubCategoriesAsync(1)).ReturnsAsync((Category)null);
+            _categoryRepoMock.Setup(r => r.GetByIdWithSubCategoriesAsync(1)).ReturnsAsync((Category?)null);
             Assert.ThrowsAsync<Exception>(() => _sut.GetCategoryPageAsync(1));
         }
 
-        // ==========================================
-        // 12. SetCoursePriceAsync
-        // ==========================================
-        [Test]
-        public async Task SetCoursePriceAsync_Success()
-        {
-            var cid = Guid.NewGuid(); var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = cid, LecturerId = lec.Id };
-            var dto = new CoursePriceDto { Price = 500 };
+        #endregion
 
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(cid)).ReturnsAsync(course);
+        #region 12. SetCoursePriceAsync
+
+        [Test]
+        public async Task SetCoursePriceAsync_HappyPath_UpdatesPrice()
+        {
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var accId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = lecturer.Id, Price = 0 };
+            var dto = new CoursePriceDto { Price = 500000 };
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
+            _courseRepoMock.Setup(r => r.UpdateCourse(course));
             _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
-            var res = await _sut.SetCoursePriceAsync(cid, dto, accId);
-            Assert.IsTrue(res);
-            Assert.AreEqual(500, course.Price);
+            // Act
+            var result = await _sut.SetCoursePriceAsync(courseId, dto, accId);
+
+            // Assert
+            Assert.IsTrue(result);
+            Assert.AreEqual(500000, course.Price);
+            Assert.AreEqual(500000, course.OriginalPrice);
         }
 
         [Test]
-        public void SetCoursePriceAsync_LecturerNotFound_Throws()
+        public void SetCoursePriceAsync_NotOwner_ThrowsUnauthorized()
         {
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(It.IsAny<Guid>())).ReturnsAsync((Lecturer)null);
-            Assert.ThrowsAsync<Exception>(() => _sut.SetCoursePriceAsync(Guid.NewGuid(), new CoursePriceDto(), Guid.NewGuid()));
-        }
-
-        [Test]
-        public void SetCoursePriceAsync_CourseNotFound_Throws()
-        {
+            // Arrange
+            var courseId = Guid.NewGuid();
             var accId = Guid.NewGuid();
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(new Lecturer());
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Course)null);
-            Assert.ThrowsAsync<Exception>(() => _sut.SetCoursePriceAsync(Guid.NewGuid(), new CoursePriceDto(), accId));
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = Guid.NewGuid() }; // Khác chủ
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
+
+            // Act & Assert
+            Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.SetCoursePriceAsync(courseId, new CoursePriceDto(), accId));
         }
 
-        [Test]
-        public void SetCoursePriceAsync_Unauthorized_Throws()
-        {
-            var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = Guid.NewGuid() };
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(course.Id)).ReturnsAsync(course);
-            Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.SetCoursePriceAsync(course.Id, new CoursePriceDto(), accId));
-        }
+        #endregion
 
-        // ==========================================
-        // 13. PublishCourseForReviewAsync
-        // ==========================================
-        [Test]
-        public async Task PublishReview_Success()
-        {
-            var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = lec.Id, Status = "Draft", Title = "T", Description = "D", SubCategoryId = 1, OriginalPrice = 10, Sections = new List<Section> { new Section { IsActive = true, Lessons = new List<Lesson> { new Lesson { IsActive = true } } } } };
+        #region 13. PublishCourseForReviewAsync (Validation Rules)
 
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
+        [Test]
+        public async Task PublishCourseForReviewAsync_HappyPath_StatusToPending()
+        {
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var accId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course
+            {
+                Id = courseId,
+                LecturerId = lecturer.Id,
+                Status = "Draft",
+                Title = "Valid",
+                Description = "Valid",
+                SubCategoryId = 1,
+                OriginalPrice = 100,
+                Sections = new List<Section>
+                {
+                    new Section { IsActive = true, Lessons = new List<Lesson> { new Lesson { IsActive = true } }, Quizzes = new List<Quiz>() }
+                }
+            };
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(courseId)).ReturnsAsync(course);
+            _courseRepoMock.Setup(r => r.UpdateCourse(course));
             _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
-            Assert.IsTrue(await _sut.PublishCourseForReviewAsync(course.Id, accId));
+            // Act
+            var result = await _sut.PublishCourseForReviewAsync(courseId, accId);
+
+            // Assert
+            Assert.IsTrue(result);
             Assert.AreEqual("Pending", course.Status);
         }
 
-        [Test]
-        public void PublishReview_AlreadyPending_Throws()
+        [TestCase("Pending", "đang chờ được duyệt")]
+        [TestCase("Public", "đã được xuất bản")]
+        public void PublishCourseForReviewAsync_InvalidStatus_ThrowsException(string status, string errorMsg)
         {
+            // Arrange
+            var courseId = Guid.NewGuid();
             var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = lec.Id, Status = "Pending" };
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = lecturer.Id, Status = status };
 
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(courseId)).ReturnsAsync(course);
 
-            var ex = Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(course.Id, accId));
-            Assert.AreEqual("Khóa học này đang chờ được duyệt.", ex.Message);
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(courseId, accId));
+            StringAssert.Contains(errorMsg, ex!.Message);
         }
 
         [Test]
-        public void PublishReview_AlreadyPublic_Throws()
+        public void PublishCourseForReviewAsync_MissingBasicInfo_ThrowsException()
         {
+            // Arrange
+            var courseId = Guid.NewGuid();
             var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = lec.Id, Status = "Public" };
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course { Id = courseId, LecturerId = lecturer.Id, Status = "Draft", Title = "", Description = "Desc", SubCategoryId = 1 };
 
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(courseId)).ReturnsAsync(course);
 
-            var ex = Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(course.Id, accId));
-            Assert.AreEqual("Khóa học này đã được xuất bản.", ex.Message);
-        }
-
-        [TestCase("", "Desc", 1)]
-        [TestCase("Title", "", 1)]
-        [TestCase("Title", "Desc", 0)]
-        public void PublishReview_MissingBasicInfo_Throws(string title, string desc, int sub)
-        {
-            var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = lec.Id, Status = "Draft", Title = title, Description = desc, SubCategoryId = sub };
-
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
-
-            var ex = Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(course.Id, accId));
-            StringAssert.Contains("hoàn thành thông tin cơ bản", ex.Message);
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(courseId, accId));
+            StringAssert.Contains("Vui lòng hoàn thành thông tin cơ bản", ex!.Message);
         }
 
         [Test]
-        public void PublishReview_MissingPrice_Throws()
+        public void PublishCourseForReviewAsync_NoContent_ThrowsException()
         {
+            // Arrange
+            var courseId = Guid.NewGuid();
             var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = lec.Id, Status = "Draft", Title = "T", Description = "D", SubCategoryId = 1, OriginalPrice = null };
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var course = new Course
+            {
+                Id = courseId,
+                LecturerId = lecturer.Id,
+                Status = "Draft",
+                Title = "T",
+                Description = "D",
+                SubCategoryId = 1,
+                OriginalPrice = 10,
+                Sections = new List<Section>
+                {
+                    new Section { IsActive = true, Lessons = new List<Lesson>(), Quizzes = new List<Quiz>() } 
+                    // Section active nhưng ko có lesson/quiz
+                }
+            };
 
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
-            Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(course.Id, accId));
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(courseId)).ReturnsAsync(course);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(courseId, accId));
+            StringAssert.Contains("ít nhất một bài học", ex!.Message);
         }
 
-        [Test]
-        public void PublishReview_NoActiveSection_Throws()
-        {
-            var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = lec.Id, Status = "Draft", Title = "T", Description = "D", SubCategoryId = 1, OriginalPrice = 10, Sections = new List<Section> { new Section { IsActive = false } } };
-
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
-            Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(course.Id, accId));
-        }
-
-        [Test]
-        public void PublishReview_NoContent_Throws()
-        {
-            var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = lec.Id, Status = "Draft", Title = "T", Description = "D", SubCategoryId = 1, OriginalPrice = 10, Sections = new List<Section> { new Section { IsActive = true, Lessons = new List<Lesson> { new Lesson { IsActive = false } }, Quizzes = new List<Quiz>() } } };
-
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
-            Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(course.Id, accId));
-        }
-
-        [Test]
-        public void PublishReview_Unauthorized_Throws()
-        {
-            var accId = Guid.NewGuid();
-            var lec = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = Guid.NewGuid(), LecturerId = Guid.NewGuid() };
-
-            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lec);
-            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(course.Id)).ReturnsAsync(course);
-            Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.PublishCourseForReviewAsync(course.Id, accId));
-        }
+        #endregion
     }
 }

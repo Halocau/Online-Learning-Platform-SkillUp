@@ -1,49 +1,51 @@
-import { jwtDecode } from 'jwt-decode'
+import { jwtDecode } from "jwt-decode";
+import { axiosInstance } from "@/config/api";
 
-//giai ma token
 export const decodeToken = (token) => {
   try {
-    if (!token) return null
-    const decoded = jwtDecode(token)
-    return decoded
+    if (!token) return null;
+    const decoded = jwtDecode(token);
+    return decoded;
   } catch {
-    return null
+    return null;
   }
-}
+};
 
+export const saveUserFromToken = async (accessToken, refreshToken) => {
+  const decoded = decodeToken(accessToken);
 
-export const saveUserFromToken = (accessToken, refreshToken) => {
-  const decoded = decodeToken(accessToken)
-  
   if (!decoded) {
-    return false
+    return null;
   }
+  console.log("🔍 JWT Decoded:", decoded);
+  localStorage.setItem("accessToken", accessToken);
+  localStorage.setItem("refreshToken", refreshToken);
 
-  console.log('🔍 JWT Decoded:', decoded); // DEBUG: Check JWT structure
-  
-  localStorage.setItem('accessToken', accessToken)
-  localStorage.setItem('refreshToken', refreshToken)
-
-  
   const user = {
     userId: decoded.userId,
     email: decoded.email,
     fullname: decoded.fullname,
     roleId: decoded.roleId,
     role: decoded.roleName,
-    status: decoded.status || decoded.Status || 'Active'
+    status: decoded.status || decoded.Status || "Active",
+    avatar: null,
+  };
+
+  try {
+    const response = await axiosInstance.get("/user/View-Profile");
+
+    if (response.data.code === 200 && response.data.data.length > 0) {
+      user.avatar = response.data.data[0].avatar || null;
+    }
+  } catch (error) {
+    console.error("⚠️ Could not fetch avatar:", error);
   }
 
-  localStorage.setItem('user', JSON.stringify(user))
-  
-  return true
-}
+  localStorage.setItem("user", JSON.stringify(user));
 
-/**
- * Navigate user theo role sau khi login
- * @param {string} role - Role của user (Admin, Moderator, Student, Teacher)
- * @returns {string} Path to navigate
- */
+  return user; // Return the user object
+};
+
 export const getRedirectPath = (role) => {
   switch (role) {
     case "Admin":
@@ -59,4 +61,4 @@ export const getRedirectPath = (role) => {
     default:
       return "/";
   }
-}
+};

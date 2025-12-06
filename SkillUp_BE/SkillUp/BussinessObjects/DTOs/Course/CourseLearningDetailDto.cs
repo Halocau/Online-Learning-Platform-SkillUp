@@ -18,6 +18,7 @@ namespace SkillUp.BussinessObjects.DTOs.Course
         public int subCategoryId { get; set; }
         public string CategoryName { get; set; }
         public string SubCategoryName { get; set; }
+        public bool? IsAiSupport { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public LecturerCourseDetailDto Lecturer { get; set; }

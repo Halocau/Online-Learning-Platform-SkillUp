@@ -9,7 +9,6 @@ namespace SkillUp.BussinessObjects.DTOs.Lesson
         [StringLength(200, ErrorMessage = "Tiêu đề không được vượt quá 200 ký tự")]
         public string Title { get; set; } = null!;
 
-        [StringLength(1000, ErrorMessage = "Mô tả không được vượt quá 1000 ký tự")]
         public string? Description { get; set; }
 
         [Range(1, double.MaxValue, ErrorMessage = "Thứ tự bài học phải lớn hơn 0")]

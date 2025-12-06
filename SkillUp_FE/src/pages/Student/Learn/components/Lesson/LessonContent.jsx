@@ -9,8 +9,12 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import VideoPlayer from "./VideoPlayer";
 import TextLesson from "./TextLesson";
-import QuizView from "../Quiz/QuizView";
+
+import CommentSection from "./CommentSection";
+
 import LearningTabs from "./LearningTabs";
+import QuizView from "../Quiz/QuizView";
+import LessonChat from "../LessonChat";
 
 
 const LessonContent = ({
@@ -24,6 +28,7 @@ const LessonContent = ({
   hasPrev,
   lessonId,
   onQuizComplete,
+  isAiSupportEnabled,
 }) => {
   const [videoProgress, setVideoProgress] = useState(0);
   const [marking, setMarking] = useState(false);
@@ -45,6 +50,14 @@ const LessonContent = ({
     }
   };
 
+  const pdfAssets =
+    item.assets?.filter(
+      (asset) => asset.type === "PDF" || asset.url?.endsWith(".pdf")
+    ) || [];
+  const showLessonChat =
+    isAiSupportEnabled &&
+    item.kind === "Lesson" &&
+    item.lessonType === "Video";
   // Handle quiz completion
   const handleQuizCompletion = async (passed) => {
     if (passed && !isCompleted) {
@@ -183,6 +196,12 @@ const LessonContent = ({
             </button>
           </div>
         </div>
+
+        {showLessonChat && (
+          <div className="mb-8">
+            <LessonChat lessonId={lessonId} />
+          </div>
+        )}
 
         {/* Learning Tabs - Only for Video Lessons */}
         {item.kind === "Lesson" && item.lessonType === "Video" && (

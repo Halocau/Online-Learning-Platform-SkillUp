@@ -72,6 +72,9 @@ const CourseLearning = () => {
       const course = response.data.data[0];
       setCourseData(course);
 
+      const hasRating =
+        course.ratingId !== null && course.ratingId !== undefined;
+      setHasShownCompletionModal(hasRating);
       // Extract completed items from API response
       const completed = new Set();
       course.sections.forEach((section) => {
@@ -263,45 +266,22 @@ const CourseLearning = () => {
 
   const handleRatingSubmit = async (data) => {
     try {
-      if (userRating) {
-        // Update existing rating
-        await ratingAPI.updateRating({
-          ratingId: userRating.ratingId,
-          star: data.star,
-          contents: data.contents,
-        });
-      } else {
-        // Create new rating
-        await ratingAPI.createRating({
-          courseId: data.courseId,
-          star: data.star,
-          contents: data.contents,
-        });
-      }
+      await ratingAPI.createRating({
+        courseId: data.courseId,
+        star: data.star,
+        contents: data.contents,
+      });
+      toast.success("Gửi đánh giá thành công!");
 
-      await checkUserRating();
       setShowRatingModal(false);
+
+      await Promise.all([checkUserRating(), fetchCourseDetail()]);
+
+      setTimeout(() => {}, 1000);
     } catch (error) {
       console.error("Error submitting rating:", error);
+      toast.error("Không thể gửi đánh giá.  Vui lòng thử lại.");
       throw error;
-    }
-  };
-
-  const handleDeleteRating = async () => {
-    if (!userRating) return;
-
-    if (!window.confirm("Bạn có chắc chắn muốn xóa đánh giá của mình?")) {
-      return;
-    }
-
-    try {
-      await ratingAPI.deleteRating(userRating.ratingId);
-      toast.success("Đã xóa đánh giá");
-      setUserRating(null);
-      await checkUserRating();
-    } catch (error) {
-      console.error("Error deleting rating:", error);
-      toast.error("Không thể xóa đánh giá");
     }
   };
 
@@ -349,7 +329,9 @@ const CourseLearning = () => {
           courseId={courseId}
           userRating={userRating}
           onOpenRatingModal={() => setShowRatingModal(true)}
-          onDeleteRating={handleDeleteRating}
+          hasRatingId={
+            courseData.ratingId !== null && courseData.ratingId !== undefined
+          }
         />
         {showRatingModal && (
           <RatingModal
@@ -408,6 +390,7 @@ const CourseLearning = () => {
             hasPrev={hasPrev()}
             lessonId={lessonId}
             onQuizComplete={handleQuizComplete}
+            isAiSupportEnabled={courseData.isAiSupport}
           />
         </div>
 

@@ -1,4 +1,4 @@
-﻿using SkillUp.BussinessObjects.DTOs.Lecturer;
+using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.RevenueReport;
 using SkillUp.BussinessObjects.Models;
 
