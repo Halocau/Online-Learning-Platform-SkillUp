@@ -175,7 +175,6 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
 builder.Services.AddScoped<ILessonChatService, LessonChatService>();
-builder.Services.AddScoped<ICourseChatService, CourseChatService>();
 
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
