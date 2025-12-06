@@ -956,8 +956,135 @@ namespace TestSkillUp
             _questionBankRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
             _questionQuizRepository.Verify(r => r.Update(It.IsAny<QuestionQuiz>()), Times.Once);
         }
+        //RemoveQuestionFromQuizAsync
+        [Test]
+        public void RemoveQuestionFromQuizAsync_Throws_WhenLecturerNotFound()
+        {
+            var accId = Guid.NewGuid();
+            var quizId = Guid.NewGuid();
+            var questionId = Guid.NewGuid();
 
+            _lecturerRepository.Setup(r => r.GetByAccountIdAsync(accId))
+                               .ReturnsAsync((Lecturer?)null);
 
+            Assert.ThrowsAsync<Exception>(async () =>
+                await _sut.RemoveQuestionFromQuizAsync(quizId, questionId, accId));
+        }
+
+        [Test]
+        public void RemoveQuestionFromQuizAsync_Throws_WhenQuizNotFound()
+        {
+            var accId = Guid.NewGuid();
+            var quizId = Guid.NewGuid();
+            var questionId = Guid.NewGuid();
+            var lecturerId = Guid.NewGuid();
+
+            _lecturerRepository.Setup(r => r.GetByAccountIdAsync(accId))
+                               .ReturnsAsync(new Lecturer { Id = lecturerId });
+
+            _quizRepository.Setup(r => r.GetQuizWithSectionAndCourseAsync(quizId))
+                           .ReturnsAsync((Quiz?)null);
+
+            Assert.ThrowsAsync<Exception>(async () =>
+                await _sut.RemoveQuestionFromQuizAsync(quizId, questionId, accId));
+        }
+        [Test]
+        public void RemoveQuestionFromQuizAsync_Throws_WhenUnauthorized()
+        {
+            var accId = Guid.NewGuid();
+            var quizId = Guid.NewGuid();
+            var questionId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid() };
+
+            _lecturerRepository.Setup(r => r.GetByAccountIdAsync(accId))
+                               .ReturnsAsync(lecturer);
+
+            var quiz = new Quiz
+            {
+                Section = new Section
+                {
+                    Course = new Course
+                    {
+                        LecturerId = Guid.NewGuid()   
+                    }
+                }
+            };
+
+            _quizRepository.Setup(r => r.GetQuizWithSectionAndCourseAsync(quizId))
+                           .ReturnsAsync(quiz);
+
+            Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+                await _sut.RemoveQuestionFromQuizAsync(quizId, questionId, accId));
+        }
+        [Test]
+        public void RemoveQuestionFromQuizAsync_Throws_WhenLinkNotFound()
+        {
+            var accId = Guid.NewGuid();
+            var lecturerId = Guid.NewGuid();
+            var quizId = Guid.NewGuid();
+            var questionId = Guid.NewGuid();
+
+            _lecturerRepository.Setup(r => r.GetByAccountIdAsync(accId))
+                               .ReturnsAsync(new Lecturer { Id = lecturerId });
+
+            var quiz = new Quiz
+            {
+                Section = new Section
+                {
+                    Course = new Course
+                    {
+                        LecturerId = lecturerId
+                    }
+                }
+            };
+
+            _quizRepository.Setup(r => r.GetQuizWithSectionAndCourseAsync(quizId))
+                           .ReturnsAsync(quiz);
+
+            _questionQuizRepository.Setup(r => r.GetLinkAsync(quizId, questionId))
+                                   .ReturnsAsync((QuestionQuiz?)null);
+
+            Assert.ThrowsAsync<Exception>(async () =>
+                await _sut.RemoveQuestionFromQuizAsync(quizId, questionId, accId));
+        }
+        [Test]
+        public async Task RemoveQuestionFromQuizAsync_ReturnsTrue_WhenSuccessful()
+        {
+            var accId = Guid.NewGuid();
+            var lecturerId = Guid.NewGuid();
+            var quizId = Guid.NewGuid();
+            var questionId = Guid.NewGuid();
+
+            _lecturerRepository.Setup(r => r.GetByAccountIdAsync(accId))
+                               .ReturnsAsync(new Lecturer { Id = lecturerId });
+
+            var quiz = new Quiz
+            {
+                Section = new Section
+                {
+                    Course = new Course { LecturerId = lecturerId }
+                }
+            };
+            _quizRepository.Setup(r => r.GetQuizWithSectionAndCourseAsync(quizId))
+                           .ReturnsAsync(quiz);
+
+            var link = new QuestionQuiz { IsActive = true };
+
+            _questionQuizRepository.Setup(r => r.GetLinkAsync(quizId, questionId))
+                                   .ReturnsAsync(link);
+
+            _questionQuizRepository.Setup(r => r.Update(It.IsAny<QuestionQuiz>()));
+
+            _questionBankRepository.Setup(r => r.SaveChangesAsync())
+                                   .ReturnsAsync(true);
+
+            var result = await _sut.RemoveQuestionFromQuizAsync(quizId, questionId, accId);
+
+            Assert.IsTrue(result);
+            Assert.IsFalse(link.IsActive);
+            _questionQuizRepository.Verify(r => r.Update(It.IsAny<QuestionQuiz>()), Times.Once);
+            _questionBankRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
+        }
 
     }
 }
