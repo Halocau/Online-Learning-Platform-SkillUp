@@ -10,27 +10,27 @@ import {
   CheckCircle2,
   ArrowLeft,
   Star,
-  Edit2,
-  Trash2,
   MessageSquare,
+  CheckCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const CourseOverview = ({
-  courseData,
-  completedItems,
+const CourseOverview = ({ 
+  courseData, 
+  completedItems, 
   courseId,
   userRating,
   onOpenRatingModal,
   onDeleteRating,
+  hasRatingId, // New prop to check if user already rated
 }) => {
   const navigate = useNavigate();
 
   const getSectionProgress = (section) => {
-    if (!section.items?.length) return 0;
+    if (!section. items?. length) return 0;
     const completed = section.items.filter((i) =>
       completedItems.has(i.id)
-    ).length;
+    ). length;
     return Math.round((completed / section.items.length) * 100);
   };
 
@@ -38,10 +38,10 @@ const CourseOverview = ({
     const items = section.items || [];
     const videos = items.filter(
       (i) => i.kind === "Lesson" && i.lessonType === "Video"
-    ).length;
+    ). length;
     const texts = items.filter(
       (i) => i.kind === "Lesson" && i.lessonType === "Text"
-    ).length;
+    ). length;
     const quizzes = items.filter((i) => i.kind === "Quiz").length;
 
     return { videos, texts, quizzes };
@@ -52,11 +52,11 @@ const CourseOverview = ({
       (acc, s) => acc + (s.items?.length || 0),
       0
     );
-    return total > 0 ? Math.round((completedItems.size / total) * 100) : 0;
+    return total > 0 ? Math.round((completedItems. size / total) * 100) : 0;
   };
 
   const overallProgress = calculateOverallProgress();
-  const totalLessons = courseData.sections.reduce(
+  const totalLessons = courseData.sections. reduce(
     (acc, s) => acc + (s.items?.length || 0),
     0
   );
@@ -88,7 +88,7 @@ const CourseOverview = ({
                 <span className="inline-flex h-1. 5 w-1.5 rounded-full bg-[#FFD54F]"></span>
                 <span>Khóa học</span>
                 {overallProgress > 0 && (
-                  <span className="rounded-full bg-[#FFD54F]/20 px-2 py-0.5 text-[0. 65rem] font-medium text-[#B8860B]">
+                  <span className="rounded-full bg-[#FFD54F]/20 px-2 py-0.5 text-[0.65rem] font-medium text-[#B8860B]">
                     {isCourseCompleted ? "Hoàn thành" : "Đang học"}
                   </span>
                 )}
@@ -113,7 +113,7 @@ const CourseOverview = ({
                       Chương học
                     </div>
                     <div className="text-base font-semibold text-gray-900">
-                      {courseData.sections?.length || 0} chương
+                      {courseData.sections?. length || 0} chương
                     </div>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ const CourseOverview = ({
                     </div>
                     <p className="mt-1 text-xs text-gray-600">
                       Bạn đã hoàn thành {completedItems.size}/{totalLessons} bài
-                      học.
+                      học. 
                     </p>
                   </div>
 
@@ -214,7 +214,7 @@ const CourseOverview = ({
                   <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2. 5 text-emerald-700 ring-1 ring-emerald-200">
                     <Trophy className="h-5 w-5" />
                     <span className="text-sm font-semibold">
-                      Hoàn thành xuất sắc!
+                      Hoàn thành xuất sắc! 
                     </span>
                   </div>
                 )}
@@ -233,8 +233,23 @@ const CourseOverview = ({
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6"
           >
-            {userRating ? (
-              // Show existing rating
+            {hasRatingId ?  (
+              // User already rated - Show information message
+              <div className="flex items-center justify-center gap-3 p-4">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    Bạn đã đánh giá khóa học này
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Cảm ơn bạn đã chia sẻ đánh giá về khóa học
+                  </p>
+                </div>
+              </div>
+            ) : userRating ?  (
+              // Show existing rating with edit/delete options
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -250,7 +265,7 @@ const CourseOverview = ({
                       </p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-center gap-2">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -258,7 +273,6 @@ const CourseOverview = ({
                       onClick={onOpenRatingModal}
                       className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                     >
-                      <Edit2 className="w-4 h-4" />
                       <span className="text-sm font-medium">Chỉnh sửa</span>
                     </motion.button>
                     <motion.button
@@ -267,7 +281,6 @@ const CourseOverview = ({
                       onClick={onDeleteRating}
                       className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
                       <span className="text-sm font-medium">Xóa</span>
                     </motion.button>
                   </div>
@@ -280,7 +293,7 @@ const CourseOverview = ({
                       <Star
                         key={star}
                         className={`w-5 h-5 ${
-                          star <= userRating.star
+                          star <= userRating. star
                             ? "fill-[#FFD54F] text-[#FFD54F]"
                             : "text-gray-300"
                         }`}
@@ -288,9 +301,7 @@ const CourseOverview = ({
                     ))}
                   </div>
                   {userRating.contents && (
-                    <p className="text-gray-700 text-sm">
-                      {userRating.contents}
-                    </p>
+                    <p className="text-gray-700 text-sm">{userRating.contents}</p>
                   )}
                 </div>
               </div>
@@ -322,12 +333,12 @@ const CourseOverview = ({
                 </motion.button>
               </div>
             )}
-          </motion.div>
+          </motion. div>
         )}
 
+        {/* Section cards continue...  */}
         <div className="space-y-4">
-          {/* Section Cards */}
-          {courseData.sections.map((section, sectionIndex) => {
+          {courseData.sections. map((section, sectionIndex) => {
             const progress = getSectionProgress(section);
             const isStarted = progress > 0;
             const isCompleted = progress === 100;
@@ -344,7 +355,6 @@ const CourseOverview = ({
                 transition={{ delay: sectionIndex * 0.05, duration: 0.3 }}
                 className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-[#FFD54F]/40 hover:shadow-lg sm:p-5"
               >
-                {/* Hover glow effect */}
                 <div className="pointer-events-none absolute inset-y-6 right-0 w-32 bg-gradient-to-l from-[#FFD54F]/10 via-transparent to-transparent opacity-0 blur-3xl transition-opacity group-hover:opacity-100"></div>
 
                 <div className="relative flex items-start gap-4 sm:gap-5">
