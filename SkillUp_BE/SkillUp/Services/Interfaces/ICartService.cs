@@ -10,5 +10,6 @@ namespace SkillUp.Services.Interfaces
         Task<bool> RemoveFromCartAsync(Guid cartItemId);
         Task<BulkAddToCartResultDto> BulkAddToCartByAccountIdAsync(Guid accountId, IEnumerable<AddToCartRequestDto> items);
         Task<bool> ClearCartAsync(Guid accountId);
+        Task<bool> CreateCartIfNotExistsAsync(Guid accountId);
     }
 }
