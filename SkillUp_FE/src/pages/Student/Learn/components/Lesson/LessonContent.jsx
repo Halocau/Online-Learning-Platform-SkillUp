@@ -9,10 +9,12 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import VideoPlayer from "./VideoPlayer";
 import TextLesson from "./TextLesson";
-import QuizView from "./Quiz/QuizView";
+
 import CommentSection from "./CommentSection";
-import LessonChat from "./LessonChat";
+
 import LearningTabs from "./LearningTabs";
+import QuizView from "../Quiz/QuizView";
+import LessonChat from "../LessonChat";
 
 
 const LessonContent = ({

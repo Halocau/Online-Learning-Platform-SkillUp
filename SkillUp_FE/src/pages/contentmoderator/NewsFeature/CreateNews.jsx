@@ -136,7 +136,7 @@ const CreateNews = () => {
           Quay lại
         </Button>
         <Card
-          title="📝 Create News"
+          title="📝 Tạo tin tức"
           className="w-full max-w-4xl shadow-lg rounded-2xl"
         >
           <Space direction="vertical" size="large" className="w-full">
