@@ -402,6 +402,30 @@ namespace TestSkillUp
             _iEmailServiceMock.Verify(e => e.SendVerifyEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
+        [Test]//1
+        public async Task RegisterAsync_InvalidRoleId_ReturnsFalse_AndDoesNotCreateAccount()
+        {
+            // Arrange
+            var request = new RegisterRequestDto
+            {
+                Email = "user@example.com",
+                Password = "P@ssw0rd!",
+                Fullname = "User",
+                RoleId = 1 // Invalid role (not 4 or 5)
+            };
+
+            // Act
+            var result = await _sut.RegisterAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.ExistsByEmailAsync(It.IsAny<string>()), Times.Never);
+            _iAccountRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Account>()), Times.Never);
+            _iAccountRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+            _iOtpRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Otp>()), Times.Never);
+            _iEmailServiceMock.Verify(e => e.SendVerifyEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
         // -------------------- VERIFY EMAIL --------------------
 
         [Test]

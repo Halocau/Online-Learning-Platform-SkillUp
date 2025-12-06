@@ -19,6 +19,7 @@ namespace SkillUp.Services.Implementations
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IStudentRepository _studentRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
+        private readonly INotifyService _notifyService;
 
         public LessonService(
             ILessonRepository lessonRepository,
@@ -28,7 +29,8 @@ namespace SkillUp.Services.Implementations
             FtpVideoUploadService ftpVideoUploadService,
             ICloudinaryService cloudinaryService,
             IStudentRepository studentRepository,
-            IStudentProgressRepository studentProgressRepository)
+            IStudentProgressRepository studentProgressRepository,
+            INotifyService notifyService)
         {
             _lessonRepository = lessonRepository;
             _sectionRepository = sectionRepository;
@@ -38,6 +40,7 @@ namespace SkillUp.Services.Implementations
             _cloudinaryService = cloudinaryService;
             _studentRepository = studentRepository;
             _studentProgressRepository = studentProgressRepository;
+            _notifyService = notifyService;
         }
 
         public async Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync()
@@ -186,7 +189,21 @@ namespace SkillUp.Services.Implementations
                 throw new Exception("Không thể lưu bài học!");
             }
 
-            // 5. Lấy lại lesson với đầy đủ thông tin
+            // 5. Gửi thông báo cập nhật khóa học cho học viên
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học mới '{lesson.Title}' đã được thêm vào khóa học."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
+            }
+
+            // 6. Lấy lại lesson với đầy đủ thông tin
             var createdLesson = await _lessonRepository.GetLessonWithDetailsAsync(lesson.Id);
             return MapToResponseDto(createdLesson!);
         }
@@ -299,6 +316,20 @@ namespace SkillUp.Services.Implementations
                 throw new Exception("Không thể cập nhật bài học!");
             }
 
+            // Gửi thông báo cập nhật khóa học cho học viên
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học '{lesson.Title}' đã được cập nhật."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
+            }
+
             var updatedLesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
             return MapToResponseDto(updatedLesson!);
         }
@@ -350,12 +381,29 @@ namespace SkillUp.Services.Implementations
             lesson.IsActive = false;
             lesson.UpdatedAt = DateTime.Now;
 
+            // Lưu tên lesson để dùng trong thông báo
+            var lessonTitle = lesson.Title;
+
             _lessonRepository.UpdateLesson(lesson);
             var saved = await _lessonRepository.SaveChangesAsync();
             
             if (!saved)
             {
                 throw new Exception("Không thể xóa bài học!");
+            }
+
+            // Gửi thông báo cập nhật khóa học cho học viên
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học '{lessonTitle}' đã được xóa khỏi khóa học."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
             }
 
             return true;
