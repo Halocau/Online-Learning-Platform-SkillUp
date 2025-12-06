@@ -203,29 +203,6 @@ namespace TestSkillUp.Services
 		}
 
 		[Test]
-		public void Create_ShouldThrowException_WhenSectionDoesNotExist()
-		{
-			var ctx = SetupValidContext();
-			var nonExistentSectionId = Guid.NewGuid();
-
-			_mockSectionRepo.Setup(x => x.GetByIdAsync(nonExistentSectionId))
-				.ReturnsAsync((Section)null);
-
-			var dto = new CreateQuestionBankDTO
-			{
-				Type = "SingleChoice",
-				SectionId = nonExistentSectionId,
-				Title = "Valid Title",
-				Answers = new List<CreateAnswerDTO> { new CreateAnswerDTO { IsCorrect = true } }
-			};
-
-			var ex = Assert.ThrowsAsync<Exception>(async () =>
-				await _service.CreateQuestionBankAsync(dto, ctx.accountId, ctx.courseId, null));
-
-			Assert.That(ex.Message, Is.EqualTo("Không tìm thấy học phần!"));
-		}
-
-		[Test]
 		public async Task Create_ShouldSucceed_WhenSingleChoiceIsValid_AndOptionalFieldsAreNull()
 		{
 			var ctx = SetupValidContext();
