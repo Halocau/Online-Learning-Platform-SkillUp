@@ -22,6 +22,8 @@ namespace SkillUp.Services.Implementations
         private readonly IStudentProgressRepository _studentProgressRepository;
         private readonly QdrantService _qdrantService;
         private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
+        private readonly INotifyService _notifyService;
+
         public LessonService(
             ILessonRepository lessonRepository,
             ISectionRepository sectionRepository,
@@ -32,7 +34,8 @@ namespace SkillUp.Services.Implementations
             IStudentRepository studentRepository,
             IStudentProgressRepository studentProgressRepository,
             QdrantService qdrantService,
-            IAiSupportBackgroundJobService aiSupportBackgroundJobService)
+            IAiSupportBackgroundJobService aiSupportBackgroundJobService,
+            INotifyService notifyService)
         {
             _lessonRepository = lessonRepository;
             _sectionRepository = sectionRepository;
@@ -44,6 +47,7 @@ namespace SkillUp.Services.Implementations
             _studentProgressRepository = studentProgressRepository;
             _qdrantService = qdrantService;
             _aiSupportBackgroundJobService = aiSupportBackgroundJobService;
+            _notifyService = notifyService;
         }
 
         public async Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync()
@@ -201,7 +205,20 @@ namespace SkillUp.Services.Implementations
                 await _aiSupportBackgroundJobService.TriggerLessonSubtitleJobAsync(lesson.Id, force: true);
             }
 
-            // 5. Lấy lại lesson với đầy đủ thông tin
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học mới '{lesson.Title}' đã được thêm vào khóa học."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
+            }
+
+            // 6. Lấy lại lesson với đầy đủ thông tin
             var createdLesson = await _lessonRepository.GetLessonWithDetailsAsync(lesson.Id);
             return MapToResponseDto(createdLesson!);
         }
@@ -293,7 +310,7 @@ namespace SkillUp.Services.Implementations
                     }
                     catch (Exception ex)
                     {
-                        _ = ex; 
+                        _ = ex;
                     }
                 }
             }
@@ -333,6 +350,19 @@ namespace SkillUp.Services.Implementations
                 {
                     await _aiSupportBackgroundJobService.TriggerLessonSubtitleJobAsync(lesson.Id, force: true);
                 }
+            }
+            // Gửi thông báo cập nhật khóa học cho học viên
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học '{lesson.Title}' đã được cập nhật."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
             }
 
             var updatedLesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
@@ -386,13 +416,30 @@ namespace SkillUp.Services.Implementations
             lesson.IsActive = false;
             lesson.UpdatedAt = DateTime.Now;
 
+            // Lưu tên lesson để dùng trong thông báo
+            var lessonTitle = lesson.Title;
+
             _lessonRepository.UpdateLesson(lesson);
             var saved = await _lessonRepository.SaveChangesAsync();
 
-            
+
             if (!saved)
             {
                 throw new Exception("Không thể xóa bài học!");
+            }
+
+            // Gửi thông báo cập nhật khóa học cho học viên
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học '{lessonTitle}' đã được xóa khỏi khóa học."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
             }
 
             return true;
