@@ -58,12 +58,102 @@ namespace SkillUp.Services.Implementations
             });
         }
 
+        //public async Task<CommentLessonDto> CreateCommentAsync(CreateCommentLessonDto dto, Guid accountId)
+        //{
+        //    // 1. Tạo Comment (Logic cũ)
+        //    var newComment = new CommentLesson
+        //    {
+        //        // ... (Id, LessonId, AccountId, ...)
+        //        Id = Guid.NewGuid(),
+        //        LessonId = dto.LessonId,
+        //        AccountId = accountId,
+        //        Contents = dto.Contents,
+        //        ParentCommentId = dto.ParentCommentId,
+        //        CreatedAt = DateTime.Now,
+        //        UpdatedAt = DateTime.Now,
+        //        IsActive = true
+        //    };
+
+        //    var savedComment = await _repo.CreateAsync(newComment);
+
+        //    var commenter = await _accountRepo.GetByIdAsync(accountId);
+        //    var accountName = commenter?.Fullname ?? "Một người dùng";
+
+        //    // 2. LOGIC THÔNG BÁO (CẬP NHẬT CATCH BLOCK)
+        //    try
+        //    {
+        //        var lesson = await _lessonRepo.GetByIdAsync(dto.LessonId);
+
+        //        CommentLesson? parentComment = null;
+        //        if (dto.ParentCommentId.HasValue)
+        //        {
+        //            parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
+        //        }
+
+        //        // 2.1. Thông báo cho Chủ Bài Giảng (Giảng viên)
+        //        if (lesson == null)
+        //            throw new Exception("Không tìm thấy Lesson.");
+        //        if (lesson.Section == null)
+        //            throw new Exception("Lesson không có Section.");
+        //        if (lesson.Section.Course == null)
+        //            throw new Exception("Section không có Course.");
+        //        if (lesson.Section.Course.Lecturer == null)
+        //            throw new Exception("Course không có Lecturer.");
+        //        if (lesson.Section.Course.Lecturer.AccountId == null) // Giả định AccountId có trong Lecturer
+        //            throw new Exception("Lecturer không có AccountId.");
+
+        //        // Nếu tất cả đều qua, mới gửi thông báo
+        //        var lecturerAccountId = lesson.Section.Course.Lecturer.AccountId;
+        //        if (lecturerAccountId != accountId)
+        //        {
+        //            await _notifyService.CreateNotificationAsync(
+        //                lecturerAccountId,
+        //                "Bình luận bài giảng mới",
+        //                $"{accountName} đã bình luận bài giảng của bạn."
+        //            );
+        //        }
+
+        //        // 2.2. Thông báo cho Chủ Comment Bị Trả Lời
+        //        if (parentComment != null && parentComment.AccountId != accountId)
+        //        {
+        //            await _notifyService.CreateNotificationAsync(
+        //                parentComment.AccountId,
+        //                "Trả lời bình luận",
+        //                $"{accountName} đã trả lời bình luận của bạn."
+        //            );
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // --- ĐÂY LÀ PHẦN SỬA QUAN TRỌNG ---
+        //        // Chúng ta in ra lỗi chi tiết hơn
+        //        Console.WriteLine("--- LỖI GỬI THÔNG BÁO (LESSON) ---");
+        //        Console.WriteLine(ex.Message); // In ra "Không tìm thấy Lesson", "Lesson không có Section", v.v...
+        //        Console.WriteLine(ex.StackTrace);
+        //        // --- HẾT PHẦN SỬA ---
+        //    }
+
+        //    // 3. Trả về DTO (Logic cũ)
+        //    return new CommentLessonDto
+        //    {
+        //        // ... (Id, LessonId, Contents, ...)
+        //        Id = savedComment.Id,
+        //        LessonId = savedComment.LessonId,
+        //        Contents = savedComment.Contents,
+        //        CreatedAt = savedComment.CreatedAt,
+        //        AccountId = savedComment.AccountId,
+        //        AccountName = accountName,
+        //        ParentCommentId = savedComment.ParentCommentId,
+        //        IsActive = true,
+        //        LikeCount = 0
+        //    };
+        //}
+
         public async Task<CommentLessonDto> CreateCommentAsync(CreateCommentLessonDto dto, Guid accountId)
         {
-            // 1. Tạo Comment (Logic cũ)
+            // 1. Tạo Comment vào DB
             var newComment = new CommentLesson
             {
-                // ... (Id, LessonId, AccountId, ...)
                 Id = Guid.NewGuid(),
                 LessonId = dto.LessonId,
                 AccountId = accountId,
@@ -79,64 +169,66 @@ namespace SkillUp.Services.Implementations
             var commenter = await _accountRepo.GetByIdAsync(accountId);
             var accountName = commenter?.Fullname ?? "Một người dùng";
 
-            // 2. LOGIC THÔNG BÁO (CẬP NHẬT CATCH BLOCK)
+            // 2. GỬI THÔNG BÁO
             try
             {
                 var lesson = await _lessonRepo.GetByIdAsync(dto.LessonId);
 
-                CommentLesson? parentComment = null;
-                if (dto.ParentCommentId.HasValue)
+                // Kiểm tra null các cấp cha để tránh lỗi
+                if (lesson != null && lesson.Section != null && lesson.Section.Course != null && lesson.Section.Course.Lecturer != null)
                 {
-                    parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
-                }
+                    var courseId = lesson.Section.Course.Id;
+                    var sectionId = lesson.Section.Id;
+                    var lessonId = lesson.Id;
 
-                // 2.1. Thông báo cho Chủ Bài Giảng (Giảng viên)
-                if (lesson == null)
-                    throw new Exception("Không tìm thấy Lesson.");
-                if (lesson.Section == null)
-                    throw new Exception("Lesson không có Section.");
-                if (lesson.Section.Course == null)
-                    throw new Exception("Section không có Course.");
-                if (lesson.Section.Course.Lecturer == null)
-                    throw new Exception("Course không có Lecturer.");
-                if (lesson.Section.Course.Lecturer.AccountId == null) // Giả định AccountId có trong Lecturer
-                    throw new Exception("Lecturer không có AccountId.");
+                    // --- SỬA LỖI TẠI ĐÂY: AccountId là Guid, không phải Guid? ---
+                    var lecturerAccountId = lesson.Section.Course.Lecturer.AccountId;
 
-                // Nếu tất cả đều qua, mới gửi thông báo
-                var lecturerAccountId = lesson.Section.Course.Lecturer.AccountId;
-                if (lecturerAccountId != accountId)
-                {
-                    await _notifyService.CreateNotificationAsync(
-                        lecturerAccountId,
-                        "Bình luận bài giảng mới",
-                        $"{accountName} đã bình luận bài giảng của bạn."
-                    );
-                }
+                    string targetLink = $"/student/learn/{courseId}/section/{sectionId}/lesson/{lessonId}";
 
-                // 2.2. Thông báo cho Chủ Comment Bị Trả Lời
-                if (parentComment != null && parentComment.AccountId != accountId)
-                {
-                    await _notifyService.CreateNotificationAsync(
-                        parentComment.AccountId,
-                        "Trả lời bình luận",
-                        $"{accountName} đã trả lời bình luận của bạn."
-                    );
+                    CommentLesson? parentComment = null;
+                    if (dto.ParentCommentId.HasValue)
+                    {
+                        parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
+                    }
+
+                    // 2.1. Thông báo cho Giảng viên
+                    // Bỏ .HasValue và .Value vì lecturerAccountId chắc chắn có giá trị
+                    if (lecturerAccountId != accountId)
+                    {
+                        await _notifyService.CreateNotificationAsync(
+                            lecturerAccountId, // Truyền trực tiếp Guid
+                            "Bình luận bài giảng mới",
+                            $"{accountName} đã bình luận trong bài: {lesson.Title}",
+                            targetLink
+                        );
+                    }
+
+                    // 2.2. Thông báo cho người được trả lời
+                    if (parentComment != null && parentComment.AccountId != accountId)
+                    {
+                        // Logic phụ: Nếu giảng viên trả lời thì không cần báo lại cho giảng viên nữa
+                        // Sửa điều kiện logic để dùng Guid trực tiếp
+                        if (parentComment.AccountId != lecturerAccountId || lecturerAccountId == accountId)
+                        {
+                            await _notifyService.CreateNotificationAsync(
+                                parentComment.AccountId,
+                                "Trả lời bình luận",
+                                $"{accountName} đã trả lời bình luận của bạn trong bài: {lesson.Title}",
+                                targetLink
+                            );
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
-                // --- ĐÂY LÀ PHẦN SỬA QUAN TRỌNG ---
-                // Chúng ta in ra lỗi chi tiết hơn
-                Console.WriteLine("--- LỖI GỬI THÔNG BÁO (LESSON) ---");
-                Console.WriteLine(ex.Message); // In ra "Không tìm thấy Lesson", "Lesson không có Section", v.v...
-                Console.WriteLine(ex.StackTrace);
-                // --- HẾT PHẦN SỬA ---
+                Console.WriteLine($"Lỗi gửi thông báo Lesson: {ex.Message}");
             }
 
-            // 3. Trả về DTO (Logic cũ)
+            // 3. Trả về DTO
             return new CommentLessonDto
             {
-                // ... (Id, LessonId, Contents, ...)
                 Id = savedComment.Id,
                 LessonId = savedComment.LessonId,
                 Contents = savedComment.Contents,
