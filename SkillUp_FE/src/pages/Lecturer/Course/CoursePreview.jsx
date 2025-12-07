@@ -194,7 +194,7 @@ function CoursePreview() {
           <div className="flex items-center gap-3">
             <Eye className="w-5 h-5" />
             <span className="font-semibold">
-              Chế độ xem trước - Không thể chỉnh sửa trong khi chờ duyệt
+              Chế độ xem trước - Không thể chỉnh sửa trong chế độ này
             </span>
           </div>
           <button
@@ -220,11 +220,6 @@ function CoursePreview() {
               }}
             />
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full border border-yellow-200">
-                  Đang chờ duyệt
-                </span>
-              </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {course.title}
               </h1>
