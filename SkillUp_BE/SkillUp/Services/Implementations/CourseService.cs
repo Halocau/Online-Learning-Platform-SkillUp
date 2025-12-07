@@ -14,6 +14,7 @@ using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
+using SkillUp.Services.Rag.Subtitle;
 
 namespace SkillUp.Services.Implementations
 {
@@ -28,28 +29,29 @@ namespace SkillUp.Services.Implementations
 		private readonly INotifyService _notifyService;
 		private readonly IEnrollmentRepository _enrollmentRepository;
 		private readonly IStudentRepository _studentRepository;
-		private readonly IStudentProgressRepository _studentProgressRepository;
-		private readonly ICurrentUserService _currentUserService;
-        private readonly IRatingService _ratingService;
-		private readonly IRatingRepository _ratingRepository;
-		public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService , IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IRatingService ratingService, IRatingRepository ratingRepository)
-		{
-			_courseRepository = courseRepository;
-			_lecturerRepository = lecturerRepository;
-			_cloudinaryService = cloudinaryService;
-			_accountRepository = accountRepository;
-			_categoryRepository = categoryRepository;
-			_emailService = emailService;
-			_notifyService = notifyService;
-			_enrollmentRepository = enrollmentRepository;
-			_studentRepository = studentRepository;
-			_studentProgressRepository = studentProgressRepository;
-			_currentUserService = currentUserService;
-            _ratingService= ratingService;
-			_ratingRepository = ratingRepository;
+        private readonly IStudentProgressRepository _studentProgressRepository;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
+        private readonly IRatingRepository _ratingRepository;
+
+        public CourseService(ICourseRepository courseRepository, ILecturerRepository lecturerRepository, ICloudinaryService cloudinaryService, IAccountRepository accountRepository, ICategoryRepository categoryRepository, IEmailService emailService, INotifyService notifyService, IEnrollmentRepository enrollmentRepository, IStudentRepository studentRepository, IStudentProgressRepository studentProgressRepository, ICurrentUserService currentUserService, IAiSupportBackgroundJobService aiSupportBackgroundJobService, IRatingRepository ratingRepository)
+        {
+            _courseRepository = courseRepository;
+            _lecturerRepository = lecturerRepository;
+            _cloudinaryService = cloudinaryService;
+            _accountRepository = accountRepository;
+            _categoryRepository = categoryRepository;
+            _emailService = emailService;
+            _notifyService = notifyService;
+            _enrollmentRepository = enrollmentRepository;
+            _studentRepository = studentRepository;
+            _studentProgressRepository = studentProgressRepository;
+            _currentUserService = currentUserService;
+            _aiSupportBackgroundJobService = aiSupportBackgroundJobService;
+            _ratingRepository = ratingRepository;
         }
 
-		public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
+        public async Task<CourseResponseDto?> CreateDraftCourseAsync(CreateUpdateCourseDto request, Guid accId)
 		{
 			var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image, "skillup/courses");
 			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accId);
@@ -66,6 +68,7 @@ namespace SkillUp.Services.Implementations
 				Image = imageUrl,
 				SubCategoryId = request.SubCategoryId,
 				LecturerId = lecturer.Id,
+				IsAiSupport = request.IsAiSupport ?? false,
 				Price = -1,
 				EnrollmentCount = 0,
 				Rating = 0,
@@ -88,7 +91,8 @@ namespace SkillUp.Services.Implementations
 				Description = course.Description,
 				Image = course.Image,
 				Status = course.Status,
-				LecturerId = lecturer.Id
+				LecturerId = lecturer.Id,
+				IsAiSupport = course.IsAiSupport
 			};
 		}
 		//giảng viên xóa khóa học
@@ -191,10 +195,24 @@ namespace SkillUp.Services.Implementations
                 course.SubCategoryId = request.SubCategoryId.Value;
             }
 
+            var previouslyEnabled = course.IsAiSupport ?? false;
+            var shouldTriggerSubtitleJob = false;
+
+            if (request.IsAiSupport.HasValue)
+            {
+                course.IsAiSupport = request.IsAiSupport.Value;
+                shouldTriggerSubtitleJob = !previouslyEnabled && course.IsAiSupport == true;
+            }
+
             course.UpdatedAt = DateTime.Now;
 
             _courseRepository.UpdateCourse(course);
             await _courseRepository.SaveChangesAsync();
+
+            if (shouldTriggerSubtitleJob)
+            {
+                await _aiSupportBackgroundJobService.TriggerCourseSubtitleJobAsync(course.Id);
+            }
 
             return new CourseResponseDto
             {
@@ -203,7 +221,8 @@ namespace SkillUp.Services.Implementations
                 Description = course.Description,
                 Image = course.Image,
                 Status = course.Status,
-                LecturerId = lecturer.Id
+                LecturerId = lecturer.Id,
+                IsAiSupport = course.IsAiSupport
             };
         }
         public async Task<bool> ToggleBanCourseAsync(Guid courseId, Guid adminAccountId)
@@ -743,6 +762,7 @@ namespace SkillUp.Services.Implementations
                 subCategoryId = course.SubCategoryId,
                 CategoryName = course.SubCategory?.Category?.Name ?? "",
                 SubCategoryName = course.SubCategory?.Name ?? "",
+                IsAiSupport = course.IsAiSupport,
                 Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
                 {
                     AccountId = course.Lecturer.AccountId,

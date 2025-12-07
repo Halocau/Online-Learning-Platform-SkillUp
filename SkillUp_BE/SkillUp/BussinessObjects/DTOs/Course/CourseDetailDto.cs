@@ -22,6 +22,7 @@ namespace SkillUp.BussinessObjects.DTOs.Course
         public DateTime UpdatedAt { get; set; }
         public LecturerCourseDetailDto Lecturer { get; set; }
         public List<SectionCourseDetailDto> Sections { get; set; }
+        public bool IsAiSupport { get; set; }
         
     }
 }

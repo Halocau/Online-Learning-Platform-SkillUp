@@ -35,14 +35,12 @@ export default function CommentReport() {
   const [forumData, setForumData] = useState([]);
   const [lessonData, setLessonData] = useState([]);
   const [loading, setLoading] = useState(false);
-
   // Filter/Search state
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [currentPage, setCurrentPage] = useState(1);
-
   // Modal state
   const [selectedReport, setSelectedReport] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -552,9 +550,7 @@ export default function CommentReport() {
                   Ngày báo cáo:
                 </label>
                 <p className="mt-1 text-gray-900">
-                  {dayjs(selectedReport.createdAt).format(
-                    "DD/MM/YYYY HH:mm:ss"
-                  )}
+                  {dayjs(selectedReport.createdAt).format("DD/MM/YYYY HH:mm:ss")}
                 </p>
               </div>
 

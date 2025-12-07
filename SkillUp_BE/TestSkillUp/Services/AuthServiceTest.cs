@@ -22,6 +22,7 @@ namespace TestSkillUp
         private Mock<IOtpRepository> _iOtpRepositoryMock = null!;
         private Mock<IEmailService> _iEmailServiceMock = null!;
         private Mock<IStudentService> _iStudentServiceMock = null!;
+        private Mock<ICartService> _iCartServiceMock = null!;
         private IConfiguration _configuration = null!;
         private IAuthService _sut = null!; // System Under Test
 
@@ -34,6 +35,7 @@ namespace TestSkillUp
             _iOtpRepositoryMock = new Mock<IOtpRepository>(MockBehavior.Loose);
             _iEmailServiceMock = new Mock<IEmailService>(MockBehavior.Loose);
             _iStudentServiceMock = new Mock<IStudentService>(MockBehavior.Loose);
+            _iCartServiceMock = new Mock<ICartService>(MockBehavior.Loose);
 
             // IConfiguration thật để hàm GenerateAccessToken() tạo JWT hợp lệ
             var dict = new Dictionary<string, string?>
@@ -53,7 +55,8 @@ namespace TestSkillUp
                 _iOtpRepositoryMock.Object,
                 _configuration,
                 _iEmailServiceMock.Object,
-                _iStudentServiceMock.Object
+                _iStudentServiceMock.Object,
+                _iCartServiceMock.Object
             );
         }
 
@@ -393,6 +396,30 @@ namespace TestSkillUp
 
             // Assert
             Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Account>()), Times.Never);
+            _iAccountRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
+            _iOtpRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Otp>()), Times.Never);
+            _iEmailServiceMock.Verify(e => e.SendVerifyEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]//1
+        public async Task RegisterAsync_InvalidRoleId_ReturnsFalse_AndDoesNotCreateAccount()
+        {
+            // Arrange
+            var request = new RegisterRequestDto
+            {
+                Email = "user@example.com",
+                Password = "P@ssw0rd!",
+                Fullname = "User",
+                RoleId = 1 // Invalid role (not 4 or 5)
+            };
+
+            // Act
+            var result = await _sut.RegisterAsync(request);
+
+            // Assert
+            Assert.IsFalse(result);
+            _iAccountRepositoryMock.Verify(r => r.ExistsByEmailAsync(It.IsAny<string>()), Times.Never);
             _iAccountRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Account>()), Times.Never);
             _iAccountRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Never);
             _iOtpRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Otp>()), Times.Never);

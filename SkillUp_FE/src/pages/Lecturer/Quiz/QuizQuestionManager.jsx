@@ -366,6 +366,21 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     });
   };
 
+  // Count answers with images
+  const countAnswerImages = (answers) => {
+    if (!answers || !Array.isArray(answers)) return 0;
+    return answers.filter((ans) => ans.imageUrl || ans.image).length;
+  };
+
+  // Debug log when editingQuestionId changes
+  useEffect(() => {
+    if (editingQuestionId) {
+      const question = questions.find(
+        (q) => getQuestionId(q) === editingQuestionId
+      );
+    }
+  }, [editingQuestionId, questions]);
+
   return (
     <div className="mt-3 space-y-3">
       {/* Confirm Modal */}
@@ -444,6 +459,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
               const isEditing = editingQuestionId === qId;
 
               const cleanTitle = extractCleanText(question.title, 100);
+              const answerImageCount = countAnswerImages(question.answers);
 
               return (
                 <Card

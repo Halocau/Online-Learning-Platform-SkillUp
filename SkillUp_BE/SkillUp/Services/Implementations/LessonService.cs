@@ -5,6 +5,7 @@ using SkillUp.Repositories.Implementations;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Interfaces;
+using SkillUp.Services.Rag.Subtitle;
 using System.ComponentModel.DataAnnotations;
 
 namespace SkillUp.Services.Implementations
@@ -19,6 +20,9 @@ namespace SkillUp.Services.Implementations
         private readonly ICloudinaryService _cloudinaryService;
         private readonly IStudentRepository _studentRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
+        private readonly IQdrantService _qdrantService;
+        private readonly IAiSupportBackgroundJobService _aiSupportBackgroundJobService;
+        private readonly INotifyService _notifyService;
 
         public LessonService(
             ILessonRepository lessonRepository,
@@ -28,7 +32,10 @@ namespace SkillUp.Services.Implementations
             FtpVideoUploadService ftpVideoUploadService,
             ICloudinaryService cloudinaryService,
             IStudentRepository studentRepository,
-            IStudentProgressRepository studentProgressRepository)
+            IStudentProgressRepository studentProgressRepository,
+            IQdrantService qdrantService,
+            IAiSupportBackgroundJobService aiSupportBackgroundJobService,
+            INotifyService notifyService)
         {
             _lessonRepository = lessonRepository;
             _sectionRepository = sectionRepository;
@@ -38,6 +45,9 @@ namespace SkillUp.Services.Implementations
             _cloudinaryService = cloudinaryService;
             _studentRepository = studentRepository;
             _studentProgressRepository = studentProgressRepository;
+            _qdrantService = qdrantService;
+            _aiSupportBackgroundJobService = aiSupportBackgroundJobService;
+            _notifyService = notifyService;
         }
 
         public async Task<IEnumerable<GetLessonResponseDto>> GetAllLessonsAsync()
@@ -158,12 +168,15 @@ namespace SkillUp.Services.Implementations
                 LessonId = lesson.Id,
                 IsActive = true
             };
+            var videoCreated = false;
 
             if (dto.Type == "Video")
             {
                 // Upload video lên VPS qua FTP
                 var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile!, "lessons");
                 asset.Url = videoUrl;
+                asset.FileUrl = null; // Video không dùng FileUrl trong Asset
+                videoCreated = true;
             }
             else if (dto.Type == "Text")
             {
@@ -186,7 +199,26 @@ namespace SkillUp.Services.Implementations
                 throw new Exception("Không thể lưu bài học!");
             }
 
-            // 5. Lấy lại lesson với đầy đủ thông tin
+            if (videoCreated && (course.IsAiSupport ?? false))
+            {
+                // Fire-and-forget subtitle generation
+                await _aiSupportBackgroundJobService.TriggerLessonSubtitleJobAsync(lesson.Id, force: true);
+            }
+
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học mới '{lesson.Title}' đã được thêm vào khóa học."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
+            }
+
+            // 6. Lấy lại lesson với đầy đủ thông tin
             var createdLesson = await _lessonRepository.GetLessonWithDetailsAsync(lesson.Id);
             return MapToResponseDto(createdLesson!);
         }
@@ -239,8 +271,9 @@ namespace SkillUp.Services.Implementations
             lesson.IsFree = dto.IsFree;
             lesson.UpdatedAt = DateTime.Now;
 
-            // Update asset
-            var asset = lesson.Assets?.FirstOrDefault();
+            // 4. Update asset
+            var asset = lesson.Assets.FirstOrDefault();
+            var videoChanged = false;
             if (asset == null)
             {
                 // Tạo asset mới nếu chưa có
@@ -266,6 +299,7 @@ namespace SkillUp.Services.Implementations
                 // Upload video mới lên VPS qua FTP
                 var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
                 asset.Url = videoUrl;
+                videoChanged = true;
 
                 // Xóa video cũ sau khi upload thành công
                 if (!string.IsNullOrEmpty(oldVideoUrl))
@@ -276,15 +310,17 @@ namespace SkillUp.Services.Implementations
                     }
                     catch (Exception ex)
                     {
-                        _ = ex; 
+                        _ = ex;
                     }
                 }
             }
             else if (lesson.Type == "Text" && !string.IsNullOrEmpty(dto.Content))
             {
+                // Cập nhật content
                 asset.Contents = dto.Content;
             }
 
+            // Upload tài liệu khóa học mới nếu có (dùng cho cả Video và Text)
             if (dto.FileUrl != null && dto.FileUrl.Length > 0)
             {
                 var documentUrl = await _cloudinaryService.UploadDocumentAsync(dto.FileUrl, "skillup/lesson-documents");
@@ -297,6 +333,36 @@ namespace SkillUp.Services.Implementations
             if (!saved)
             {
                 throw new Exception("Không thể cập nhật bài học!");
+            }
+
+            if (videoChanged)
+            {
+                try
+                {
+                    await _qdrantService.DeleteVectorsByLessonAsync(lesson.Id);
+                }
+                catch
+                {
+                    // ignore cleanup failures to avoid blocking lesson update
+                }
+
+                if (course.IsAiSupport == true)
+                {
+                    await _aiSupportBackgroundJobService.TriggerLessonSubtitleJobAsync(lesson.Id, force: true);
+                }
+            }
+            // Gửi thông báo cập nhật khóa học cho học viên
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học '{lesson.Title}' đã được cập nhật."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
             }
 
             var updatedLesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
@@ -317,8 +383,8 @@ namespace SkillUp.Services.Implementations
             }
 
             // 2. Kiểm tra quyền
-            var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);       
-            var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);     
+            var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);
+            var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
             if (lecturer == null || course.LecturerId != lecturer.Id)
             {
@@ -350,12 +416,30 @@ namespace SkillUp.Services.Implementations
             lesson.IsActive = false;
             lesson.UpdatedAt = DateTime.Now;
 
+            // Lưu tên lesson để dùng trong thông báo
+            var lessonTitle = lesson.Title;
+
             _lessonRepository.UpdateLesson(lesson);
             var saved = await _lessonRepository.SaveChangesAsync();
-            
+
+
             if (!saved)
             {
                 throw new Exception("Không thể xóa bài học!");
+            }
+
+            // Gửi thông báo cập nhật khóa học cho học viên
+            try
+            {
+                await _notifyService.SendCourseUpdateNotificationAsync(
+                    course.Id,
+                    "Khóa học đã được cập nhật",
+                    $"Bài học '{lessonTitle}' đã được xóa khỏi khóa học."
+                );
+            }
+            catch (Exception ex)
+            {
+                _ = ex; // Suppress exception để không ảnh hưởng đến flow chính
             }
 
             return true;
@@ -441,8 +525,8 @@ namespace SkillUp.Services.Implementations
                     LessonId = lessonId,
                     CourseId = lesson.Section.CourseId,
                     QuizId = null,
-                    IsCompleted = false, 
-                    LastViewedAt = DateTime.Now 
+                    IsCompleted = false,
+                    LastViewedAt = DateTime.Now
                 };
                 await _studentProgressRepository.AddAsync(newProgress);
             }

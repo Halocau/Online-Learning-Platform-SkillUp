@@ -20,6 +20,7 @@ function EditCourseForm({ courseId, course, isOpen, onClose, onSuccess }) {
     categoryId: 0,
     subCategoryId: undefined,
     image: null,
+    isAiSupport: false,
   });
 
   const [updating, setUpdating] = useState(false);
@@ -35,6 +36,7 @@ function EditCourseForm({ courseId, course, isOpen, onClose, onSuccess }) {
         categoryId: course.categoryId || 0,
         subCategoryId: course.subCategoryId || undefined,
         image: null,
+        isAiSupport: course.isAiSupport ?? false,
       });
       setPreviewImage(course.image || null);
       setHasImageChanged(false);
@@ -118,6 +120,8 @@ function EditCourseForm({ courseId, course, isOpen, onClose, onSuccess }) {
       if (formData.subCategoryId) {
         form.append("subCategoryId", formData.subCategoryId.toString());
       }
+
+      form.append("IsAiSupport", formData.isAiSupport ? "true" : "false");
 
       if (removeCurrentImage) {
         form.append("removeImage", "true");
@@ -216,6 +220,41 @@ function EditCourseForm({ courseId, course, isOpen, onClose, onSuccess }) {
                   categoryName={course?.categoryName}
                   subCategoryName={course?.subCategoryName}
                 />
+              </div>
+
+              {/* AI Support Toggle */}
+              <div className="p-4 border border-blue-100 rounded-lg bg-white shadow-sm space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">
+                      AI hỗ trợ học viên
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Bật tùy chọn này để học viên có thể chat với trợ lý dựa trên phụ đề bài học video.
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={formData.isAiSupport}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          isAiSupport: e.target.checked,
+                        }))
+                      }
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-blue-500 relative transition-colors">
+                      <div className="absolute top-[2px] left-[2px] h-5 w-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+                    </div>
+                  </label>
+                </div>
+                {formData.isAiSupport && (
+                  <div className="text-xs text-green-600 flex items-center gap-2">
+                    ✅ Subtitles sẽ tự cập nhật khi bạn đổi video.
+                  </div>
+                )}
               </div>
 
               {/* Image Upload */}

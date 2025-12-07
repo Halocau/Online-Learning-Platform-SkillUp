@@ -40,9 +40,8 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
     if (disabled) {
       return (
         <div
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-not-allowed opacity-50 ${
-            isCollapsed ? "justify-center" : ""
-          }`}
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-not-allowed opacity-50 ${isCollapsed ? "justify-center" : ""
+            }`}
           title={isCollapsed ? label : "Chỉ khả dụng sau khi CV được duyệt"}
         >
           {content}
@@ -53,11 +52,10 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
     return (
       <Link
         to={path}
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-          isActive(path)
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive(path)
             ? "bg-yellow-100 text-yellow-700 font-semibold"
             : "text-gray-700 hover:bg-gray-100"
-        } ${isCollapsed ? "justify-center" : ""}`}
+          } ${isCollapsed ? "justify-center" : ""}`}
         title={isCollapsed ? label : ""}
       >
         {content}
@@ -152,10 +150,9 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
 
           <NavItem
             icon={MessageSquare}
-            label="Tin nhắn"
-            path="/lecturer/messages"
+            label="Phiếu hỗ trợ"
+            path="/lecturer/ticket"
             disabled={isPending}
-            badge="2"
           />
         </nav>
 

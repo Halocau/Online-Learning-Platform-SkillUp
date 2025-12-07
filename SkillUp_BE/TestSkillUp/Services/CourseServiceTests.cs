@@ -32,6 +32,7 @@ namespace TestSkillUp.Services
         private Mock<IEmailService> _emailServiceMock = null!;
         private Mock<INotifyService> _notifyServiceMock = null!;
         private Mock<ICurrentUserService> _currentUserServiceMock = null!;
+        private Mock<SkillUp.Services.Rag.Subtitle.IAiSupportBackgroundJobService> _aiSupportBackgroundJobServiceMock = null!;
 
         private Mock<IRatingService> _ratingServiceMock = null!;    
         private Mock<IRatingRepository> _ratingRepoMock = null!;
@@ -53,6 +54,7 @@ namespace TestSkillUp.Services
             _emailServiceMock = new Mock<IEmailService>(MockBehavior.Loose);
             _notifyServiceMock = new Mock<INotifyService>(MockBehavior.Loose);
             _currentUserServiceMock = new Mock<ICurrentUserService>(MockBehavior.Loose);
+            _aiSupportBackgroundJobServiceMock = new Mock<SkillUp.Services.Rag.Subtitle.IAiSupportBackgroundJobService>(MockBehavior.Loose);
 
             _ratingRepoMock = new Mock<IRatingRepository>(MockBehavior.Strict); 
             _ratingServiceMock = new Mock<IRatingService>(MockBehavior.Loose);
@@ -62,7 +64,7 @@ namespace TestSkillUp.Services
                 _accountRepoMock.Object, _categoryRepoMock.Object, _emailServiceMock.Object,
                 _notifyServiceMock.Object, _enrollmentRepoMock.Object, _studentRepoMock.Object,
                 _studentProgressRepoMock.Object, _currentUserServiceMock.Object,
-                _ratingServiceMock.Object,
+                _aiSupportBackgroundJobServiceMock.Object,
                 _ratingRepoMock.Object
             );
         }

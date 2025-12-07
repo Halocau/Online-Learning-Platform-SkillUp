@@ -2,6 +2,7 @@
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
+using System.Linq;
 using System;
 
 namespace SkillUp.Services.Implementations
@@ -9,12 +10,47 @@ namespace SkillUp.Services.Implementations
 	public class VoucherService : IVoucherService
 	{
 		private readonly IVoucherRepository _voucherRepository;
-		public VoucherService(IVoucherRepository voucherRepository)
+		private readonly ICourseRepository _courseRepository;
+		private readonly ICurrentUserService _currentUserService;
+		private readonly ILecturerRepository _lecturerRepository;
+		public VoucherService(IVoucherRepository voucherRepository, ICourseRepository courseRepository, ICurrentUserService currentUserService, ILecturerRepository lecturerRepository)
 		{
 			_voucherRepository = voucherRepository;
+			_courseRepository = courseRepository;
+			_currentUserService = currentUserService;
+			_lecturerRepository = lecturerRepository;
 		}
 		public async Task<AddVoucherDTO> AddVoucher(AddVoucherDTO addVoucherDTO)
 		{
+			if (_currentUserService.UserId == null)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên");
+			}
+			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(_currentUserService.UserId.Value);
+			if (lecturer == null)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên");
+			}
+			if (addVoucherDTO.CourseId == null) 
+			{ 
+				throw new Exception("CourseId không được để trống!"); 
+			}
+			var course = await _courseRepository.GetByIdAsync((Guid)addVoucherDTO.CourseId);
+			if (course == null)
+			{
+				throw new Exception("Không tìm thấy khoá học");
+			}
+			if(course.LecturerId != lecturer.Id)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên của khoá học này");
+			}
+			var voucherTypes = await _voucherRepository.GetAllVoucherTypes();
+
+			if (!voucherTypes.Any(v => v.Id == addVoucherDTO.VoucherType))
+			{
+				throw new Exception("Loại mã giảm giá không hợp lệ");
+			}
+
 			// Normalize thời gian về Local time trước khi lưu
 			// Frontend gửi local time string → parse thành Unspecified → chuyển thành Local
 			var normalizedStartTime = NormalizeToLocalTime(addVoucherDTO.StartTime);
@@ -47,11 +83,32 @@ namespace SkillUp.Services.Implementations
 
 		public async Task DeleteVoucher(Guid id)
 		{
+			if (_currentUserService.UserId == null)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên");
+			}
+			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(_currentUserService.UserId.Value);
+			if (lecturer == null)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên");
+			}
+			
 			var voucher = await _voucherRepository.GetVoucherById(id);
 			if (voucher == null)
 			{
-				throw new Exception("Voucher not found");
+				throw new Exception("Không tìm thấy voucher");
 			}
+
+			var course = await _courseRepository.GetByIdAsync((Guid)voucher.CourseId!);
+			if (course == null)
+			{
+				throw new Exception("Không tìm thấy khoá học");
+			}
+			if (course.LecturerId != lecturer.Id)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên của khoá học này");
+			}
+
 			voucher.IsActive = false;
 			_voucherRepository.UpdateVoucher(voucher);
 			await _voucherRepository.SaveChangesAsync();
@@ -136,6 +193,35 @@ namespace SkillUp.Services.Implementations
 
 		public async Task<AddVoucherDTO> UpdateVoucher(AddVoucherDTO addVoucherDTO, Guid voucherId)
 		{
+			if (_currentUserService.UserId == null)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên");
+			}
+			var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(_currentUserService.UserId.Value);
+			if (lecturer == null)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên");
+			}
+			if (addVoucherDTO.CourseId == null)
+			{
+				throw new Exception("CourseId không được để trống!");
+			}
+			var course = await _courseRepository.GetByIdAsync((Guid)addVoucherDTO.CourseId);
+			if (course == null)
+			{
+				throw new Exception("Không tìm thấy khoá học");
+			}
+			if (course.LecturerId != lecturer.Id)
+			{
+				throw new UnauthorizedAccessException("Bạn không phải giảng viên của khoá học này");
+			}
+			var voucherTypes = await _voucherRepository.GetAllVoucherTypes();
+
+			if (!voucherTypes.Any(v => v.Id == addVoucherDTO.VoucherType))
+			{
+				throw new Exception("Loại mã giảm giá không hợp lệ");
+			}
+
 			var existingVoucher = await _voucherRepository.GetVoucherById(voucherId);
 			if (existingVoucher == null)
 			{

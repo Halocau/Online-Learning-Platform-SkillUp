@@ -25,7 +25,7 @@ namespace SkillUp.Services.Implementations
             var student = await _studentRepository.GetByAccountIdAsync(accountId);
             if (student == null)
             {
-                throw new InvalidOperationException("Student not found.");
+                throw new InvalidOperationException("Không tìm thấy thông tin học viên cho tài khoản này.");
             }
             return student;
         }

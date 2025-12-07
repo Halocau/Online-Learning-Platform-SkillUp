@@ -225,12 +225,22 @@ function NotificationBell() {
       }
     }
 
-    if (notification.hyperlink) {
+    // Xử lý hyperlink - normalize và navigate
+    const hyperlink = notification.hyperlink?.trim();
+    if (hyperlink) {
       setShowNotificationDropdown(false);
-      if (notification.hyperlink.startsWith("http")) {
-        window.open(notification.hyperlink, "_blank", "noopener,noreferrer");
-      } else {
-        navigate(notification.hyperlink);
+
+      // Nếu là URL đầy đủ (http/https), mở tab mới
+      if (hyperlink.startsWith("http://") || hyperlink.startsWith("https://")) {
+        window.open(hyperlink, "_blank", "noopener,noreferrer");
+      }
+      // Nếu là relative path, đảm bảo có "/" ở đầu và navigate
+      else if (hyperlink.startsWith("/")) {
+        navigate(hyperlink);
+      }
+      // Nếu không có "/" ở đầu, thêm "/" và navigate
+      else {
+        navigate(`/${hyperlink}`);
       }
     }
   };
