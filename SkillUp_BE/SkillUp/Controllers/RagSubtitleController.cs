@@ -2,7 +2,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillUp.ExceptionHandling;
-using SkillUp.Services.Common;
+using SkillUp.Services.Interfaces;
 using SkillUp.Services.Rag.Subtitle;
 
 namespace SkillUp.Controllers
@@ -12,12 +12,12 @@ namespace SkillUp.Controllers
     [Authorize]
     public class RagSubtitleController : ControllerBase
     {
-        private readonly QdrantService _qdrantService;
+        private readonly IQdrantService _qdrantService;
         private readonly ISubtitleLessonJobService _lessonJobService;
         private readonly ISubtitleCourseJobService _courseJobService;
 
         public RagSubtitleController(
-            QdrantService qdrantService,
+            IQdrantService qdrantService,
             ISubtitleLessonJobService lessonJobService,
             ISubtitleCourseJobService courseJobService)
         {

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 using SkillUp.BussinessObjects.DTOs.Subtitle;
 using SkillUp.Configuration;
-using SkillUp.Services.Common;
+using SkillUp.Services.Interfaces;
 using SkillUp.Services.Rag.Embedding;
 
 namespace SkillUp.Services.Rag.Subtitle
@@ -11,13 +11,13 @@ namespace SkillUp.Services.Rag.Subtitle
     public class SubtitleService : ISubtitleService
     {
         private readonly RagOptions _ragOptions;
-        private readonly QdrantService _qdrantService;
+        private readonly IQdrantService _qdrantService;
         private readonly IEmbeddingProvider _embeddingProvider;
         private readonly ILogger<SubtitleService> _logger;
 
         public SubtitleService(
             IOptions<RagOptions> ragOptions,
-            QdrantService qdrantService,
+            IQdrantService qdrantService,
             IEmbeddingProvider embeddingProvider,
             ILogger<SubtitleService> logger)
         {
