@@ -21,8 +21,11 @@ function CourseCardLecture({
 }) {
   const [imageError, setImageError] = useState(false);
 
-  const isPendingStatus = course.status === "Pending";
-  const isUnpublishStatus = course.status === "Unpublish";
+  // Status checks
+  const isDraft = course.status === "Draft";
+  const isPublic = course.status === "Public";
+  const isUnpublish = course.status === "Unpublish";
+  const isPending = course.status === "Pending";
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -79,7 +82,7 @@ function CourseCardLecture({
               </div>
             )}
 
-            {isPendingStatus && (
+            {isPending && (
               <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-md flex items-center gap-1 shadow-md">
                 <Lock className="w-3 h-3" />
                 <span className="text-xs font-semibold">Chờ duyệt</span>
@@ -91,19 +94,16 @@ function CourseCardLecture({
           <div className="flex-1 p-5 md:p-6 flex flex-col justify-between relative">
             {/* Action Buttons - Top Right */}
             <div className="absolute top-4 right-4 flex gap-2 bg-white rounded-lg p-1. 5 shadow-md border border-gray-200">
-              {/* Preview Button - Available for Pending courses */}
-              {isPendingStatus && (
-                <button
-                  onClick={() => onPreview(course)}
-                  className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-all duration-200 transform hover:scale-110"
-                  title="Xem trước khóa học"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              )}
+              {/* 
+                BUTTON LOGIC BY STATUS:
+                - Draft: Edit only
+                - Public: Edit + Hide (delete)
+                - Unpublish: Edit + Reopen
+                - Pending: Preview only
+              */}
 
-              {/* Edit Button  */}
-              {!isPendingStatus && (
+              {/* Edit Button */}
+              {(isDraft || isPublic || isUnpublish) && onEdit && (
                 <button
                   onClick={() => onEdit(course.id)}
                   className="p-2 hover:bg-yellow-50 rounded-md text-yellow-600 transition-all duration-200 transform hover:scale-110"
@@ -113,8 +113,19 @@ function CourseCardLecture({
                   <Edit2 className="w-4 h-4" />
                 </button>
               )}
-              {/* Reopen Button */}
-              {isUnpublishStatus && onReopen && (
+              {/* Pending: Preview */}
+              {(isPending || isDraft) && onPreview && (
+                <button
+                  onClick={() => onPreview(course)}
+                  className="p-2 hover:bg-blue-50 rounded-md text-blue-600 transition-all duration-200 transform hover:scale-110"
+                  title="Xem trước khóa học"
+                  disabled={isDeleting}
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              )}
+              {/* Unpublish: Reopen Button */}
+              {isUnpublish && onReopen && (
                 <button
                   onClick={() => onReopen(course.id)}
                   className="p-2 hover:bg-green-50 rounded-md text-green-600 transition-all duration-200 transform hover:scale-110"
@@ -124,8 +135,9 @@ function CourseCardLecture({
                   <Unlock className="w-4 h-4" />
                 </button>
               )}
-              {/* Delete/Hide Button */}
-              {!isUnpublishStatus && (
+
+              {/* Public: Hide/Delete Button */}
+              {isPublic && onDelete && (
                 <button
                   onClick={() => onDelete(course.id)}
                   className="p-2 hover:bg-red-50 rounded-md text-red-600 transition-all duration-200 transform hover:scale-110 disabled:opacity-50"
@@ -147,13 +159,13 @@ function CourseCardLecture({
                     </h3>
                     <span
                       className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors flex-shrink-0 ${
-                        course.status === "Draft"
+                        isDraft
                           ? "bg-blue-100 text-blue-800 border border-blue-200"
-                          : course.status === "Public"
+                          : isPublic
                           ? "bg-green-100 text-green-800 border border-green-200"
-                          : course.status === "Unpublish"
+                          : isUnpublish
                           ? "bg-orange-100 text-orange-800 border border-orange-200"
-                          : course.status === "Pending"
+                          : isPending
                           ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                           : "bg-gray-100 text-gray-800 border border-gray-200"
                       }`}
@@ -164,8 +176,8 @@ function CourseCardLecture({
 
                   {/* Date Information */}
                   <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                    <div className="flex items-center gap-1. 5">
+                      <Calendar className="w-3. 5 h-3.5 text-blue-500" />
                       <span className="font-medium">Tạo:</span>
                       <span className="text-gray-700 font-semibold">
                         {formatDate(course.createdAt)}
@@ -185,13 +197,13 @@ function CourseCardLecture({
 
               {/* Description */}
               <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-3">
-                {course.description || "Chưa có mô tả cho khóa học này. "}
+                {course.description || "Chưa có mô tả cho khóa học này."}
               </p>
 
               {/* Pending Status Warning Message */}
-              {isPendingStatus && (
+              {isPending && (
                 <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
-                  <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0. 5" />
+                  <Lock className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-xs font-semibold text-yellow-800 mb-1">
                       Khóa học đang chờ duyệt

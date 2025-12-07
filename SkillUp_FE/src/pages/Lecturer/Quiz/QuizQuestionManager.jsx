@@ -182,7 +182,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
         setQuestions((prev) => [...prev, newQuestion]);
         setAddingMode(null);
-        toast.success("Câu hỏi đã được tạo thành công!");
       }
     } catch (error) {
       console.error("❌ Error adding question:", error);
@@ -242,7 +241,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     setEditingQuestionId(id);
   };
 
-  // Memoize the viewing question data
   const viewingQuestionData = useMemo(() => {
     if (!viewingQuestionId) return null;
 
@@ -253,7 +251,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     return question || null;
   }, [viewingQuestionId, questions]);
 
-  // Memoize the initial data for the editing question to prevent unnecessary re-renders
   const editingQuestionData = useMemo(() => {
     if (!editingQuestionId) return null;
 
