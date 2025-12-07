@@ -8,6 +8,7 @@ import {
   LogOut,
   Menu,
   X,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,6 +30,7 @@ export default function AdminLayout() {
       path: "/admin/moderators",
     },
     { label: "Báo cáo tài chính", icon: <BarChart3 />, path: "/admin/salary-report" },
+    { label: "Thông báo hệ thống", icon: <Bell />, path: "/admin/notifications" },
   ];
 
   return (

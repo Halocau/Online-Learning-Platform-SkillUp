@@ -1,4 +1,3 @@
-// Update imports
 import { useState } from "react";
 import { BookOpen, FileText, Eye, EyeOff, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,7 +34,7 @@ function CourseList({
     setConfirmModal({
       isOpen: true,
       loading: false,
-      ...config,
+      ... config,
     });
   };
 
@@ -124,6 +123,7 @@ function CourseList({
 
           if (response.data.code === 200) {
             toast.success("Khóa học đã được ẩn thành công");
+            setDeletingId(null); // ✅ RESET deletingId BEFORE refresh
             setTimeout(() => {
               onRefresh();
             }, 500);
@@ -157,18 +157,19 @@ function CourseList({
 
           if (response.data.code === 200) {
             toast.success("Khóa học đã được mở lại thành công!");
+            setDeletingId(null); // ✅ RESET deletingId BEFORE refresh
             setTimeout(() => {
               onRefresh();
             }, 500);
           } else {
-            toast.error(response.data.message || "Lỗi khi mở lại khóa học");
+            toast.error(response.data. message || "Lỗi khi mở lại khóa học");
             setDeletingId(null);
           }
         } catch (error) {
-          if (error.response?.data?.message) {
+          if (error.response?. data?.message) {
             toast.error(error.response.data.message);
           } else {
-            toast.error("Lỗi khi mở lại khóa học.  Vui lòng thử lại.");
+            toast.error("Lỗi khi mở lại khóa học. Vui lòng thử lại.");
           }
           setDeletingId(null);
         }
@@ -234,16 +235,16 @@ function CourseList({
         <div className="flex flex-wrap gap-3">
           {statusTabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = filterStatus === tab.id;
+            const isActive = filterStatus === tab. id;
             const count = getStatusCount(tab.id);
             return (
               <button
                 key={tab.id}
-                onClick={() => setFilterStatus(tab.id)}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 border ${getTabColorClasses(
+                onClick={() => setFilterStatus(tab. id)}
+                className={`flex items-center gap-2. 5 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 border ${getTabColorClasses(
                   tab.color,
                   isActive
-                )} ${isActive ? "transform scale-105" : ""}`}
+                )} ${isActive ?  "transform scale-105" : ""}`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>

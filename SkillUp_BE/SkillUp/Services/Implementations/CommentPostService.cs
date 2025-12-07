@@ -1,13 +1,11 @@
-﻿// --- File: SkillUp.Services/Implementations/CommentPostService.cs ---
-// --- HÃY DÙNG CODE NÀY ĐỂ THAY THẾ ---
-
+﻿
 using SkillUp.BussinessObjects.DTOs.Comment;
 using SkillUp.BussinessObjects.Models;
-using SkillUp.Repositories.Interfaces; // <-- THÊM
+using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Interfaces;
 using System;
-using System.Collections.Generic; // <-- THÊM
-using System.Linq; // <-- THÊM
+using System.Collections.Generic; 
+using System.Linq; 
 using System.Threading.Tasks;
 
 namespace SkillUp.Services.Implementations
@@ -15,7 +13,7 @@ namespace SkillUp.Services.Implementations
     public class CommentPostService : ICommentPostService
     {
         private readonly ICommentPostRepository _repo;
-        private readonly ILikeCommentPostRepository _likeRepo; // <-- DÒNG MỚI
+        private readonly ILikeCommentPostRepository _likeRepo; 
         private readonly IPostRepository _postRepo;
         private readonly INotifyService _notifyService;
         private readonly IAccountRepository _accountRepo;
@@ -24,18 +22,18 @@ namespace SkillUp.Services.Implementations
         public CommentPostService(
             ICommentPostRepository repo,
             ILikeCommentPostRepository likeRepo,
-            IPostRepository postRepo, // Tham số mới
-            INotifyService notifyService, // Tham số mới
+            IPostRepository postRepo, 
+            INotifyService notifyService, 
             IAccountRepository accountRepo)
         {
             _repo = repo;
-            _likeRepo = likeRepo; // <-- DÒNG MỚI
-            _postRepo = postRepo; // Mới
-            _notifyService = notifyService; // Mới
-            _accountRepo = accountRepo; // Mới
+            _likeRepo = likeRepo; 
+            _postRepo = postRepo; 
+            _notifyService = notifyService;  
+            _accountRepo = accountRepo; 
         }
 
-        // --- HÀM BỊ SAI HIỆN TẠI (GETBYPOST) ---
+      
         public async Task<IEnumerable<CommentPostDto>> GetCommentsByPostIdAsync(Guid postId)
         {
             // 1. Lấy danh sách comment
@@ -49,7 +47,7 @@ namespace SkillUp.Services.Implementations
             // 2. Lấy danh sách ID của các comment
             var commentIds = comments.Select(c => c.Id).ToList();
 
-            // 3. (PHẦN BỊ THIẾU) Gọi hàm tối ưu để lấy TẤT CẢ like count trong 1 truy vấn
+            // 3.    Gọi hàm tối ưu để lấy TẤT CẢ like count trong 1 truy vấn
             var likeCounts = new Dictionary<Guid, int>();
             if (commentIds.Any())
             {
@@ -67,24 +65,98 @@ namespace SkillUp.Services.Implementations
                 AccountName = c.Account?.Fullname ?? "",
                 ParentCommentId = c.ParentCommentId,
                 IsActive = c.IsActive,
-
-                // Lấy giá trị từ dictionary, nếu không có thì mặc định là 0
-                LikeCount = likeCounts.GetValueOrDefault(c.Id, 0) // <-- SỬA Ở ĐÂY
+                LikeCount = likeCounts.GetValueOrDefault(c.Id, 0) 
             });
         }
 
-        // --- CÁC HÀM KHÁC (Cũng cần cập nhật để trả về LikeCount) ---
+
+
+        //public async Task<CommentPostDto> CreateCommentAsync(CreateCommentDto dto, Guid accountId)
+        //{
+        //    // 1. Tạo Comment (Logic cũ của bạn)
+        //    var newComment = new CommentPost
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        PostId = dto.PostId,
+        //        AccountId = accountId,
+        //        Contents = dto.Contents,
+        //        ParentCommentId = dto.ParentCommentId, // Đây là ID của comment cha
+        //        CreatedAt = DateTime.Now,
+        //        IsActive = true
+        //    };
+
+        //    var savedComment = await _repo.CreateAsync(newComment);
+
+        //    var commenter = await _accountRepo.GetByIdAsync(accountId);
+        //    var accountName = commenter?.Fullname ?? "Một người dùng";
+
+
+        //    try
+        //    {
+
+        //        var post = await _postRepo.GetByIdAsync(dto.PostId);
+
+
+        //        CommentPost? parentComment = null;
+        //        if (dto.ParentCommentId.HasValue)
+        //        {
+
+        //            parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
+        //        }
+        //        // ----------------------------------------
+
+
+        //        if (post != null && post.AccountId != accountId)
+        //        {
+        //            await _notifyService.CreateNotificationAsync(
+        //                post.AccountId,
+        //                "Bình luận mới",
+        //                $"{accountName} đã bình luận bài viết của bạn."
+        //            );
+        //        }
+
+
+        //        if (parentComment != null &&
+        //            parentComment.AccountId != accountId &&
+        //            (post == null || parentComment.AccountId != post.AccountId))
+        //        {
+        //            await _notifyService.CreateNotificationAsync(
+        //                parentComment.AccountId, 
+        //                "Trả lời bình luận",
+        //                $"{accountName} đã trả lời bình luận của bạn."
+        //            );
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Lỗi gửi thông báo: {ex.Message}");
+        //    }
+
+
+        //    return new CommentPostDto
+        //    {
+        //        Id = savedComment.Id,
+        //        PostId = savedComment.PostId,
+        //        Contents = savedComment.Contents,
+        //        CreatedAt = savedComment.CreatedAt,
+        //        AccountId = savedComment.AccountId,
+        //        AccountName = accountName,
+        //        ParentCommentId = savedComment.ParentCommentId,
+        //        IsActive = true,
+        //        LikeCount = 0
+        //    };
+        //}
 
         public async Task<CommentPostDto> CreateCommentAsync(CreateCommentDto dto, Guid accountId)
         {
-            // 1. Tạo Comment (Logic cũ của bạn)
+            // 1. Tạo Comment
             var newComment = new CommentPost
             {
                 Id = Guid.NewGuid(),
                 PostId = dto.PostId,
                 AccountId = accountId,
                 Contents = dto.Contents,
-                ParentCommentId = dto.ParentCommentId, // Đây là ID của comment cha
+                ParentCommentId = dto.ParentCommentId,
                 CreatedAt = DateTime.Now,
                 IsActive = true
             };
@@ -94,40 +166,41 @@ namespace SkillUp.Services.Implementations
             var commenter = await _accountRepo.GetByIdAsync(accountId);
             var accountName = commenter?.Fullname ?? "Một người dùng";
 
-            
+            // 2. Gửi thông báo (NOTIFICATION)
             try
             {
-              
                 var post = await _postRepo.GetByIdAsync(dto.PostId);
 
-               
+            
+                string targetLink = $"/forum/{dto.PostId}";
+
                 CommentPost? parentComment = null;
                 if (dto.ParentCommentId.HasValue)
                 {
-                   
                     parentComment = await _repo.GetByIdAsync(dto.ParentCommentId.Value);
                 }
-                // ----------------------------------------
 
-               
+                // A. Thông báo cho chủ bài viết (nếu người comment không phải chủ bài viết)
                 if (post != null && post.AccountId != accountId)
                 {
                     await _notifyService.CreateNotificationAsync(
                         post.AccountId,
                         "Bình luận mới",
-                        $"{accountName} đã bình luận bài viết của bạn."
+                        $"{accountName} đã bình luận bài viết của bạn.",
+                        targetLink 
                     );
                 }
 
-              
+                // B. Thông báo cho người được trả lời (nếu trả lời comment của người khác)
                 if (parentComment != null &&
                     parentComment.AccountId != accountId &&
-                    (post == null || parentComment.AccountId != post.AccountId))
+                    (post == null || parentComment.AccountId != post.AccountId)) // Tránh spam 2 thông báo nếu chủ bài viết cũng là người cmt
                 {
                     await _notifyService.CreateNotificationAsync(
-                        parentComment.AccountId, 
+                        parentComment.AccountId,
                         "Trả lời bình luận",
-                        $"{accountName} đã trả lời bình luận của bạn."
+                        $"{accountName} đã trả lời bình luận của bạn.",
+                        targetLink // <--- TRUYỀN LINK VÀO ĐÂY
                     );
                 }
             }
@@ -136,7 +209,6 @@ namespace SkillUp.Services.Implementations
                 Console.WriteLine($"Lỗi gửi thông báo: {ex.Message}");
             }
 
-           
             return new CommentPostDto
             {
                 Id = savedComment.Id,

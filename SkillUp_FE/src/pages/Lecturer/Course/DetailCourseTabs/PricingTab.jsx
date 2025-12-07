@@ -7,11 +7,12 @@ import { toast } from "react-toastify";
 import { courseAPI } from "@/api/courseAPI";
 
 function PricingTab({ course, courseId, onUpdate }) {
-  const [priceType, setPriceType] = useState("free");
+  // default to 'notset' so -1 is represented properly (neither free nor paid)
+  const [priceType, setPriceType] = useState("notset"); // 'notset' | 'free' | 'paid'
   const [price, setPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [currentPrice, setCurrentPrice] = useState(null);
+  const [currentPrice, setCurrentPrice] = useState(null); // can be -1 (not priced), 0, >0
 
   // Fetch fresh course data when component mounts or courseId changes
   useEffect(() => {
@@ -45,7 +46,16 @@ function PricingTab({ course, courseId, onUpdate }) {
   };
 
   const updatePriceState = (coursePrice) => {
-    const priceValue = coursePrice || 0;
+    // handle sentinel -1 (not yet priced)
+    if (coursePrice === -1) {
+      setCurrentPrice(-1);
+      setPriceType("notset");
+      setPrice(0);
+      return;
+    }
+
+    // otherwise treat normally (null/undefined -> 0)
+    const priceValue = typeof coursePrice === "number" ? coursePrice : 0;
     setCurrentPrice(priceValue);
     setPriceType(priceValue > 0 ? "paid" : "free");
     setPrice(priceValue);
@@ -53,6 +63,12 @@ function PricingTab({ course, courseId, onUpdate }) {
 
   const handleSavePrice = async () => {
     try {
+      // Guard: require user to choose a price type
+      if (priceType === "notset") {
+        toast.error("Vui lòng chọn loại giá (Miễn phí hoặc Trả phí) trước khi lưu");
+        return;
+      }
+
       setLoading(true);
 
       const finalPrice = priceType === "free" ? 0 : price;
@@ -94,13 +110,17 @@ function PricingTab({ course, courseId, onUpdate }) {
   };
 
   const formatPrice = (value) => {
+    // treat sentinel -1 as "not priced"
+    if (value === -1) return "Chưa được định giá";
     if (!value || value === 0) return "Miễn phí";
     return `${value.toLocaleString("vi-VN")}đ`;
   };
 
   const hasChanges = () => {
     if (currentPrice === null) return false;
-    const newPrice = priceType === "free" ? 0 : price;
+    // compute newPrice respecting 'notset'
+    const newPrice =
+      priceType === "free" ? 0 : priceType === "paid" ? price : -1;
     return newPrice !== currentPrice;
   };
 
@@ -148,22 +168,27 @@ function PricingTab({ course, courseId, onUpdate }) {
                 <p className="text-sm text-green-700 mb-1 font-medium">
                   Giá hiện tại
                 </p>
-                {currentPrice < 0 && (
+
+                {/* sentinel -1 -> not priced */}
+                {currentPrice === -1 && (
                   <p className="text-xs text-green-600 mt-2">
                     Khóa học chưa được định giá
                   </p>
                 )}
-                {currentPrice >= 0 && (
+
+                {/* priced or zero */}
+                {currentPrice !== -1 && (
                   <p className="text-3xl font-bold text-green-900">
                     {formatPrice(currentPrice)}
                   </p>
                 )}
-                {currentPrice === 0 && (
+
+                {currentPrice !== -1 && currentPrice === 0 && (
                   <p className="text-xs text-green-600 mt-2">
                     Học viên có thể đăng ký miễn phí
                   </p>
                 )}
-                {currentPrice > 0 && (
+                {currentPrice !== -1 && currentPrice > 0 && (
                   <p className="text-xs text-green-600 mt-2">
                     Học viên cần thanh toán để đăng ký
                   </p>
@@ -247,6 +272,12 @@ function PricingTab({ course, courseId, onUpdate }) {
                 </div>
               </button>
             </div>
+            {/* show hint when notset */}
+            {priceType === "notset" && (
+              <p className="text-xs text-gray-500 mt-2">
+                Khóa học chưa được định giá. Vui lòng chọn "Miễn phí" hoặc "Trả phí".
+              </p>
+            )}
           </div>
 
           {/* Price Input - Only show when paid */}
@@ -323,6 +354,7 @@ function PricingTab({ course, courseId, onUpdate }) {
             disabled={
               loading ||
               refreshing ||
+              priceType === "notset" ||
               (priceType === "paid" && (!price || price <= 0))
             }
             className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3"

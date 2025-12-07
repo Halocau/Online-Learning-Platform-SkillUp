@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Rag;
 using SkillUp.Configuration;
-using SkillUp.Services.Common;
+using SkillUp.Services.Interfaces;
 using SkillUp.Services.Rag.Embedding;
 
 namespace SkillUp.Services.Rag.Chat

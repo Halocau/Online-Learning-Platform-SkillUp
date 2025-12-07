@@ -4,6 +4,7 @@ using SkillUp.BussinessObjects.DTOs.Subtitle;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
+using SkillUp.Services.Interfaces;
 
 namespace SkillUp.Services.Rag.Subtitle
 {

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 using SkillUp.BussinessObjects.DTOs.Subtitle;
 using SkillUp.Configuration;
-using SkillUp.Services.Common;
+using SkillUp.Services.Interfaces;
 using SkillUp.Services.Rag.Embedding;
 
 namespace SkillUp.Services.Rag.Subtitle
