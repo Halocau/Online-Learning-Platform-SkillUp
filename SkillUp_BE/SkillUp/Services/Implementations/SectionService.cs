@@ -92,7 +92,7 @@ namespace SkillUp.Bussiness.Services
 		public async Task<IEnumerable<SectionDto>> GetSectionsByCourseIdAsync(Guid courseId)
 		{
 			var sections = await _sectionRepository.GetByCourseIdAsync(courseId);
-			return sections.Select(MapToDto); // Chuyển List<Section> thành List<SectionDto>
+			return sections.Select(MapToDto); 
 		}
 
 	public async Task<SectionDto?> UpdateSectionAsync(Guid id, SectionUpdateDto updateDto)

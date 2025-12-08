@@ -68,13 +68,12 @@ namespace SkillUp.API.Controllers
             {
                 var result = await _service.CreateAsync(request);
 
-                // Trả về 201 Created kèm message và data
-                // Lưu ý: CreatedAtAction cần URL chuẩn, nhưng ở đây ta bọc trong APIReturn cho thống nhất
+               
                 return StatusCode(201, new APIReturn(201, "Tạo mới thành công", new List<object> { result }));
             }
             catch (ArgumentException ex)
             {
-                // Lỗi validation (trùng tên, sai %)
+               
                 return BadRequest(new APIReturn(400, ex.Message, null));
             }
             catch (Exception ex)
@@ -83,7 +82,7 @@ namespace SkillUp.API.Controllers
             }
         }
 
-        // PUT: api/VoucherTypes/UpdateVoucherTypes/5
+       
         [HttpPut("UpdateVoucherTypes/{id}")]
         [Authorize(Roles = "Content Morderator")]
         public async Task<IActionResult> Update(int id, [FromBody] VoucherTypeRequest request)
@@ -97,14 +96,36 @@ namespace SkillUp.API.Controllers
                     return NotFound(new APIReturn(404, "Không tìm thấy loại Voucher để cập nhật", null));
                 }
 
-                // --- SỬA QUAN TRỌNG TẠI ĐÂY ---
-                // Thay vì return NoContent(); (204 - trắng trang)
-                // Ta return Ok (200) kèm JSON thông báo
+                
                 return Ok(new APIReturn(200, "Cập nhật thành công", null));
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(new APIReturn(400, ex.Message, null));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new APIReturn(500, "Lỗi hệ thống: " + ex.Message, null));
+            }
+        }
+        [HttpPut("UpdateStatus/{id}")]
+        [Authorize(Roles = "Content Morderator")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromQuery] bool isActive)
+        {
+            try
+            {
+                // Gọi Service xử lý logic ẩn hiện
+                var isUpdated = await _service.UpdateStatusAsync(id, isActive);
+
+                if (!isUpdated)
+                {
+                    return NotFound(new APIReturn(404, "Không tìm thấy loại Voucher", null));
+                }
+
+                string statusMessage = isActive ? "Đã hiện Voucher (Active)" : "Đã ẩn Voucher (Inactive)";
+
+                // Trả về 200 OK kèm thông báo
+                return Ok(new APIReturn(200, statusMessage, null));
             }
             catch (Exception ex)
             {

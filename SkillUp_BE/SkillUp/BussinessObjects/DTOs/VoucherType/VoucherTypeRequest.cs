@@ -5,5 +5,6 @@
     {
         public string Name { get; set; } = null!;
         public int Percentage { get; set; }
+
     }
 }

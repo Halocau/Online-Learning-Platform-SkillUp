@@ -8,5 +8,6 @@ namespace SkillUp.BusinessLogic.Services
         Task<VoucherTypeResponse?> GetByIdAsync(int id);
         Task<VoucherTypeResponse> CreateAsync(VoucherTypeRequest request);
         Task<bool> UpdateAsync(int id, VoucherTypeRequest request);
+        Task<bool> UpdateStatusAsync(int id, bool isActive);
     }
 }

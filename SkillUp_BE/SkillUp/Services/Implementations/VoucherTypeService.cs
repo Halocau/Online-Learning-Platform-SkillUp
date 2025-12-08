@@ -13,17 +13,23 @@ namespace SkillUp.BusinessLogic.Services
             _repository = repository;
         }
 
+        // 1. LẤY DANH SÁCH (Kèm trạng thái Active)
         public async Task<List<VoucherTypeResponse>> GetAllAsync()
         {
             var entities = await _repository.GetVoucherTypesAsync();
+
+            // Map Entity -> DTO
             return entities.Select(x => new VoucherTypeResponse
             {
                 Id = x.Id,
                 Name = x.Name,
-                Percentage = x.Percentage
+                Percentage = x.Percentage,
+                // Nếu null thì mặc định là True (Hiện)
+                IsActive = x.IsActive ?? true
             }).ToList();
         }
 
+        // 2. LẤY CHI TIẾT
         public async Task<VoucherTypeResponse?> GetByIdAsync(int id)
         {
             var entity = await _repository.GetVoucherTypeByIdAsync(id);
@@ -33,16 +39,21 @@ namespace SkillUp.BusinessLogic.Services
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                Percentage = entity.Percentage
+                Percentage = entity.Percentage,
+                IsActive = entity.IsActive ?? true
             };
         }
 
+        // 3. TẠO MỚI (Check trùng + Mặc định Active)
         public async Task<VoucherTypeResponse> CreateAsync(VoucherTypeRequest request)
         {
+            // Validate Percentage
             if (request.Percentage < 0 || request.Percentage > 100)
+            {
                 throw new ArgumentException("Phần trăm giảm giá phải từ 0 đến 100.");
+            }
 
-            // CHECK TRÙNG CẶP (NAME + PERCENTAGE)
+            // Check trùng cặp (Name + Percentage)
             bool isDuplicate = await _repository.IsDuplicateAsync(request.Name, request.Percentage);
             if (isDuplicate)
             {
@@ -52,7 +63,8 @@ namespace SkillUp.BusinessLogic.Services
             var newEntity = new VoucherType
             {
                 Name = request.Name,
-                Percentage = request.Percentage
+                Percentage = request.Percentage,
+                IsActive = true // <--- Mặc định khi tạo mới là Hiện
             };
 
             await _repository.AddVoucherTypeAsync(newEntity);
@@ -61,25 +73,29 @@ namespace SkillUp.BusinessLogic.Services
             {
                 Id = newEntity.Id,
                 Name = newEntity.Name,
-                Percentage = newEntity.Percentage
+                Percentage = newEntity.Percentage,
+                IsActive = true
             };
         }
 
+        // 4. CẬP NHẬT THÔNG TIN (Tên, %)
         public async Task<bool> UpdateAsync(int id, VoucherTypeRequest request)
         {
-            if (request.Percentage < 0 || request.Percentage >= 100)
+            // Validate Percentage
+            if (request.Percentage < 0 || request.Percentage > 100)
+            {
                 throw new ArgumentException("Phần trăm giảm giá phải từ 0 đến 100.");
+            }
 
             var existingEntity = await _repository.GetVoucherTypeByIdAsync(id);
             if (existingEntity == null) return false;
 
-            // LOGIC CHECK KHI UPDATE
-            // Chỉ check nếu dữ liệu có thay đổi
+            // Logic Check Trùng khi Update
+            // Chỉ check nếu dữ liệu THỰC SỰ thay đổi
             bool isChanged = (existingEntity.Name != request.Name) || (existingEntity.Percentage != request.Percentage);
 
             if (isChanged)
             {
-                // Kiểm tra xem bộ dữ liệu MỚI này đã có ai dùng chưa
                 bool isDuplicate = await _repository.IsDuplicateAsync(request.Name, request.Percentage);
                 if (isDuplicate)
                 {
@@ -87,9 +103,22 @@ namespace SkillUp.BusinessLogic.Services
                 }
             }
 
-            // Cập nhật dữ liệu
+            // Cập nhật thông tin
             existingEntity.Name = request.Name;
             existingEntity.Percentage = request.Percentage;
+
+            await _repository.UpdateVoucherTypeAsync(existingEntity);
+            return true;
+            
+        }
+
+        public async Task<bool> UpdateStatusAsync(int id, bool isActive)
+        {
+            var existingEntity = await _repository.GetVoucherTypeByIdAsync(id);
+            if (existingEntity == null) return false;
+
+            // Cập nhật cột IsActive
+            existingEntity.IsActive = isActive;
 
             await _repository.UpdateVoucherTypeAsync(existingEntity);
             return true;
