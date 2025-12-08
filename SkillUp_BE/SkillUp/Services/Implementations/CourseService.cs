@@ -6,6 +6,7 @@ using SkillUp.BussinessObjects.DTOs.Course;
 using SkillUp.BussinessObjects.DTOs.CourseByCategoryPage;
 using SkillUp.BussinessObjects.DTOs.Lecturer;
 using SkillUp.BussinessObjects.DTOs.Lesson;
+using SkillUp.BussinessObjects.DTOs.Question;
 using SkillUp.BussinessObjects.DTOs.Quiz;
 using SkillUp.BussinessObjects.DTOs.Section;
 using SkillUp.BussinessObjects.DTOs.StudentCourse;
@@ -709,6 +710,28 @@ namespace SkillUp.Services.Implementations
                         Description = q.Description,
                         PassPercent = q.PassPercent,
                         Timer = q.Timer,
+                        Questions = q.QuestionQuizzes
+                            .Where(qq => qq.IsActive == true)
+                            .Where(qq => qq.QuestionBank != null && qq.QuestionBank.IsActive)
+                            .OrderBy(qq => qq.Orders)
+                            .Select(qq => new QuestionDetailDTO
+                            {
+                                QuestionId = qq.QuestionBank.Id,
+                                Title = qq.QuestionBank.Title,
+                                Description = qq.QuestionBank.Description,
+                                Image = qq.QuestionBank.Image,
+                                Type = qq.QuestionBank.Type ?? "",
+                                Orders = qq.Orders,
+                                Answers = qq.QuestionBank.AnswerBanks
+                                    .Where(a => a.IsActive)
+                                    .Select(a => new AnswerDetailDTO
+                                    {
+                                        AnswerId = a.Id,
+                                        AnswerName = a.AnswerName,
+                                        IsCorrect = a.IsCorrect,
+                                        Image = a.Image
+                                    }).ToList()
+                            }).ToList(),
                         CreatedAt = q.CreatedAt,
                         UpdatedAt = q.UpdatedAt
                     });

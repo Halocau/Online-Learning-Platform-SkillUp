@@ -1,4 +1,5 @@
 ﻿using SkillUp.BussinessObjects.DTOs.Asset;
+using SkillUp.BussinessObjects.DTOs.Question;
 using System.Text.Json.Serialization;
 
 namespace SkillUp.BussinessObjects.DTOs.Section
@@ -29,6 +30,8 @@ namespace SkillUp.BussinessObjects.DTOs.Section
         public Guid? QuizSubmissionId { get; set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public bool? IsCompleted { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<QuestionDetailDTO>? Questions { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
