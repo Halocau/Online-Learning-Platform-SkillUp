@@ -23,7 +23,16 @@ namespace SkillUp.Services.Common
             _collectionBaseName = string.IsNullOrWhiteSpace(_options.Collection)
                 ? "skillup_subtitles"
                 : _options.Collection;
-            _defaultVectorSize = _options.DefaultVectorSize > 0 ? _options.DefaultVectorSize : 3072;
+
+            // Validate DefaultVectorSize - must be configured in appsettings.json
+            if (_options.DefaultVectorSize <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Qdrant:DefaultVectorSize must be configured in appsettings.json. " +
+                    "Example: 768 for nomic-embed-text, 3072 for Gemini embedding.");
+            }
+
+            _defaultVectorSize = _options.DefaultVectorSize;
             _collectionName = BuildCollectionName(_defaultVectorSize);
             _indexesEnsured = false;
             _httpClient = httpClientFactory.CreateClient(nameof(QdrantService));
@@ -93,6 +102,8 @@ namespace SkillUp.Services.Common
             float? scoreThreshold = null,
             CancellationToken ct = default)
         {
+            // Đảm bảo collection name đúng với vector size của query
+            await EnsureCollectionExistsIfMissingAsync(query.Length, ct);
             var name = _collectionName;
             await EnsurePayloadIndexesAsync(ct);//đánh index
             var limit = topK <= 0 ? 5 : topK;

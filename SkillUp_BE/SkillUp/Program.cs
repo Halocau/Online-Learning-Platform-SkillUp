@@ -170,6 +170,8 @@ builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<GenSubService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
 builder.Services.AddScoped<ISubtitleService, SubtitleService>();
+// Embedding Provider - Switch between Gemini and Ollama
+//builder.Services.AddScoped<IEmbeddingProvider, OllamaEmbeddingProvider>();
 builder.Services.AddScoped<IEmbeddingProvider, GeminiEmbeddingProvider>();
 builder.Services.AddScoped<ISubtitleLessonJobService, SubtitleLessonJobService>();
 builder.Services.AddScoped<ISubtitleCourseJobService, SubtitleCourseJobService>();
@@ -178,8 +180,8 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<ILessonChatService, LessonChatService>();
 //ai
-//builder.Services.AddScoped<IChatCompletionProvider, OllamaChatCompletionProvider>();
-builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
+builder.Services.AddScoped<IChatCompletionProvider, OllamaChatCompletionProvider>();
+// builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
 
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();

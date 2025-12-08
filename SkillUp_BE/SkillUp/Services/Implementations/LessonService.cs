@@ -175,7 +175,6 @@ namespace SkillUp.Services.Implementations
                 // Upload video lên VPS qua FTP
                 var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile!, "lessons");
                 asset.Url = videoUrl;
-                asset.FileUrl = null; // Video không dùng FileUrl trong Asset
                 videoCreated = true;
             }
             else if (dto.Type == "Text")

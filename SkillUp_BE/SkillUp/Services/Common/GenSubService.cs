@@ -39,6 +39,7 @@ namespace SkillUp.Services.Common
                 throw new ArgumentException("Format must be text, vtt, or srt", nameof(format));
             }
 
+            //configure http client
             var client = _httpClientFactory.CreateClient(nameof(GenSubService));
             client.BaseAddress = new Uri(_options.BaseUrl.TrimEnd('/') + "/");
             var timeoutSeconds = _options.RequestTimeoutSeconds > 0
@@ -46,10 +47,11 @@ namespace SkillUp.Services.Common
                 : 1800;
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
+            //build request
             var query = new Dictionary<string, string?>
             {
-                ["videoUrl"] = videoUrl,
-                ["fmt"] = fmt,
+                ["videoUrl"] = videoUrl,//url
+                ["fmt"] = fmt, //format
                 ["ai_correct"] = (aiCorrect ?? _options.AiCorrection) ? "true" : "false",
             };
 
@@ -61,19 +63,19 @@ namespace SkillUp.Services.Common
             if (!response.IsSuccessStatusCode)
             {
                 var errorPayload = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("GenSub returned {StatusCode}: {Body}", response.StatusCode, errorPayload);
+                _logger.LogError("GenSub returned {StatusCode}: {Body}", response.StatusCode, errorPayload);//log error details
                 throw new InvalidOperationException($"GenSub request failed with status {response.StatusCode}");
             }
 
-            var payload = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-            var headers = CollectHeaders(response);
+            var payload = await response.Content.ReadAsByteArrayAsync(cancellationToken);//read response payload
+            var headers = CollectHeaders(response);//collect headers
 
             string? contentDispositionFileName = response.Content.Headers.ContentDisposition?.FileName?.Trim('"');
             string? textContent = null;
 
             if (fmt.Equals("text", StringComparison.OrdinalIgnoreCase))
             {
-                textContent = Encoding.UTF8.GetString(payload);
+                textContent = Encoding.UTF8.GetString(payload); //decode text content
             }
 
             return new GenSubResultDto
