@@ -193,7 +193,7 @@ namespace SkillUp.Services.Implementations
                     }
 
                     // 2.1. Thông báo cho Giảng viên
-                    // Bỏ .HasValue và .Value vì lecturerAccountId chắc chắn có giá trị
+                    
                     if (lecturerAccountId != accountId)
                     {
                         await _notifyService.CreateNotificationAsync(
@@ -207,8 +207,7 @@ namespace SkillUp.Services.Implementations
                     // 2.2. Thông báo cho người được trả lời
                     if (parentComment != null && parentComment.AccountId != accountId)
                     {
-                        // Logic phụ: Nếu giảng viên trả lời thì không cần báo lại cho giảng viên nữa
-                        // Sửa điều kiện logic để dùng Guid trực tiếp
+                       
                         if (parentComment.AccountId != lecturerAccountId || lecturerAccountId == accountId)
                         {
                             await _notifyService.CreateNotificationAsync(
@@ -260,7 +259,7 @@ namespace SkillUp.Services.Implementations
             return new CommentLessonDto
             {
                 Id = comment.Id,
-                LessonId = comment.LessonId, // Đổi
+                LessonId = comment.LessonId, 
                 Contents = comment.Contents,
                 CreatedAt = comment.CreatedAt,
                 AccountId = comment.AccountId,
@@ -280,7 +279,7 @@ namespace SkillUp.Services.Implementations
             if (comment.AccountId != accountId)
                 throw new UnauthorizedAccessException("Bạn không có quyền xóa comment này.");
 
-            comment.IsActive = false; // Soft delete
+            comment.IsActive = false; 
             comment.UpdatedAt = DateTime.Now;
 
             await _repo.UpdateAsync(comment);
@@ -290,7 +289,7 @@ namespace SkillUp.Services.Implementations
             return new CommentLessonDto
             {
                 Id = comment.Id,
-                LessonId = comment.LessonId, // Đổi
+                LessonId = comment.LessonId, 
                 Contents = comment.Contents,
                 CreatedAt = comment.CreatedAt,
                 AccountId = comment.AccountId,
