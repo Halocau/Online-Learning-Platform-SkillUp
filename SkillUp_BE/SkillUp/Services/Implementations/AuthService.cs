@@ -55,12 +55,6 @@ namespace SkillUp.Services.Implementations
                 throw new Exception("Tài khoản của bạn đã bị cấm !");
             }
 
-            // Tạo cart cho Student nếu chưa có (roleId = 5 và status = Active)
-            if (account.RoleId == 5 && string.Equals(account.Status, "Active"))
-            {              
-                    await _cartService.CreateCartIfNotExistsAsync(account.Id);
-            }
-
             // generate access tokens and refresh token
             var token = await GenerateAndSaveTokensAsync(account);
 
@@ -355,6 +349,16 @@ namespace SkillUp.Services.Implementations
                     // Reload để chắc chắn có Role/Perms cho bước phát token
                     account = await _accountRepository.GetByEmailWithRoleAndPermissionsAsync(email) ?? account;
                     isNewUser = true;
+
+                    // Tạo Student record nếu roleId = 5
+                    if (account.RoleId == 5)
+                    {
+                        var student = await _studentService.GetStudentByAccountIdAsync(account.Id);
+                        if (student == null)
+                        {
+                            await _studentService.RegisterStudentAsync(account.Id);
+                        }
+                    }
                 }
                 else
                 {
@@ -388,7 +392,7 @@ namespace SkillUp.Services.Implementations
                 // Tạo cart cho Student nếu chưa có (roleId = 5 và status = Active)
                 if (account.RoleId == 5 && string.Equals(account.Status, "Active"))
                 {
-                        await _cartService.CreateCartIfNotExistsAsync(account.Id);
+                    await _cartService.CreateCartIfNotExistsAsync(account.Id);
                 }
 
                 var token = await GenerateAndSaveTokensAsync(account);
