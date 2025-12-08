@@ -44,6 +44,7 @@ builder.Services.Configure<GenSubOptions>(builder.Configuration.GetSection("GenS
 builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
 builder.Services.Configure<QdrantOptions>(builder.Configuration.GetSection("Qdrant"));
 builder.Services.Configure<RagOptions>(builder.Configuration.GetSection("Rag"));
+builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection("Ollama"));
 
 builder.Services.AddHttpClient(nameof(QdrantService), (sp, client) =>
 {
@@ -173,7 +174,7 @@ builder.Services.AddScoped<ISubtitleCourseJobService, SubtitleCourseJobService>(
 builder.Services.AddScoped<IAiSupportBackgroundJobService, AiSupportBackgroundJobService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
-builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
+builder.Services.AddScoped<IChatCompletionProvider, OllamaChatCompletionProvider>();
 builder.Services.AddScoped<ILessonChatService, LessonChatService>();
 
 builder.Services.AddScoped<ITransactionService, TransactionService>();
