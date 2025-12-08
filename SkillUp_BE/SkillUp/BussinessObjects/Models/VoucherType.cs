@@ -11,5 +11,7 @@ public partial class VoucherType
 
     public int Percentage { get; set; }
 
+    public bool? IsActive { get; set; }
+
     public virtual ICollection<Voucher> Vouchers { get; set; } = new List<Voucher>();
 }
