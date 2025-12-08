@@ -5,7 +5,6 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using SkillUp.BussinessObjects.DTOs.Qdrant;
 using SkillUp.Configuration;
-using SkillUp.Services.Interfaces;
 
 namespace SkillUp.Services.Common
 {

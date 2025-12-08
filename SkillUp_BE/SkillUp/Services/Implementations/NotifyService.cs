@@ -157,7 +157,8 @@ namespace SkillUp.Services.Implementations
                     Title = dto.Title,
                     Contents = dto.Contents,
                     Status = "Unread",
-                    CreatedAt = now
+                    CreatedAt = now,
+                    Hyperlink = dto.Hyperlink
                 });
             }
 

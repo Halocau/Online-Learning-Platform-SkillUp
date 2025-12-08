@@ -17,8 +17,8 @@ namespace SkillUp.Services.Implementations
         public LikeCommentLessonService(
              ILikeCommentLessonRepository likeRepo,
              ICommentLessonRepository commentRepo,
-             INotifyService notifyService,      // Tham số mới
-             IAccountRepository accountRepo)         // Tham số mới
+             INotifyService notifyService,      
+             IAccountRepository accountRepo)        
         {
             _likeRepo = likeRepo;
             _commentRepo = commentRepo;
@@ -43,7 +43,7 @@ namespace SkillUp.Services.Implementations
                     Status = true // Lần đầu luôn là true
                 });
                 newStatus = true;
-                isFirstLike = true; // <-- Đặt cờ là true
+                isFirstLike = true;
             }
             else
             {
@@ -54,7 +54,7 @@ namespace SkillUp.Services.Implementations
                 // isFirstLike vẫn là false
             }
 
-            // 2. LOGIC THÔNG BÁO (MỚI)
+            
             // Chỉ gửi thông báo nếu:
             // (1) Trạng thái MỚI là "Like" (true)
             // (2) VÀ đây là LẦN ĐẦU TIÊN (isFirstLike == true)

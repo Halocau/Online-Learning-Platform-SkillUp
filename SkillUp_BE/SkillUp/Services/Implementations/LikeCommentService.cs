@@ -14,9 +14,9 @@ namespace SkillUp.Services.Implementations
 
         public LikeCommentPostService(
               ILikeCommentPostRepository likeRepo,
-              ICommentPostRepository commentPostRepo, // Tham số mới
-              IAccountRepository accountRepo,         // Tham số mới
-              INotifyService notifyService)         // Tham số mới
+              ICommentPostRepository commentPostRepo, 
+              IAccountRepository accountRepo,      
+              INotifyService notifyService)        
         {
             _likeRepo = likeRepo;
             _commentPostRepo = commentPostRepo;
@@ -29,7 +29,7 @@ namespace SkillUp.Services.Implementations
             // 1. Thực hiện Like/Unlike (Hàm này giờ trả về LikeInteractionResult)
             var result = await _likeRepo.AddOrToggleLikeAsync(accountId, commentPostId);
 
-            // 2. LOGIC THÔNG BÁO (SỬA LẠI)
+            // 2. LOGIC THÔNG BÁO 
             // Chỉ thông báo NẾU:
             // (a) Trạng thái là "Like" (true)
             // (b) VÀ đây là LẦN ĐẦU TIÊN (IsFirstLike == true)

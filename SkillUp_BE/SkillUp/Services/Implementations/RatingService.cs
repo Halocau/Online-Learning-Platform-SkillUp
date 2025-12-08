@@ -9,7 +9,7 @@ namespace SkillUp.Services.Implementations
     {
         private readonly IRatingRepository _ratingRepo;
         private readonly ICourseRepository _courseRepo;
-        private readonly IStudentRepository _studentRepo; // Dịch vụ sửa lỗi FK
+        private readonly IStudentRepository _studentRepo; 
         private readonly ICurrentUserService _userService;
 
         public RatingService(IRatingRepository ratingRepo, ICourseRepository courseRepo, IStudentRepository studentRepo, ICurrentUserService userService)
@@ -24,7 +24,7 @@ namespace SkillUp.Services.Implementations
         // --- CREATE ---
         public async Task<RatingDto> CreateRatingAsync(CreateRatingDto dto, Guid accountId)
         {
-            // BƯỚC 1: SỬA LỖI FK - Tìm StudentId từ AccountId (token)
+            
             var student = await _studentRepo.GetStudentByAccountIdAsync(accountId);
             if (student == null)
             {
@@ -42,7 +42,7 @@ namespace SkillUp.Services.Implementations
             // BƯỚC 3: Tạo mới
             var rating = new Rating
             {
-                StudentId = studentId, // <-- Dùng studentId đã tìm được
+                StudentId = studentId, 
                 CourseId = dto.CourseId,
                 Contents = dto.Contents,
                 Star = dto.Star,
@@ -114,8 +114,8 @@ namespace SkillUp.Services.Implementations
         // --- READ ---
         public async Task<RatingResponseDto> GetRatingsByCourseIdAsync(Guid courseId)
         {
-            // SỬA LỖI: Chúng ta phải chạy các lệnh này tuần tự,
-            // không được dùng Task.WhenAll vì chúng dùng chung 1 DbContext.
+          
+            
 
             // 1. Lấy danh sách ratings trước
             var ratings = await _ratingRepo.GetRatingsByCourseIdAsync(courseId);
