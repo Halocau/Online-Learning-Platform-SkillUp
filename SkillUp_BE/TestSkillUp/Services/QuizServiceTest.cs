@@ -1214,4 +1214,212 @@ public class QuizServiceTest
 
         Assert.That(ex.Message, Is.EqualTo("Không tìm thấy bài quiz."));
     }
+    [Test]
+    public async Task GetQuizResultDetailAsync_ShouldThrowException_WhenStudentNotFound()
+    {
+        var submissionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+
+        _mockStudentRepo.Setup(x => x.GetByAccountIdAsync(accountId))
+            .ReturnsAsync((Student?)null);
+
+        var ex = Assert.ThrowsAsync<Exception>(async () =>
+            await _service.GetQuizResultDetailAsync(submissionId, accountId));
+
+        Assert.That(ex.Message, Is.EqualTo("Không tìm thấy sinh viên."));
+    }
+
+    [Test]
+    public async Task GetQuizResultDetailAsync_ShouldThrowException_WhenSubmissionNotFound()
+    {
+        var submissionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var studentId = Guid.NewGuid();
+
+        _mockStudentRepo.Setup(x => x.GetByAccountIdAsync(accountId))
+            .ReturnsAsync(new Student { Id = studentId });
+
+        _mockQuizSubmissionRepo.Setup(x => x.GetSubmissionWithDetailsAsync(submissionId, studentId))
+            .ReturnsAsync((QuizSubmission?)null);
+
+        var ex = Assert.ThrowsAsync<Exception>(async () =>
+            await _service.GetQuizResultDetailAsync(submissionId, accountId));
+
+        Assert.That(ex.Message, Is.EqualTo("Không tìm thấy lượt làm bài này hoặc bạn không có quyền xem."));
+    }
+
+    [Test]
+    public async Task GetQuizResultDetailAsync_ShouldReturnDetailDto_WithQuestionsAndAnswers_MarkedSelectedAndCorrectness()
+    {
+        var submissionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var studentId = Guid.NewGuid();
+
+        var q1 = Guid.NewGuid();
+        var a1 = Guid.NewGuid();
+        var a2 = Guid.NewGuid();
+        var a3 = Guid.NewGuid();
+
+        _mockStudentRepo.Setup(x => x.GetByAccountIdAsync(accountId))
+            .ReturnsAsync(new Student { Id = studentId });
+
+        var submission = new QuizSubmission
+        {
+            Id = submissionId,
+            StudentId = studentId,
+            Quiz = new Quiz
+            {
+                Id = Guid.NewGuid(),
+                Title = "Sample Quiz",
+                Description = "Sample Desc",
+                PassPercent = 50
+            },
+            Score = 75m,
+            EndedAt = DateTime.UtcNow
+        };
+
+        _mockQuizSubmissionRepo.Setup(x => x.GetSubmissionWithDetailsAsync(submissionId, studentId))
+            .ReturnsAsync(submission);
+
+        var answerSubmissions = new List<QuizAnswerSubmission>
+    {
+        new QuizAnswerSubmission
+        {
+            Id = Guid.NewGuid(),
+            SubmissionId = submissionId,
+            QuestionBankId = q1,
+            IsCorrect = true
+        }
+    };
+
+        _mockQuizAnswerSubmissionRepo.Setup(x => x.GetBySubmissionIdAsync(submissionId))
+            .ReturnsAsync(answerSubmissions);
+
+        var selectedAnswers = new List<StudentSelectedAnswer>
+    {
+        new StudentSelectedAnswer
+        {
+            Id = Guid.NewGuid(),
+            QuizAnswerSubmissionId = answerSubmissions[0].Id,
+            AnswerBankId = a1
+        }
+    };
+
+        _mockStudentSelectedAnswersRepo.Setup(x => x.GetSelectedAnswersBySubmissionIdAsync(submissionId))
+            .ReturnsAsync(selectedAnswers);
+
+        var questionsData = new List<QuestionBank>
+    {
+        new QuestionBank
+        {
+            Id = q1,
+            Title = "Q1 Title",
+            Description = "Q1 Desc",
+            Type = "SingleChoice",
+            Image = null,
+            AnswerBanks = new List<AnswerBank>
+            {
+                new AnswerBank { Id = a1, AnswerName = "A1", IsCorrect = true },
+                new AnswerBank { Id = a2, AnswerName = "A2", IsCorrect = false },
+                new AnswerBank { Id = a3, AnswerName = "A3", IsCorrect = true }
+            }
+        }
+    };
+
+        _mockQuestionBankRepo.Setup(x =>
+                x.GetQuestionsWithAnswersAsync((List<Guid>)It.Is<IEnumerable<Guid>>(ids => ids.Contains(q1))))
+            .ReturnsAsync(questionsData);
+
+        var result = await _service.GetQuizResultDetailAsync(submissionId, accountId);
+
+        Assert.IsNotNull(result);
+        Assert.AreEqual(submissionId, result.SubmissionId);
+        Assert.AreEqual("Sample Quiz", result.QuizTitle);
+        Assert.AreEqual("Sample Desc", result.QuizDescription);
+        Assert.AreEqual(75m, result.Score);
+        Assert.IsTrue(result.IsPassed);
+        Assert.AreEqual(submission.EndedAt, result.EndedAt);
+
+        Assert.AreEqual(1, result.Questions.Count);
+
+        var qDto = result.Questions.First();
+        Assert.AreEqual(q1, qDto.QuestionId);
+        Assert.AreEqual("Q1 Title", qDto.Title);
+        Assert.AreEqual("SingleChoice", qDto.Type);
+        Assert.IsTrue(qDto.IsQuestionCorrect);
+
+        var ansA1 = qDto.AllAnswers.Single(a => a.AnswerId == a1);
+        var ansA2 = qDto.AllAnswers.Single(a => a.AnswerId == a2);
+        var ansA3 = qDto.AllAnswers.Single(a => a.AnswerId == a3);
+
+        Assert.IsTrue(ansA1.WasSelected);
+        Assert.IsTrue(ansA1.IsCorrect);
+
+        Assert.IsFalse(ansA2.WasSelected);
+        Assert.IsFalse(ansA2.IsCorrect);
+
+        Assert.IsFalse(ansA3.WasSelected);
+        Assert.IsTrue(ansA3.IsCorrect);
+    }
+
+    [Test]
+    public async Task GetQuizResultDetailAsync_ShouldSkipQuestionIfNotFoundInQuestionData()
+    {
+        var submissionId = Guid.NewGuid();
+        var accountId = Guid.NewGuid();
+        var studentId = Guid.NewGuid();
+
+        var q1 = Guid.NewGuid();
+        var a1 = Guid.NewGuid();
+
+        _mockStudentRepo.Setup(x => x.GetByAccountIdAsync(accountId))
+            .ReturnsAsync(new Student { Id = studentId });
+
+        var submission = new QuizSubmission
+        {
+            Id = submissionId,
+            StudentId = studentId,
+            Quiz = new Quiz { Id = Guid.NewGuid(), Title = "T", Description = "D", PassPercent = 0 },
+            Score = 0m,
+            EndedAt = DateTime.UtcNow
+        };
+
+        _mockQuizSubmissionRepo.Setup(x => x.GetSubmissionWithDetailsAsync(submissionId, studentId))
+            .ReturnsAsync(submission);
+
+        var answerSubmissions = new List<QuizAnswerSubmission>
+    {
+        new QuizAnswerSubmission
+        {
+            Id = Guid.NewGuid(),
+            SubmissionId = submissionId,
+            QuestionBankId = q1,
+            IsCorrect = false
+        }
+    };
+
+        _mockQuizAnswerSubmissionRepo.Setup(x => x.GetBySubmissionIdAsync(submissionId))
+            .ReturnsAsync(answerSubmissions);
+
+        _mockStudentSelectedAnswersRepo.Setup(x => x.GetSelectedAnswersBySubmissionIdAsync(submissionId))
+            .ReturnsAsync(new List<StudentSelectedAnswer>
+            {
+            new StudentSelectedAnswer
+            {
+                Id = Guid.NewGuid(),
+                QuizAnswerSubmissionId = answerSubmissions[0].Id,
+                AnswerBankId = a1
+            }
+            });
+
+        _mockQuestionBankRepo.Setup(x => x.GetQuestionsWithAnswersAsync(It.IsAny<List<Guid>>()))
+            .ReturnsAsync(new List<QuestionBank>());
+
+        var result = await _service.GetQuizResultDetailAsync(submissionId, accountId);
+
+        Assert.IsNotNull(result);
+        Assert.IsEmpty(result.Questions);
+    }
+
+
 }
