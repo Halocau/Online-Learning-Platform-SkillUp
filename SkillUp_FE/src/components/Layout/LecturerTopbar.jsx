@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import NotificationBell from "../common/NotificationBell";
 
 function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
   const [notifications, setNotifications] = useState([]);
@@ -37,15 +38,7 @@ function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
       <div className="flex items-center gap-6">
         {/* Notifications */}
         <div className="relative">
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Bell className="w-5 h-5 text-gray-700" />
-            {notifications.length > 0 && (
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-            )}
-          </button>
+          <NotificationBell notifications={notifications} />
 
           {/* Notifications Dropdown */}
           {showNotifications && (
@@ -85,8 +78,18 @@ function LecturerTopbar({ onToggleSidebar, user, onRefreshStatus }) {
               variant="ghost"
               className="flex items-center gap-2 hover:bg-gray-100"
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                {user?.fullname?.[0]?.toUpperCase() || "U"}
+              <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ring-2 ring-gray-200">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user?.fullname || "User"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-r from-yellow-400 to-yellow-500 flex items-center justify-center text-white font-semibold text-sm">
+                    {user?.fullname?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
               </div>
               <span className="text-sm font-medium text-gray-900 hidden sm:inline">
                 {user?.fullname || "User"}

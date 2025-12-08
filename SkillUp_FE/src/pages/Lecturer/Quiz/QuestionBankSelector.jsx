@@ -20,7 +20,6 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
 import { extractCleanText } from "@/utils/htmlUtils";
 import axiosInstance from "@/lib/axios";
 

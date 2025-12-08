@@ -278,8 +278,7 @@ namespace SkillUp.Services.Implementations
             var oldQuestion = await _questionBankRepository.GetQuestionWithAnswersAsync(oldQuestionId);
             if (oldQuestion == null) throw new Exception("Không tìm thấy câu hỏi gốc.");
 
-            if (oldQuestion.LecturerId != lecturer.Id)
-                throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa câu hỏi này.");
+            if (oldQuestion.LecturerId != lecturer.Id) throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa câu hỏi này.");
 
             var link = await _questionQuizRepository.GetLinkAsync(dto.QuizId, oldQuestionId);
             if (link == null) throw new Exception("Không tìm thấy câu hỏi này trong quiz hiện tại.");

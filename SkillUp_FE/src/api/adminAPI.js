@@ -1,4 +1,3 @@
-// src/api/adminAPI.js
 import axiosInstance from "@/lib/axios";
 
 const API_BASE_URL = "/Admin";
@@ -16,6 +15,20 @@ export const adminAPI = {
       return response;
     } catch (error) {
       console.error("Error fetching monthly payroll report:", error);
+      throw error;
+    }
+  },
+
+  // Send notification to all users
+  notifyAllUsers: async (notificationData) => {
+    try {
+      const response = await axiosInstance. post(
+        `${API_BASE_URL}/notify-all`,
+        notificationData
+      );
+      return response;
+    } catch (error) {
+      console.error("Error sending notification to all users:", error);
       throw error;
     }
   },

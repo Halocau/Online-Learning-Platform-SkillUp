@@ -182,7 +182,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
         setQuestions((prev) => [...prev, newQuestion]);
         setAddingMode(null);
-        toast.success("Câu hỏi đã được tạo thành công!");
       }
     } catch (error) {
       console.error("❌ Error adding question:", error);
@@ -242,7 +241,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     setEditingQuestionId(id);
   };
 
-  // Memoize the viewing question data
   const viewingQuestionData = useMemo(() => {
     if (!viewingQuestionId) return null;
 
@@ -253,7 +251,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     return question || null;
   }, [viewingQuestionId, questions]);
 
-  // Memoize the initial data for the editing question to prevent unnecessary re-renders
   const editingQuestionData = useMemo(() => {
     if (!editingQuestionId) return null;
 
@@ -369,6 +366,21 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     });
   };
 
+  // Count answers with images
+  const countAnswerImages = (answers) => {
+    if (!answers || !Array.isArray(answers)) return 0;
+    return answers.filter((ans) => ans.imageUrl || ans.image).length;
+  };
+
+  // Debug log when editingQuestionId changes
+  useEffect(() => {
+    if (editingQuestionId) {
+      const question = questions.find(
+        (q) => getQuestionId(q) === editingQuestionId
+      );
+    }
+  }, [editingQuestionId, questions]);
+
   return (
     <div className="mt-3 space-y-3">
       {/* Confirm Modal */}
@@ -447,6 +459,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
               const isEditing = editingQuestionId === qId;
 
               const cleanTitle = extractCleanText(question.title, 100);
+              const answerImageCount = countAnswerImages(question.answers);
 
               return (
                 <Card

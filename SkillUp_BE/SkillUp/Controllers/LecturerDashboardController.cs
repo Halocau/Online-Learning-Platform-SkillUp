@@ -124,7 +124,7 @@ namespace SkillUp.Controllers
                 {
                     code = 200,
                     message = "Lấy danh sách học viên thành công",
-                    data = new List<object> { result } 
+                    data = new List<object> { result }
                 });
             }
             catch (Exception ex)

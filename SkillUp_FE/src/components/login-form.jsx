@@ -8,7 +8,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
 import { saveUserFromToken, getRedirectPath } from "@/lib/auth-utils";
 import { toast } from "react-toastify";
-import { handlePostLogin } from "@/utils/loginHelpers";
+import {
+  checkLecturerProfileCompletion,
+  handlePostLogin,
+} from "@/utils/loginHelpers";
 
 export function LoginForm({ className, ...props }) {
   const navigate = useNavigate();
@@ -32,24 +35,47 @@ export function LoginForm({ className, ...props }) {
 
       if (response.data.code === 200) {
         const userData = response.data.data[0];
-        saveUserFromToken(
+
+        // Wait for user to be saved AND get the user object back
+        const user = await saveUserFromToken(
           userData.token.accessToken,
           userData.token.refreshToken
         );
 
+        if (!user) {
+          setErrorMsg("Không thể lưu thông tin đăng nhập. Vui lòng thử lại.");
+          return;
+        }
+
         if (userData.isNewUser) {
-          toast.success("Đăng ký thành công! Chào mừng bạn đến với SkillUp!");
+          toast.success("Đăng ký thành công!  Chào mừng bạn đến với SkillUp!");
         } else {
           toast.success("Đăng nhập Google thành công!");
         }
 
-        const user = JSON.parse(localStorage.getItem("user"));
-
         // Merge guest cart vào server cart
+
         await handlePostLogin(user.userId, user);
 
         // Dispatch event để các component khác biết user đã thay đổi
-        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event("storage"));
+
+        // Check if Lecturer needs to complete profile
+
+        const incompleteProfilePath = await checkLecturerProfileCompletion(
+          user
+        );
+
+        if (incompleteProfilePath) {
+          toast.warning("Vui lòng hoàn thiện thông tin hồ sơ giảng viên!", {
+            autoClose: 3000,
+          });
+
+          setTimeout(() => {
+            navigate(incompleteProfilePath, { replace: true });
+          }, 1000);
+          return;
+        }
 
         const redirectPath = getRedirectPath(user.role);
 
@@ -58,18 +84,18 @@ export function LoginForm({ className, ...props }) {
         }, 1000);
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("❌ Google login error:", error);
+      console.error("❌ Error response:", error.response);
       setErrorMsg(
         error.response?.data?.message
           ? "Đăng nhập thất bại: " + error.response.data.message
-          : "Đăng nhập thất bại. Vui lòng thử lại!"
+          : "Đăng nhập thất bại.  Vui lòng thử lại!"
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle normal login
   const handleNormalLogin = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -83,16 +109,40 @@ export function LoginForm({ className, ...props }) {
 
       if (response.data.code === 200) {
         const { accessToken, refreshToken } = response.data.data[0];
-        saveUserFromToken(accessToken, refreshToken);
+
+        // Wait for user to be saved AND get the user object back
+        const user = await saveUserFromToken(accessToken, refreshToken);
+
+        if (!user) {
+          setErrorMsg("Không thể lưu thông tin đăng nhập. Vui lòng thử lại.");
+          return;
+        }
+
         toast.success("Đăng nhập thành công!");
 
-        const user = JSON.parse(localStorage.getItem("user"));
-
         // Merge guest cart vào server cart
+
         await handlePostLogin(user.userId, user);
 
         // Dispatch event để các component khác biết user đã thay đổi
-        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event("storage"));
+
+        // Check if Lecturer needs to complete profile
+
+        const incompleteProfilePath = await checkLecturerProfileCompletion(
+          user
+        );
+
+        if (incompleteProfilePath) {
+          toast.warning("Vui lòng hoàn thiện thông tin hồ sơ giảng viên!", {
+            autoClose: 3000,
+          });
+
+          setTimeout(() => {
+            navigate(incompleteProfilePath, { replace: true });
+          }, 1000);
+          return;
+        }
 
         const redirectPath = getRedirectPath(user.role);
 
@@ -103,7 +153,9 @@ export function LoginForm({ className, ...props }) {
         setErrorMsg(response.data.message || "Đăng nhập thất bại");
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("❌ Login error:", error);
+      console.error("❌ Error message:", error.message);
+      console.error("❌ Error response:", error.response);
       setErrorMsg(
         error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại!"
       );

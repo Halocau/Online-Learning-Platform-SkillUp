@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Options;
 using SkillUp.Bussiness.Services;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Configuration;
@@ -11,16 +12,56 @@ using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Common;
 using SkillUp.Services.Implementations;
 using SkillUp.Services.Interfaces;
+using SkillUp.Services.Rag.Embedding;
+using SkillUp.Services.Rag.Subtitle;
+using SkillUp.Services.Rag.Chat;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Net.Http.Headers;
 
 // Clear default claim type mappings để giữ nguyên custom claim types
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// Configure request size limits for file uploads (up to 100MB)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100MB
+    options.ValueLengthLimit = int.MaxValue;
+    options.ValueCountLimit = int.MaxValue;
+});
+
+builder.Services.AddControllers(options =>
+{
+    // Increase request body size limit to 100MB
+    options.MaxModelBindingCollectionSize = int.MaxValue;
+});
 builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddHttpClient();
+builder.Services.Configure<GenSubOptions>(builder.Configuration.GetSection("GenSub"));
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
+builder.Services.Configure<QdrantOptions>(builder.Configuration.GetSection("Qdrant"));
+builder.Services.Configure<RagOptions>(builder.Configuration.GetSection("Rag"));
+
+builder.Services.AddHttpClient(nameof(QdrantService), (sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<QdrantOptions>>().Value ?? new QdrantOptions();
+    var endpoint = string.IsNullOrWhiteSpace(options.Endpoint)
+        ? "https://08d02dbc-fd71-4d4a-80e4-4194b2c14301.europe-west3-0.gcp.cloud.qdrant.io"
+        : options.Endpoint;
+
+    client.BaseAddress = new Uri(endpoint.TrimEnd('/') + "/");
+    client.DefaultRequestHeaders.Accept.Clear();
+    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+    if (!string.IsNullOrWhiteSpace(options.ApiKey))
+    {
+        client.DefaultRequestHeaders.Remove("api-key");
+        client.DefaultRequestHeaders.Add("api-key", options.ApiKey);
+    }
+});
 
 // Configure Swagger with JWT Authentication
 builder.Services.AddSwaggerGen(options =>
@@ -123,8 +164,23 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
+builder.Services.AddScoped<GenSubService>();
+builder.Services.AddScoped<IQdrantService, QdrantService>();
+builder.Services.AddScoped<ISubtitleService, SubtitleService>();
+builder.Services.AddScoped<IEmbeddingProvider, GeminiEmbeddingProvider>();
+builder.Services.AddScoped<ISubtitleLessonJobService, SubtitleLessonJobService>();
+builder.Services.AddScoped<ISubtitleCourseJobService, SubtitleCourseJobService>();
+builder.Services.AddScoped<IAiSupportBackgroundJobService, AiSupportBackgroundJobService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
+builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
+builder.Services.AddScoped<ILessonChatService, LessonChatService>();
+builder.Services.AddScoped<ICourseChatService, CourseChatService>();
+
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<ILecturerDashboardService, LecturerDashboardService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ILecturerDashboardService, LecturerDashboardService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
@@ -288,6 +344,12 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod()
                   .AllowCredentials();
         });
+});
+
+// Configure Kestrel server options for large file uploads
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
 });
 
 var app = builder.Build();
