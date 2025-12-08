@@ -29,7 +29,7 @@ const handleAPIError = (
   throw err;
 };
 
-// Get quiz by ID - NO TOAST for read operations
+// Get quiz by ID
 export const getQuizById = async (quizId) => {
   try {
     const res = await axiosInstance.get(`${API_URL}/View-Quiz/${quizId}`);
@@ -61,7 +61,7 @@ export const createQuiz = async (quizData) => {
       timer: Number(quizData.timer),
     };
 
-    // ADD ORDERS FIELD
+    
     if (quizData.orders !== undefined && quizData.orders !== null) {
       payload.orders = Number(quizData.orders);
     }
@@ -137,7 +137,7 @@ export const deleteQuiz = async (quizId) => {
   }
 };
 
-// Get quiz result by submission ID - NO TOAST for read operations
+// Get quiz result by submission ID
 export const getQuizResult = async (submissionId) => {
   try {
     const res = await axiosInstance.get(`${API_URL}/results/${submissionId}`);
