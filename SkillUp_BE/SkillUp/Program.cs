@@ -18,6 +18,8 @@ using SkillUp.Services.Rag.Chat;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Net.Http.Headers;
+using SkillUp.BusinessLogic.Services;
+using SkillUp.DataAccess.Repositories;
 
 // Clear default claim type mappings để giữ nguyên custom claim types
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -274,6 +276,9 @@ builder.Services.AddHostedService<QueuedHostedService>();
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
+
+builder.Services.AddScoped<IVoucherTypeRepository, VoucherTypeRepository>();
+builder.Services.AddScoped<IVoucherTypeService, VoucherTypeService>();
 
 builder.Services.AddAuthentication(options =>
 {
