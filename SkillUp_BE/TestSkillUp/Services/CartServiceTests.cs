@@ -47,7 +47,7 @@ namespace SkillUp.Tests.Services
             var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
                 await _cartService.AddToCartByAccountIdAsync(accountId, new AddToCartRequestDto()));
 
-            Assert.AreEqual("Student not found.", ex.Message);
+            Assert.AreEqual("Không tìm thấy thông tin học viên cho tài khoản này.", ex.Message);
         }
 
         #endregion
