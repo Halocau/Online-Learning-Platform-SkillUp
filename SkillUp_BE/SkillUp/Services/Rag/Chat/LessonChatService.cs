@@ -52,6 +52,11 @@ namespace SkillUp.Services.Rag.Chat
                 // 2. Search trong Qdrant với filter lessonId và score threshold
                 var topK = _ragOptions.TopK ?? 5;
                 var scoreThreshold = _ragOptions.ScoreThreshold;
+                
+                _logger.LogInformation(
+                    "Searching Qdrant for lesson {LessonId} with vector size {VectorSize}, topK={TopK}, scoreThreshold={ScoreThreshold}",
+                    lessonId, questionVector.Length, topK, scoreThreshold);
+                
                 var hits = await _qdrantService.SearchAsync(
                     query: questionVector,
                     topK: topK,
@@ -59,11 +64,18 @@ namespace SkillUp.Services.Rag.Chat
                     scoreThreshold: scoreThreshold,
                     ct: ct);
 
+                _logger.LogInformation(
+                    "Qdrant search returned {HitCount} hits for lesson {LessonId}",
+                    hits.Count, lessonId);
+
                 if (hits.Count == 0)
                 {
                     var thresholdMessage = scoreThreshold.HasValue 
                         ? $" (score threshold: {scoreThreshold.Value:F2})" 
                         : "";
+                    _logger.LogWarning(
+                        "No hits found for lesson {LessonId} with question: {Question}",
+                        lessonId, question);
                     return new ChatResponseDto
                     {
                         Success = false,
@@ -77,9 +89,17 @@ namespace SkillUp.Services.Rag.Chat
                     .ToList();
 
                 var context = string.Join("\n\n", sortedHits.Select(h => h.Payload.Text));
+                
+                _logger.LogInformation(
+                    "Generated context from {HitCount} chunks (total {ContextLength} chars) for lesson {LessonId}. Calling LLM...",
+                    sortedHits.Count, context.Length, lessonId);
 
                 // 4. Gọi LLM để tạo response
                 var answer = await _chatProvider.GenerateResponseAsync(question, context, ct);
+                
+                _logger.LogInformation(
+                    "LLM generated response for lesson {LessonId} (answer length: {AnswerLength} chars)",
+                    lessonId, answer?.Length ?? 0);
 
                 return new ChatResponseDto
                 {

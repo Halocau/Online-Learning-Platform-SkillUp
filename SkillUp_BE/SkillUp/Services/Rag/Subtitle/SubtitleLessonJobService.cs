@@ -116,11 +116,15 @@ namespace SkillUp.Services.Rag.Subtitle
                     videoAsset.Url);
 
                 var genSubStart = DateTime.Now;
+
+
                 var subtitlePayload = await _genSubService.GenerateFromUrlAsync(
                     videoAsset.Url!,
                     format: "text",
                     aiCorrect: true,
                     cancellationToken: ct);
+
+
                 var genSubDuration = DateTime.Now - genSubStart;
 
                 _logger.LogInformation(
@@ -154,6 +158,8 @@ namespace SkillUp.Services.Rag.Subtitle
                     subtitleText.Length);
 
                 var indexStart = DateTime.Now;
+
+                // Index  Qdrant
                 var indexResult = await _subtitleService.IndexLessonAsync(
                     new SubtitleIndexRequest
                     {

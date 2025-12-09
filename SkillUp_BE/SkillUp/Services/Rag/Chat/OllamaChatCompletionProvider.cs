@@ -27,7 +27,8 @@ namespace SkillUp.Services.Rag.Chat
                 : _options.BaseUrl.TrimEnd('/');
 
             _httpClient = httpClientFactory.CreateClient(nameof(OllamaChatCompletionProvider));
-            _httpClient.BaseAddress = new Uri(baseUrl);
+            _httpClient.BaseAddress = new Uri(baseUrl + "/");
+            _httpClient.Timeout = TimeSpan.FromMinutes(5); // Ollama có thể mất thời gian để xử lý
 
             _jsonOptions = new JsonSerializerOptions
             {

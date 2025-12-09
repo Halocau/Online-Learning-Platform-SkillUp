@@ -81,7 +81,7 @@ namespace SkillUp.Services.Implementations
             var account = await _accountRepository.GetByIdAsync(accountId);
             if (account == null || account.RoleId != 4)
             {
-                return new List<LecturerApplicationResponseDto>();
+                throw new UnauthorizedAccessException("Bạn không có quyền truy cập.");
             }
 
             var applications = await _lecturerApplicationRepository.GetAllByAccountIdAsync(accountId);

@@ -170,6 +170,8 @@ builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<GenSubService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
 builder.Services.AddScoped<ISubtitleService, SubtitleService>();
+// Embedding Provider - Switch between Gemini and Ollama
+//builder.Services.AddScoped<IEmbeddingProvider, OllamaEmbeddingProvider>();
 builder.Services.AddScoped<IEmbeddingProvider, GeminiEmbeddingProvider>();
 builder.Services.AddScoped<ISubtitleLessonJobService, SubtitleLessonJobService>();
 builder.Services.AddScoped<ISubtitleCourseJobService, SubtitleCourseJobService>();
