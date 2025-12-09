@@ -30,12 +30,12 @@ const normalizeNotification = (notification = {}) => {
 
 const sortNotifications = (list) =>
   [...list].sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
 function NotificationBell() {
-  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] =
+    useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
@@ -46,7 +46,9 @@ function NotificationBell() {
   const accessToken = localStorage.getItem("accessToken");
 
   const unreadCount = useMemo(() => {
-    return notifications.filter((notification) => isNotificationUnread(notification)).length;
+    return notifications.filter((notification) =>
+      isNotificationUnread(notification)
+    ).length;
   }, [notifications]);
 
   const visibleNotifications = useMemo(() => {
@@ -60,12 +62,17 @@ function NotificationBell() {
     }
 
     const sorted = [...visibleNotifications].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     return {
-      unread: sorted.filter((notification) => isNotificationUnread(notification)),
-      read: sorted.filter((notification) => !isNotificationUnread(notification)),
+      unread: sorted.filter((notification) =>
+        isNotificationUnread(notification)
+      ),
+      read: sorted.filter(
+        (notification) => !isNotificationUnread(notification)
+      ),
     };
   }, [visibleNotifications]);
 
@@ -149,7 +156,9 @@ function NotificationBell() {
       .startConnection()
       .then(() => {
         if (!isMounted) return;
-        notificationHubService.onNotificationReceived(handleRealtimeNotification);
+        notificationHubService.onNotificationReceived(
+          handleRealtimeNotification
+        );
       })
       .catch((error) => {
         console.error("Không thể kết nối realtime thông báo:", error);
@@ -157,16 +166,20 @@ function NotificationBell() {
 
     return () => {
       isMounted = false;
-      notificationHubService.offNotificationReceived(handleRealtimeNotification);
+      notificationHubService.offNotificationReceived(
+        handleRealtimeNotification
+      );
     };
   }, [accessToken, handleRealtimeNotification]);
-
 
   useEffect(() => {
     if (!showNotificationDropdown) return;
 
     const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
         setShowNotificationDropdown(false);
       }
     };
@@ -255,9 +268,7 @@ function NotificationBell() {
   };
 
   const handleShowMore = () => {
-    setVisibleCount((prev) =>
-      Math.min(prev + 5, notifications.length)
-    );
+    setVisibleCount((prev) => Math.min(prev + 5, notifications.length));
   };
 
   const renderSection = (title, items) => {
@@ -275,14 +286,16 @@ function NotificationBell() {
               <div
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`flex cursor-pointer gap-3 px-4 py-3 transition-colors ${unread
-                  ? "bg-[#e3f6f5]/70 hover:bg-[#e3f6f5]"
-                  : "hover:bg-[#f4f4f4]"
-                  }`}
+                className={`flex cursor-pointer gap-3 px-4 py-3 transition-colors ${
+                  unread
+                    ? "bg-[#e3f6f5]/70 hover:bg-[#e3f6f5]"
+                    : "hover:bg-[#f4f4f4]"
+                }`}
               >
                 <div
-                  className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full ${unread ? "bg-[#e3f6f5]" : "bg-[#f4f4f4]"
-                    }`}
+                  className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full ${
+                    unread ? "bg-[#e3f6f5]" : "bg-[#f4f4f4]"
+                  }`}
                 >
                   <Bell className="h-5 w-5 text-[#272343]" />
                 </div>
@@ -304,7 +317,9 @@ function NotificationBell() {
                     </span>
                   )}
                 </div>
-                {unread && <span className="mt-1 h-2 w-2 self-start rounded-full bg-[#ff6b6b]" />}
+                {unread && (
+                  <span className="mt-1 h-2 w-2 self-start rounded-full bg-[#ff6b6b]" />
+                )}
               </div>
             );
           })}
@@ -339,10 +354,15 @@ function NotificationBell() {
       </button>
 
       {showNotificationDropdown && (
-        <div className="absolute right-0 mt-2 w-80 max-h-[460px] overflow-hidden rounded-2xl border border-[#272343]/15 bg-[#fffffe] shadow-[0_18px_60px_rgba(39,35,67,0.18)]">
+        <div
+          className="absolute right-0 mt-2 w-80 max-h-[460px] overflow-hidden rounded-2xl border border-[#272343]/15 bg-[#fffffe] shadow-[0_18px_60px_rgba(39,35,67,0.18)]"
+          style={{ zIndex: 9999 }}
+        >
           <div className="flex items-center justify-between gap-3 border-b border-[#272343]/15 px-4 py-3">
             <div>
-              <h3 className="text-sm font-semibold text-[#272343]">Thông báo</h3>
+              <h3 className="text-sm font-semibold text-[#272343]">
+                Thông báo
+              </h3>
             </div>
             <button
               onClick={handleMarkAllAsRead}

@@ -8,12 +8,5 @@ export const lessonChatAPI = {
         );
         return response;
     },
-    askCourse: async (courseId, question) => {
-        const response = await axiosInstance.post(
-            `/courses/${courseId}/chat`,
-            { question }
-        );
-        return response;
-    },
 };
 

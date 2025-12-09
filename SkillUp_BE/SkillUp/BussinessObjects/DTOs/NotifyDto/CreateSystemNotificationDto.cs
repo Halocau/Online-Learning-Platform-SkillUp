@@ -9,5 +9,6 @@ namespace SkillUp.BussinessObjects.DTOs.NotifyDto
 
         [Required(ErrorMessage = "Nội dung không được để trống")]
         public string Contents { get; set; }
+        public string? Hyperlink { get; set; }
     }
 }

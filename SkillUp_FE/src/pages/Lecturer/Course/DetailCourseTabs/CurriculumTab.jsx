@@ -1159,6 +1159,7 @@ function SectionsList(props) {
                         editingQuizId={editingQuizId}
                         setEditingQuizId={setEditingQuizId}
                         courseId={courseId}
+                        onUpdate={onUpdate}
                       />
                     </div>
                   )}

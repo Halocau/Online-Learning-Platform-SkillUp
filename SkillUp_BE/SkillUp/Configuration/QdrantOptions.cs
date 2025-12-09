@@ -17,10 +17,7 @@ namespace SkillUp.Configuration
         /// </summary>
         public string Collection { get; set; } = "skillup_subtitles";
 
-        /// <summary>
-        /// Default vector size used to build the collection name when no EnsureCollection call has happened yet.
-        /// </summary>
-        public int DefaultVectorSize { get; set; } = 3072;
+        public int DefaultVectorSize { get; set; } = 0; // Must be configured in appsettings.json
     }
 }
 

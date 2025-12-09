@@ -18,6 +18,8 @@ using SkillUp.Services.Rag.Chat;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Net.Http.Headers;
+using SkillUp.BusinessLogic.Services;
+using SkillUp.DataAccess.Repositories;
 
 // Clear default claim type mappings để giữ nguyên custom claim types
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -44,6 +46,7 @@ builder.Services.Configure<GenSubOptions>(builder.Configuration.GetSection("GenS
 builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
 builder.Services.Configure<QdrantOptions>(builder.Configuration.GetSection("Qdrant"));
 builder.Services.Configure<RagOptions>(builder.Configuration.GetSection("Rag"));
+builder.Services.Configure<OllamaOptions>(builder.Configuration.GetSection("Ollama"));
 
 builder.Services.AddHttpClient(nameof(QdrantService), (sp, client) =>
 {
@@ -167,15 +170,18 @@ builder.Services.AddScoped<IQuestionBankService, QuestionBankService>();
 builder.Services.AddScoped<GenSubService>();
 builder.Services.AddScoped<IQdrantService, QdrantService>();
 builder.Services.AddScoped<ISubtitleService, SubtitleService>();
+// Embedding Provider - Switch between Gemini and Ollama
+//builder.Services.AddScoped<IEmbeddingProvider, OllamaEmbeddingProvider>();
 builder.Services.AddScoped<IEmbeddingProvider, GeminiEmbeddingProvider>();
 builder.Services.AddScoped<ISubtitleLessonJobService, SubtitleLessonJobService>();
 builder.Services.AddScoped<ISubtitleCourseJobService, SubtitleCourseJobService>();
 builder.Services.AddScoped<IAiSupportBackgroundJobService, AiSupportBackgroundJobService>();
 builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
-builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
 builder.Services.AddScoped<ILessonChatService, LessonChatService>();
-builder.Services.AddScoped<ICourseChatService, CourseChatService>();
+//ai
+//builder.Services.AddScoped<IChatCompletionProvider, OllamaChatCompletionProvider>();
+builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
 
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
@@ -274,6 +280,9 @@ builder.Services.AddHostedService<QueuedHostedService>();
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
+
+builder.Services.AddScoped<IVoucherTypeRepository, VoucherTypeRepository>();
+builder.Services.AddScoped<IVoucherTypeService, VoucherTypeService>();
 
 builder.Services.AddAuthentication(options =>
 {

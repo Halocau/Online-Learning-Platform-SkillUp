@@ -140,7 +140,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       }));
       setQuestions(questionsList);
     } catch (error) {
-      console.error("❌ Error loading questions:", error);
+      console.error(" Error loading questions:", error);
       setQuestions([]);
     } finally {
       setLoadingQuestions(false);
@@ -182,10 +182,21 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
 
         setQuestions((prev) => [...prev, newQuestion]);
         setAddingMode(null);
-        toast.success("Câu hỏi đã được tạo thành công!");
+
+        toast.success("Câu hỏi đã được thêm!");
+
+        try {
+          if (onUpdate) {
+            await onUpdate({ showSuccess: false });
+          } else {
+            console.error(" onUpdate is not defined!");
+          }
+        } catch (updateError) {
+          console.error(" Error calling onUpdate:", updateError);
+        }
       }
     } catch (error) {
-      console.error("❌ Error adding question:", error);
+      console.error(" Error adding question:", error);
       toast.error(error.message || "Lỗi khi tạo câu hỏi");
     } finally {
       setLoading(false);
@@ -214,9 +225,19 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         await loadQuestions();
         setAddingMode(null);
         toast.success("Câu hỏi đã được thêm từ ngân hàng!");
+
+        try {
+          if (onUpdate) {
+            await onUpdate({ showSuccess: false });
+          } else {
+            console.error(" onUpdate is not defined!");
+          }
+        } catch (updateError) {
+          console.error(" Error calling onUpdate:", updateError);
+        }
       }
     } catch (error) {
-      console.error("❌ Error adding questions from bank:", error);
+      console.error(" Error adding questions from bank:", error);
       toast.error(error.message || "Lỗi khi thêm câu hỏi từ ngân hàng");
     } finally {
       setLoading(false);
@@ -242,7 +263,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     setEditingQuestionId(id);
   };
 
-  // Memoize the viewing question data
   const viewingQuestionData = useMemo(() => {
     if (!viewingQuestionId) return null;
 
@@ -253,7 +273,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
     return question || null;
   }, [viewingQuestionId, questions]);
 
-  // Memoize the initial data for the editing question to prevent unnecessary re-renders
   const editingQuestionData = useMemo(() => {
     if (!editingQuestionId) return null;
 
@@ -329,7 +348,7 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         toast.success("Câu hỏi đã được cập nhật!");
       }
     } catch (error) {
-      console.error("❌ Error updating question:", error);
+      console.error(" Error updating question:", error);
       toast.error(error.message || "Lỗi khi cập nhật câu hỏi");
     } finally {
       setLoading(false);
@@ -352,15 +371,27 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       onConfirm: async () => {
         setLoading(true);
         try {
+          // 1. Delete from API
           await deleteQuestionFromQuiz(quiz.id, questionId);
 
+          // 2. Update local state
           setQuestions((prev) =>
             prev.filter((q) => getQuestionId(q) !== questionId)
           );
 
           toast.success("Câu hỏi đã được xóa!");
+
+          try {
+            if (onUpdate) {
+              await onUpdate({ showSuccess: false });
+            } else {
+              console.error("onUpdate is not defined!");
+            }
+          } catch (updateError) {
+            console.error(" Error calling onUpdate:", updateError);
+          }
         } catch (err) {
-          console.error("❌ Error deleting question:", err);
+          console.error(" Error deleting question:", err);
           toast.error("Lỗi khi xóa câu hỏi");
         } finally {
           setLoading(false);
@@ -368,7 +399,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       },
     });
   };
-
   // Count answers with images
   const countAnswerImages = (answers) => {
     if (!answers || !Array.isArray(answers)) return 0;

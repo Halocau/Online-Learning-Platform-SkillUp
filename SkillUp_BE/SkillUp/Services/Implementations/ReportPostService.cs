@@ -10,7 +10,7 @@ namespace SkillUp.Services.Implementations
     public class ReportPostService : IReportPostService
     {
         private readonly IReportPostRepository _reportPostRepo;
-        private readonly IPostRepository _postRepo; // Giả sử bạn đã có
+        private readonly IPostRepository _postRepo; 
         
 
         public ReportPostService(
@@ -24,7 +24,7 @@ namespace SkillUp.Services.Implementations
         public async Task<ReportPostDto> CreateReportPostAsync(CreateReportPostDto dto, Guid reporterAccountId)
         {
             // 1. Kiểm tra Post có tồn tại không
-            var post = await _postRepo.GetByIdAsync(dto.PostId); // Giả sử IPostRepository có hàm này
+            var post = await _postRepo.GetByIdAsync(dto.PostId); 
             if (post == null)
             {
                 throw new KeyNotFoundException("Không tìm thấy bài đăng.");
@@ -40,12 +40,12 @@ namespace SkillUp.Services.Implementations
             // 3. Tạo ReportPost mới
             var report = new ReportPost
             {
-                Id = Guid.NewGuid(), // Tạo ID mới
+                Id = Guid.NewGuid(), 
                 PostId = dto.PostId,
                 AccountId = reporterAccountId,
                 CreatedAt = DateTime.Now,
                 Description = dto.Description,
-                Status = "Pending" // Trạng thái mặc định
+                Status = "Pending" 
             };
 
             var savedReport = await _reportPostRepo.CreateAsync(report);
@@ -63,7 +63,7 @@ namespace SkillUp.Services.Implementations
             return reports.Select(MapToDto);
         }
 
-        // --- CẬP NHẬT HÀM MAPTODTO ---
+        // ---HÀM MAPTODTO ---
         private ReportPostDto MapToDto(ReportPost report)
         {
             return new ReportPostDto
@@ -89,7 +89,7 @@ namespace SkillUp.Services.Implementations
                 throw new KeyNotFoundException("Không tìm thấy báo cáo.");
             }
 
-            // 2. TÌM BÀI POST LIÊN QUAN (Bước mới)
+            // 2. TÌM BÀI POST LIÊN QUAN
             var post = await _postRepo.GetByIdAsync(report.PostId);
             if (post == null)
             {
@@ -102,7 +102,7 @@ namespace SkillUp.Services.Implementations
                 throw new InvalidOperationException("Bài đăng liên quan đến báo cáo này không còn tồn tại.");
             }
 
-            // 3. KIỂM TRA TRẠNG THÁI BÀI POST (Bước mới quan trọng)
+            // 3. KIỂM TRA TRẠNG THÁI BÀI POST 
             // Nếu post đã "Inactive", nghĩa là nó ĐÃ BỊ XỬ LÝ bởi một báo cáo khác.
             if (post.Status == "Inactive")
             {
@@ -123,17 +123,17 @@ namespace SkillUp.Services.Implementations
                 throw new InvalidOperationException("Báo cáo này đã được xử lý trước đó.");
             }
 
-            // 5. Xử lý logic (Giữ nguyên)
+            // 5. Xử lý logic 
             switch (dto.Action.ToLower())
             {
                 case "accepted":
                     report.Status = "Accepted";
 
-                    // Bài post chắc chắn đang "Active" (vì đã qua kiểm tra ở bước 3)
+                    // Bài post chắc chắn đang "Active"
                     post.Status = "Inactive";
                     await _postRepo.UpdateAsync(post);
 
-                    // (Nâng cao) Bạn cũng có thể cập nhật tất cả 
+                    // Bạn cũng có thể cập nhật tất cả 
                     // report "Pending" khác của post này thành "Accepted" ở đây.
                     break;
 

@@ -97,6 +97,11 @@ namespace SkillUp.Repositories.Implementations
                 .Include(c => c.Sections)
                     .ThenInclude(s => s.Quizzes)
                         .ThenInclude(q => q.QuizSubmissions)
+                .Include(c => c.Sections)
+                    .ThenInclude(s => s.Quizzes)
+                        .ThenInclude(q => q.QuestionQuizzes)
+                            .ThenInclude(qq => qq.QuestionBank)
+                                .ThenInclude(qb => qb.AnswerBanks)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
         }
         public async Task<List<Course>> GetCoursesOfLecturerByAccountIdAsync(Guid accountId)

@@ -77,7 +77,6 @@ export const uploadQuestionImage = async (imageFile) => {
     }
 
     if (imageUrl) {
-      toast.success("Ảnh đã được tải lên!");
       return imageUrl;
     } else {
       console.error("❌ No URL in response:", res.data);

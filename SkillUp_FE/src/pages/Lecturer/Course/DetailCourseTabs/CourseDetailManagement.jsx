@@ -127,7 +127,33 @@ function CourseDetailManagement() {
       (section) => section.items && section.items.length > 0
     );
 
-    return hasContent;
+    if (!hasContent) {
+      return false;
+    }
+
+    const allQuizzesValid = courseData.sections.every((section) => {
+      if (!section.items || section.items.length === 0) {
+        return true;
+      }
+
+      const quizzes = section.items.filter((item) => item.kind === "Quiz");
+
+      if (quizzes.length === 0) {
+        return true;
+      }
+
+      // Check each quiz has at least 1 question
+      return quizzes.every((quiz) => {
+        const hasQuestions =
+          quiz.questions &&
+          Array.isArray(quiz.questions) &&
+          quiz.questions.length > 0;
+
+        return hasQuestions;
+      });
+    });
+
+    return allQuizzesValid;
   };
 
   const checkPricingCompleted = (courseData, options = {}) => {
@@ -186,14 +212,12 @@ function CourseDetailManagement() {
         // Update completion status
         updateCompletionStatus(courseData, options);
 
-        // Show success feedback if needed
         if (options.showSuccess) {
           toast.success(options.successMessage || "Cập nhật thành công!");
         }
       }
     } catch (error) {
-      console.error("Error refreshing course:", error);
-      // Don't show error to user, just log it
+      console.error("❌ Error refreshing course:", error);
     }
   };
 
