@@ -106,7 +106,7 @@ export const courseAPI = {
     }
   },
 
-  // Get course detail for learning (requires enrollment)
+  // Get course detail for learning
   getCourseLearningDetail: async (courseId) => {
     try {
       const response = await axiosInstance.get(

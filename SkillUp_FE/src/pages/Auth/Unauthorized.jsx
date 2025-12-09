@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, ArrowLeft, Home } from "lucide-react";
 import { getRedirectPath } from "@/lib/auth-utils";
@@ -27,11 +27,6 @@ function Unauthorized() {
 
   const handleGoBack = () => {
     navigate(-1);
-  };
-
-  const handleGoHome = () => {
-    const redirectPath = getRedirectPath(userRole);
-    navigate(redirectPath);
   };
 
   return (
@@ -71,10 +66,14 @@ function Unauthorized() {
           )}
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 rounded-lg border-2 border-yellow-500 ">
+          <div className="flex flex-col gap-3 ">
+            <Button className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold">
+              <Home className="w-4 h-4 mr-2" />
+              <Link to="/login">Về trang đăng nhập</Link>
+            </Button>
             <Button onClick={handleGoBack} variant="outline" className="w-full">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Quay lại
+              Quay lại trang trước
             </Button>
           </div>
         </div>

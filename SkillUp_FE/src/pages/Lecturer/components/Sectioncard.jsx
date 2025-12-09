@@ -52,8 +52,8 @@ function SectionCard({
   setEditingLessonId,
   editingQuizId,
   setEditingQuizId,
-  // Added for quiz question management
   courseId,
+  onUpdate,
 }) {
   return (
     <Card className="overflow-hidden">
@@ -151,72 +151,79 @@ function SectionCard({
 
           {/* Items List */}
           <div className="space-y-2 mb-3">
-            {/* 2. Wrap the list in a Droppable. Use section.id as the unique ID */}
             <Droppable droppableId={section.id.toString()} type="SECTION_ITEM">
               {(provided) => (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  // Optional: Add a min-height so you can drop into an empty section
                   className="min-h-[10px]"
                 >
-                  {section.items && section.items.length > 0 ? (
-                    section.items.map((item, itemIndex) => (
-                      // 3. Wrap each ItemCard in a Draggable
-                      <Draggable
-                        key={item.id}
-                        draggableId={item.id.toString()}
-                        index={itemIndex}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            style={{
-                              ...provided.draggableProps.style,
-                              // Optional: Visual feedback when dragging
-                              opacity: snapshot.isDragging ? 0.5 : 1,
-                            }}
-                            className="mb-2" // Add spacing between dragged items
-                          >
-                            <ItemCard
-                              item={item}
-                              // Pass existing props...
-                              onEdit={item.kind === "Lesson" ? onEditLesson : onEditQuiz}
-                              onDelete={item.kind === "Lesson" ? onDeleteLesson : onDeleteQuiz}
-                              isEditing={
-                                item.kind === "Lesson"
-                                  ? editingLessonId === item.id
-                                  : editingQuizId === item.id
-                              }
-                              editForm={item.kind === "Lesson" ? lessonForm : quizForm}
-                              setEditForm={
-                                item.kind === "Lesson" ? setLessonForm : setQuizForm
-                              }
-                              onUpdate={
-                                item.kind === "Lesson" ? onUpdateLesson : onUpdateQuiz
-                              }
-                              onCancelEdit={() =>
-                                item.kind === "Lesson"
-                                  ? setEditingLessonId(null)
-                                  : setEditingQuizId(null)
-                              }
-                              courseId={courseId}
-                              sectionId={section.id}
-                            />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))
-                  ) : (
-                    !provided.placeholder && (
-                      <div className="text-center py-6 text-gray-400">
-                        <p className="text-sm">Chưa có nội dung</p>
-                      </div>
-                    )
-                  )}
-                  {/* 5. Essential Placeholder for layout calculation */}
+                  {section.items && section.items.length > 0
+                    ? section.items.map((item, itemIndex) => (
+                        <Draggable
+                          key={item.id}
+                          draggableId={item.id.toString()}
+                          index={itemIndex}
+                        >
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              style={{
+                                ...provided.draggableProps.style,
+                                opacity: snapshot.isDragging ? 0.5 : 1,
+                              }}
+                              className="mb-2"
+                            >
+                              <ItemCard
+                                item={item}
+                                onEdit={
+                                  item.kind === "Lesson"
+                                    ? onEditLesson
+                                    : onEditQuiz
+                                }
+                                onDelete={
+                                  item.kind === "Lesson"
+                                    ? onDeleteLesson
+                                    : onDeleteQuiz
+                                }
+                                isEditing={
+                                  item.kind === "Lesson"
+                                    ? editingLessonId === item.id
+                                    : editingQuizId === item.id
+                                }
+                                editForm={
+                                  item.kind === "Lesson" ? lessonForm : quizForm
+                                }
+                                setEditForm={
+                                  item.kind === "Lesson"
+                                    ? setLessonForm
+                                    : setQuizForm
+                                }
+                                onUpdate={
+                                  item.kind === "Lesson"
+                                    ? onUpdateLesson
+                                    : onUpdateQuiz
+                                }
+                                onCancelEdit={() =>
+                                  item.kind === "Lesson"
+                                    ? setEditingLessonId(null)
+                                    : setEditingQuizId(null)
+                                }
+                                courseId={courseId}
+                                sectionId={section.id}
+                                onRefreshCourse={onUpdate}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))
+                    : !provided.placeholder && (
+                        <div className="text-center py-6 text-gray-400">
+                          <p className="text-sm">Chưa có nội dung</p>
+                        </div>
+                      )}
                   {provided.placeholder}
                 </div>
               )}

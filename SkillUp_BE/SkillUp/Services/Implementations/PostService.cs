@@ -163,7 +163,7 @@ namespace SkillUp.Services.Implementations
             if (post.Status == "Inactive" )
             {
                 throw new Exception("Không tìm thấy bài viết.");
-                // TODO: Nâng cao: Có thể check role ở đây
+               
                 // Nếu là admin/mod thì vẫn cho xem
             }
 

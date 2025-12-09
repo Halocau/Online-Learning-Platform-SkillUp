@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const CourseOverview = ({ 
-  courseData, 
-  completedItems, 
+const CourseOverview = ({
+  courseData,
+  completedItems,
   courseId,
   userRating,
   onOpenRatingModal,
@@ -27,10 +27,10 @@ const CourseOverview = ({
   const navigate = useNavigate();
 
   const getSectionProgress = (section) => {
-    if (!section. items?. length) return 0;
+    if (!section.items?.length) return 0;
     const completed = section.items.filter((i) =>
       completedItems.has(i.id)
-    ). length;
+    ).length;
     return Math.round((completed / section.items.length) * 100);
   };
 
@@ -38,10 +38,10 @@ const CourseOverview = ({
     const items = section.items || [];
     const videos = items.filter(
       (i) => i.kind === "Lesson" && i.lessonType === "Video"
-    ). length;
+    ).length;
     const texts = items.filter(
       (i) => i.kind === "Lesson" && i.lessonType === "Text"
-    ). length;
+    ).length;
     const quizzes = items.filter((i) => i.kind === "Quiz").length;
 
     return { videos, texts, quizzes };
@@ -52,11 +52,11 @@ const CourseOverview = ({
       (acc, s) => acc + (s.items?.length || 0),
       0
     );
-    return total > 0 ? Math.round((completedItems. size / total) * 100) : 0;
+    return total > 0 ? Math.round((completedItems.size / total) * 100) : 0;
   };
 
   const overallProgress = calculateOverallProgress();
-  const totalLessons = courseData.sections. reduce(
+  const totalLessons = courseData.sections.reduce(
     (acc, s) => acc + (s.items?.length || 0),
     0
   );
@@ -113,7 +113,7 @@ const CourseOverview = ({
                       Chương học
                     </div>
                     <div className="text-base font-semibold text-gray-900">
-                      {courseData.sections?. length || 0} chương
+                      {courseData.sections?.length || 0} chương
                     </div>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ const CourseOverview = ({
                     </div>
                     <p className="mt-1 text-xs text-gray-600">
                       Bạn đã hoàn thành {completedItems.size}/{totalLessons} bài
-                      học. 
+                      học.
                     </p>
                   </div>
 
@@ -214,7 +214,7 @@ const CourseOverview = ({
                   <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2. 5 text-emerald-700 ring-1 ring-emerald-200">
                     <Trophy className="h-5 w-5" />
                     <span className="text-sm font-semibold">
-                      Hoàn thành xuất sắc! 
+                      Hoàn thành xuất sắc!
                     </span>
                   </div>
                 )}
@@ -233,7 +233,7 @@ const CourseOverview = ({
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6"
           >
-            {hasRatingId ?  (
+            {hasRatingId ? (
               // User already rated - Show information message
               <div className="flex items-center justify-center gap-3 p-4">
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -248,7 +248,7 @@ const CourseOverview = ({
                   </p>
                 </div>
               </div>
-            ) : userRating ?  (
+            ) : userRating ? (
               // Show existing rating with edit/delete options
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -265,7 +265,7 @@ const CourseOverview = ({
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -292,11 +292,10 @@ const CourseOverview = ({
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
                         key={star}
-                        className={`w-5 h-5 ${
-                          star <= userRating. star
-                            ? "fill-[#FFD54F] text-[#FFD54F]"
-                            : "text-gray-300"
-                        }`}
+                        className={`w-5 h-5 ${star <= userRating.star
+                          ? "fill-[#FFD54F] text-[#FFD54F]"
+                          : "text-gray-300"
+                          }`}
                       />
                     ))}
                   </div>
@@ -333,12 +332,12 @@ const CourseOverview = ({
                 </motion.button>
               </div>
             )}
-          </motion. div>
+          </motion.div>
         )}
 
         {/* Section cards continue...  */}
         <div className="space-y-4">
-          {courseData.sections. map((section, sectionIndex) => {
+          {courseData.sections.map((section, sectionIndex) => {
             const progress = getSectionProgress(section);
             const isStarted = progress > 0;
             const isCompleted = progress === 100;
@@ -361,13 +360,12 @@ const CourseOverview = ({
                   {/* Section */}
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200 shadow-inner">
                     <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold tracking-tight ring-1 ${
-                        isCompleted
-                          ? "bg-emerald-400/15 text-emerald-600 ring-emerald-400/60"
-                          : isStarted
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold tracking-tight ring-1 ${isCompleted
+                        ? "bg-emerald-400/15 text-emerald-600 ring-emerald-400/60"
+                        : isStarted
                           ? "bg-[#FFD54F]/15 text-[#B8860B] ring-[#FFD54F]/60"
                           : "bg-gray-100 text-gray-600 ring-gray-300"
-                      }`}
+                        }`}
                     >
                       {isCompleted ? (
                         <CheckCircle2 className="h-4 w-4" />
@@ -451,11 +449,10 @@ const CourseOverview = ({
                               duration: 0.5,
                               delay: sectionIndex * 0.05,
                             }}
-                            className={`h-full rounded-full ${
-                              isCompleted
-                                ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600"
-                                : "bg-gradient-to-r from-[#FFD54F] via-[#FFC107] to-[#FFB300]"
-                            }`}
+                            className={`h-full rounded-full ${isCompleted
+                              ? "bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600"
+                              : "bg-gradient-to-r from-[#FFD54F] via-[#FFC107] to-[#FFB300]"
+                              }`}
                           ></motion.div>
                         </div>
                       </div>
