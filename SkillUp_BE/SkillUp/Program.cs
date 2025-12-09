@@ -180,8 +180,8 @@ builder.Services.AddScoped<ILessonService, LessonService>();
 builder.Services.AddScoped<IBannerService, BannerService>();
 builder.Services.AddScoped<ILessonChatService, LessonChatService>();
 //ai
-builder.Services.AddScoped<IChatCompletionProvider, OllamaChatCompletionProvider>();
-// builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
+//builder.Services.AddScoped<IChatCompletionProvider, OllamaChatCompletionProvider>();
+builder.Services.AddScoped<IChatCompletionProvider, GeminiChatCompletionProvider>();
 
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();

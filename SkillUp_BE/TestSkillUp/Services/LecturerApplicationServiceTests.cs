@@ -258,27 +258,29 @@ namespace TestSkillUp
 
         //method : GetMyApplicationsAsync 
         [Test]
-        public async Task ReturnsEmptyList_WhenAccountNotExist()
+        public async Task ThrowsUnauthorizedAccessException_WhenAccountNotExist()
         {
             var accountId = Guid.NewGuid();
             _accountRepo.Setup(r => r.GetByIdAsync(accountId)).ReturnsAsync((Account)null);
 
-            var result = await _sut.GetMyApplicationsAsync(accountId);
+            Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+                await _sut.GetMyApplicationsAsync(accountId)
+            );
 
-            Assert.IsNotNull(result);
-            Assert.IsEmpty(result);
+            _accountRepo.Verify(r => r.GetByIdAsync(accountId), Times.Once);
         }
         [Test]
-        public async Task ReturnsEmptyList_WhenAccountIsNotLecturer()
+        public async Task ThrowsUnauthorizedAccessException_WhenAccountIsNotLecturer()
         {
             var accountId = Guid.NewGuid();
             _accountRepo.Setup(r => r.GetByIdAsync(accountId))
                         .ReturnsAsync(new Account { Id = accountId, RoleId = 2 });
 
-            var result = await _sut.GetMyApplicationsAsync(accountId);
+            Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+                await _sut.GetMyApplicationsAsync(accountId)
+            );
 
-            Assert.IsNotNull(result);
-            Assert.IsEmpty(result);
+            _accountRepo.Verify(r => r.GetByIdAsync(accountId), Times.Once);
         }
         [Test]
         public async Task ReturnsEmptyList_WhenNoApplicationsExist()
