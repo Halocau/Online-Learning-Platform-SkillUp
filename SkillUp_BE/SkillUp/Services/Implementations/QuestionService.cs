@@ -171,7 +171,7 @@ namespace SkillUp.Services.Implementations
                 if (questionBank == null)
                     throw new Exception($"Không tìm thấy câu hỏi ID: {dto.QuestionBankId}");
 
-                int correctAnswersCount = questionBank.AnswerBanks.Count(a => a.IsCorrect == true);
+                //int correctAnswersCount = questionBank.AnswerBanks.Count(a => a.IsCorrect == true);
 
                 // Tạo và thêm câu hỏi
                 var question = new QuestionQuiz
