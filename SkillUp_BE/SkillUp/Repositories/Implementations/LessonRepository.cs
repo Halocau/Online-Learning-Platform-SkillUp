@@ -32,7 +32,7 @@ namespace SkillUp.Repositories.Implementations
         public async Task<Lesson?> GetLessonWithDetailsAsync(Guid id)
         {
             return await _context.Lessons
-                .Include(l => l.Section)
+                .Include(l => l.Section).ThenInclude(s => s.Course)
                 .Include(l => l.Assets)
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
