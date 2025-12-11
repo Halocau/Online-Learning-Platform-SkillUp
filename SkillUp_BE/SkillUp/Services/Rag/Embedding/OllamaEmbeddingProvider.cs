@@ -45,7 +45,7 @@ namespace SkillUp.Services.Rag.Embedding
             }
 
             var model = string.IsNullOrWhiteSpace(_options.EmbeddingModel)
-                ? "nomic-embed-text" // Model embedding mặc định của Ollama
+                ? "nomic-embed-text"
                 : _options.EmbeddingModel;
 
             // Ollama API yêu cầu property names là lowercase (model, input)
@@ -57,10 +57,10 @@ namespace SkillUp.Services.Rag.Embedding
 
             try
             {
-                // Serialize với default options (không dùng CamelCase)
+                // Giữ nguyên property names (không dùng CamelCase) vì Ollama yêu cầu lowercase
                 var jsonOptions = new JsonSerializerOptions
                 {
-                    PropertyNamingPolicy = null // Giữ nguyên property names
+                    PropertyNamingPolicy = null
                 };
                 
                 using var response = await _httpClient.PostAsJsonAsync(
@@ -91,6 +91,10 @@ namespace SkillUp.Services.Rag.Embedding
             }
         }
 
+        /// <summary>
+        /// Parse embedding vector từ JSON response của Ollama API.
+        /// Hỗ trợ các format: "embedding", "embeddings", hoặc array trực tiếp.
+        /// </summary>
         private static float[] ParseEmbedding(string payload)
         {
             if (string.IsNullOrWhiteSpace(payload))
@@ -103,13 +107,13 @@ namespace SkillUp.Services.Rag.Embedding
                 using var doc = JsonDocument.Parse(payload);
                 var root = doc.RootElement;
 
-                // Ollama có thể trả về "embedding" (single array) hoặc "embeddings" (array of arrays)
+                // Format 1: Single embedding array
                 if (root.TryGetProperty("embedding", out var embeddingElement))
                 {
                     return ExtractValues(embeddingElement);
                 }
 
-                // Nếu là "embeddings" (array of arrays), lấy phần tử đầu tiên
+                // Format 2: Array of embeddings (lấy phần tử đầu tiên)
                 if (root.TryGetProperty("embeddings", out var embeddingsElement)
                     && embeddingsElement.ValueKind == JsonValueKind.Array
                     && embeddingsElement.GetArrayLength() > 0)
@@ -117,7 +121,7 @@ namespace SkillUp.Services.Rag.Embedding
                     return ExtractValues(embeddingsElement[0]);
                 }
 
-                // Hoặc có thể trả về trực tiếp là array
+                // Format 3: Root element là array trực tiếp
                 if (root.ValueKind == JsonValueKind.Array)
                 {
                     return ExtractValues(root);

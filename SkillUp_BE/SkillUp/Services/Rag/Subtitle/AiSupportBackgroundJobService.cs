@@ -102,46 +102,23 @@ namespace SkillUp.Services.Rag.Subtitle
             await lessonJob.GenerateForLessonAsync(lessonId, force, cancellationToken);
         }
 
-        private string GetJobIdentifier(Guid? courseId, Guid? lessonId)
+        private static string GetJobIdentifier(Guid? courseId, Guid? lessonId)
         {
-            if (courseId.HasValue)
-            {
-                return $"course {courseId.Value}";
-            }
-            
-            if (lessonId.HasValue)
-            {
-                return $"lesson {lessonId.Value}";
-            }
-            
-            return "unknown";
+            return courseId.HasValue 
+                ? $"course {courseId.Value}" 
+                : lessonId.HasValue 
+                    ? $"lesson {lessonId.Value}" 
+                    : "unknown";
         }
 
         private void LogJobError(Guid jobId, Guid? courseId, Guid? lessonId, Exception ex)
         {
-            if (courseId.HasValue)
-            {
-                _logger.LogError(
-                    ex,
-                    "Background subtitle job [{JobId}] failed for course {CourseId}",
-                    jobId,
-                    courseId.Value);
-            }
-            else if (lessonId.HasValue)
-            {
-                _logger.LogError(
-                    ex,
-                    "Background subtitle job [{JobId}] failed for lesson {LessonId}",
-                    jobId,
-                    lessonId.Value);
-            }
-            else
-            {
-                _logger.LogError(
-                    ex,
-                    "Background subtitle job [{JobId}] failed",
-                    jobId);
-            }
+            var identifier = GetJobIdentifier(courseId, lessonId);
+            _logger.LogError(
+                ex,
+                "Background subtitle job [{JobId}] failed for {Identifier}",
+                jobId,
+                identifier);
         }
     }
 }
