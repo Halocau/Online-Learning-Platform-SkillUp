@@ -38,7 +38,7 @@ export default function ForumCategoryModal({ open, onClose, data, onEdit, onTogg
 
   const onCloseCreate = () => {
     setCreateOpen(false);
-    setCreateData(null);
+    // setCreateData(null);
   };
 
   const onSaveEdit = async () => {
