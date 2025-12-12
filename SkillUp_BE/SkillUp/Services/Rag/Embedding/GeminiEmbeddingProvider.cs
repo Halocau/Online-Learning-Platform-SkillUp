@@ -71,36 +71,38 @@ namespace SkillUp.Services.Rag.Embedding
 
             var endpoint = $"{BaseUrl}/models/{model}:embedContent";
 
-            //json format gemin
+            // Tạo request body theo format Gemini API
             var requestBody = new
             {
                 model = $"models/{model}",
                 content = new
                 {
-                    parts = new[]
-                    {
-                        new { text }
-                    }
+                    parts = new[] { new { text } }
                 }
             };
 
             var payload = JsonSerializer.Serialize(requestBody, _jsonOptions);
-            using var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");//đóng gói
+            using var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
 
-            // Retry with different keys if needed
+            // Thử với các API keys (retry nếu key hiện tại bị lỗi)
+            return await TryWithApiKeysAsync(endpoint, httpContent, ct);
+        }
+
+        /// <summary>
+        /// Thử gọi API với các API keys khác nhau nếu key hiện tại bị lỗi (403, 429).
+        /// </summary>
+        private async Task<float[]> TryWithApiKeysAsync(string endpoint, HttpContent httpContent, CancellationToken ct)
+        {
             var maxAttempts = _apiKeys.Length;
             Exception? lastException = null;
 
-            //test key
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                var currentKey = _apiKeys[_currentKeyIndex];
-                _httpClient.DefaultRequestHeaders.Remove(ApiKeyHeader);
-                _httpClient.DefaultRequestHeaders.Add(ApiKeyHeader, currentKey);
+                // Đặt API key hiện tại vào header
+                SetCurrentApiKey();
 
                 try
                 {
-                    // Send request gemini
                     var response = await _httpClient.PostAsync(endpoint, httpContent, ct);
                     var responseText = await response.Content.ReadAsStringAsync(ct);
 
@@ -109,43 +111,60 @@ namespace SkillUp.Services.Rag.Embedding
                         return ParseEmbedding(responseText);
                     }
 
-                    // Check if we should retry with another key
-                    if ((response.StatusCode == System.Net.HttpStatusCode.Forbidden ||
-                         response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) &&
-                        _apiKeys.Length > 1 && attempt < maxAttempts - 1)
+                    // Nếu lỗi 403 hoặc 429 và còn keys khác, thử key tiếp theo
+                    if (ShouldRetryWithNextKey(response.StatusCode, attempt, maxAttempts))
                     {
                         var errorMessage = ExtractErrorMessage(responseText, response.StatusCode);
                         _logger?.LogWarning(
-                            "API key failed ({StatusCode}): {ErrorMessage}. Switching to another key (attempt {Attempt}/{MaxAttempts})",
-                            response.StatusCode,
-                            errorMessage,
-                            attempt + 1,
-                            maxAttempts);
-
-                        // Switch to next key
-                        _currentKeyIndex = (_currentKeyIndex + 1) % _apiKeys.Length;
+                            "API key failed ({StatusCode}): {ErrorMessage}. Switching to next key ({Attempt}/{MaxAttempts})",
+                            response.StatusCode, errorMessage, attempt + 1, maxAttempts);
+                        
+                        SwitchToNextKey();
                         continue;
                     }
 
-                    // != 403 && 429 throw exception.
+                    // Lỗi khác hoặc hết keys, throw exception
                     var message = ExtractErrorMessage(responseText, response.StatusCode);
                     throw new HttpRequestException(message);
                 }
-                catch (HttpRequestException ex) when (attempt < maxAttempts - 1 && _apiKeys.Length > 1)
+                catch (HttpRequestException ex) when (CanRetry(attempt, maxAttempts))
                 {
                     lastException = ex;
                     _logger?.LogWarning(
-                        "Request failed with key {KeyIndex}: {Error}. Retrying with another key...",
-                        _currentKeyIndex,
-                        ex.Message);
-
-                    // Switch to next key
-                    _currentKeyIndex = (_currentKeyIndex + 1) % _apiKeys.Length;
+                        "Request failed with key {KeyIndex}: {Error}. Retrying with next key...",
+                        _currentKeyIndex, ex.Message);
+                    
+                    SwitchToNextKey();
                 }
             }
 
-            // All keys failed
+            // Tất cả keys đều thất bại
             throw lastException ?? new HttpRequestException("All API keys failed.");
+        }
+
+        private void SetCurrentApiKey()
+        {
+            var currentKey = _apiKeys[_currentKeyIndex];
+            _httpClient.DefaultRequestHeaders.Remove(ApiKeyHeader);
+            _httpClient.DefaultRequestHeaders.Add(ApiKeyHeader, currentKey);
+        }
+
+        private void SwitchToNextKey()
+        {
+            _currentKeyIndex = (_currentKeyIndex + 1) % _apiKeys.Length;
+        }
+
+        private bool ShouldRetryWithNextKey(System.Net.HttpStatusCode statusCode, int attempt, int maxAttempts)
+        {
+            return (statusCode == System.Net.HttpStatusCode.Forbidden ||
+                    statusCode == System.Net.HttpStatusCode.TooManyRequests) &&
+                   _apiKeys.Length > 1 &&
+                   attempt < maxAttempts - 1;
+        }
+
+        private bool CanRetry(int attempt, int maxAttempts)
+        {
+            return attempt < maxAttempts - 1 && _apiKeys.Length > 1;
         }
 
         private static string ExtractErrorMessage(string payload, System.Net.HttpStatusCode statusCode)
@@ -175,19 +194,22 @@ namespace SkillUp.Services.Rag.Embedding
         }
 
 
-        //json -> float
+        /// <summary>
+        /// Parse embedding vector từ JSON response của Gemini API.
+        /// Hỗ trợ cả format "embedding" (single) và "embeddings" (array).
+        /// </summary>
         private static float[] ParseEmbedding(string payload)
         {
-            using var doc = JsonDocument.Parse(payload); //string -> object
-            var root = doc.RootElement;//lấy gốc
+            using var doc = JsonDocument.Parse(payload);
+            var root = doc.RootElement;
 
-            //1
-            if (root.TryGetProperty("embedding", out var embedding))//tìm thấy true <> false
+            // Format 1: Single embedding object
+            if (root.TryGetProperty("embedding", out var embedding))
             {
                 return ExtractValues(embedding);
             }
 
-            //n
+            // Format 2: Array of embeddings (lấy phần tử đầu tiên)
             if (root.TryGetProperty("embeddings", out var embeddingsArray)
                 && embeddingsArray.ValueKind == JsonValueKind.Array
                 && embeddingsArray.GetArrayLength() > 0)
@@ -198,6 +220,9 @@ namespace SkillUp.Services.Rag.Embedding
             throw new JsonException("Gemini response missing embedding values.");
         }
 
+        /// <summary>
+        /// Trích xuất mảng float từ JsonElement chứa embedding values.
+        /// </summary>
         private static float[] ExtractValues(JsonElement embeddingElement)
         {
             if (!embeddingElement.TryGetProperty("values", out var valuesElement)

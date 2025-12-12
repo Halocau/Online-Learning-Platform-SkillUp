@@ -382,13 +382,12 @@ namespace TestSkillUp
             var section = new Section
             {
                 Id = sectionId,
-                CourseId = courseId
-            };
-
-            var course = new Course
-            {
-                Id = courseId,
-                LecturerId = lecturerId
+                CourseId = courseId,
+                Course = new Course
+                {
+                    Id = courseId,
+                    LecturerId = lecturerId
+                }
             };
 
             var lecturer = new Lecturer
@@ -402,10 +401,6 @@ namespace TestSkillUp
             _sectionRepositoryMock
                 .Setup(r => r.GetSectionByIdAsync(sectionId))
                 .ReturnsAsync(section);
-
-            _courseRepositoryMock
-                .Setup(r => r.GetCourseByIdAsync(courseId))
-                .ReturnsAsync(course);
 
             _lecturerRepositoryMock
                 .Setup(r => r.GetLecturerByAccountIdAsync(accountId))
@@ -436,7 +431,6 @@ namespace TestSkillUp
             Assert.AreEqual(dto.Content, res.TextContent);
 
             _sectionRepositoryMock.Verify(r => r.GetSectionByIdAsync(sectionId), Times.Once);
-            _courseRepositoryMock.Verify(r => r.GetCourseByIdAsync(courseId), Times.Once);
             _lecturerRepositoryMock.Verify(r => r.GetLecturerByAccountIdAsync(accountId), Times.Once);
             _lessonRepositoryMock.Verify(r => r.AddLessonAsync(It.IsAny<Lesson>()), Times.Once);
             _lessonRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
@@ -460,7 +454,7 @@ namespace TestSkillUp
                 .ReturnsAsync((Section?)null);
 
             // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(() =>
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _sut.CreateLessonAsync(dto, Guid.NewGuid()));
 
             StringAssert.Contains("Không tìm thấy section", ex!.Message);
@@ -516,12 +510,15 @@ namespace TestSkillUp
                 VideoFile = new FormFileMock("video.mp4", new byte[] { 1, 2, 3 })
             };
 
-            var section = new Section { Id = sectionId, CourseId = courseId };
-            var course = new Course { Id = courseId, LecturerId = lecturerId };
+            var section = new Section
+            {
+                Id = sectionId,
+                CourseId = courseId,
+                Course = new Course { Id = courseId, LecturerId = lecturerId }
+            };
             var lecturer = new Lecturer { Id = lecturerId, AccountId = accountId };
 
             _sectionRepositoryMock.Setup(r => r.GetSectionByIdAsync(sectionId)).ReturnsAsync(section);
-            _courseRepositoryMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
             _lecturerRepositoryMock.Setup(r => r.GetLecturerByAccountIdAsync(accountId)).ReturnsAsync(lecturer);
             _lessonRepositoryMock.Setup(r => r.AddLessonAsync(It.IsAny<Lesson>())).Returns(Task.CompletedTask);
 
@@ -534,7 +531,6 @@ namespace TestSkillUp
 
             // Verify các bước trước upload đã được thực hiện
             _sectionRepositoryMock.Verify(r => r.GetSectionByIdAsync(sectionId), Times.Once);
-            _courseRepositoryMock.Verify(r => r.GetCourseByIdAsync(courseId), Times.Once);
             _lecturerRepositoryMock.Verify(r => r.GetLecturerByAccountIdAsync(accountId), Times.Once);
             _lessonRepositoryMock.Verify(r => r.AddLessonAsync(It.IsAny<Lesson>()), Times.Once);
 
@@ -843,7 +839,7 @@ namespace TestSkillUp
                 .ReturnsAsync((Lesson?)null);
 
             // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(() =>
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _sut.UpdateLessonAsync(lessonId, dto, accountId));
 
             StringAssert.Contains("Không tìm thấy bài học", ex!.Message);
@@ -959,32 +955,22 @@ namespace TestSkillUp
                 Id = lessonId,
                 SectionId = sectionId,
                 Type = "Text",
-                IsActive = true
-            };
-
-            var section = new Section
-            {
-                Id = sectionId,
-                CourseId = courseId
-            };
-
-            var course = new Course
-            {
-                Id = courseId,
-                LecturerId = lecturerId
+                IsActive = true,
+                Section = new Section
+                {
+                    Id = sectionId,
+                    CourseId = courseId,
+                    Course = new Course
+                    {
+                        Id = courseId,
+                        LecturerId = lecturerId
+                    }
+                }
             };
 
             _lessonRepositoryMock
                 .Setup(r => r.GetLessonWithDetailsAsync(lessonId))
                 .ReturnsAsync(lesson);
-
-            _sectionRepositoryMock
-                .Setup(r => r.GetSectionByIdAsync(sectionId))
-                .ReturnsAsync(section);
-
-            _courseRepositoryMock
-                .Setup(r => r.GetCourseByIdAsync(courseId))
-                .ReturnsAsync(course);
 
             _lecturerRepositoryMock
                 .Setup(r => r.GetLecturerByAccountIdAsync(accountId))
@@ -1020,19 +1006,17 @@ namespace TestSkillUp
                 Id = lessonId,
                 SectionId = sectionId,
                 Type = "Text",
-                IsActive = true
-            };
-
-            var section = new Section
-            {
-                Id = sectionId,
-                CourseId = courseId
-            };
-
-            var course = new Course
-            {
-                Id = courseId,
-                LecturerId = otherLecturerId // Khác lecturerId
+                IsActive = true,
+                Section = new Section
+                {
+                    Id = sectionId,
+                    CourseId = courseId,
+                    Course = new Course
+                    {
+                        Id = courseId,
+                        LecturerId = otherLecturerId // Khác lecturerId
+                    }
+                }
             };
 
             var lecturer = new Lecturer
@@ -1044,14 +1028,6 @@ namespace TestSkillUp
             _lessonRepositoryMock
                 .Setup(r => r.GetLessonWithDetailsAsync(lessonId))
                 .ReturnsAsync(lesson);
-
-            _sectionRepositoryMock
-                .Setup(r => r.GetSectionByIdAsync(sectionId))
-                .ReturnsAsync(section);
-
-            _courseRepositoryMock
-                .Setup(r => r.GetCourseByIdAsync(courseId))
-                .ReturnsAsync(course);
 
             _lecturerRepositoryMock
                 .Setup(r => r.GetLecturerByAccountIdAsync(accountId))
@@ -1105,6 +1081,16 @@ namespace TestSkillUp
                         Contents = "Old content",
                         IsActive = true
                     }
+                },
+                Section = new Section
+                {
+                    Id = sectionId,
+                    CourseId = courseId,
+                    Course = new Course
+                    {
+                        Id = courseId,
+                        LecturerId = lecturerId
+                    }
                 }
             };
 
@@ -1130,14 +1116,6 @@ namespace TestSkillUp
             _lessonRepositoryMock
                 .Setup(r => r.GetLessonWithDetailsAsync(lessonId))
                 .ReturnsAsync(lesson);
-
-            _sectionRepositoryMock
-                .Setup(r => r.GetSectionByIdAsync(sectionId))
-                .ReturnsAsync(section);
-
-            _courseRepositoryMock
-                .Setup(r => r.GetCourseByIdAsync(courseId))
-                .ReturnsAsync(course);
 
             _lecturerRepositoryMock
                 .Setup(r => r.GetLecturerByAccountIdAsync(accountId))
@@ -1233,13 +1211,12 @@ namespace TestSkillUp
                 .Setup(r => r.GetLessonWithDetailsAsync(lessonId))
                 .ReturnsAsync(lesson);
 
-            _sectionRepositoryMock
-                .Setup(r => r.GetSectionByIdAsync(sectionId))
-                .ReturnsAsync(section);
-
-            _courseRepositoryMock
-                .Setup(r => r.GetCourseByIdAsync(courseId))
-                .ReturnsAsync(course);
+            lesson.Section = new Section
+            {
+                Id = sectionId,
+                CourseId = courseId,
+                Course = course
+            };
 
             _lecturerRepositoryMock
                 .Setup(r => r.GetLecturerByAccountIdAsync(accountId))
@@ -1263,8 +1240,6 @@ namespace TestSkillUp
                 _sut.UpdateLessonAsync(lessonId, dto, accountId));
 
             // Verify các bước trước upload đã được thực hiện
-            _sectionRepositoryMock.Verify(r => r.GetSectionByIdAsync(sectionId), Times.Once);
-            _courseRepositoryMock.Verify(r => r.GetCourseByIdAsync(courseId), Times.Once);
             _lecturerRepositoryMock.Verify(r => r.GetLecturerByAccountIdAsync(accountId), Times.Once);
         }
 
@@ -1277,11 +1252,20 @@ namespace TestSkillUp
             var lessonId = Guid.NewGuid();
             var accountId = Guid.NewGuid();
 
+            var courseId = Guid.NewGuid();
+            var sectionId = Guid.NewGuid();
+
             var lesson = new Lesson
             {
                 Id = lessonId,
-                SectionId = Guid.NewGuid(),
-                IsActive = false
+                SectionId = sectionId,
+                IsActive = false,
+                Section = new Section
+                {
+                    Id = sectionId,
+                    CourseId = courseId,
+                    Course = new Course { Id = courseId, LecturerId = Guid.NewGuid() }
+                }
             };
 
             _lessonRepositoryMock
@@ -1289,7 +1273,7 @@ namespace TestSkillUp
                 .ReturnsAsync(lesson);
 
             // Act & Assert
-            var ex = Assert.ThrowsAsync<Exception>(() =>
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
                 _sut.DeleteLessonAsync(lessonId, accountId));
 
             StringAssert.Contains("đã được xoá từ trước", ex!.Message);
@@ -1334,24 +1318,20 @@ namespace TestSkillUp
             {
                 Id = lessonId,
                 SectionId = sectionId,
-                IsActive = true
+                IsActive = true,
+                Section = new Section
+                {
+                    Id = sectionId,
+                    CourseId = courseId,
+                    Course = new Course { Id = courseId, LecturerId = otherLecturerId } // Khác lecturerId
+                }
             };
 
-            var section = new Section { Id = sectionId, CourseId = courseId };
-            var course = new Course { Id = courseId, LecturerId = otherLecturerId }; // Khác lecturerId
             var lecturer = new Lecturer { Id = lecturerId, AccountId = accountId };
 
             _lessonRepositoryMock
                 .Setup(r => r.GetLessonWithDetailsAsync(lessonId))
                 .ReturnsAsync(lesson);
-
-            _sectionRepositoryMock
-                .Setup(r => r.GetSectionByIdAsync(sectionId))
-                .ReturnsAsync(section);
-
-            _courseRepositoryMock
-                .Setup(r => r.GetCourseByIdAsync(courseId))
-                .ReturnsAsync(course);
 
             _lecturerRepositoryMock
                 .Setup(r => r.GetLecturerByAccountIdAsync(accountId))
@@ -1382,11 +1362,15 @@ namespace TestSkillUp
                 SectionId = sectionId,
                 IsActive = true,
                 UpdatedAt = DateTime.MinValue,
-                Assets = null // Không có assets
+                Assets = null, // Không có assets
+                Section = new Section
+                {
+                    Id = sectionId,
+                    CourseId = courseId,
+                    Course = new Course { Id = courseId, LecturerId = lecturerId }
+                }
             };
 
-            var section = new Section { Id = sectionId, CourseId = courseId };
-            var course = new Course { Id = courseId, LecturerId = lecturerId };
             var lecturer = new Lecturer { Id = lecturerId, AccountId = accountId };
 
             _lessonRepositoryMock
@@ -1395,11 +1379,11 @@ namespace TestSkillUp
 
             _sectionRepositoryMock
                 .Setup(r => r.GetSectionByIdAsync(sectionId))
-                .ReturnsAsync(section);
+                .ReturnsAsync(lesson.Section);
 
             _courseRepositoryMock
                 .Setup(r => r.GetCourseByIdAsync(courseId))
-                .ReturnsAsync(course);
+                .ReturnsAsync(lesson.Section.Course);
 
             _lecturerRepositoryMock
                 .Setup(r => r.GetLecturerByAccountIdAsync(accountId))

@@ -99,15 +99,21 @@ namespace SkillUp.Services.Rag.Chat
             var payload = JsonSerializer.Serialize(requestBody, _jsonOptions);
             using var httpContent = new StringContent(payload, Encoding.UTF8, "application/json");
 
-            // Retry with different keys if needed
+            // Thử với các API keys (retry nếu key hiện tại bị lỗi)
+            return await TryWithApiKeysAsync(endpoint, httpContent, ct);
+        }
+
+        /// <summary>
+        /// Thử gọi API với các API keys khác nhau nếu key hiện tại bị lỗi (403, 429).
+        /// </summary>
+        private async Task<string> TryWithApiKeysAsync(string endpoint, HttpContent httpContent, CancellationToken ct)
+        {
             var maxAttempts = _apiKeys.Length;
             Exception? lastException = null;
 
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                var currentKey = _apiKeys[_currentKeyIndex];
-                _httpClient.DefaultRequestHeaders.Remove(ApiKeyHeader);
-                _httpClient.DefaultRequestHeaders.Add(ApiKeyHeader, currentKey);
+                SetCurrentApiKey();
 
                 try
                 {
@@ -119,43 +125,60 @@ namespace SkillUp.Services.Rag.Chat
                         return ParseResponse(responseText);
                     }
 
-                    // Check if we should retry with another key
-                    if ((response.StatusCode == System.Net.HttpStatusCode.Forbidden ||
-                         response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) &&
-                        _apiKeys.Length > 1 && attempt < maxAttempts - 1)
+                    // Nếu lỗi 403 hoặc 429 và còn keys khác, thử key tiếp theo
+                    if (ShouldRetryWithNextKey(response.StatusCode, attempt, maxAttempts))
                     {
                         var errorMessage = ExtractErrorMessage(responseText, response.StatusCode);
                         _logger.LogWarning(
-                            "API key failed ({StatusCode}): {ErrorMessage}. Switching to another key (attempt {Attempt}/{MaxAttempts})",
-                            response.StatusCode,
-                            errorMessage,
-                            attempt + 1,
-                            maxAttempts);
-
-                        // Switch to next key
-                        _currentKeyIndex = (_currentKeyIndex + 1) % _apiKeys.Length;
+                            "API key failed ({StatusCode}): {ErrorMessage}. Switching to next key ({Attempt}/{MaxAttempts})",
+                            response.StatusCode, errorMessage, attempt + 1, maxAttempts);
+                        
+                        SwitchToNextKey();
                         continue;
                     }
 
-                    // Final failure or non-retryable error
+                    // Lỗi khác hoặc hết keys, throw exception
                     var message = ExtractErrorMessage(responseText, response.StatusCode);
                     throw new HttpRequestException(message);
                 }
-                catch (HttpRequestException ex) when (attempt < maxAttempts - 1 && _apiKeys.Length > 1)
+                catch (HttpRequestException ex) when (CanRetry(attempt, maxAttempts))
                 {
                     lastException = ex;
                     _logger.LogWarning(
-                        "Request failed with key {KeyIndex}: {Error}. Retrying with another key...",
-                        _currentKeyIndex,
-                        ex.Message);
-
-                    // Switch to next key
-                    _currentKeyIndex = (_currentKeyIndex + 1) % _apiKeys.Length;
+                        "Request failed with key {KeyIndex}: {Error}. Retrying with next key...",
+                        _currentKeyIndex, ex.Message);
+                    
+                    SwitchToNextKey();
                 }
             }
 
-            // All keys failed
+            // Tất cả keys đều thất bại
             throw lastException ?? new HttpRequestException("All API keys failed.");
+        }
+
+        private void SetCurrentApiKey()
+        {
+            var currentKey = _apiKeys[_currentKeyIndex];
+            _httpClient.DefaultRequestHeaders.Remove(ApiKeyHeader);
+            _httpClient.DefaultRequestHeaders.Add(ApiKeyHeader, currentKey);
+        }
+
+        private void SwitchToNextKey()
+        {
+            _currentKeyIndex = (_currentKeyIndex + 1) % _apiKeys.Length;
+        }
+
+        private bool ShouldRetryWithNextKey(System.Net.HttpStatusCode statusCode, int attempt, int maxAttempts)
+        {
+            return (statusCode == System.Net.HttpStatusCode.Forbidden ||
+                    statusCode == System.Net.HttpStatusCode.TooManyRequests) &&
+                   _apiKeys.Length > 1 &&
+                   attempt < maxAttempts - 1;
+        }
+
+        private bool CanRetry(int attempt, int maxAttempts)
+        {
+            return attempt < maxAttempts - 1 && _apiKeys.Length > 1;
         }
 
         private static string BuildSystemPrompt(string context)
@@ -200,6 +223,10 @@ Lưu ý:
             return $"Gemini API returned {statusCode}: {payload}";
         }
 
+        /// <summary>
+        /// Parse text response từ JSON response của Gemini API.
+        /// Xử lý các trường hợp: error, safety filter, token limit, và normal response.
+        /// </summary>
         private string ParseResponse(string payload)
         {
             try
@@ -207,7 +234,7 @@ Lưu ý:
                 using var doc = JsonDocument.Parse(payload);
                 var root = doc.RootElement;
 
-                // Check for error in response
+                // Kiểm tra lỗi trong response
                 if (root.TryGetProperty("error", out var error))
                 {
                     var errorMessage = error.TryGetProperty("message", out var msg) 
@@ -217,56 +244,32 @@ Lưu ý:
                     throw new HttpRequestException($"Gemini API error: {errorMessage}");
                 }
 
+                // Lấy candidate đầu tiên từ mảng candidates
                 if (root.TryGetProperty("candidates", out var candidates)
                     && candidates.ValueKind == JsonValueKind.Array
                     && candidates.GetArrayLength() > 0)
                 {
                     var candidate = candidates[0];
+                    var (finishReason, isTruncated) = CheckFinishReason(candidate);
 
-                    string? finishReasonText = null;
-                    bool isTruncated = false;
-                    if (candidate.TryGetProperty("finishReason", out var finishReason))
+                    // Xử lý safety filter
+                    if (finishReason == "SAFETY")
                     {
-                        finishReasonText = finishReason.GetString();
-                        if (finishReasonText == "SAFETY")
-                        {
-                            _logger.LogWarning("Gemini blocked response due to safety filter.");
-                            return "Xin lỗi, câu hỏi này có thể vi phạm chính sách nội dung. Vui lòng thử lại với câu hỏi khác.";
-                        }
-                        
-                        // Kiểm tra nếu response bị cắt do đạt giới hạn token
-                        if (finishReasonText == "MAX_TOKENS")
-                        {
-                            isTruncated = true;
-                            _logger.LogWarning("Gemini response was truncated due to MAX_TOKENS limit. Consider increasing MaxOutputTokens or splitting the response.");
-                        }
+                        _logger.LogWarning("Gemini blocked response due to safety filter.");
+                        return "Xin lỗi, câu hỏi này có thể vi phạm chính sách nội dung. Vui lòng thử lại với câu hỏi khác.";
                     }
 
-                    if (candidate.TryGetProperty("content", out var content))
+                    // Lấy text từ content.parts[0].text
+                    var text = ExtractTextFromCandidate(candidate);
+                    if (!string.IsNullOrWhiteSpace(text))
                     {
-                        if (content.TryGetProperty("parts", out var parts)
-                            && parts.ValueKind == JsonValueKind.Array
-                            && parts.GetArrayLength() > 0)
-                        {
-                            var firstPart = parts[0];
-                            if (firstPart.TryGetProperty("text", out var textElement))
-                            {
-                                var text = textElement.GetString();
-                                if (!string.IsNullOrWhiteSpace(text))
-                                {
-                                    // Thêm thông báo nếu response bị cắt
-                                    if (isTruncated)
-                                    {
-                                        return text + "\n\n[Lưu ý: Câu trả lời có thể đã bị cắt do giới hạn độ dài. Nếu cần thêm thông tin, vui lòng đặt câu hỏi cụ thể hơn.]";
-                                    }
-                                    return text;
-                                }
-                            }
-                        }
+                        // Thêm cảnh báo nếu response bị cắt do token limit
+                        return isTruncated
+                            ? text + "\n\n[Lưu ý: Câu trả lời có thể đã bị cắt do giới hạn độ dài. Nếu cần thêm thông tin, vui lòng đặt câu hỏi cụ thể hơn.]"
+                            : text;
                     }
                 }
 
-                // Log the actual response for debugging
                 _logger.LogWarning("Gemini response missing text content. Response: {Response}", payload);
                 return "Không thể tạo phản hồi từ AI. Vui lòng thử lại sau.";
             }
@@ -275,6 +278,39 @@ Lưu ý:
                 _logger.LogError(ex, "Failed to parse Gemini response. Payload: {Payload}", payload);
                 throw new JsonException($"Gemini response parsing failed: {ex.Message}", ex);
             }
+        }
+
+        private (string? finishReason, bool isTruncated) CheckFinishReason(JsonElement candidate)
+        {
+            if (!candidate.TryGetProperty("finishReason", out var finishReason))
+                return (null, false);
+
+            var finishReasonText = finishReason.GetString();
+            
+            if (finishReasonText == "MAX_TOKENS")
+            {
+                _logger.LogWarning("Gemini response was truncated due to MAX_TOKENS limit.");
+                return (finishReasonText, true);
+            }
+
+            return (finishReasonText, false);
+        }
+
+        private string? ExtractTextFromCandidate(JsonElement candidate)
+        {
+            if (!candidate.TryGetProperty("content", out var content))
+                return null;
+
+            if (!content.TryGetProperty("parts", out var parts)
+                || parts.ValueKind != JsonValueKind.Array
+                || parts.GetArrayLength() == 0)
+                return null;
+
+            var firstPart = parts[0];
+            if (!firstPart.TryGetProperty("text", out var textElement))
+                return null;
+
+            return textElement.GetString();
         }
     }
 }

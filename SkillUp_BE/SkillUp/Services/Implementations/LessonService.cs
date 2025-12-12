@@ -129,13 +129,13 @@ namespace SkillUp.Services.Implementations
             ValidateCreate(dto);
 
             var section = await _sectionRepository.GetSectionByIdAsync(dto.SectionId)
-                ?? throw new Exception("Không tìm thấy section!");
+                ?? throw new InvalidOperationException("Không tìm thấy section!");
 
             // 2. Kiểm tra quyền: giảng viên phải sở hữu course
-            var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);
+            var course = section.Course;
             if (course == null)
             {
-                throw new Exception("Bạn không sở hữu khóa học này!");
+                throw new InvalidOperationException("Không tìm thấy khóa học liên quan!");
             }
 
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
@@ -192,11 +192,8 @@ namespace SkillUp.Services.Implementations
 
             lesson.Assets.Add(asset);
 
-            var saved = await _lessonRepository.SaveChangesAsync();
-            if (!saved)
-            {
-                throw new Exception("Không thể lưu bài học!");
-            }
+            await _lessonRepository.SaveChangesAsync();
+
 
             if (videoCreated && (course.IsAiSupport ?? false))
             {
@@ -241,20 +238,14 @@ namespace SkillUp.Services.Implementations
             var lesson = await _lessonRepository.GetLessonWithDetailsAsync(id);
             if (lesson == null)
             {
-                throw new Exception("Không tìm thấy bài học!");
+                throw new InvalidOperationException("Không tìm thấy bài học!");
             }
 
             // Kiểm tra section và course tồn tại
-            var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);
-            if (section == null)
-            {
-                throw new Exception("Không tìm thấy section!");
-            }
-
-            var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);
+            var course = lesson.Section?.Course;
             if (course == null)
             {
-                throw new Exception("Không tìm thấy khóa học!");
+                throw new InvalidOperationException("Không tìm thấy khóa học liên quan!");
             }
 
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
@@ -288,12 +279,8 @@ namespace SkillUp.Services.Implementations
 
             if (lesson.Type == "Video" && dto.VideoFile != null)
             {
-                // Xóa video cũ trên VPS nếu có (trước khi upload mới để tránh lỗi)
-                string? oldVideoUrl = null;
-                if (!string.IsNullOrEmpty(asset.Url))
-                {
-                    oldVideoUrl = asset.Url;
-                }
+                // Lưu URL video cũ để xóa sau
+                string? oldVideoUrl = asset.Url;
 
                 // Upload video mới lên VPS qua FTP
                 var videoUrl = await _ftpVideoUploadService.UploadVideoAsync(dto.VideoFile, "lessons");
@@ -327,12 +314,9 @@ namespace SkillUp.Services.Implementations
             }
 
             _lessonRepository.UpdateLesson(lesson);
-            var saved = await _lessonRepository.SaveChangesAsync();
+            await _lessonRepository.SaveChangesAsync();
 
-            if (!saved)
-            {
-                throw new Exception("Không thể cập nhật bài học!");
-            }
+
 
             if (videoChanged)
             {
@@ -378,12 +362,15 @@ namespace SkillUp.Services.Implementations
             }
             if (lesson.IsActive == false)
             {
-                throw new Exception("Bài học đã được xoá từ trước!");
+                throw new InvalidOperationException("Bài học đã được xoá từ trước!");
             }
 
             // 2. Kiểm tra quyền
-            var section = await _sectionRepository.GetSectionByIdAsync(lesson.SectionId);
-            var course = await _courseRepository.GetCourseByIdAsync(section.CourseId);
+            var course = lesson.Section?.Course;
+            if (course == null)
+            {
+                throw new InvalidOperationException("Không tìm thấy khóa học liên quan!");
+            }
             var lecturer = await _lecturerRepository.GetLecturerByAccountIdAsync(accountId);
             if (lecturer == null || course.LecturerId != lecturer.Id)
             {
@@ -415,25 +402,15 @@ namespace SkillUp.Services.Implementations
             lesson.IsActive = false;
             lesson.UpdatedAt = DateTime.Now;
 
-            // Lưu tên lesson để dùng trong thông báo
-            var lessonTitle = lesson.Title;
-
             _lessonRepository.UpdateLesson(lesson);
-            var saved = await _lessonRepository.SaveChangesAsync();
+            await _lessonRepository.SaveChangesAsync();
 
-
-            if (!saved)
-            {
-                throw new Exception("Không thể xóa bài học!");
-            }
-
-            // Gửi thông báo cập nhật khóa học cho học viên
             try
             {
                 await _notifyService.SendCourseUpdateNotificationAsync(
                     course.Id,
                     "Khóa học đã được cập nhật",
-                    $"Bài học '{lessonTitle}' đã được xóa khỏi khóa học."
+                    $"Bài học '{lesson.Title}' đã được xóa khỏi khóa học."
                 );
             }
             catch (Exception ex)

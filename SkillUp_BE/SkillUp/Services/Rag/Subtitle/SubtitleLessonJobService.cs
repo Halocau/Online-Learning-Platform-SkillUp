@@ -45,63 +45,39 @@ namespace SkillUp.Services.Rag.Subtitle
 
             var courseId = lesson.Section?.CourseId ?? Guid.Empty;
 
+            // Validate lesson type
             if (!string.Equals(lesson.Type, "Video", StringComparison.OrdinalIgnoreCase))
-            {
-                return new SubtitleGenerationJobResult
-                {
-                    LessonId = lessonId,
-                    CourseId = courseId,
-                    Success = false,
-                    Message = "Lesson type is not Video."
-                };
-            }
+                return CreateResult(lessonId, courseId, false, "Lesson type is not Video.");
 
+            // Get video asset
             var videoAsset = lesson.Assets?.FirstOrDefault(a => a.IsActive && !string.IsNullOrWhiteSpace(a.Url));
             if (videoAsset?.Url is null)
-            {
-                return new SubtitleGenerationJobResult
-                {
-                    LessonId = lessonId,
-                    CourseId = courseId,
-                    Success = false,
-                    Message = "Lesson does not have an active video asset."
-                };
-            }
+                return CreateResult(lessonId, courseId, false, "Lesson does not have an active video asset.");
 
-            // Phase 4.5: Skip nếu lesson đã có subtitle (trừ khi force = true)
-            if (!force)
-            {
-                try
-                {
-                    var hasSubtitle = await _subtitleService.HasSubtitlesAsync(lessonId, ct);
-                    if (hasSubtitle)
-                    {
-                        _logger.LogInformation(
-                            "Lesson {LessonId} already has subtitle indexed. Skipping generation.",
-                            lessonId);
-
-                        return new SubtitleGenerationJobResult
-                        {
-                            LessonId = lessonId,
-                            CourseId = courseId,
-                            Success = true,
-                            Message = "Subtitle already exists. Skipped generation.",
-                            SourceVideoUrl = videoAsset.Url
-                        };
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(
-                        ex,
-                        "Failed to check existing subtitle for lesson {LessonId}. Proceeding with generation.",
-                        lessonId);
-                }
-            }
+            // Skip if subtitle already exists (unless forced)
+            if (!force && await CheckAndSkipIfExistsAsync(lessonId, videoAsset.Url, courseId, ct))
+                return CreateResult(lessonId, courseId, true, "Subtitle already exists. Skipped generation.", videoAsset.Url);
 
             return await GenerateAsync(lesson, videoAsset, courseId, ct);
         }
-        //create subtitle for lesson
+
+        private async Task<bool> CheckAndSkipIfExistsAsync(Guid lessonId, string videoUrl, Guid courseId, CancellationToken ct)
+        {
+            try
+            {
+                if (await _subtitleService.HasSubtitlesAsync(lessonId, ct))
+                {
+                    _logger.LogInformation("Lesson {LessonId} already has subtitle indexed. Skipping generation.", lessonId);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to check existing subtitle for lesson {LessonId}. Proceeding with generation.", lessonId);
+            }
+            return false;
+        }
+
         private async Task<SubtitleGenerationJobResult> GenerateAsync(
             Lesson lesson,
             Asset videoAsset,
@@ -115,16 +91,13 @@ namespace SkillUp.Services.Rag.Subtitle
                     lesson.Id,
                     videoAsset.Url);
 
+                // Generate subtitle from video
                 var genSubStart = DateTime.Now;
-
-
                 var subtitlePayload = await _genSubService.GenerateFromUrlAsync(
                     videoAsset.Url!,
                     format: "text",
                     aiCorrect: true,
                     cancellationToken: ct);
-
-
                 var genSubDuration = DateTime.Now - genSubStart;
 
                 _logger.LogInformation(
@@ -132,24 +105,14 @@ namespace SkillUp.Services.Rag.Subtitle
                     lesson.Id,
                     genSubDuration.TotalMilliseconds);
 
-                var subtitleText = !string.IsNullOrEmpty(subtitlePayload.TextContent)
-                    ? subtitlePayload.TextContent
-                    : Encoding.UTF8.GetString(subtitlePayload.Data ?? Array.Empty<byte>());
+                // Extract subtitle text
+                var subtitleText = subtitlePayload.TextContent 
+                    ?? Encoding.UTF8.GetString(subtitlePayload.Data ?? Array.Empty<byte>());
 
                 if (string.IsNullOrWhiteSpace(subtitleText))
                 {
-                    _logger.LogWarning(
-                        "Generated subtitle text is empty for lesson {LessonId}",
-                        lesson.Id);
-                    return new SubtitleGenerationJobResult
-                    {
-                        LessonId = lesson.Id,
-                        CourseId = courseId,
-                        Success = false,
-                        Message = "Generated subtitle text is empty.",
-                        SourceVideoUrl = videoAsset.Url,
-                        GenSubDuration = genSubDuration
-                    };
+                    _logger.LogWarning("Generated subtitle text is empty for lesson {LessonId}", lesson.Id);
+                    return CreateResult(lesson.Id, courseId, false, "Generated subtitle text is empty.", videoAsset.Url, genSubDuration);
                 }
 
                 _logger.LogInformation(
@@ -157,9 +120,8 @@ namespace SkillUp.Services.Rag.Subtitle
                     lesson.Id,
                     subtitleText.Length);
 
+                // Index to Qdrant
                 var indexStart = DateTime.Now;
-
-                // Index  Qdrant
                 var indexResult = await _subtitleService.IndexLessonAsync(
                     new SubtitleIndexRequest
                     {
@@ -179,16 +141,7 @@ namespace SkillUp.Services.Rag.Subtitle
                     indexDuration.TotalMilliseconds,
                     (genSubDuration + indexDuration).TotalMilliseconds);
 
-                return new SubtitleGenerationJobResult
-                {
-                    LessonId = lesson.Id,
-                    CourseId = courseId,
-                    Success = true,
-                    Message = "Subtitle generated and indexed.",
-                    IndexResult = indexResult,
-                    SourceVideoUrl = videoAsset.Url,
-                    GenSubDuration = genSubDuration
-                };
+                return CreateResult(lesson.Id, courseId, true, "Subtitle generated and indexed.", videoAsset.Url, genSubDuration, indexResult);
             }
             catch (Exception ex)
             {
@@ -197,15 +150,29 @@ namespace SkillUp.Services.Rag.Subtitle
                     "Failed to generate subtitle for lesson {LessonId} (Video: {VideoUrl})",
                     lesson.Id,
                     videoAsset.Url);
-                return new SubtitleGenerationJobResult
-                {
-                    LessonId = lesson.Id,
-                    CourseId = courseId,
-                    Success = false,
-                    Message = ex.Message,
-                    SourceVideoUrl = videoAsset.Url
-                };
+                return CreateResult(lesson.Id, courseId, false, ex.Message, videoAsset.Url);
             }
+        }
+
+        private SubtitleGenerationJobResult CreateResult(
+            Guid lessonId,
+            Guid courseId,
+            bool success,
+            string message,
+            string? videoUrl = null,
+            TimeSpan? genSubDuration = null,
+            SubtitleIndexResult? indexResult = null)
+        {
+            return new SubtitleGenerationJobResult
+            {
+                LessonId = lessonId,
+                CourseId = courseId,
+                Success = success,
+                Message = message,
+                SourceVideoUrl = videoUrl,
+                GenSubDuration = genSubDuration,
+                IndexResult = indexResult
+            };
         }
     }
 }

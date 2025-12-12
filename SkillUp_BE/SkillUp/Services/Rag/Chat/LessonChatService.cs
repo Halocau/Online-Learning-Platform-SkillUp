@@ -70,16 +70,13 @@ namespace SkillUp.Services.Rag.Chat
 
                 if (hits.Count == 0)
                 {
-                    var thresholdMessage = scoreThreshold.HasValue 
-                        ? $" (score threshold: {scoreThreshold.Value:F2})" 
-                        : "";
                     _logger.LogWarning(
-                        "No hits found for lesson {LessonId} with question: {Question}",
-                        lessonId, question);
+                        "No hits found for lesson {LessonId} with question: {Question} (threshold: {Threshold})",
+                        lessonId, question, scoreThreshold);
                     return new ChatResponseDto
                     {
-                        Success = false,
-                        Message = $"Không tìm thấy nội dung liên quan trong bài học này. Vui lòng đảm bảo phụ đề đã được tạo."
+                        Success = true, // Trả về true để không báo lỗi 400
+                        Message = "Xin lỗi, tôi không tìm thấy thông tin liên quan đến câu hỏi của bạn trong bài học này. Vui lòng thử đặt câu hỏi cụ thể hơn về nội dung bài học."
                     };
                 }
 

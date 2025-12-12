@@ -74,24 +74,7 @@ const LessonChat = ({ lessonId }) => {
                             {message.role === "user" ? "Bạn" : "Trợ lý"}
                         </p>
                         <p className="leading-relaxed whitespace-pre-line">{message.content}</p>
-                        {message.sources && message.sources.length > 0 && (
-                            <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
-                                <p className="text-xs font-semibold text-gray-500">
-                                    Trích đoạn liên quan:
-                                </p>
-                                {message.sources.map((source, sourceIdx) => (
-                                    <div
-                                        key={sourceIdx}
-                                        className="text-xs text-gray-600 bg-white border border-gray-200 rounded-md p-2"
-                                    >
-                                        <p className="font-medium text-gray-700">
-                                            Đoạn {source.chunkIndex + 1}
-                                        </p>
-                                        <p className="italic text-gray-600">{source.text}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        
                     </div>
                 ))}
             </div>
