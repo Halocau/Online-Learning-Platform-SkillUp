@@ -2,6 +2,7 @@
 // (Hãy copy và dán toàn bộ code này để thay thế file cũ)
 
 import * as signalR from "@microsoft/signalr";
+import { API_BASE_URL } from "@/config/api";
 
 class SignalRService {
   constructor() {
@@ -28,9 +29,12 @@ class SignalRService {
       return Promise.reject("Không có token");
     }
 
+    const hubBaseUrl = API_BASE_URL.endsWith("/api")
+      ? API_BASE_URL.slice(0, -4)
+      : API_BASE_URL.replace("/api", "");
+
     this.connection = new signalR.HubConnectionBuilder()
-      // SỬA URL NÀY NẾU CẦN (port 5120 là port backend của bạn)
-      .withUrl("http://localhost:5120/commentHub", { 
+      .withUrl(`${hubBaseUrl}/commentHub`, {
         accessTokenFactory: () => token,
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000]) // Tự động kết nối lại
@@ -68,7 +72,7 @@ class SignalRService {
         this.connectionPromise = null; // Reset promise khi thất bại
         throw error;
       });
-    
+
     return this.connectionPromise;
   }
 
@@ -90,7 +94,7 @@ class SignalRService {
   async joinPostGroup(postId) {
     if (!this.isConnected) {
       // Sẽ đợi startConnection() hoàn thành nếu nó đang chạy
-      await this.startConnection(); 
+      await this.startConnection();
     }
     try {
       await this.connection.invoke("JoinPostGroup", postId);

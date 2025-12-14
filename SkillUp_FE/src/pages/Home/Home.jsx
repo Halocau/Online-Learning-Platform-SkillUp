@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 import CategoryBar from "./components/CategoryBar";
 import HeroCarousel from "./components/HeroCarousel";
 import PopularCoursesSection from "./components/PopularCoursesSection";
 import NewestCoursesSection from "./components/NewestCourse";
 import TestimonialsSection from "./components/TestimonialsSection";
 
-const API_URL = "http://localhost:5120/api/HomePage/GetAllHomePage";
+const API_URL = `${API_BASE_URL}/HomePage/GetAllHomePage`;
 
 export default function Home() {
   const [data, setData] = useState(null);

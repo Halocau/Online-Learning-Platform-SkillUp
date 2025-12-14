@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  gensub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gensub
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount thư mục upload để dữ liệu không mất khi container restart
+      - ./upload:/app/upload
+      # Mount thư mục logs để xem logs dễ dàng
+      - ./logs:/app/logs
+      # Mount .env file nếu có (tùy chọn - comment dòng này nếu không có file .env)
+      # - ./.env:/app/.env:ro
+    environment:
+      # Các biến môi trường mặc định (có thể override bằng .env file)
+      - WHISPER_MODEL=${WHISPER_MODEL:-small}
+      - DEVICE=${DEVICE:-cpu}
+      - COMPUTE_TYPE=${COMPUTE_TYPE:-int8}
+      - LANGUAGE=${LANGUAGE:-vi}
+      - MAX_FILE_MB=${MAX_FILE_MB:-2048}
+      # Gemini API keys (nếu có)
+      - GEMINI_API_KEY_1=${GEMINI_API_KEY_1:-}
+      - GEMINI_API_KEY_2=${GEMINI_API_KEY_2:-}
+      - GEMINI_API_KEY_3=${GEMINI_API_KEY_3:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+

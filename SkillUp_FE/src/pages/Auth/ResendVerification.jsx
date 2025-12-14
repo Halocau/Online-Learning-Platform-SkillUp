@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '@/config/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ function ResendVerification() {
 
   const handleResend = async (e) => {
     e.preventDefault();
-    
+
     if (!email) {
       setMessage({ type: 'error', text: 'Vui lòng nhập email' });
       return;
@@ -24,14 +25,14 @@ function ResendVerification() {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post('http://localhost:5120/api/auth/resend-otp', {
+      const response = await axios.post(`${API_BASE_URL}/auth/resend-otp`, {
         email: email
       });
 
       if (response.data.code === 200) {
-        setMessage({ 
-          type: 'success', 
-          text: 'Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn.' 
+        setMessage({
+          type: 'success',
+          text: 'Email xác thực đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn.'
         });
         setEmail('');
       }
@@ -68,11 +69,10 @@ function ResendVerification() {
 
             {message.text && (
               <div
-                className={`p-3 rounded-lg text-sm ${
-                  message.type === 'success'
-                    ? 'bg-green-50 text-green-700 border border-green-200'
-                    : 'bg-red-50 text-red-700 border border-red-200'
-                }`}
+                className={`p-3 rounded-lg text-sm ${message.type === 'success'
+                  ? 'bg-green-50 text-green-700 border border-green-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+                  }`}
               >
                 {message.text}
               </div>

@@ -1,8 +1,9 @@
 // src/api/courseReportAPI.js
 import { message } from "antd";
 import axiosInstance from "../lib/axios";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL = "http://localhost:5120/api/ReportCourse";
+const API_URL = `${API_BASE_URL}/ReportCourse`;
 
 const handleAPIResponse = (res, defaultSuccessMsg = "Thành công!") => {
   const apiRes = res.data;

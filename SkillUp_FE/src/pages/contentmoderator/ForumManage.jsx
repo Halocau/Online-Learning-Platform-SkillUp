@@ -35,6 +35,7 @@ import { categoryApi } from "@/api/forumCategory";
 import ForumCategoryModal from "@/components/Forum/ForumCategoryModal";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axios";
+import { API_BASE_URL } from "@/config/api";
 import { PlusCircle } from "lucide-react";
 
 const { Title, Text, Paragraph } = Typography;
@@ -161,7 +162,7 @@ export default function ForumManage() {
       const updatedStatus = !item.isActive;
 
       await axiosInstance.put(
-        `http://localhost:5120/api/ForumCategory/update/${item.id}`,
+        `${API_BASE_URL}/ForumCategory/update/${item.id}`,
         {
           id: item.id,
           name: item.name,
@@ -283,11 +284,10 @@ export default function ForumManage() {
         const isActive = value?.toLowerCase() === "active";
         return (
           <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-              isActive
+            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isActive
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
-            }`}
+              }`}
           >
             {isActive ? "Hoạt động" : "Vô hiệu hóa"}
           </span>
@@ -394,18 +394,18 @@ export default function ForumManage() {
             {(searchText ||
               statusFilter !== "all" ||
               categoryFilter !== "all") && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchText("");
-                  setStatusFilter("all");
-                  setCategoryFilter("all");
-                  setCurrentPage(1);
-                }}
-              >
-                Xóa bộ lọc
-              </Button>
-            )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchText("");
+                    setStatusFilter("all");
+                    setCategoryFilter("all");
+                    setCurrentPage(1);
+                  }}
+                >
+                  Xóa bộ lọc
+                </Button>
+              )}
           </div>
 
           {/* Results count and Items per page */}

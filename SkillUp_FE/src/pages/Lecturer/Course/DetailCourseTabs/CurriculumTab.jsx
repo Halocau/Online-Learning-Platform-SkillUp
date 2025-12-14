@@ -10,6 +10,7 @@ import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
 
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import axiosInstance from "@/lib/axios";
+import { API_BASE_URL } from "@/config/api";
 import SectionCard from "../../components/Sectioncard";
 import ConfirmModal from "../../components/ConfirmModal";
 
@@ -223,10 +224,10 @@ function CurriculumTab({ course, courseId, onUpdate }) {
           newCourse.sections = newCourse.sections.map((section) =>
             section.id === sectionId
               ? {
-                  ...section,
-                  title: sectionForm.title,
-                  description: sectionForm.description,
-                }
+                ...section,
+                title: sectionForm.title,
+                description: sectionForm.description,
+              }
               : section
           );
           return newCourse;
@@ -448,7 +449,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
     const pdfUrl =
       lesson.assets?.[0]?.fileUrl &&
-      lesson.assets[0].fileUrl !== "default-file-url"
+        lesson.assets[0].fileUrl !== "default-file-url"
         ? lesson.assets[0].fileUrl
         : null;
 
@@ -496,12 +497,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === lessonId
                 ? {
-                    ...item,
-                    title: lessonForm.title,
-                    description: lessonForm.description,
-                    isFree: lessonForm.isFree,
-                    orders: lessonForm.lessonOrder,
-                  }
+                  ...item,
+                  title: lessonForm.title,
+                  description: lessonForm.description,
+                  isFree: lessonForm.isFree,
+                  orders: lessonForm.lessonOrder,
+                }
                 : item
             ),
           }));
@@ -719,12 +720,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === quizId
                 ? {
-                    ...item,
-                    title: quizForm.title,
-                    description: quizForm.description,
-                    passPercent,
-                    timer,
-                  }
+                  ...item,
+                  title: quizForm.title,
+                  description: quizForm.description,
+                  passPercent,
+                  timer,
+                }
                 : item
             ),
           }));
@@ -783,8 +784,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   const sortedSections = displayCourse?.sections
     ? [...displayCourse.sections].sort(
-        (a, b) => (a.orders || 0) - (b.orders || 0)
-      )
+      (a, b) => (a.orders || 0) - (b.orders || 0)
+    )
     : [];
 
   return (
@@ -1026,7 +1027,7 @@ function SectionsList(props) {
         }));
 
         await axiosInstance.put(
-          `http://localhost:5120/api/Sections/${courseId}/reorder-sections`,
+          `${API_BASE_URL}/Sections/${courseId}/reorder-sections`,
           payload
         );
 
@@ -1072,7 +1073,7 @@ function SectionsList(props) {
         }));
         // API call to save the new order
         await axiosInstance.put(
-          `http://localhost:5120/api/Sections/${activeSection.id}/reorder`,
+          `${API_BASE_URL}/Sections/${activeSection.id}/reorder`,
           payload
         );
 

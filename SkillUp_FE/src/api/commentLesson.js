@@ -1,11 +1,11 @@
 // src/api/commentLessonApi.js
 import { toast } from "react-toastify";
 import axiosInstance from "../lib/axios";
+import { API_BASE_URL } from "../config/api";
 
-
-const API = "http://localhost:5120/api/CommentLesson";
-const LIKE_API = "http://localhost:5120/api/LikeCommentLesson";
-const REPORT_API = "http://localhost:5120/api/CommentReportLesson";
+const API = `${API_BASE_URL}/CommentLesson`;
+const LIKE_API = `${API_BASE_URL}/LikeCommentLesson`;
+const REPORT_API = `${API_BASE_URL}/CommentReportLesson`;
 
 export const commentLessonApi = {
   getByLesson: async (lessonId) => {

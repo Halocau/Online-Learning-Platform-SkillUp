@@ -1,8 +1,9 @@
 import { toast } from "react-toastify";
 import axiosInstance from "../lib/axios";
+import { API_BASE_URL } from "../config/api";
 
-const API_URL = "http://localhost:5120/api/Question";
-const UPLOAD_URL = "http://localhost:5120/api/Upload";
+const API_URL = `${API_BASE_URL}/Question`;
+const UPLOAD_URL = `${API_BASE_URL}/Upload`;
 
 const handleAPIResponse = (
   res,

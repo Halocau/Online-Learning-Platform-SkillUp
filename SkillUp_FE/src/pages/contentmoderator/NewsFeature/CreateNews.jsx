@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Select, Card, message, Space } from "antd";
 import { Editor } from "@tinymce/tinymce-react";
-import { axiosInstance, API_ENDPOINTS } from "@/config/api";
+import { axiosInstance, API_ENDPOINTS, TINYMCE_API_KEY } from "@/config/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft } from "lucide-react";
@@ -156,7 +156,7 @@ const CreateNews = () => {
               <label className="text-sm font-medium mb-1 block">Nội dung</label>
             </div>
             <Editor
-              apiKey="tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i"
+              apiKey={TINYMCE_API_KEY}
               init={{
                 height: 500,
                 plugins: [

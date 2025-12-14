@@ -3,6 +3,7 @@ import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Sel
 import { PlusOutlined, MinusCircleOutlined, UploadOutlined, CheckOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import axiosInstance from "@/lib/axios";
+import { API_BASE_URL } from "@/config/api";
 import RichTextEditor from "../Editor/RichText";
 
 const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
@@ -133,7 +134,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
         formData.append("image", file);
 
         const response = await axiosInstance.post(
-            "http://localhost:5120/api/Upload/image",
+            `${API_BASE_URL}/Upload/image`,
             formData,
             {
                 headers: {
@@ -239,9 +240,9 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
     const isOverLimit = currentLength > 255;
     const isAnswerOverLimit = questionData.answers.some(ans => getCharacterCount(ans.answerName) > 255);
 
-    const activeAnswerCount = questionData.answers 
-    ? questionData.answers.filter(ans => ans.isActive !== false).length 
-    : 0;
+    const activeAnswerCount = questionData.answers
+        ? questionData.answers.filter(ans => ans.isActive !== false).length
+        : 0;
 
     return (
         <Modal
@@ -491,8 +492,8 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
                             <span style={{ display: "block", marginBottom: "10px", color: "#888" }}>
                                 Chưa có đáp án nào
                             </span>
-                            <Button 
-                            type="dashed" icon={<PlusOutlined />} onClick={handleAddAnswer} style={{ width: "100%" }}>
+                            <Button
+                                type="dashed" icon={<PlusOutlined />} onClick={handleAddAnswer} style={{ width: "100%" }}>
                                 Thêm đáp án
                             </Button>
                         </div>

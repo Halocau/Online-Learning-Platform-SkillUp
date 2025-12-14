@@ -30,6 +30,7 @@ import {
   Filter
 } from 'lucide-react';
 import axiosInstance from '@/lib/axios';
+import { API_BASE_URL } from '@/config/api';
 import { record } from 'zod';
 import { toast } from 'react-toastify';
 
@@ -49,7 +50,7 @@ const ModeratorManage = () => {
   const fetchModerators = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get('http://localhost:5120/api/User/all-mod');
+      const response = await axiosInstance.get(`${API_BASE_URL}/User/all-mod`);
 
       setInitialData(response.data.data[0]);
       setDataSource(response.data.data[0]);
@@ -86,7 +87,7 @@ const ModeratorManage = () => {
   const handleToggleStatus = async (item) => {
     try {
       item.status = item.status === 'Active' ? 'InActive' : 'Active';
-      const response = await axiosInstance.put('http://localhost:5120/api/User/update-status', {
+      const response = await axiosInstance.put(`${API_BASE_URL}/User/update-status`, {
         id: item.id,
         status: item.status
       });
@@ -143,7 +144,7 @@ const ModeratorManage = () => {
 
         message.success('Moderator updated successfully');
       } else {
-        await axiosInstance.post('http://localhost:5120/api/Auth/register-mod', payload);
+        await axiosInstance.post(`${API_BASE_URL}/Auth/register-mod`, payload);
       }
 
       setIsModalVisible(false);
