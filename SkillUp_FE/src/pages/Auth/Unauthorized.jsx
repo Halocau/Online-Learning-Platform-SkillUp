@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, ArrowLeft, Home } from "lucide-react";
-import { getRedirectPath } from "@/lib/auth-utils";
+import { getRedirectPath } from "@/lib/auth-utils.js";
 
 function Unauthorized() {
   const navigate = useNavigate();

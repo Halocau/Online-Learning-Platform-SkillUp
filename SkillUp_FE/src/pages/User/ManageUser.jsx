@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Avatar, Button, Tag, Space, Input, Row, Col } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 import { API_BASE_URL } from "@/config/api";
 import { toast } from "react-toastify";
 

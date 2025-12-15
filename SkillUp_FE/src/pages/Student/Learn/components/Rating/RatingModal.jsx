@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Star, X, Award, Send } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 const RatingModal = ({
   courseName,

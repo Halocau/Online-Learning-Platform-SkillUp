@@ -1,6 +1,6 @@
 // src/pages/Lecturer/components/tabs/UnpublishCoursesTab.jsx
 import { Edit2, EyeOff, Info, Unlock } from "lucide-react";
-import BaseCourseTab from "./BaseCourseTab";
+import BaseCourseTab from "./BaseCourseTab.jsx";
 
 function UnpublishCoursesTab({
   courses,

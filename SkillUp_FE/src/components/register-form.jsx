@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils.js"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,27 +21,57 @@ export function RegisterForm({
     fullname: ''
   })
   const [errorMsg, setErrorMsg] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
+
+  const validateForm = () => {
+    const newErrors = {}
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const hasMinLength = formData.password.length >= 6
+    const hasUppercase = /[A-Z]/.test(formData.password)
+    const hasLowercase = /[a-z]/.test(formData.password)
+    const hasNumber = /[0-9]/.test(formData.password)
+    const hasSpecial = /[^A-Za-z0-9]/.test(formData.password)
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Vui lòng nhập email'
+    } else if (!emailRegex.test(formData.email.trim())) {
+      newErrors.email = 'Email không hợp lệ'
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Vui lòng nhập mật khẩu'
+    } else if (!hasMinLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+      newErrors.password = 'Mật khẩu phải ≥ 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt'
+    }
+
+    if (!formData.rePassword) {
+      newErrors.rePassword = 'Vui lòng xác nhận mật khẩu'
+    } else if (formData.password !== formData.rePassword) {
+      newErrors.rePassword = 'Mật khẩu xác nhận chưa khớp'
+    }
+
+    const trimmedName = formData.fullname.trim()
+
+    const letterCount = trimmedName.replace(/\s+/g, '').length
+
+    if (!trimmedName) {
+      newErrors.fullname = 'Vui lòng nhập họ và tên'
+    } else if (letterCount < 4) {
+      newErrors.fullname = 'Họ tên phải có tối thiểu 4 ký tự chữ'
+    }
+
+    setFieldErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   // Handle normal register
   const handleNormalRegister = async (e) => {
     e.preventDefault()
     setErrorMsg('')
+    setFieldErrors({})
 
-    // Validate
-    if (!formData.email || !formData.password || !formData.rePassword || !formData.fullname) {
-      setErrorMsg('Vui lòng điền đầy đủ thông tin')
-      return
-    }
-
-    if (formData.password !== formData.rePassword) {
-      setErrorMsg('Mật khẩu không khớp')
-      return
-    }
-
-    if (formData.password.length < 6) {
-      setErrorMsg('Mật khẩu phải có ít nhất 6 ký tự')
-      return
-    }
+    const isValid = validateForm()
+    if (!isValid) return
 
     setLoading(true)
 
@@ -150,12 +180,21 @@ export function RegisterForm({
               type="email"
               placeholder="Nhập địa chỉ email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="pl-10 h-12"
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value })
+                setFieldErrors((prev) => ({ ...prev, email: '' }))
+              }}
+              className={cn(
+                "pl-10 h-12",
+                fieldErrors.email && "border-red-500 focus-visible:ring-red-500"
+              )}
               disabled={loading}
               required
             />
           </div>
+          {fieldErrors.email && (
+            <p className="text-sm text-red-600">{fieldErrors.email}</p>
+          )}
         </div>
 
         {/* Password Input */}
@@ -173,12 +212,21 @@ export function RegisterForm({
               type="password"
               placeholder="Nhập mật khẩu"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="pl-10 h-12"
+              onChange={(e) => {
+                setFormData({ ...formData, password: e.target.value })
+                setFieldErrors((prev) => ({ ...prev, password: '' }))
+              }}
+              className={cn(
+                "pl-10 h-12",
+                fieldErrors.password && "border-red-500 focus-visible:ring-red-500"
+              )}
               disabled={loading}
               required
             />
           </div>
+          {fieldErrors.password && (
+            <p className="text-sm text-red-600">{fieldErrors.password}</p>
+          )}
         </div>
 
         {/* Re-Password Input */}
@@ -196,12 +244,21 @@ export function RegisterForm({
               type="password"
               placeholder="Nhập lại mật khẩu"
               value={formData.rePassword}
-              onChange={(e) => setFormData({ ...formData, rePassword: e.target.value })}
-              className="pl-10 h-12"
+              onChange={(e) => {
+                setFormData({ ...formData, rePassword: e.target.value })
+                setFieldErrors((prev) => ({ ...prev, rePassword: '' }))
+              }}
+              className={cn(
+                "pl-10 h-12",
+                fieldErrors.rePassword && "border-red-500 focus-visible:ring-red-500"
+              )}
               disabled={loading}
               required
             />
           </div>
+          {fieldErrors.rePassword && (
+            <p className="text-sm text-red-600">{fieldErrors.rePassword}</p>
+          )}
         </div>
 
         {/* Full Name Input */}
@@ -219,12 +276,22 @@ export function RegisterForm({
               type="text"
               placeholder="Nhập họ và tên"
               value={formData.fullname}
-              onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
-              className="pl-10 h-12"
+              onChange={(e) => {
+                setFormData({ ...formData, fullname: e.target.value })
+                setFieldErrors((prev) => ({ ...prev, fullname: '' }))
+              }}
+              className={cn(
+                "pl-10 h-12",
+                fieldErrors.fullname && "border-red-500 focus-visible:ring-red-500"
+              )}
+              minLength={2}
               disabled={loading}
               required
             />
           </div>
+          {fieldErrors.fullname && (
+            <p className="text-sm text-red-600">{fieldErrors.fullname}</p>
+          )}
         </div>
 
         {/* Register Button */}

@@ -6,7 +6,7 @@ import { axiosInstance, API_ENDPOINTS, API_BASE_URL } from '@/config/api';
 import { toast } from 'react-toastify';
 import QuestionBankViewModal from '@/components/QuestionBank/QuestionBankViewModal';
 import QuestionBankEditModal from '@/components/QuestionBank/QuestionBankEditModal';
-import QuestionBankCreateModal from '@/components/QuestionBank/QuestionBanKCreateModal';
+import QuestionBankCreateModal from '@/components/QuestionBank/QuestionBankCreateModal';
 import QuestionBankExcelModal from '@/components/QuestionBank/QuestionBankExcelModal';
 import { extractCleanText } from '@/utils/htmlUtils';
 

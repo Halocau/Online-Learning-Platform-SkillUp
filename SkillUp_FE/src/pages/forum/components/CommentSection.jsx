@@ -6,12 +6,12 @@ import { Spin, Empty, Divider, Button } from "antd";
 import { MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
-import CommentItem from "./CommentItem";
-import CommentForm from "./CommentForm";
-import CommentModals from "./CommentModal";
+import CommentItem from "./CommentItem.jsx";
+import CommentForm from "./CommentForm.jsx";
+import CommentModals from "./CommentModal.jsx";
 import commentApi from "@/api/commentAPI";
-import ReplyForm from "./ReplyForm";
-import signalRService from "./SignalRService";
+import ReplyForm from "./ReplyForm.jsx";
+import signalRService from "./SignalRService.jsx";
 
 // --- Chuyển hàm helper ra ngoài để dùng chung ---
 const findCommentById = (list, id) => {

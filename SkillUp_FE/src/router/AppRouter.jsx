@@ -1,35 +1,35 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "../pages/Auth/Login";
-import Register from "../pages/Auth/Register";
-import VerifyEmail from "../pages/Auth/VerifyEmail";
-import ResendVerification from "../pages/Auth/ResendVerification";
-import ForgotPassword from "../pages/Auth/ForgotPassword";
-import ResetPassword from "../pages/Auth/ResetPassword";
-import Home from "../pages/Home/Home";
-import MyProfile from "../pages/Profile/MyProfile";
-import MainLayout from "../layouts/MainLayout";
+import Login from "../pages/Auth/Login.jsx";
+import Register from "../pages/Auth/Register.jsx";
+import VerifyEmail from "../pages/Auth/VerifyEmail.jsx";
+import ResendVerification from "../pages/Auth/ResendVerification.jsx";
+import ForgotPassword from "../pages/Auth/ForgotPassword.jsx";
+import ResetPassword from "../pages/Auth/ResetPassword.jsx";
+import Home from "../pages/Home/Home.jsx";
+import MyProfile from "../pages/Profile/MyProfile.jsx";
+import MainLayout from "../layouts/MainLayout.jsx";
 
-import AdminRoutes from "./AdminRoutes";
-import ContentModeratorRoutes from "./ContentModeratorRoutes";
-import SystemModeratorRoutes from "./SystemModeratorRoutes";
-import StudentRoutes from "./StudentRoutes";
-import LecturerRoutes from "./LecturerRoute";
-import ForumRoutes from "./ForumRoute";
+import AdminRoutes from "./AdminRoutes.jsx";
+import ContentModeratorRoutes from "./ContentModeratorRoutes.jsx";
+import SystemModeratorRoutes from "./SystemModeratorRoutes.jsx";
+import StudentRoutes from "./StudentRoutes.jsx";
+import LecturerRoutes from "./LecturerRoute.jsx";
+import ForumRoutes from "./ForumRoute.jsx";
 
-import TicketList from "@/pages/Ticket/TicketList";
-import TicketDetail from "@/pages/Ticket/TicketDetail";
-import NewsList from "@/pages/News/NewsList";
-import NewsDetail from "@/pages/News/NewsDetail";
-import MyCart from "@/pages/Cart/MyCart";
-import CourseDetail from "@/pages/Course/CourseDetail";
-import CoursesByCategory from "@/pages/Course/CoursesByCategory";
-import MyCourses from "@/pages/Student/MyCourses";
-import PaymentResult from "@/pages/Payment/PaymentResult";
-import LecturerProfile from "@/pages/Lecturer/LecturerProfile";
-import LecturerPendingGuard from "./LecturerPendingGuard";
-import PurchaseHistory from "@/pages/Student/PurchaseHistory";
-import ProtectedRoute from "./ProtectedRoute";
-import Unauthorized from "@/pages/Auth/Unauthorized";
+import TicketList from "@/pages/ticket/TicketList.jsx";
+import TicketDetail from "@/pages/ticket/TicketDetail.jsx";
+import NewsList from "@/pages/News/NewsList.jsx";
+import NewsDetail from "@/pages/News/NewsDetail.jsx";
+import MyCart from "@/pages/Cart/MyCart.jsx";
+import CourseDetail from "@/pages/Course/CourseDetail.jsx";
+import CoursesByCategory from "@/pages/Course/CoursesByCategory.jsx";
+import MyCourses from "@/pages/Student/MyCourses.jsx";
+import PaymentResult from "@/pages/Payment/PaymentResult.jsx";
+import LecturerProfile from "@/pages/Lecturer/LecturerProfile.jsx";
+import LecturerPendingGuard from "./LecturerPendingGuard.jsx";
+import PurchaseHistory from "@/pages/Student/PurchaseHistory.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
+import Unauthorized from "@/pages/Auth/Unauthorized.jsx";
 
 function AppRouter() {
   return (

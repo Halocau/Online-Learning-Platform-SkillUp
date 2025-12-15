@@ -1,5 +1,5 @@
 // src/api/notificationAPI.js
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 
 const API_BASE_URL = "/Notify";
 

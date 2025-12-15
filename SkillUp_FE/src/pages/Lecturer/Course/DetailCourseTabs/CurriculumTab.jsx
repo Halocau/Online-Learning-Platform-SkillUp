@@ -9,10 +9,10 @@ import { createLesson, updateLesson, deleteLesson } from "@/api/lessonAPI";
 import { createQuiz, updateQuiz, deleteQuiz } from "@/api/quizAPI";
 
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 import { API_BASE_URL } from "@/config/api";
-import SectionCard from "../../components/Sectioncard";
-import ConfirmModal from "../../components/ConfirmModal";
+import SectionCard from "../../components/Sectioncard.jsx";
+import ConfirmModal from "../../components/ConfirmModal.jsx";
 
 function CurriculumTab({ course, courseId, onUpdate }) {
   const [expandedSections, setExpandedSections] = useState({});

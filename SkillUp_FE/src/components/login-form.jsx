@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { axiosInstance, API_ENDPOINTS } from "@/config/api";
-import { saveUserFromToken, getRedirectPath } from "@/lib/auth-utils";
+import { saveUserFromToken, getRedirectPath } from "@/lib/auth-utils.js";
 import { toast } from "react-toastify";
 import {
   checkLecturerProfileCompletion,

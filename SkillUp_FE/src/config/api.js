@@ -80,5 +80,5 @@ export const getApiUrl = (endpoint) => {
 };
 
 
-import axiosInstance from '../lib/axios';
+import axiosInstance from '@/lib/axios.js';
 export { axiosInstance };

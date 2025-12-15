@@ -10,7 +10,7 @@ import {
   RefreshCw,
   Loader2,
 } from "lucide-react";
-import QuizResultDetail from "./QuizResultDetail";
+import QuizResultDetail from "./QuizResultDetail.jsx";
 import { getQuizResult } from "@/api/quizAPI";
 import { extractCleanText } from "@/utils/htmlUtils";
 
@@ -175,15 +175,13 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
             <>
               {/* Status icon */}
               <div
-                className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl border-2 border-[#272343] mb-6 relative ${
-                  resultData?.isPassed ? "bg-[#e3f6f5]" : "bg-red-50"
-                }`}
+                className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl border-2 border-[#272343] mb-6 relative ${resultData?.isPassed ? "bg-[#e3f6f5]" : "bg-red-50"
+                  }`}
               >
                 <Trophy className="w-10 h-10 text-[#272343]" />
                 <div
-                  className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#272343] flex items-center justify-center ${
-                    resultData?.isPassed ? "bg-[#ffd803]" : "bg-red-400"
-                  }`}
+                  className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-[#272343] flex items-center justify-center ${resultData?.isPassed ? "bg-[#ffd803]" : "bg-red-400"
+                    }`}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#272343]" />
                 </div>
@@ -210,24 +208,21 @@ const QuizView = ({ quiz, onComplete, isCompleted }) => {
                 </div>
 
                 <div
-                  className={`p-4 rounded-xl border border-[#272343]/20 ${
-                    resultData?.isPassed ? "bg-green-50" : "bg-red-50"
-                  }`}
+                  className={`p-4 rounded-xl border border-[#272343]/20 ${resultData?.isPassed ? "bg-green-50" : "bg-red-50"
+                    }`}
                 >
                   <p className="text-xs text-[#2d334a] mb-1">Kết quả của bạn</p>
                   <p
-                    className={`text-lg font-bold tracking-tight ${
-                      resultData?.isPassed ? "text-green-700" : "text-red-700"
-                    }`}
+                    className={`text-lg font-bold tracking-tight ${resultData?.isPassed ? "text-green-700" : "text-red-700"
+                      }`}
                   >
                     {resultData?.score
                       ? `${resultData.score.toFixed(1)}%`
                       : "0.00%"}
                   </p>
                   <p
-                    className={`mt-1 text-xs font-medium ${
-                      resultData?.isPassed ? "text-green-600" : "text-red-600"
-                    }`}
+                    className={`mt-1 text-xs font-medium ${resultData?.isPassed ? "text-green-600" : "text-red-600"
+                      }`}
                   >
                     {resultData?.isPassed ? "✓ Đạt yêu cầu" : "✗ Chưa đạt"}
                   </p>

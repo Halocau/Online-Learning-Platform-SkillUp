@@ -11,7 +11,7 @@ import {
   Settings,
   Loader2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
   const videoRef = useRef(null);
@@ -344,11 +344,9 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
                     [&::-moz-range-thumb]:border-0
                     [&::-moz-range-thumb]:cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, #FFD54F 0%, #FFD54F ${
-                      volume * 100
-                    }%, rgba(255,255,255,0.3) ${
-                      volume * 100
-                    }%, rgba(255,255,255,0.3) 100%)`,
+                    background: `linear-gradient(to right, #FFD54F 0%, #FFD54F ${volume * 100
+                      }%, rgba(255,255,255,0.3) ${volume * 100
+                      }%, rgba(255,255,255,0.3) 100%)`,
                   }}
                 />
               </div>
@@ -372,7 +370,7 @@ const VideoPlayer = ({ videoUrl, onVideoEnd, onProgress }) => {
               </button>
 
               {showSettings && (
-                <div 
+                <div
                   className="absolute bottom-full right-0 mb-2 bg-black/95 rounded-lg overflow-hidden shadow-xl"
                   onMouseEnter={handleSettingsMouseEnter}
                   onMouseLeave={handleSettingsMouseLeave}

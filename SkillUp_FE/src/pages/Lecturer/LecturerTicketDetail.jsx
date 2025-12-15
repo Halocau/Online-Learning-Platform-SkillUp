@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
-import CreateTicketModal from '@/components/Ticket/CreateTicketModal';
-import UpdateTicketModal from '@/components/Ticket/UpdateTicketModal';
+import CreateTicketModal from '@/components/Ticket/CreateTicketModal.jsx';
+import UpdateTicketModal from '@/components/Ticket/UpdateTicketModal.jsx';
 import {
     ArrowLeft,
     Clock,

@@ -1,5 +1,5 @@
 // src/pages/Lecturer/components/tabs/AllCoursesTab. jsx
-import BaseCourseTab from "./BaseCourseTab";
+import BaseCourseTab from "./BaseCourseTab.jsx";
 
 function AllCoursesTab({ courses, onEdit, onDelete, onPreview, onReopen, deletingId }) {
   return (

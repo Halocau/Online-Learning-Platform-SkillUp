@@ -5,16 +5,16 @@ import {
   AlertCircle,
   Check,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 import { useState } from "react";
-import VideoPlayer from "./VideoPlayer";
-import TextLesson from "./TextLesson";
+import VideoPlayer from "./VideoPlayer.jsx";
+import TextLesson from "./TextLesson.jsx";
 
-import CommentSection from "./CommentSection";
+import CommentSection from "./CommentSection.jsx";
 
-import LearningTabs from "./LearningTabs";
-import QuizView from "../Quiz/QuizView";
-import LessonChat from "../LessonChat";
+import LearningTabs from "./LearningTabs.jsx";
+import QuizView from "../Quiz/QuizView.jsx";
+import LessonChat from "../LessonChat.jsx";
 
 
 const LessonContent = ({

@@ -1,7 +1,7 @@
 // src/api/commentLessonApi.js
 import { toast } from "react-toastify";
-import axiosInstance from "../lib/axios";
-import { API_BASE_URL } from "../config/api";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
 
 const API = `${API_BASE_URL}/CommentLesson`;
 const LIKE_API = `${API_BASE_URL}/LikeCommentLesson`;

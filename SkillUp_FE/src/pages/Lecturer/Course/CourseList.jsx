@@ -4,11 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import ConfirmModal from "../components/ConfirmModal";
-import AllCoursesTab from "./StatusTabs/AllCoursesTab";
-import DraftCoursesTab from "./StatusTabs/DraftCoursesTab";
-import PublicCoursesTab from "./StatusTabs/PublicCoursesTab";
-import UnpublishCoursesTab from "./StatusTabs/UnpublishCoursesTab";
-import PendingCoursesTab from "./StatusTabs/PendingCoursesTab";
+import AllCoursesTab from "./StatusTabs/AllCoursesTab.jsx";
+import DraftCoursesTab from "./StatusTabs/DraftCoursesTab.jsx";
+import PublicCoursesTab from "./StatusTabs/PublicCoursesTab.jsx";
+import UnpublishCoursesTab from "./StatusTabs/UnpublishCoursesTab.jsx";
+import PendingCoursesTab from "./StatusTabs/PendingCoursesTab.jsx";
 
 function CourseList({
   courses,
@@ -34,7 +34,7 @@ function CourseList({
     setConfirmModal({
       isOpen: true,
       loading: false,
-      ... config,
+      ...config,
     });
   };
 
@@ -162,11 +162,11 @@ function CourseList({
               onRefresh();
             }, 500);
           } else {
-            toast.error(response.data. message || "Lỗi khi mở lại khóa học");
+            toast.error(response.data.message || "Lỗi khi mở lại khóa học");
             setDeletingId(null);
           }
         } catch (error) {
-          if (error.response?. data?.message) {
+          if (error.response?.data?.message) {
             toast.error(error.response.data.message);
           } else {
             toast.error("Lỗi khi mở lại khóa học. Vui lòng thử lại.");
@@ -235,25 +235,24 @@ function CourseList({
         <div className="flex flex-wrap gap-3">
           {statusTabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = filterStatus === tab. id;
+            const isActive = filterStatus === tab.id;
             const count = getStatusCount(tab.id);
             return (
               <button
                 key={tab.id}
-                onClick={() => setFilterStatus(tab. id)}
+                onClick={() => setFilterStatus(tab.id)}
                 className={`flex items-center gap-2. 5 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 border ${getTabColorClasses(
                   tab.color,
                   isActive
-                )} ${isActive ?  "transform scale-105" : ""}`}
+                )} ${isActive ? "transform scale-105" : ""}`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 <span
-                  className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${
-                    isActive
-                      ? "bg-white bg-opacity-80"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
+                  className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${isActive
+                    ? "bg-white bg-opacity-80"
+                    : "bg-gray-100 text-gray-600"
+                    }`}
                 >
                   {count}
                 </span>

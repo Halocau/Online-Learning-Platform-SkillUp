@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
-import CreateTicketModal from '@/components/Ticket/CreateTicketModal';
+import CreateTicketModal from '@/components/Ticket/CreateTicketModal.jsx';
 import { jwtDecode } from 'jwt-decode';
 import {
     Plus,

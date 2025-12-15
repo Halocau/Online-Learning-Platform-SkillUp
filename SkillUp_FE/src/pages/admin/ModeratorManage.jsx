@@ -29,7 +29,7 @@ import {
   KeyRound,
   Filter
 } from 'lucide-react';
-import axiosInstance from '@/lib/axios';
+import axiosInstance from '@/lib/axios.js';
 import { API_BASE_URL } from '@/config/api';
 import { record } from 'zod';
 import { toast } from 'react-toastify';

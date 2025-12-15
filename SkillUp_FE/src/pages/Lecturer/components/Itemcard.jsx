@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import LessonForm from "./LessonForm";
-import QuizForm from "../Quiz/Quizform";
-import QuizQuestionManager from "../Quiz/QuizQuestionManager";
+import LessonForm from "./Lessonform.jsx";
+import QuizForm from "../Quiz/Quizform.jsx";
+import QuizQuestionManager from "../Quiz/QuizQuestionManager.jsx";
 
 function ItemCard({
   item,

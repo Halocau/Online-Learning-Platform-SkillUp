@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { extractCleanText } from "@/utils/htmlUtils";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 
 function QuestionBankSelector({
   courseId,

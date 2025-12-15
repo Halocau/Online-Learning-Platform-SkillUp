@@ -1,4 +1,4 @@
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 
 const API_BASE_URL = "/Lecturer";
 const LECTURER_APP_URL = "/LecturerApplication";
@@ -46,13 +46,13 @@ export const lecturerAPI = {
 };
 export const isLecturerProfileComplete = (lecturerData) => {
   if (!lecturerData) return false;
-  
+
   // Check if all required fields are filled and not empty strings
   const hasTitle = lecturerData.title && lecturerData.title.trim() !== '';
   const hasProfession = lecturerData.profession && lecturerData.profession.trim() !== '';
   const hasBankName = lecturerData.bankName && lecturerData.bankName.trim() !== '';
   const hasBankNumber = lecturerData.bankNumber && lecturerData.bankNumber.trim() !== '';
   const hasReceiverName = lecturerData.receiverName && lecturerData.receiverName.trim() !== '';
-  
+
   return hasTitle && hasProfession && hasBankName && hasBankNumber && hasReceiverName;
 };

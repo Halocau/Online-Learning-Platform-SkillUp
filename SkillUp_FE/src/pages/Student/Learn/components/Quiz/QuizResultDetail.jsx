@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { getQuizResult } from "@/api/quizAPI";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 import { extractCleanText } from "@/utils/htmlUtils";
 
 const QuizResultDetail = ({ submissionId, onClose }) => {
@@ -68,17 +68,15 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
+        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"
+          }`}
         onClick={handleClose}
       />
 
       {/* Full width drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-full bg-[#fffffe] z-50 shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed right-0 top-0 h-full w-full bg-[#fffffe] z-50 shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto ${isOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full">
@@ -440,7 +438,7 @@ const QuizResultDetail = ({ submissionId, onClose }) => {
                                               >
                                                 {cleanAnswerText}
                                               </p>
-                                              
+
                                               {/* Answer image */}
                                               {answer.image && (
                                                 <img

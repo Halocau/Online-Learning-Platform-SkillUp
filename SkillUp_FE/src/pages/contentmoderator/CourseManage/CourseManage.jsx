@@ -76,57 +76,51 @@ export default function CourseManagement() {
           <div className="flex gap-1 p-1">
             <button
               onClick={() => setActiveTab("public")}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeTab === "public"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${activeTab === "public"
+                ? "bg-blue-600 text-white shadow-sm"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
               Đã công khai
               <span
-                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                  activeTab === "public"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${activeTab === "public"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+                  }`}
               >
                 {publicCount}
               </span>
             </button>
             <button
               onClick={() => setActiveTab("pending")}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeTab === "pending"
-                  ? "bg-amber-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${activeTab === "pending"
+                ? "bg-amber-600 text-white shadow-sm"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
               Đang chờ duyệt
               <span
-                className={`ml-2 px-2 py-0. 5 rounded-full text-xs ${
-                  activeTab === "pending"
-                    ? "bg-amber-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
+                className={`ml-2 px-2 py-0. 5 rounded-full text-xs ${activeTab === "pending"
+                  ? "bg-amber-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+                  }`}
               >
                 {pendingCount}
               </span>
             </button>
             <button
               onClick={() => setActiveTab("reports")}
-              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-                activeTab === "reports"
-                  ? "bg-red-600 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${activeTab === "reports"
+                ? "bg-red-600 text-white shadow-sm"
+                : "text-gray-600 hover:bg-gray-100"
+                }`}
             >
               Báo cáo khóa học
               <span
-                className={`ml-2 px-2 py-0. 5 rounded-full text-xs ${
-                  activeTab === "reports"
-                    ? "bg-red-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
+                className={`ml-2 px-2 py-0. 5 rounded-full text-xs ${activeTab === "reports"
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+                  }`}
               >
                 {reportCount}
               </span>

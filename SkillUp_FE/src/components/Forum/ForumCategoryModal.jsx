@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Modal, Table, Input, Select, Tag, Button, Popconfirm, message } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined, CheckOutlined } from "@ant-design/icons";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 import { API_BASE_URL } from "@/config/api";
 import { toast } from "react-toastify";
 

@@ -1,5 +1,5 @@
 // src/components/ui/badge.jsx
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 export function Badge({ children, variant = "default", className = "" }) {
   const variants = {

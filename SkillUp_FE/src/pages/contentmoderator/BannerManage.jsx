@@ -18,7 +18,7 @@ import {
 import { Image, Switch, Spin } from "antd";
 import { PlusCircle } from "lucide-react";
 import Table from "@/components/common/Table";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 import { API_BASE_URL } from "@/config/api";
 import { toast } from "react-toastify";
 import BannerEditModal from "@/components/Banner/BannerEditModal";

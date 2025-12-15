@@ -1,6 +1,6 @@
 // src/pages/Lecturer/components/tabs/PendingCoursesTab.jsx
 import { Lock, Info, Eye } from "lucide-react";
-import BaseCourseTab from "./BaseCourseTab";
+import BaseCourseTab from "./BaseCourseTab.jsx";
 
 function PendingCoursesTab({ courses, onEdit, onDelete, onPreview, deletingId }) {
   const pendingCourses = courses.filter((c) => c.status === "Pending");

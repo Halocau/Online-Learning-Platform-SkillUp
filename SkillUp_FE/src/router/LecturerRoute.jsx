@@ -1,13 +1,13 @@
 // src/routes/LecturerRoutes.jsx
 import { Routes, Route } from "react-router-dom";
-import LecturerLayout from "@/layouts/LecturerLayout";
-import ProtectedRoute from "./ProtectedRoute";
-import ApplyCV from "@/pages/Lecturer/ApplyCV";
-import LecturerDashboard from "@/pages/Lecturer/LecturerBoard/LecturerDashboard";
-import MyApplications from "@/pages/Lecturer/MyApplications";
-import ManageCourses from "@/pages/Lecturer/ManageCourses";
-import ManageQuestionBank from "@/pages/Lecturer/ManageQuestionBank";
-import LecturerTicketList from "@/pages/Lecturer/LecturerTicketList";
+import LecturerLayout from "@/layouts/LecturerLayout.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
+import ApplyCV from "@/pages/Lecturer/ApplyCV.jsx";
+import LecturerDashboard from "@/pages/Lecturer/LecturerBoard/LecturerDashboard.jsx";
+import MyApplications from "@/pages/Lecturer/MyApplications.jsx";
+import ManageCourses from "@/pages/Lecturer/ManageCourses.jsx";
+import ManageQuestionBank from "@/pages/Lecturer/ManageQuestionBank.jsx";
+import LecturerTicketList from "@/pages/Lecturer/LecturerTicketList.jsx";
 import LecturerTicketDetail from "@/pages/Lecturer/LecturerTicketDetail";
 import CoursePreview from "@/pages/Lecturer/Course/CoursePreview";
 import ManageStudents from "@/pages/Lecturer/LecturerBoard/ManageStudents";

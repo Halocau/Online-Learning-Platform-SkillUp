@@ -1,5 +1,5 @@
 // src/api/courseAPI.js
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 
 const API_BASE_URL = "/Course";
 

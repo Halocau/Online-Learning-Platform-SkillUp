@@ -1,13 +1,13 @@
 // src/routes/ContentModeratorRoutes.jsx
 import { Routes, Route } from "react-router-dom";
-import ModeratorLayout from "../layouts/ContentModeratorLayout";
-import ProtectedRoute from "./ProtectedRoute";
+import ModeratorLayout from "../layouts/ContentModeratorLayout.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
-import ContentModeratorDashboard from "../pages/contentmoderator/ContentModDashboard";
-import NewsManage from "@/pages/contentmoderator/NewsFeature/NewsManage";
-import CommentReport from "@/pages/contentmoderator/CommentReport";
-import CreateNews from "@/pages/contentmoderator/NewsFeature/CreateNews";
-import EditNews from "@/pages/contentmoderator/NewsFeature/EditNews";
+import ContentModeratorDashboard from "../pages/contentmoderator/ContentModDashboard.jsx";
+import NewsManage from "@/pages/contentmoderator/NewsFeature/NewsManage.jsx";
+import CommentReport from "@/pages/contentmoderator/CommentReport.jsx";
+import CreateNews from "@/pages/contentmoderator/NewsFeature/CreateNews.jsx";
+import EditNews from "@/pages/contentmoderator/NewsFeature/EditNews.jsx";
 import NewsDetailMod from "@/pages/contentmoderator/NewsFeature/DetailNewsMod";
 import CourseManage from "@/pages/contentmoderator/CourseManage/CourseManage";
 import CategoryManage from "@/pages/contentmoderator/CategoryManage";

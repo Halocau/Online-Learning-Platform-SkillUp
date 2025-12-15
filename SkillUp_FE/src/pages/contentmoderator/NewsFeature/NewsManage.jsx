@@ -19,11 +19,11 @@ import {
 } from "@heroicons/react/24/outline";
 import { Modal, Spin } from "antd";
 import Table from "@/components/common/Table";
-import { getAllNews, deleteNews } from "../../../api/newsAPI";
+import { getAllNews, deleteNews } from "@/api/newsAPI";
 import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { toast } from "sonner";
-import NewsDetailModal from "./DetailNewsMod";
+import NewsDetailModal from "./DetailNewsMod.jsx";
 import { extractCleanText, extractFirstImage } from "@/utils/htmlUtils";
 
 export default function NewsManage() {

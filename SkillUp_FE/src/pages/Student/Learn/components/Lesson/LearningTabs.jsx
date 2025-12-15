@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MessageSquare, FileText, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
-import CommentSection from "./CommentSection";
+import { cn } from "@/lib/utils.js";
+import CommentSection from "./CommentSection.jsx";
 
 const LearningTabs = ({ lessonId, item, description }) => {
   const [activeTab, setActiveTab] = useState("discussion");

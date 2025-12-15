@@ -34,7 +34,7 @@ import { modPostAPI } from "@/api/modPostAPI";
 import { categoryApi } from "@/api/forumCategory";
 import ForumCategoryModal from "@/components/Forum/ForumCategoryModal";
 import { toast } from "react-toastify";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 import { API_BASE_URL } from "@/config/api";
 import { PlusCircle } from "lucide-react";
 
@@ -285,8 +285,8 @@ export default function ForumManage() {
         return (
           <span
             className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isActive
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
               }`}
           >
             {isActive ? "Hoạt động" : "Vô hiệu hóa"}

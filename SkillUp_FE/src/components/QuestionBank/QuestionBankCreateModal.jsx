@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select, Tooltip } from "antd";
 import { PlusOutlined, MinusCircleOutlined, UploadOutlined, CheckOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 import { API_BASE_URL } from "@/config/api";
-import RichTextEditor from "../Editor/RichText";
+import RichTextEditor from "../Editor/RichText.jsx";
 
 const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
     const [fileList, setFileList] = useState([]);

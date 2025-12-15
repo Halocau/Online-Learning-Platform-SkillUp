@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { message, Card, Input, Button, Space } from "antd";
 import { ArrowLeft } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
-import { getAllNews, updateNews } from "../../../api/newsAPI";
+import { getAllNews, updateNews } from "@/api/newsAPI";
 import { axiosInstance, API_ENDPOINTS, TINYMCE_API_KEY } from "@/config/api";
 import { toast } from "sonner";
 

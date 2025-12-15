@@ -1,16 +1,16 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { decodeToken } from "@/lib/auth-utils";
+import { decodeToken } from "@/lib/auth-utils.js";
 
 function LecturerPendingRoute({ children }) {
   const location = useLocation();
   const accessToken = localStorage.getItem("accessToken");
-  
+
   if (!accessToken) {
     return <Navigate to="/login" replace />;
   }
 
   const decoded = decodeToken(accessToken);
-  
+
   if (!decoded || decoded.roleName !== "Lecturer") {
     return <Navigate to="/login" replace />;
   }

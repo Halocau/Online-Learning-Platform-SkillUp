@@ -1,6 +1,6 @@
 // src/api/lecturerDashboardAPI.js
 
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 
 export const lecturerDashboardAPI = {
   getViewDashboard: async () => {

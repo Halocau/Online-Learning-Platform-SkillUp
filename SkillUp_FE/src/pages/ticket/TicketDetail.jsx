@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '@/components/Layout/Header';
-import Footer from '@/components/Layout/Footer';
+import Header from '@/components/Layout/Header.jsx';
+import Footer from '@/components/Layout/Footer.jsx';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
-import CreateTicketModal from '../../components/Ticket/CreateTicketModal';
-import UpdateTicketModal from '../../components/Ticket/UpdateTicketModal';
-import TicketFilterPanel from '@/components/Ticket/TicketFilterPanel';
+import CreateTicketModal from '../../components/Ticket/CreateTicketModal.jsx';
+import UpdateTicketModal from '../../components/Ticket/UpdateTicketModal.jsx';
+import TicketFilterPanel from '@/components/Ticket/TicketFilterPanel.jsx';
 
 function TicketDetail() {
     const { ticketCode } = useParams();

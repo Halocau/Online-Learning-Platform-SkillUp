@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import { decodeToken } from "@/lib/auth-utils";
-import LecturerSidebar from "@/components/Layout/LecturerSidebar";
-import LecturerTopbar from "@/components/Layout/LecturerTopBar";
+import { decodeToken } from "@/lib/auth-utils.js";
+import LecturerSidebar from "@/components/Layout/LecturerSidebar.jsx";
+import LecturerTopbar from "@/components/Layout/LecturerTopbar.jsx";
 
 function LecturerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -13,7 +13,7 @@ function LecturerLayout() {
     const accessToken = localStorage.getItem("accessToken");
     const userData = JSON.parse(localStorage.getItem("user"));
     setUser(userData);
-    
+
     if (accessToken) {
       const decoded = decodeToken(accessToken);
       const status = decoded?.status || decoded?.Status;

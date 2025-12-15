@@ -1,4 +1,4 @@
-import ModAllTicket from "../Ticket/ModAllTicket";
+import ModAllTicket from "../ticket/ModAllTicket.jsx";
 
 const TicketManage = () => {
     return (

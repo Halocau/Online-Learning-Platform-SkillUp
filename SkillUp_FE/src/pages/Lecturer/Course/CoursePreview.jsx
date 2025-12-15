@@ -10,7 +10,7 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 import { courseAPI } from "@/api/courseAPI";
 import { getQuizById } from "@/api/quizAPI";
 
@@ -316,11 +316,11 @@ function CoursePreview() {
                                           className={cn(
                                             "w-6 h-6 rounded flex items-center justify-center text-xs font-semibold flex-shrink-0",
                                             color === "sky" &&
-                                              "bg-sky-100 text-sky-700",
+                                            "bg-sky-100 text-sky-700",
                                             color === "amber" &&
-                                              "bg-amber-100 text-amber-700",
+                                            "bg-amber-100 text-amber-700",
                                             color === "violet" &&
-                                              "bg-violet-100 text-violet-700"
+                                            "bg-violet-100 text-violet-700"
                                           )}
                                         >
                                           {index + 1}
@@ -334,11 +334,11 @@ function CoursePreview() {
                                               className={cn(
                                                 "text-xs px-1.5 py-0.5 rounded",
                                                 color === "sky" &&
-                                                  "bg-sky-100 text-sky-700",
+                                                "bg-sky-100 text-sky-700",
                                                 color === "amber" &&
-                                                  "bg-amber-100 text-amber-700",
+                                                "bg-amber-100 text-amber-700",
                                                 color === "violet" &&
-                                                  "bg-violet-100 text-violet-700"
+                                                "bg-violet-100 text-violet-700"
                                               )}
                                             >
                                               {getItemType(item)}
@@ -416,7 +416,7 @@ function CoursePreview() {
                       selectedItem.lessonType === "Video" && (
                         <div className="bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center">
                           {selectedItem.assets?.[0]?.url &&
-                          selectedItem.assets[0].url !== "default-url" ? (
+                            selectedItem.assets[0].url !== "default-url" ? (
                             <video
                               src={selectedItem.assets[0].url}
                               controls
@@ -478,7 +478,7 @@ function CoursePreview() {
 
                             {/* Quiz Questions */}
                             {previewQuiz.questions &&
-                            previewQuiz.questions.length > 0 ? (
+                              previewQuiz.questions.length > 0 ? (
                               <div className="space-y-6">
                                 {previewQuiz.questions
                                   .sort(
@@ -515,9 +515,8 @@ function CoursePreview() {
                                             >
                                               <input
                                                 type="radio"
-                                                name={`question_${
-                                                  q.questionId || idx
-                                                }`}
+                                                name={`question_${q.questionId || idx
+                                                  }`}
                                                 value={ans.answerId}
                                                 disabled
                                                 className="w-4 h-4"
