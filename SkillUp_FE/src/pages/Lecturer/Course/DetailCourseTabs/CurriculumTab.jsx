@@ -62,7 +62,68 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   }, [course]);
 
   const displayCourse = localCourse || course;
+  const validateSection = (section) => {
+    const errors = [];
 
+    if (!section.items || section.items.length === 0) {
+      errors.push("Chương phải có ít nhất một bài học hoặc quiz");
+      return { isValid: false, errors };
+    }
+
+    const quizzes = section.items.filter((item) => item.kind === "Quiz");
+    const emptyQuizzes = quizzes.filter(
+      (quiz) => !quiz.questions || quiz.questions.length === 0
+    );
+
+    if (emptyQuizzes.length > 0) {
+      emptyQuizzes.forEach((quiz) => {
+        errors.push(`Quiz "${quiz.title}" cần ít nhất 1 câu hỏi`);
+      });
+      return { isValid: false, errors };
+    }
+
+    return { isValid: true, errors: [] };
+  };
+
+  const getCourseValidation = () => {
+    if (!displayCourse?.sections || displayCourse.sections.length === 0) {
+      return {
+        isValid: false,
+        errors: ["Khóa học phải có ít nhất một chương"],
+        sectionValidations: {},
+      };
+    }
+
+    const sectionValidations = {};
+    let allValid = true;
+    const globalErrors = [];
+
+    displayCourse.sections.forEach((section) => {
+      const validation = validateSection(section);
+      sectionValidations[section.id] = validation;
+      if (!validation.isValid) {
+        allValid = false;
+      }
+    });
+
+    // Check if at least one section has content
+    const hasAnyContent = displayCourse.sections.some(
+      (section) => section.items && section.items.length > 0
+    );
+
+    if (!hasAnyContent) {
+      globalErrors.push("Ít nhất một chương phải có nội dung");
+      allValid = false;
+    }
+
+    return {
+      isValid: allValid,
+      errors: globalErrors,
+      sectionValidations,
+    };
+  };
+
+  const validation = getCourseValidation();
   // Confirm modal helpers
   const openConfirmModal = (config) => {
     setConfirmModal({
@@ -857,6 +918,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         courseId={courseId}
         onAddSectionClick={handleAddSectionClick}
         onUpdate={onUpdate}
+        validation={validation}
       />
     </div>
   );
@@ -987,6 +1049,7 @@ function SectionsList(props) {
     courseId,
     onAddSectionClick,
     onUpdate,
+    validation,
   } = props;
 
   if (!sections.length) {
@@ -1127,7 +1190,6 @@ function SectionsList(props) {
                       <SectionCard
                         section={section}
                         index={index}
-                        // ... pass all your existing props ...
                         isExpanded={expandedSections[section.id]}
                         onToggle={() => onToggleSection(section.id)}
                         onEdit={onEditSection}
@@ -1158,6 +1220,7 @@ function SectionsList(props) {
                         setEditingLessonId={setEditingLessonId}
                         editingQuizId={editingQuizId}
                         setEditingQuizId={setEditingQuizId}
+                        validation={validation.sectionValidations[section.id]}
                         courseId={courseId}
                         onUpdate={onUpdate}
                       />

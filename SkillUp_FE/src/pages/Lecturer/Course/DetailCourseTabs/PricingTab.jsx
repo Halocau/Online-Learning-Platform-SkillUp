@@ -6,13 +6,14 @@ import { axiosInstance } from "@/config/api";
 import { toast } from "react-toastify";
 import { courseAPI } from "@/api/courseAPI";
 
+const MIN_PAID_PRICE = 2000;
+
 function PricingTab({ course, courseId, onUpdate }) {
-  // default to 'notset' so -1 is represented properly (neither free nor paid)
-  const [priceType, setPriceType] = useState("notset"); // 'notset' | 'free' | 'paid'
+  const [priceType, setPriceType] = useState("notset");
   const [price, setPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [currentPrice, setCurrentPrice] = useState(null); // can be -1 (not priced), 0, >0
+  const [currentPrice, setCurrentPrice] = useState(null);
 
   // Fetch fresh course data when component mounts or courseId changes
   useEffect(() => {
@@ -46,26 +47,25 @@ function PricingTab({ course, courseId, onUpdate }) {
   };
 
   const updatePriceState = (coursePrice) => {
-    // handle sentinel -1 (not yet priced)
     if (coursePrice === -1) {
       setCurrentPrice(-1);
       setPriceType("notset");
-      setPrice(0);
+      setPrice(MIN_PAID_PRICE);
       return;
     }
 
-    // otherwise treat normally (null/undefined -> 0)
     const priceValue = typeof coursePrice === "number" ? coursePrice : 0;
     setCurrentPrice(priceValue);
     setPriceType(priceValue > 0 ? "paid" : "free");
-    setPrice(priceValue);
+    setPrice(priceValue > 0 ? priceValue : MIN_PAID_PRICE);
   };
 
   const handleSavePrice = async () => {
     try {
-      // Guard: require user to choose a price type
       if (priceType === "notset") {
-        toast.error("Vui lòng chọn loại giá (Miễn phí hoặc Trả phí) trước khi lưu");
+        toast.error(
+          "Vui lòng chọn loại giá (Miễn phí hoặc Trả phí) trước khi lưu"
+        );
         return;
       }
 
@@ -73,8 +73,15 @@ function PricingTab({ course, courseId, onUpdate }) {
 
       const finalPrice = priceType === "free" ? 0 : price;
 
-      if (priceType === "paid" && (!finalPrice || finalPrice <= 0)) {
-        toast.error("Vui lòng nhập giá hợp lệ cho khóa học trả phí");
+      if (
+        priceType === "paid" &&
+        (!finalPrice || finalPrice < MIN_PAID_PRICE)
+      ) {
+        toast.error(
+          `Vui lòng nhập giá tối thiểu ${MIN_PAID_PRICE.toLocaleString(
+            "vi-VN"
+          )}đ cho khóa học trả phí`
+        );
         return;
       }
 
@@ -118,7 +125,6 @@ function PricingTab({ course, courseId, onUpdate }) {
 
   const hasChanges = () => {
     if (currentPrice === null) return false;
-    // compute newPrice respecting 'notset'
     const newPrice =
       priceType === "free" ? 0 : priceType === "paid" ? price : -1;
     return newPrice !== currentPrice;
@@ -169,29 +175,34 @@ function PricingTab({ course, courseId, onUpdate }) {
                   Giá hiện tại
                 </p>
 
-                {/* sentinel -1 -> not priced */}
                 {currentPrice === -1 && (
-                  <p className="text-xs text-green-600 mt-2">
-                    Khóa học chưa được định giá
-                  </p>
+                  <>
+                    <p className="text-3xl font-bold text-green-900">
+                      {formatPrice(currentPrice)}
+                    </p>
+                    <p className="text-xs text-green-600 mt-2">
+                      Khóa học chưa được định giá
+                    </p>
+                  </>
                 )}
 
                 {/* priced or zero */}
                 {currentPrice !== -1 && (
-                  <p className="text-3xl font-bold text-green-900">
-                    {formatPrice(currentPrice)}
-                  </p>
-                )}
-
-                {currentPrice !== -1 && currentPrice === 0 && (
-                  <p className="text-xs text-green-600 mt-2">
-                    Học viên có thể đăng ký miễn phí
-                  </p>
-                )}
-                {currentPrice !== -1 && currentPrice > 0 && (
-                  <p className="text-xs text-green-600 mt-2">
-                    Học viên cần thanh toán để đăng ký
-                  </p>
+                  <>
+                    <p className="text-3xl font-bold text-green-900">
+                      {formatPrice(currentPrice)}
+                    </p>
+                    {currentPrice === 0 && (
+                      <p className="text-xs text-green-600 mt-2">
+                        Học viên có thể đăng ký miễn phí
+                      </p>
+                    )}
+                    {currentPrice > 0 && (
+                      <p className="text-xs text-green-600 mt-2">
+                        Học viên cần thanh toán để đăng ký
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
               <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
@@ -206,6 +217,10 @@ function PricingTab({ course, courseId, onUpdate }) {
             <div className="text-sm text-blue-700">
               <p className="font-medium mb-1">Lưu ý về giá khóa học:</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>
+                  Khóa học trả phí phải có giá tối thiểu{" "}
+                  {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ
+                </li>
                 <li>
                   Khóa học trả phí nên có giá trị rõ ràng và nội dung chất lượng
                 </li>
@@ -253,7 +268,11 @@ function PricingTab({ course, courseId, onUpdate }) {
                     ? "border-green-500 bg-green-50 shadow-md"
                     : "border-gray-200 hover:border-green-300"
                 }`}
-                onClick={() => setPriceType("paid")}
+                onClick={() => {
+                  setPriceType("paid");
+                  // Set to minimum if current price is 0
+                  if (price === 0) setPrice(MIN_PAID_PRICE);
+                }}
               >
                 <div className="flex items-center gap-3">
                   <input
@@ -266,7 +285,7 @@ function PricingTab({ course, courseId, onUpdate }) {
                   <div>
                     <p className="font-semibold text-gray-900">Trả phí</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Yêu cầu thanh toán
+                      Tối thiểu {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ
                     </p>
                   </div>
                 </div>
@@ -275,12 +294,13 @@ function PricingTab({ course, courseId, onUpdate }) {
             {/* show hint when notset */}
             {priceType === "notset" && (
               <p className="text-xs text-gray-500 mt-2">
-                Khóa học chưa được định giá. Vui lòng chọn "Miễn phí" hoặc "Trả phí".
+                Khóa học chưa được định giá. Vui lòng chọn "Miễn phí" hoặc "Trả
+                phí".
               </p>
             )}
           </div>
 
-          {/* Price Input - Only show when paid */}
+          {/* Price Input  */}
           {priceType === "paid" && (
             <div className="mb-5">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -289,18 +309,20 @@ function PricingTab({ course, courseId, onUpdate }) {
               <div className="relative">
                 <input
                   type="number"
-                  placeholder="Nhập giá khóa học (ví dụ: 100000)"
+                  placeholder={`Nhập giá khóa học (tối thiểu ${MIN_PAID_PRICE.toLocaleString(
+                    "vi-VN"
+                  )}đ)`}
                   value={price || ""}
                   onChange={(e) => setPrice(Number(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                  min="0"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus: ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                  min={MIN_PAID_PRICE}
                   step="1000"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                   đ
                 </div>
               </div>
-              {price > 0 && (
+              {price >= MIN_PAID_PRICE && (
                 <p className="text-sm text-gray-500 mt-2">
                   Giá hiển thị:{" "}
                   <span className="font-semibold text-gray-700">
@@ -308,9 +330,10 @@ function PricingTab({ course, courseId, onUpdate }) {
                   </span>
                 </p>
               )}
-              {priceType === "paid" && (!price || price <= 0) && (
+              {priceType === "paid" && (!price || price < MIN_PAID_PRICE) && (
                 <p className="text-sm text-red-500 mt-2">
-                  Vui lòng nhập giá lớn hơn 0 cho khóa học trả phí
+                  Vui lòng nhập giá tối thiểu{" "}
+                  {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ cho khóa học trả phí
                 </p>
               )}
             </div>
@@ -323,7 +346,7 @@ function PricingTab({ course, courseId, onUpdate }) {
                 Gợi ý mức giá phổ biến:
               </p>
               <div className="flex flex-wrap gap-2">
-                {[99000, 199000, 299000, 499000, 999000].map(
+                {[50000, 99000, 199000, 299000, 499000, 999000].map(
                   (suggestedPrice) => (
                     <button
                       key={suggestedPrice}
@@ -343,7 +366,7 @@ function PricingTab({ course, courseId, onUpdate }) {
           {hasChanges() && (
             <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800">
-                ⚠️ Bạn chưa lưu giá khóa học. Nhấn nút bên dưới để lưu thay đổi.
+                Bạn chưa lưu giá khóa học. Nhấn nút bên dưới để lưu thay đổi.
               </p>
             </div>
           )}
@@ -355,7 +378,7 @@ function PricingTab({ course, courseId, onUpdate }) {
               loading ||
               refreshing ||
               priceType === "notset" ||
-              (priceType === "paid" && (!price || price <= 0))
+              (priceType === "paid" && (!price || price < MIN_PAID_PRICE))
             }
             className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3"
           >

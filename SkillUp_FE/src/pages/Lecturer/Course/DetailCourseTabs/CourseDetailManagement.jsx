@@ -184,7 +184,7 @@ function CourseDetailManagement() {
       case "pricing":
         return completionStatus.pricing;
       case "voucher":
-        return true; // Voucher is optional
+        return true;
       default:
         return false;
     }
@@ -199,7 +199,7 @@ function CourseDetailManagement() {
     return Math.round((completedSteps / requiredTabs.length) * 100);
   };
 
-  // Handle updates from child tabs - refresh immediately
+  // Handle updates from child tabs
   const handleTabUpdate = async (options = {}) => {
     try {
       // Reload course data

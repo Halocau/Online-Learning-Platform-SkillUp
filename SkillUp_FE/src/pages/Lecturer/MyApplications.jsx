@@ -229,7 +229,7 @@ function MyApplications() {
                         </Button>
                       )}
 
-                      {app.status === "Pending" && (
+                      {/* {app.status === "Pending" && (
                         <Button
                           onClick={() =>
                             navigate(`/lecturer/application/${app.id}/edit`)
@@ -238,7 +238,7 @@ function MyApplications() {
                         >
                           Chỉnh sửa
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   </CardContent>
                 </Card>
