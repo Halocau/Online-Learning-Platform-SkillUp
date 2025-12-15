@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Skillup@490
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    restart: unless-stopped
+
+  skillup_api:
+    build:
+      context: ./SkillUp_BE/SkillUp
+      dockerfile: Dockerfile
+    container_name: skillup_api
+    depends_on:
+      - mssql
+    ports:
+      - "5120:5120"          # BE .NET chạy trên 5120
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # DB MỚI: SQL Server chạy trong container 'mssql'
+      - ConnectionStrings__DefaultConnection=Server=mssql,1433;Database=SkillUpDB;User Id=sa;Password=Skillup@490;TrustServerCertificate=True;
+    restart: unless-stopped
+
+  gensub:
+    build:
+      context: ./SkillUp_Py
+      dockerfile: Dockerfile
+    container_name: gensub
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./SkillUp_Py/upload:/app/upload
+      - ./SkillUp_Py/logs:/app/logs
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-small}
+      - DEVICE=${DEVICE:-cpu}
+      - COMPUTE_TYPE=${COMPUTE_TYPE:-int8}
+      - LANGUAGE=${LANGUAGE:-vi}
+      - MAX_FILE_MB=${MAX_FILE_MB:-2048}
+      - GEMINI_API_KEY_1=${GEMINI_API_KEY_1:-}
+      - GEMINI_API_KEY_2=${GEMINI_API_KEY_2:-}
+      - GEMINI_API_KEY_3=${GEMINI_API_KEY_3:-}
+    restart: unless-stopped
+
+volumes:
+  mssql_data:
