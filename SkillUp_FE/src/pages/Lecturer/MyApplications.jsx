@@ -47,7 +47,7 @@ function MyApplications() {
       if (response.data.code === 200) {
         // API trả về data là array lồng 2 lần [[{...}]]
         const rawData = response.data.data[0] || [];
-        
+
         // Map API fields sang component fields
         const mappedApplications = rawData.map(app => ({
           id: app.id,
@@ -66,7 +66,7 @@ function MyApplications() {
           reviewDate: app.updatedAt,
           appliedDate: app.createdAt
         }));
-        
+
         setApplications(mappedApplications);
       }
     } catch (error) {
@@ -100,6 +100,13 @@ function MyApplications() {
     setViewDialog({ open: false, url: null, type: null });
   };
 
+  // Chỉ cho phép hiển thị nút "Nộp đơn mới" / "Nộp đơn ngay" khi:
+  // - Chưa có đơn nào
+  // - Hoặc đơn mới nhất có status = "Rejected"
+  const latestStatus = applications[0]?.status;
+  const canCreateNew =
+    applications.length === 0 || latestStatus === "Rejected";
+
   return (
     <>
       <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -113,12 +120,14 @@ function MyApplications() {
                 Quản lý các đơn ứng tuyển giảng viên
               </p>
             </div>
-            <Button
-              onClick={() => navigate("/lecturer/apply-cv")}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-900"
-            >
-              Nộp đơn mới
-            </Button>
+            {canCreateNew && (
+              <Button
+                onClick={() => navigate("/lecturer/apply-cv")}
+                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900"
+              >
+                Nộp đơn mới
+              </Button>
+            )}
           </div>
 
           {applications.length === 0 ? (
@@ -131,12 +140,14 @@ function MyApplications() {
                 <p className="text-gray-600 mb-6">
                   Bạn chưa nộp đơn ứng tuyển giảng viên
                 </p>
-                <Button
-                  onClick={() => navigate("/lecturer/apply-cv")}
-                  className="bg-yellow-400 hover:bg-yellow-500 text-gray-900"
-                >
-                  Nộp đơn ngay
-                </Button>
+                {canCreateNew && (
+                  <Button
+                    onClick={() => navigate("/lecturer/apply-cv")}
+                    className="bg-yellow-400 hover:bg-yellow-500 text-gray-900"
+                  >
+                    Nộp đơn ngay
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -221,22 +232,11 @@ function MyApplications() {
                       {app.cvUrl && (
                         <Button
                           variant="outline"
-                          onClick={() => handleViewFile(app.cvUrl, 'pdf')}
+                          onClick={() => handleViewFile(app.cvUrl, "pdf")}
                           className="flex-1 gap-2 hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-600 transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                           Xem CV
-                        </Button>
-                      )}
-
-                      {app.status === "Pending" && (
-                        <Button
-                          onClick={() =>
-                            navigate(`/lecturer/application/${app.id}/edit`)
-                          }
-                          className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold"
-                        >
-                          Chỉnh sửa
                         </Button>
                       )}
                     </div>
@@ -266,7 +266,7 @@ function MyApplications() {
               )}
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="w-full h-[calc(95vh-80px)] overflow-auto">
             {viewDialog.type === 'pdf' ? (
               <iframe
