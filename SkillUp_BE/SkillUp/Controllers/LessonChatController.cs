@@ -15,7 +15,6 @@ namespace SkillUp.Controllers
     {
         private readonly ILessonChatService _lessonChatService;
         private readonly ILessonRepository _lessonRepository;
-        private readonly ICourseRepository _courseRepository;
         private readonly IStudentRepository _studentRepository;
         private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly ICurrentUserService _currentUserService;
@@ -23,14 +22,12 @@ namespace SkillUp.Controllers
         public LessonChatController(
             ILessonChatService lessonChatService,
             ILessonRepository lessonRepository,
-            ICourseRepository courseRepository,
             IStudentRepository studentRepository,
             IEnrollmentRepository enrollmentRepository,
             ICurrentUserService currentUserService)
         {
             _lessonChatService = lessonChatService;
             _lessonRepository = lessonRepository;
-            _courseRepository = courseRepository;
             _studentRepository = studentRepository;
             _enrollmentRepository = enrollmentRepository;
             _currentUserService = currentUserService;
@@ -85,24 +82,13 @@ namespace SkillUp.Controllers
                 });
             }
 
-            if (lesson.Section == null)
+            var course = lesson.Section?.Course;
+            if (course == null)
             {
                 return BadRequest(new APIReturn
                 {
                     code = 400,
                     message = "Bài học không thuộc bất kỳ khóa học nào.",
-                    data = new List<object>()
-                });
-            }
-
-            var courseId = lesson.Section.CourseId;
-            var course = await _courseRepository.GetCourseByIdAsync(courseId);
-            if (course == null)
-            {
-                return NotFound(new APIReturn
-                {
-                    code = 404,
-                    message = "Không tìm thấy khóa học.",
                     data = new List<object>()
                 });
             }
@@ -117,7 +103,7 @@ namespace SkillUp.Controllers
                 });
             }
 
-            var enrolled = await _enrollmentRepository.IsStudentEnrolledInCourseAsync(student.Id, courseId);
+            var enrolled = await _enrollmentRepository.IsStudentEnrolledInCourseAsync(student.Id, course.Id);
             if (!enrolled)
             {
                 return StatusCode(403, new APIReturn

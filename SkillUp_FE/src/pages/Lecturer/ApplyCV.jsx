@@ -18,45 +18,58 @@ import {
   Briefcase,
   GraduationCap,
   Award,
-  CheckCircle2,
   X,
 } from "lucide-react";
 
 function ApplyCV() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [hasApplication, setHasApplication] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [canApply, setCanApply] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     profession: "",
     description: "",
     cvFile: null,
-    degreeFiles: [], 
+    degreeFiles: [],
   });
 
-  // Kiểm tra xem đã có đơn ứng tuyển chưa
+  // Chỉ cho phép tạo đơn mới nếu:
+  // - Chưa có đơn nào
+  // - Hoặc đơn mới nhất có status = "Rejected"
   useEffect(() => {
+    const checkExistingApplication = async () => {
+      try {
+        setCheckingStatus(true);
+        const response = await axiosInstance.get(
+          "/LecturerApplication/my-applications"
+        );
+
+        if (response.data.code === 200) {
+          const rawData = response.data.data[0] || [];
+
+          if (rawData.length === 0) {
+            setCanApply(true);
+          } else {
+            const latest = rawData[0];
+            const status = (latest.status || "").trim().toLowerCase();
+            setCanApply(status === "rejected");
+          }
+        } else {
+          // Nếu API trả về khác 200, cho phép nộp để tránh kẹt người dùng
+          setCanApply(true);
+        }
+      } catch (error) {
+        console.error("Check application error:", error);
+        // Lỗi khi kiểm tra: cho phép nộp để không khóa người dùng
+        setCanApply(true);
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+
     checkExistingApplication();
   }, []);
-
-  const checkExistingApplication = async () => {
-    try {
-      setCheckingStatus(true);
-      const response = await axiosInstance.get(
-        "/LecturerApplication/my-applications"
-      );
-
-      if (response.data.code === 200 && response.data.data[0]?.length > 0) {
-        // Đã có đơn ứng tuyển
-        setHasApplication(true);
-      }
-    } catch (error) {
-      console.error("Check application error:", error);
-    } finally {
-      setCheckingStatus(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -95,7 +108,7 @@ function ApplyCV() {
 
   const handleDegreeFilesChange = (e) => {
     const files = Array.from(e.target.files);
-    
+
     if (files.length === 0) return;
 
     // Validate từng file
@@ -160,7 +173,7 @@ function ApplyCV() {
       submitData.append("Profession", formData.profession);
       submitData.append("Description", formData.description || "");
       submitData.append("CvFile", formData.cvFile);
-      
+
       // Append nhiều ảnh degree
       formData.degreeFiles.forEach((file) => {
         submitData.append("DegreeFile", file);
@@ -178,8 +191,8 @@ function ApplyCV() {
 
       if (response.data.code === 200) {
         toast.success("Nộp CV thành công! Chúng tôi sẽ liên hệ với bạn sớm.");
-        setHasApplication(true);
-        // Ở lại trang này để hiển thị trạng thái đã nộp đơn
+        // Sau khi nộp xong, quay về danh sách đơn
+        navigate("/lecturer/applications");
       }
     } catch (error) {
       console.error("Apply CV error:", error);
@@ -191,65 +204,69 @@ function ApplyCV() {
     }
   };
 
-
-  if (hasApplication) {
+  if (checkingStatus) {
     return (
-      <>
-     
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-4">
-          <Card className="w-full max-w-2xl shadow-2xl">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-12 h-12 text-green-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-600">Đang kiểm tra trạng thái đơn ứng tuyển...</p>
+      </div>
+    );
+  }
+
+  if (!canApply) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#fff8e1] via-[#fffffe] to-[#e3f6f5] flex items-center justify-center px-4">
+        <div className="w-full max-w-3xl">
+          <Card className="shadow-2xl border-0 overflow-hidden">
+            <div className="h-2 w-full bg-gradient-to-r from-yellow-400 via-amber-300 to-emerald-300" />
+            <CardHeader className="text-center pb-4 pt-8">
+              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center shadow-inner">
+                <span className="text-3xl">ℹ️</span>
               </div>
-              <CardTitle className="text-3xl font-bold text-green-600">
-                Đơn ứng tuyển đã được gửi!
+              <CardTitle className="text-2xl md:text-3xl font-bold text-[#272343]">
+                Bạn đã có đơn đang chờ duyệt hoặc bị từ chối
               </CardTitle>
-              <CardDescription className="text-lg">
-                Chúng tôi đã nhận được CV của bạn
+              <CardDescription className="mt-2 text-base text-[#2d334a]">
+                Chỉ khi đơn gần nhất bị{" "}
+                <span className="font-semibold text-red-500">Từ chối</span> bạn mới
+                có thể nộp đơn mới.
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-center space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 className="font-semibold text-blue-900 mb-4 text-lg">
-                  Các bước tiếp theo:
-                </h3>
-                <ol className="list-decimal list-inside space-y-2 text-left text-blue-800">
-                  <li>
-                    Chúng tôi sẽ xem xét hồ sơ của bạn trong vòng 3-5 ngày làm
-                    việc
-                  </li>
-                  <li>Bạn sẽ nhận được email thông báo kết quả</li>
-                  <li>Nếu được chấp nhận, bạn sẽ được cấp quyền giảng viên</li>
-                </ol>
+            <CardContent className="px-6 pb-8">
+              <div className="bg-white rounded-2xl border border-dashed border-yellow-300/70 px-5 py-4 mb-6 text-left">
+                <p className="text-sm text-[#2d334a] leading-relaxed">
+                  <span className="font-semibold text-[#272343]">
+                    Gợi ý:
+                  </span>{" "}
+                  Hãy theo dõi email và trang &quot;Đơn ứng tuyển của tôi&quot; để
+                  biết khi nào đơn được duyệt hoặc bị từ chối. Nếu đơn bị từ chối,
+                  bạn có thể nộp lại với thông tin và hồ sơ được chuẩn bị tốt hơn.
+                </p>
               </div>
 
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => navigate("/lecturer/dashboard")}
-                  className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold"
-                >
-                  Bảng điều khiển
-                </Button>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
                 <Button
                   onClick={() => navigate("/lecturer/applications")}
-                  variant="outline"
-                  className="flex-1"
+                  className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-8 py-2 rounded-full"
                 >
-                  Xem đơn của tôi
+                  Xem đơn ứng tuyển của tôi
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/lecturer/dashboard")}
+                  className="border-[#272343]/10 text-[#272343] hover:bg-[#fff8e1] rounded-full px-8 py-2"
+                >
+                  Về bảng điều khiển
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
-    
-      </>
+      </div>
     );
   }
 
   return (
     <>
-  
       <div className="min-h-screen bg-gray-50 py-12 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header Section */}

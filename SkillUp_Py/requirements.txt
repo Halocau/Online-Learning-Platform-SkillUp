@@ -1,0 +1,25 @@
+# Core web framework
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+
+# Whisper transcription engine
+faster-whisper>=1.0.0
+
+# Environment variables management
+python-dotenv>=1.0.0
+
+# AI correction with Gemini
+google-generativeai>=0.3.0
+
+# HTTP client for remote downloads
+httpx>=0.27.0
+
+# File type validation (recommended for better security)
+python-magic>=0.4.27
+python-magic-bin>=0.4.14; sys_platform == 'win32'
+
+# Note: ffmpeg must be installed on system PATH (not a Python package)
+# Windows: https://www.gyan.dev/ffmpeg/builds/
+# Linux: sudo apt install ffmpeg
+# macOS: brew install ffmpeg

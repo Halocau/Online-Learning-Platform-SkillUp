@@ -1,6 +1,6 @@
 // src/components/ui/tooltip.jsx
 import React, { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 export function Tooltip({ children, text, position = "top", delay = 300 }) {
   const [visible, setVisible] = useState(false);
@@ -48,13 +48,13 @@ export function Tooltip({ children, text, position = "top", delay = 300 }) {
             className={cn(
               "absolute border-4 border-transparent",
               position === "top" &&
-                "border-t-gray-800 bottom-[-8px] left-1/2 -translate-x-1/2",
+              "border-t-gray-800 bottom-[-8px] left-1/2 -translate-x-1/2",
               position === "bottom" &&
-                "border-b-gray-800 top-[-8px] left-1/2 -translate-x-1/2",
+              "border-b-gray-800 top-[-8px] left-1/2 -translate-x-1/2",
               position === "left" &&
-                "border-l-gray-800 right-[-8px] top-1/2 -translate-y-1/2",
+              "border-l-gray-800 right-[-8px] top-1/2 -translate-y-1/2",
               position === "right" &&
-                "border-r-gray-800 left-[-8px] top-1/2 -translate-y-1/2"
+              "border-r-gray-800 left-[-8px] top-1/2 -translate-y-1/2"
             )}
           ></span>
         </div>

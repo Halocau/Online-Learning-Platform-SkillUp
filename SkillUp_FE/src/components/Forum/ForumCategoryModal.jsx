@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { Modal, Table, Input, Select, Tag, Button, Popconfirm, message } from "antd";
 import { EditOutlined, DeleteOutlined, PlusOutlined, CheckOutlined } from "@ant-design/icons";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
 import { toast } from "react-toastify";
 
 const { Search } = Input;
@@ -47,7 +48,7 @@ export default function ForumCategoryModal({ open, onClose, data, onEdit, onTogg
         return toast.error("Tên danh mục phải có ít nhất 1 ký tự!");
       }
 
-      await axiosInstance.put(`http://localhost:5120/api/ForumCategory/update/${editData.id}`, editData);
+      await axiosInstance.put(`${API_BASE_URL}/ForumCategory/update/${editData.id}`, editData);
 
       toast.success("Cập nhật thành công!");
 
@@ -67,7 +68,7 @@ export default function ForumCategoryModal({ open, onClose, data, onEdit, onTogg
       }
 
       const response = await axiosInstance.post(
-        "http://localhost:5120/api/ForumCategory/create",
+        `${API_BASE_URL}/ForumCategory/create`,
         createData
       );
 
@@ -77,7 +78,7 @@ export default function ForumCategoryModal({ open, onClose, data, onEdit, onTogg
       setCreateData({ name: "", isActive: true }); // reset
     } catch (error) {
       toast.error(error.response?.data?.message || "Tạo chuyên mục thất bại. Vui lòng thử lại.");
-    } finally{
+    } finally {
       setCreateOpen(false);
       onEdit();
     }

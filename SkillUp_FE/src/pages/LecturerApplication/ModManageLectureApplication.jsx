@@ -178,7 +178,7 @@ const ModManageLectureApplication = () => {
 
             const { code, message } = res?.data || {};
             if (res.status === 200 && (code === undefined || code === 200)) {
-                toast.success('Cập nhật trạng thái thành công');
+                toast.success(message || 'Cập nhật trạng thái ứng tuyển và gửi email thành công!');
                 setStatusModalOpen(false);
                 setStatusTarget(null);
                 refresh(); // refetch list

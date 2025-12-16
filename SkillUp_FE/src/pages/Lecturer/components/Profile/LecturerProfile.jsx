@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import ProfileSidebar from './ProfileSidebar';
-import BasicInfoForm from './BasicInfoForm';
-import LecturerInfoForm from './LecturerInfoForm';
-import PasswordChangeForm from './PasswordChangeForm';
-import { useProfileData } from './useProfileData';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProfileSidebar from './ProfileSideBar.jsx';
+import BasicInfoForm from './BasicInfoForm.jsx';
+import LecturerInfoForm from './LecturerInfoForm.jsx';
+import PasswordChangeForm from './PasswordChangeForm.jsx';
+import { useProfileData } from './useProfileData.js';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
 import { User, Briefcase, Lock } from 'lucide-react';
 
 function LecturerProfile() {
@@ -25,7 +25,7 @@ function LecturerProfile() {
   } = useProfileData();
 
   // Loading state
-  if (loading && ! profile) {
+  if (loading && !profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -39,12 +39,12 @@ function LecturerProfile() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-32"></div>
-      
+
       <div className="max-w-6xl mx-auto px-4 -mt-20 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Sidebar */}
           <div className="lg:col-span-1">
-            <ProfileSidebar 
+            <ProfileSidebar
               profile={profile}
               lecturerProfile={lecturerProfile}
               onUploadAvatar={uploadAvatar}
@@ -73,7 +73,7 @@ function LecturerProfile() {
               </TabsList>
 
               <TabsContent value="basic">
-                <BasicInfoForm 
+                <BasicInfoForm
                   profile={profile}
                   formData={formData}
                   setFormData={setFormData}
@@ -83,7 +83,7 @@ function LecturerProfile() {
               </TabsContent>
 
               <TabsContent value="lecturer">
-                <LecturerInfoForm 
+                <LecturerInfoForm
                   lecturerFormData={lecturerFormData}
                   setLecturerFormData={setLecturerFormData}
                   onSubmit={updateLecturerProfile}
@@ -92,7 +92,7 @@ function LecturerProfile() {
               </TabsContent>
 
               <TabsContent value="password">
-                <PasswordChangeForm 
+                <PasswordChangeForm
                   passwordData={passwordData}
                   setPasswordData={setPasswordData}
                   onSubmit={changePassword}

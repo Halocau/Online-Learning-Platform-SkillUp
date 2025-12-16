@@ -1,5 +1,5 @@
 // src/pages/Lecturer/components/tabs/DraftCoursesTab.jsx
-import BaseCourseTab from "./BaseCourseTab";
+import BaseCourseTab from "./BaseCourseTab.jsx";
 
 function DraftCoursesTab({ courses, onEdit, onDelete, onPreview, deletingId }) {
   const draftCourses = courses.filter((c) => c.status === "Draft");

@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { List, Row, Col, Image, Space, Typography, Rate, Button } from 'antd';
-import VoucherSection from './VoucherSection';
+import VoucherSection from './VoucherSection.jsx';
 import { formatPrice, formatNumber } from '../../utils/formatUtils';
 
 const CartItem = memo(({

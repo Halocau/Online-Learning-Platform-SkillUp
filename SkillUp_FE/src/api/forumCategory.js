@@ -1,8 +1,9 @@
-// src/api/categoryAPI.js
+// src/api/forumCategory.js
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5120/api",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 

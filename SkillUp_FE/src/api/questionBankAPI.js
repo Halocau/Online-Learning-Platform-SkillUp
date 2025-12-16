@@ -1,7 +1,8 @@
 import { toast } from "react-toastify";
-import axiosInstance from "../lib/axios";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
 
-const API_URL = "http://localhost:5120/api/QuestionBank";
+const API_URL = `${API_BASE_URL}/QuestionBank`;
 
 const handleAPIResponse = (res, defaultSuccessMsg = "Thành công!") => {
   const apiRes = res.data;
@@ -67,7 +68,7 @@ export const getSectionsByCourseId = async (courseId) => {
     const res = await axiosInstance.get(
       `${API_URL}/getByCourseId/${courseId}`
     );
-    
+
     let sections = [];
 
     if (res.data?.data) {

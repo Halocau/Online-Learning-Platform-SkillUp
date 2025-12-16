@@ -18,7 +18,8 @@ import {
 import { Image, Switch, Spin } from "antd";
 import { PlusCircle } from "lucide-react";
 import Table from "@/components/common/Table";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
 import { toast } from "react-toastify";
 import BannerEditModal from "@/components/Banner/BannerEditModal";
 import BannerCreateModal from "@/components/Banner/BannerCreateModal";
@@ -40,7 +41,7 @@ export default function BannerManage() {
     try {
       setLoading(true);
       const response = await axiosInstance.get(
-        "http://localhost:5120/api/Banner/all-banners"
+        `${API_BASE_URL}/Banner/all-banners`
       );
       setData(response.data.data.flat());
     } catch (error) {
@@ -65,7 +66,7 @@ export default function BannerManage() {
 
     try {
       await axiosInstance.put(
-        "http://localhost:5120/api/Banner/toggle-banner",
+        `${API_BASE_URL}/Banner/toggle-banner`,
         null,
         {
           params: {
@@ -91,7 +92,7 @@ export default function BannerManage() {
   const handleUpdateBanner = async (updatedBanner) => {
     try {
       await axiosInstance.put(
-        "http://localhost:5120/api/Banner/update-banner",
+        `${API_BASE_URL}/Banner/update-banner`,
         updatedBanner,
         {
           headers: {
@@ -112,7 +113,7 @@ export default function BannerManage() {
   const handleCreateBanner = async (formData) => {
     try {
       await axiosInstance.post(
-        "http://localhost:5120/api/Banner/create-banner",
+        `${API_BASE_URL}/Banner/create-banner`,
         formData,
         {
           headers: {

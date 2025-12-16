@@ -1,5 +1,5 @@
 // src/components/ui/separator.jsx
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 export function Separator({ orientation = "horizontal", className = "" }) {
   const isHorizontal = orientation === "horizontal";

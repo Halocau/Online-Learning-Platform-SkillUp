@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Modal, Descriptions, Checkbox, Radio, Input, Button, Space, Upload, Select, Alert, Tooltip } from "antd";
 import { PlusOutlined, MinusCircleOutlined, UploadOutlined, CheckOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import axiosInstance from "@/lib/axios";
-import RichTextEditor from "../Editor/RichText";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
+import RichTextEditor from "../Editor/RichText.jsx";
 
 const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   const [questionData, setQuestionData] = useState(null);
@@ -73,7 +74,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
     formData.append("image", file);
 
     const response = await axiosInstance.post(
-      "http://localhost:5120/api/Upload/image",
+      `${API_BASE_URL}/Upload/image`,
       formData,
       {
         headers: {

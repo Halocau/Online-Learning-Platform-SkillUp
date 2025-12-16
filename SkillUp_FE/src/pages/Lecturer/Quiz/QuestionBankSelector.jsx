@@ -2,6 +2,7 @@
 // DRAWER VERSION - Opens from LEFT with improved quick tools
 
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "@/config/api";
 import {
   Check,
   X,
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { extractCleanText } from "@/utils/htmlUtils";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 
 function QuestionBankSelector({
   courseId,
@@ -67,7 +68,7 @@ function QuestionBankSelector({
       }
 
       const response = await axiosInstance.get(
-        `http://localhost:5120/api/QuestionBank/getByCourseId/${courseId}`
+        `${API_BASE_URL}/QuestionBank/getByCourseId/${courseId}`
       );
 
       let sectionsData = [];
@@ -286,9 +287,8 @@ function QuestionBankSelector({
       <>
         <div className="fixed inset-0 bg-black/50 z-50" onClick={handleClose} />
         <div
-          className={`fixed right-0 top-0 h-full w-full bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out ${
-            isOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`fixed right-0 top-0 h-full w-full bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <div className="flex flex-col items-center justify-center h-full">
             <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
@@ -307,9 +307,8 @@ function QuestionBankSelector({
       <>
         <div className="fixed inset-0 bg-black/50 z-50" onClick={handleClose} />
         <div
-          className={`fixed right-0 top-0 h-full w-full bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out ${
-            isOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`fixed right-0 top-0 h-full w-full bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+            }`}
         >
           <div className="flex flex-col items-center justify-center h-full p-8">
             <div className="max-w-lg w-full bg-white rounded-2xl border-2 border-red-200 p-8">
@@ -351,17 +350,15 @@ function QuestionBankSelector({
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
+        className={`fixed inset-0 bg-black/50 z-50 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"
+          }`}
         onClick={handleClose}
       />
 
       {/* Drawer Content */}
       <div
-        className={`fixed right-0 top-0 h-full w-full bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed right-0 top-0 h-full w-full bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto ${isOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         {/* Compact Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
@@ -486,11 +483,10 @@ function QuestionBankSelector({
                         onClick={() => setQuickSelectAmount(amount)}
                         size="sm"
                         variant="outline"
-                        className={`text-sm ${
-                          quickSelectAmount === amount
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-blue-300 hover:bg-blue-50"
-                        }`}
+                        className={`text-sm ${quickSelectAmount === amount
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-blue-300 hover:bg-blue-50"
+                          }`}
                         disabled={totalFilteredQuestions < parseInt(amount)}
                       >
                         {amount}
@@ -712,20 +708,18 @@ function QuestionBankSelector({
                               <div
                                 key={question.id}
                                 onClick={() => toggleQuestion(question.id)}
-                                className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                                  isSelected
-                                    ? "bg-blue-100 border-blue-400"
-                                    : "bg-white border-gray-200 hover:border-blue-300"
-                                }`}
+                                className={`p-3 border rounded-lg cursor-pointer transition-all hover:shadow-md ${isSelected
+                                  ? "bg-blue-100 border-blue-400"
+                                  : "bg-white border-gray-200 hover:border-blue-300"
+                                  }`}
                               >
                                 <div className="flex items-start gap-2">
                                   <div className="flex-shrink-0 mt-0.5">
                                     <div
-                                      className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                                        isSelected
-                                          ? "bg-blue-600 border-blue-600"
-                                          : "border-gray-300 bg-white"
-                                      }`}
+                                      className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isSelected
+                                        ? "bg-blue-600 border-blue-600"
+                                        : "border-gray-300 bg-white"
+                                        }`}
                                     >
                                       {isSelected && (
                                         <Check className="w-3 h-3 text-white" />

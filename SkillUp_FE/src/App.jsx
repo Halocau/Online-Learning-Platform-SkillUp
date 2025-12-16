@@ -1,7 +1,7 @@
-import AppRouter from "./router/AppRouter";
+import AppRouter from "./router/AppRouter.jsx";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { CartProvider } from "./context/CartContext";
+import { CartProvider } from "./context/CartContext.jsx";
 
 function App() {
   return (

@@ -7,7 +7,7 @@ import {
   ArrowLeft,
   ChevronRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 const CourseSidebar = ({
   courseData,
@@ -126,8 +126,8 @@ const CourseSidebar = ({
                     isCompleted
                       ? "bg-green-500 text-white"
                       : isCurrent
-                      ? "bg-[#FFD54F] text-gray-900"
-                      : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
+                        ? "bg-[#FFD54F] text-gray-900"
+                        : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
                   )}
                 >
                   {isCompleted ? (

@@ -1,8 +1,9 @@
 // API Configuration - Central place for all API endpoints
-export const API_BASE_URL = 'http://localhost:5120/api';
+// Sử dụng environment variable nếu có, fallback về localhost cho development
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5120/api';
 
-// TinyMCE API Key
-export const TINYMCE_API_KEY = 'tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i';
+// TinyMCE API Key - Lấy từ environment variable
+export const TINYMCE_API_KEY = import.meta.env.VITE_TINYMCE_API_KEY || 'tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i';
 
 export const API_ENDPOINTS = {
     // Auth endpoints
@@ -79,5 +80,5 @@ export const getApiUrl = (endpoint) => {
 };
 
 
-import axiosInstance from '../lib/axios';
+import axiosInstance from '@/lib/axios.js';
 export { axiosInstance };

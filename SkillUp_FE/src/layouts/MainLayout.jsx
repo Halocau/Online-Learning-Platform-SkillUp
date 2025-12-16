@@ -1,8 +1,8 @@
 import { Outlet } from 'react-router-dom';
-import Header from '../components/Layout/Header';
-import Footer from '../components/Layout/Footer';
+import Header from '../components/Layout/Header.jsx';
+import Footer from '../components/Layout/Footer.jsx';
 import { Scroll } from 'lucide-react';
-import ScrollToTop from '@/components/ScrollToTop';
+import ScrollToTop from '@/components/ScrollToTop.jsx';
 
 function Layout() {
   return (

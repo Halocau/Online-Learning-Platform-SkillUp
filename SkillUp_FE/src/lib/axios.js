@@ -2,7 +2,8 @@ import axios from 'axios';
 import { saveUserFromToken } from './auth-utils';
 
 
-const API_BASE_URL = 'http://localhost:5120/api';
+// Sử dụng environment variable nếu có, fallback về localhost cho development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5120/api';
 const API_ENDPOINTS = {
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
@@ -31,7 +32,7 @@ const processQueue = (error, token = null) => {
       prom.resolve(token);
     }
   });
-  
+
   failedQueue = [];
 };
 
@@ -39,11 +40,11 @@ const processQueue = (error, token = null) => {
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -61,11 +62,11 @@ axiosInstance.interceptors.response.use(
 
     // Nếu lỗi 401 và chưa retry
     if (error.response?.status === 401 && !originalRequest._retry) {
-      
+
       // Nếu request là refresh-token hoặc login, không retry
-      if (originalRequest.url?.includes('/auth/refresh-token') || 
-          originalRequest.url?.includes('/auth/login') ||
-          originalRequest.url?.includes('/auth/google-login')) {
+      if (originalRequest.url?.includes('/auth/refresh-token') ||
+        originalRequest.url?.includes('/auth/login') ||
+        originalRequest.url?.includes('/auth/google-login')) {
         return Promise.reject(error);
       }
 
@@ -87,7 +88,7 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       const refreshToken = localStorage.getItem('refreshToken');
-      
+
       if (!refreshToken) {
         handleLogout();
         return Promise.reject(error);
@@ -106,20 +107,20 @@ axiosInstance.interceptors.response.use(
         // Backend trả data dạng array [{tokens: {accessToken, refreshToken}}]
         const tokenData = response.data.data[0].tokens;
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } = tokenData;
-        
+
         // Lưu token mới
         saveUserFromToken(newAccessToken, newRefreshToken);
-        
+
         // Update token cho request ban đầu
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        
+
         // Process queue
         processQueue(null, newAccessToken);
         isRefreshing = false;
-        
+
         // Retry request ban đầu
         return axiosInstance(originalRequest);
-        
+
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
@@ -137,7 +138,7 @@ const handleLogout = () => {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
-  
+
   // Redirect về trang login
   window.location.href = '/login';
 };

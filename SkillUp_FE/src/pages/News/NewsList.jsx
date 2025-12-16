@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAllNews } from "../../api/newsAPI";
+import { getAllNews } from "@/api/newsAPI";
 import { useNavigate } from "react-router-dom";
 import { MagnifyingGlassIcon, CalendarIcon } from "@heroicons/react/24/outline";
 import { Input } from "@/components/ui/input";

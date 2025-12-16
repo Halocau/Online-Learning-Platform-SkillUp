@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Header from '@/components/Layout/Header';
-import Footer from '@/components/Layout/Footer';
+import Header from '@/components/Layout/Header.jsx';
+import Footer from '@/components/Layout/Footer.jsx';
 import { axiosInstance, API_ENDPOINTS } from '@/config/api';
 import { toast } from 'react-toastify';
-import CreateTicketModal from '../../components/Ticket/CreateTicketModal';
+import CreateTicketModal from '../../components/Ticket/CreateTicketModal.jsx';
 import { jwtDecode } from 'jwt-decode';
-import TicketFilterPanel from '@/components/Ticket/TicketFilterPanel';
+import TicketFilterPanel from '@/components/Ticket/TicketFilterPanel.jsx';
 
 const PAGE_SIZE = 5;
 

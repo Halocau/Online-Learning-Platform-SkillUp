@@ -1,7 +1,8 @@
 import { toast } from "react-toastify";
-import axiosInstance from "../lib/axios";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
 
-const API_URL = "http://localhost:5120/api/Quiz";
+const API_URL = `${API_BASE_URL}/Quiz`;
 
 const handleAPIResponse = (
   res,
@@ -61,7 +62,7 @@ export const createQuiz = async (quizData) => {
       timer: Number(quizData.timer),
     };
 
-    
+
     if (quizData.orders !== undefined && quizData.orders !== null) {
       payload.orders = Number(quizData.orders);
     }

@@ -9,7 +9,7 @@ import {
   Lock,
   Check,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
   const navigate = useNavigate();
@@ -129,8 +129,8 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
                   isCompleted
                     ? "border-emerald-400/30 bg-emerald-500/5 hover:border-emerald-300 hover:bg-emerald-500/10 hover:shadow-md"
                     : isLocked
-                    ? "border-gray-200 bg-gray-50/60 opacity-70"
-                    : "border-gray-200 bg-white hover:border-[#FFD54F]/40 hover:bg-[#FFD54F]/5 hover:shadow-lg"
+                      ? "border-gray-200 bg-gray-50/60 opacity-70"
+                      : "border-gray-200 bg-white hover:border-[#FFD54F]/40 hover:bg-[#FFD54F]/5 hover:shadow-lg"
                 )}
               >
                 {/* Index / Status Badge */}
@@ -140,8 +140,8 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
                     isCompleted
                       ? "bg-emerald-500/20 text-emerald-700 ring-emerald-400/60"
                       : isLocked
-                      ? "bg-gray-200 text-gray-400 ring-gray-300"
-                      : "bg-gray-50 text-gray-700 ring-gray-200 group-hover:bg-[#FFD54F]/20 group-hover:text-[#B8860B] group-hover:ring-[#FFD54F]/60"
+                        ? "bg-gray-200 text-gray-400 ring-gray-300"
+                        : "bg-gray-50 text-gray-700 ring-gray-200 group-hover:bg-[#FFD54F]/20 group-hover:text-[#B8860B] group-hover:ring-[#FFD54F]/60"
                   )}
                 >
                   {isCompleted ? (
@@ -170,11 +170,11 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full px-2 py-1 ring-1",
                         color === "sky" &&
-                          "bg-sky-50 text-sky-700 ring-sky-200",
+                        "bg-sky-50 text-sky-700 ring-sky-200",
                         color === "amber" &&
-                          "bg-amber-50 text-amber-700 ring-amber-200",
+                        "bg-amber-50 text-amber-700 ring-amber-200",
                         color === "violet" &&
-                          "bg-violet-50 text-violet-700 ring-violet-200"
+                        "bg-violet-50 text-violet-700 ring-violet-200"
                       )}
                     >
                       {getItemIcon(item)}
@@ -218,9 +218,8 @@ const SectionDetail = ({ section, courseId, completedItems, courseData }) => {
                   <p className="mt-1 text-xs text-gray-600 sm:text-sm">
                     {completedCount === section.items.length
                       ? "Xuất sắc! Bạn đã hoàn thành toàn bộ chương này."
-                      : `Chỉ còn ${
-                          section.items.length - completedCount
-                        } bài nữa, bạn sẽ hoàn thành toàn bộ chương này.`}
+                      : `Chỉ còn ${section.items.length - completedCount
+                      } bài nữa, bạn sẽ hoàn thành toàn bộ chương này.`}
                   </p>
                 </div>
               </div>

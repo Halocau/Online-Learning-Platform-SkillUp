@@ -1,9 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Lock } from "lucide-react";
-import ProfileSidebar from "../Lecturer/components/Profile/ProfileSideBar";
-import BasicInfoForm from "../Lecturer/components/Profile/BasicInfoForm";
-import PasswordChangeForm from "../Lecturer/components/Profile/PasswordChangeForm";
-import { useBasicProfile } from "./useBasicProfile";
+import ProfileSidebar from "../Lecturer/components/Profile/ProfileSideBar.jsx";
+import BasicInfoForm from "../Lecturer/components/Profile/BasicInfoForm.jsx";
+import PasswordChangeForm from "../Lecturer/components/Profile/PasswordChangeForm.jsx";
+import { useBasicProfile } from "./useBasicProfile.jsx";
 
 function ModProfile() {
   const {

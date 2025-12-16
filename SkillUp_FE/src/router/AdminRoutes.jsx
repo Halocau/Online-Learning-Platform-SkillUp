@@ -1,13 +1,13 @@
 // src/routes/AdminRoutes.jsx
 import { Routes, Route } from "react-router-dom";
-import AdminLayout from "../layouts/AdminLayout";
-import ProtectedRoute from "./ProtectedRoute";
+import AdminLayout from "../layouts/AdminLayout.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
 
-import ModeratorManage from "../pages/admin/ModeratorManage";
-import AdminSalaryReport from "@/pages/admin/AdminSalaryReport";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
-import AdminNotification from "@/pages/admin/AdminNotification";
+import ModeratorManage from "../pages/admin/ModeratorManage.jsx";
+import AdminSalaryReport from "@/pages/admin/AdminSalaryReport.jsx";
+import AdminDashboard from "@/pages/admin/AdminDashboard.jsx";
+import AdminNotification from "@/pages/admin/AdminNotification.jsx";
 
 const AdminRoutes = () => {
   return (

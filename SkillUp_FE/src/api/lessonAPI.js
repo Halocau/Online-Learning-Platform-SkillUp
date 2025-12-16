@@ -1,7 +1,8 @@
 import { toast } from "react-toastify";
-import axiosInstance from "../lib/axios";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
 
-const API_URL = "http://localhost:5120/api/Lesson";
+const API_URL = `${API_BASE_URL}/Lesson`;
 
 const handleAPIResponse = (res, defaultSuccessMsg = "Thành công!") => {
   const apiRes = res.data;
@@ -61,7 +62,7 @@ export const createLesson = async (lessonData) => {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
-    
+
     return handleAPIResponse(res, "Tạo bài học mới thành công!");
   } catch (err) {
     return handleAPIError(err, "Không thể tạo bài học!");
@@ -136,7 +137,7 @@ export const getLessonsBySection = async (sectionId) => {
 export const markLessonComplete = async (lessonId) => {
   try {
     const res = await axiosInstance.post(`${API_URL}/${lessonId}/complete`);
-    if (res.data?.code === 200) {     
+    if (res.data?.code === 200) {
       return res.data;
     }
     throw new Error(res.data?.message);

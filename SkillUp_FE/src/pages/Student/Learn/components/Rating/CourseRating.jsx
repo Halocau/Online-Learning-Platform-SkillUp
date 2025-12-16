@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Star, Edit2, Trash2, MessageSquare } from "lucide-react";
 import { ratingAPI } from "@/api/ratingAPI";
 import { toast } from "react-toastify";
-import { cn } from "@/lib/utils";
-import RatingModal from "./RatingModal";
+import { cn } from "@/lib/utils.js";
+import RatingModal from "./RatingModal.jsx";
 import { formatTimeAgo } from "@/utils/formatTimeAgo";
 
 
@@ -261,7 +261,7 @@ const CourseRatings = ({ courseId, currentUserId }) => {
                 {rating.updatedAt &&
                   rating.createdAt &&
                   new Date(rating.updatedAt).getTime() >
-                    new Date(rating.createdAt).getTime() + 1000 && (
+                  new Date(rating.createdAt).getTime() + 1000 && (
                     <p className="text-xs text-gray-500 mt-3 italic">
                       Đã chỉnh sửa
                     </p>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Table, Avatar, Button, Tag, Space, Input, Row, Col } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
 import { toast } from "react-toastify";
 
 const ManageUser = () => {
@@ -10,7 +11,7 @@ const ManageUser = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axiosInstance.get("http://localhost:5120/api/User/All-Users");
+      const response = await axiosInstance.get(`${API_BASE_URL}/User/All-Users`);
       const data = response.data.data.flat();
       setUsers(data);
     } catch (error) {
@@ -37,7 +38,7 @@ const ManageUser = () => {
 
       // Send id and status in the body
       await axiosInstance.put(
-        "http://localhost:5120/api/User/update-status",
+        `${API_BASE_URL}/User/update-status`,
         {
           id: user.id,
           status: user.status

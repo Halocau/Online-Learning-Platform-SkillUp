@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { getApiUrl } from '../../config/api.js';
-import { axiosInstance } from '../../config/api.js';
+import { getApiUrl, axiosInstance } from '@/config/api';
 import { GuestCartView } from '@/components/Cart/GuestCartView';
 import CartItem from '@/components/Cart/CartItem';
 import PriceSummary from '@/components/Cart/PriceSummary';
-import { voucherAPI } from '../../api/voucherAPI.js';
-import { paymentAPI } from '../../api/paymentAPI.js';
+import { voucherAPI } from '@/api/voucherAPI';
+import { paymentAPI } from '@/api/paymentAPI';
 import {
     List,
     Spin,

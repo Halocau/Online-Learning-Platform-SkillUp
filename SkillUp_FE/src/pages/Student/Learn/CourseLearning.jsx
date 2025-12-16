@@ -5,11 +5,11 @@ import { markLessonComplete, trackLessonView } from "@/api/lessonAPI";
 import { ratingAPI } from "@/api/ratingAPI";
 import { toast } from "react-toastify";
 import { BookOpen, Loader2 } from "lucide-react";
-import CourseSidebar from "./components/CourseSidebar";
-import LessonContent from "./components/Lesson/LessonContent";
-import CourseOverview from "./components/CourseOverview";
-import SectionDetail from "./components/SectionDetail";
-import RatingModal from "./components/Rating/RatingModal";
+import CourseSidebar from "./components/CourseSidebar.jsx";
+import LessonContent from "./components/Lesson/LessonContent.jsx";
+import CourseOverview from "./components/CourseOverview.jsx";
+import SectionDetail from "./components/SectionDetail.jsx";
+import RatingModal from "./components/Rating/RatingModal.jsx";
 
 const CourseLearning = () => {
   const { courseId, sectionId, lessonId } = useParams();
@@ -185,7 +185,7 @@ const CourseLearning = () => {
     return (
       idx < currentSection.items.length - 1 ||
       courseData.sections.findIndex((s) => s.id === currentSection.id) <
-        courseData.sections.length - 1
+      courseData.sections.length - 1
     );
   };
 
@@ -277,7 +277,7 @@ const CourseLearning = () => {
 
       await Promise.all([checkUserRating(), fetchCourseDetail()]);
 
-      setTimeout(() => {}, 1000);
+      setTimeout(() => { }, 1000);
     } catch (error) {
       console.error("Error submitting rating:", error);
       toast.error("Không thể gửi đánh giá.  Vui lòng thử lại.");

@@ -1,4 +1,4 @@
-import axiosInstance from "@/lib/axios";
+import axiosInstance from "@/lib/axios.js";
 
 const API_BASE_URL = "/Admin";
 
@@ -22,7 +22,7 @@ export const adminAPI = {
   // Send notification to all users
   notifyAllUsers: async (notificationData) => {
     try {
-      const response = await axiosInstance. post(
+      const response = await axiosInstance.post(
         `${API_BASE_URL}/notify-all`,
         notificationData
       );

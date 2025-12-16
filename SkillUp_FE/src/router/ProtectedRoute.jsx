@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { decodeToken } from "@/lib/auth-utils";
+import { decodeToken } from "@/lib/auth-utils.js";
 
 function ProtectedRoute({
   allowedRoles,

@@ -1,0 +1,33 @@
+1. Cài đặt dependencies
+py -m pip install -r requirements.txt
+
+2. Chạy server Khuyên dùng (development mode với auto-reload):
+py -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+Hoặc chạy trực tiếp:
+py -m app.main
+
+Chạy trên port khác:
+py -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+
+3. Kiểm tra môi trường:
+# Xem pip packages đã cài
+py -m pip list
+
+# Kiểm tra pip
+py -m pip --version
+
+# Nâng cấp pip nếu cần
+py -m pip install --upgrade pip
+
+
+py -m pip install python-magic python-magic-bin
+
+
+py -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+
+python -m app.main
+
+gunicorn app.main:app -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:8000

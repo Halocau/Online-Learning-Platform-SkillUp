@@ -11,7 +11,7 @@ import {
 import { startQuiz, submitQuiz } from "@/api/quizAPI";
 import { toast } from "react-toastify";
 import { extractCleanText } from "@/utils/htmlUtils";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 const QuizTakingPage = () => {
   const { quizId } = useParams();
@@ -232,8 +232,8 @@ const QuizTakingPage = () => {
                       isCurrent
                         ? "border-[#272343] bg-[#ffd803] text-[#272343] ring-2 ring-[#272343] ring-offset-2"
                         : isAnswered
-                        ? "border-[#272343] bg-[#e3f6f5] text-[#272343] hover:bg-[#e3f6f5]/80"
-                        : "border-[#272343]/20 bg-[#fffffe] text-[#2d334a] hover:bg-[#e3f6f5]/30"
+                          ? "border-[#272343] bg-[#e3f6f5] text-[#272343] hover:bg-[#e3f6f5]/80"
+                          : "border-[#272343]/20 bg-[#fffffe] text-[#2d334a] hover:bg-[#e3f6f5]/30"
                     )}
                   >
                     {index + 1}

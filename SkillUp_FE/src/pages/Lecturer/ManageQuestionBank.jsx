@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Table, Button, Space, Tag, Input, Segmented, Tooltip, Select } from 'antd';
 import { ReloadOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { axiosInstance, API_ENDPOINTS } from '@/config/api';
+import { axiosInstance, API_ENDPOINTS, API_BASE_URL } from '@/config/api';
 import { toast } from 'react-toastify';
 import QuestionBankViewModal from '@/components/QuestionBank/QuestionBankViewModal';
 import QuestionBankEditModal from '@/components/QuestionBank/QuestionBankEditModal';
-import QuestionBankCreateModal from '@/components/QuestionBank/QuestionBanKCreateModal';
+import QuestionBankCreateModal from '@/components/QuestionBank/QuestionBankCreateModal';
 import QuestionBankExcelModal from '@/components/QuestionBank/QuestionBankExcelModal';
 import { extractCleanText } from '@/utils/htmlUtils';
 
@@ -49,7 +49,7 @@ export default function ManageQuestionBank() {
     const fetchCourses = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await axiosInstance.get('http://localhost:5120/api/Course/Courses-Of-Lecturer');
+            const response = await axiosInstance.get(`${API_BASE_URL}/Course/Courses-Of-Lecturer`);
             const activeCourses = response.data.data.filter(course => course.isActive);
             setCourses(activeCourses);
         } catch (err) {
@@ -276,7 +276,7 @@ export default function ManageQuestionBank() {
         const formData = new FormData();
         formData.append("file", file); // must match backend param name
         return axiosInstance.post(
-            `http://localhost:5120/api/QuestionBank/add-by-excel`,
+            `${API_BASE_URL}/QuestionBank/add-by-excel`,
             formData,
             {
                 params: {

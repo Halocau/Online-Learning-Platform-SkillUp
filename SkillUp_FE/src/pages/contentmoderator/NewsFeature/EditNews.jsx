@@ -3,8 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { message, Card, Input, Button, Space } from "antd";
 import { ArrowLeft } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
-import { getAllNews, updateNews } from "../../../api/newsAPI";
-import { axiosInstance, API_ENDPOINTS } from "@/config/api";
+import { getAllNews, updateNews } from "@/api/newsAPI";
+import { axiosInstance, API_ENDPOINTS, TINYMCE_API_KEY } from "@/config/api";
 import { toast } from "sonner";
 
 export default function EditNews() {
@@ -114,7 +114,7 @@ export default function EditNews() {
             <div>
               <label className="text-sm font-medium mb-1 block">Nội dung</label>
               <Editor
-                apiKey="tv8otnk3960gtkqgy0sdo1csb22swjvc7bgco353p0967x7i"
+                apiKey={TINYMCE_API_KEY}
                 init={{
                   height: 500,
                   plugins: [

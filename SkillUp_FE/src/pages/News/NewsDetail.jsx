@@ -7,8 +7,9 @@ import {
   UserIcon,
   ShareIcon,
 } from "@heroicons/react/24/outline";
-import axiosInstance from "../../lib/axios";
-import { getAllNews } from "../../api/newsAPI";
+import axiosInstance from "@/lib/axios.js";
+import { API_BASE_URL } from "@/config/api";
+import { getAllNews } from "@/api/newsAPI";
 
 export default function NewsDetail() {
   const { id } = useParams();
@@ -28,7 +29,7 @@ export default function NewsDetail() {
       try {
         // Fetch current news detail
         const res = await axiosInstance.get(
-          `http://localhost:5120/api/News/${id}`
+          `${API_BASE_URL}/News/${id}`
         );
         const data = res.data.data?.[0];
         setNews(data);

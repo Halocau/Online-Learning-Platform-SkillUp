@@ -88,7 +88,7 @@ namespace SkillUp.Controllers
                 return Ok(new APIReturn
                 {
                     code = 200,
-                    message = "Cập nhật trạng thái ứng tuyển thành công!",
+                    message = "Cập nhật trạng thái ứng tuyển và gửi email thành công!",
                     data = new List<object>()
                 });
             }

@@ -1,13 +1,13 @@
 // src/routes/SystemModeratorRoutes.jsx
 import { Routes, Route } from "react-router-dom";
-import SystemModeratorLayout from "@/layouts/SystemModeratorLayout";
-import ProtectedRoute from "./ProtectedRoute";
+import SystemModeratorLayout from "@/layouts/SystemModeratorLayout.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
 
-import TicketManage from "@/pages/systemModerator/TicketManage";
-import LecturerApplicationManage from "@/pages/systemModerator/LecturerApplicationManage";
-import SystemModeratorDashboard from "@/pages/systemModerator/SysModDashboard";
-import UserManage from "@/pages/systemModerator/UserManage";
-import ModProfile from "@/pages/Profile/ModProfile";
+import TicketManage from "@/pages/systemModerator/TicketManage.jsx";
+import LecturerApplicationManage from "@/pages/systemModerator/LecturerApplicationManage.jsx";
+import SystemModeratorDashboard from "@/pages/systemModerator/SysModDashboard.jsx";
+import UserManage from "@/pages/systemModerator/UserManage.jsx";
+import ModProfile from "@/pages/Profile/ModProfile.jsx";
 
 const SystemModeratorRoutes = () => {
   return (

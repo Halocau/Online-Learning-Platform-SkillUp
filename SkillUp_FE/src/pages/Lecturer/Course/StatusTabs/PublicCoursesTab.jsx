@@ -1,5 +1,5 @@
 // src/pages/Lecturer/components/tabs/PublicCoursesTab.jsx
-import BaseCourseTab from "./BaseCourseTab";
+import BaseCourseTab from "./BaseCourseTab.jsx";
 
 function PublicCoursesTab({ courses, onEdit, onDelete, onPreview, deletingId }) {
   const publicCourses = courses.filter((c) => c.status === "Public");
