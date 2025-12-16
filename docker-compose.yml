@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Skillup@490
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    restart: unless-stopped
+
+  skillup_api:
+    build:
+      context: ./SkillUp_BE/SkillUp
+      dockerfile: Dockerfile
+    container_name: skillup_api
+    depends_on:
+      - mssql
+    ports:
+      - "5120:5120"          # BE .NET chạy trên 5120
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # DB MỚI: SQL Server chạy trong container 'mssql'
+      - ConnectionStrings__DefaultConnection=Server=mssql,1433;Database=SkillUp;User Id=sa;Password=Skillup@490;TrustServerCertificate=True;
+    restart: unless-stopped
+
+  gensub:
+    build:
+      context: ./SkillUp_Py
+      dockerfile: Dockerfile
+    container_name: gensub
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./SkillUp_Py/upload:/app/upload
+      - ./SkillUp_Py/logs:/app/logs
+    environment:
+      # Whisper Model Settings
+      - WHISPER_MODEL=${WHISPER_MODEL:-small}
+      - DEVICE=${DEVICE:-cpu}
+      - COMPUTE_TYPE=${COMPUTE_TYPE:-int8}
+      - BEAM_SIZE=${BEAM_SIZE:-7}
+      - BEST_OF=${BEST_OF:-7}
+      - TEMPERATURE=${TEMPERATURE:-0.0}
+      - USE_DENOISE=${USE_DENOISE:-1}
+      - VAD_MIN_SIL_MS=${VAD_MIN_SIL_MS:-300}
+      - LANGUAGE=${LANGUAGE:-vi}
+      - MAX_FILE_MB=${MAX_FILE_MB:-2048}
+      # Gemini API Keys
+      - GEMINI_API_KEY_1=AIzaSyCYYA2-PUr7Zc0hIkbGCjnyP_cUMdoEoOs
+      - GEMINI_API_KEY_2=AIzaSyDWSMwvvOBuj1j-3f8tPf7tWsIgTKyJsoI
+      - GEMINI_API_KEY_3=AIzaSyAzw2jriR-d-BAq7_IIOfweDIa5JPEnYOA
+      - GEMINI_API_KEY_4=AIzaSyD6AqEtM4u8NQ2L2r5HpWphoPsIIJoTdVY
+      - GEMINI_API_KEY_5=AIzaSyDWSMwvvOBuj1j-3f8tPf7tWsIgTKyJsoI
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      # AI Correction Settings
+      - AI_CORRECTION_ENABLED=${AI_CORRECTION_ENABLED:-1}
+      - AI_CORRECTION_RATE_LIMIT=${AI_CORRECTION_RATE_LIMIT:-60}
+      - AI_CORRECTION_BATCH_SIZE=${AI_CORRECTION_BATCH_SIZE:-5}
+      # Parallel Processing Settings
+      - PARALLEL_CHUNK_DURATION=${PARALLEL_CHUNK_DURATION:-60.0}
+      - PARALLEL_MAX_WORKERS=${PARALLEL_MAX_WORKERS:-6}
+      # Allowed Remote Video Hosts
+      - ALLOWED_REMOTE_VIDEO_HOSTS=api.skillup.website,222.255.214.208
+    restart: unless-stopped
+
+volumes:
+  mssql_data:

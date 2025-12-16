@@ -5,7 +5,7 @@ import { Spin } from "antd";
 import { courseAPI } from "@/api/courseAPI";
 import { getGroupedCourseReports } from "@/api/courseReportAPI"; // Updated import
 import CoursePublicTab from "./CoursePublicTab";
-import CoursePendingTab from "./CoursePendingTab";
+import CoursePendingTab from "./CoursePendingtab";
 import CourseReportTab from "./CourseReportTab";
 
 export default function CourseManagement() {

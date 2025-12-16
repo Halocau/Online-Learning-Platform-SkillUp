@@ -5,7 +5,7 @@ namespace SkillUp.BussinessObjects.DTOs.Account
 {
     public class AccountResponseDto
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } 
         public string Email { get; set; } = null!;
         public string? Fullname { get; set; }
         public string? Phone { get; set; }

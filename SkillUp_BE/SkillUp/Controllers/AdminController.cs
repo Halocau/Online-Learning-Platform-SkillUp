@@ -11,7 +11,7 @@ namespace SkillUp.Controllers
     [ApiController]
     public class AdminController : ControllerBase
     {
-        private readonly IBackgroundTaskQueue _taskQueue;
+        private readonly IBackgroundTaskQueue  _taskQueue;
 		private readonly IPayrollService _payrollService;
 		private readonly ICurrentUserService _currentUserService;
 

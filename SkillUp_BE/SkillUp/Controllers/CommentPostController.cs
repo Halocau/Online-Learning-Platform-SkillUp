@@ -36,22 +36,47 @@ namespace SkillUp.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> Create([FromBody] CreateCommentDto dto)
         {
-            if (_currentUserService.UserId == null)
-                return BadRequest(new { code = 400, message = "Người dùng chưa đăng nhập" });
-
-            var accountId = _currentUserService.UserId.Value;
-
-            var comment = await _commentService.CreateCommentAsync(dto, accountId);
-
-            await _hubContext.Clients.Group(dto.PostId.ToString())
-                .SendAsync("ReceiveComment", comment);
-
-            return Ok(new
+            try
             {
-                code = 200,
-                message = "Tạo comment thành công",
-                data = comment
-            });
+                if (_currentUserService.UserId == null)
+                    return BadRequest(new { code = 400, message = "Người dùng chưa đăng nhập" });
+
+                var accountId = _currentUserService.UserId.Value;
+
+                // Validate DTO
+                if (dto == null)
+                    return BadRequest(new { code = 400, message = "Dữ liệu không hợp lệ" });
+
+                if (string.IsNullOrWhiteSpace(dto.Contents))
+                    return BadRequest(new { code = 400, message = "Nội dung comment không được để trống" });
+
+                var comment = await _commentService.CreateCommentAsync(dto, accountId);
+
+                // Gửi realtime qua SignalR (không block nếu SignalR lỗi)
+                try
+                {
+                    await _hubContext.Clients.Group(dto.PostId.ToString())
+                        .SendAsync("ReceiveComment", comment);
+                }
+                catch (Exception signalREx)
+                {
+                    // Log lỗi SignalR nhưng không fail request
+                    Console.WriteLine($"Lỗi SignalR khi gửi comment: {signalREx.Message}");
+                }
+
+                return Ok(new
+                {
+                    code = 200,
+                    message = "Tạo comment thành công",
+                    data = comment
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi tạo comment: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return BadRequest(new { code = 400, message = $"Lỗi khi tạo comment: {ex.Message}" });
+            }
         }
 
         [Authorize]
