@@ -11,7 +11,7 @@ namespace SkillUp.Controllers
 	[ApiController]
 	public class AuthController : ControllerBase
 	{
-		private readonly IAuthService _authService;
+		private readonly IAuthService  _authService;
 		private readonly ICurrentUserService _currentUserService;
 		private readonly IConfiguration _configuration;
 
