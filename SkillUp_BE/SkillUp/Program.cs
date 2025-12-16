@@ -394,6 +394,9 @@ app.UseSwaggerUI();
 // Enable serving static files from wwwroot folder
 app.UseStaticFiles();
 
+// Routing is required before CORS/Auth/Endpoints
+app.UseRouting();
+
 // Use CORS
 app.UseCors("AllowAll");
 //app.UseCors("AllowSpecificOrigin"); // Sử dụng policy đã đặt tên ở trên
