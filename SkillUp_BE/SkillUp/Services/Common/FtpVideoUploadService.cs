@@ -77,14 +77,17 @@ namespace SkillUp.Services.Common
                 request.Credentials = new NetworkCredential(_ftpUsername, _ftpPassword);
                 request.UsePassive = true;
                 request.UseBinary = true;
-                request.KeepAlive = false;
-                request.Timeout = 60000; // 60 seconds
+                request.KeepAlive = true; // ✅ Tái sử dụng kết nối
+                request.Timeout = 300000; // ✅ 5 phút cho file lớn
+                request.ReadWriteTimeout = 300000; // ✅ Timeout cho read/write operations
 
-                // Copy file stream to FTP
+                // Copy file stream to FTP với buffer lớn hơn
                 using (var fileStream = file.OpenReadStream())
                 using (var ftpStream = request.GetRequestStream())
                 {
-                    await fileStream.CopyToAsync(ftpStream);
+                    // ✅ Sử dụng buffer 1MB thay vì 80KB mặc định
+                    var bufferSize = 1024 * 1024; // 1MB buffer
+                    await fileStream.CopyToAsync(ftpStream, bufferSize);
                 }
 
                 // Get response

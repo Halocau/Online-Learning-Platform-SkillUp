@@ -109,8 +109,11 @@ builder.Services.AddDbContext<SkillUpContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-// Add SignalR
-builder.Services.AddSignalR();
+// Add SignalR with CORS support
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
@@ -348,7 +351,24 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173")
+            // Get allowed origins from configuration
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+                ?? new[] { "http://localhost:5173" };
+            
+            policy.WithOrigins(allowedOrigins)
+                  .SetIsOriginAllowed(origin =>
+                  {
+                      // Allow localhost for development
+                      if (origin.StartsWith("http://localhost") || origin.StartsWith("https://localhost"))
+                          return true;
+                      
+                      // Allow any Vercel domain (including preview deployments)
+                      if (origin.Contains("vercel.app"))
+                          return true;
+                      
+                      // Check against configured allowed origins
+                      return allowedOrigins.Contains(origin);
+                  })
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -364,12 +384,13 @@ builder.WebHost.ConfigureKestrel(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI();
+// }
+app.UseSwagger();
+app.UseSwaggerUI();
 // Enable serving static files from wwwroot folder
 app.UseStaticFiles();
 
@@ -381,17 +402,14 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map SignalR Hub
-//app.MapHub<SkillUp.Hubs.CommentHub>("/hubs/comment");
-
-app.MapControllers();
-
-// Map SignalR Hub cho Comment realtime
+// Map SignalR Hubs BEFORE MapControllers to ensure proper routing
+app.MapHub<NotificationHub>("/hubs/notification");
 app.MapHub<SkillUp.Hubs.CommentHub>("/commentHub");
 app.MapHub<LikeCommentHub>("/hubs/likeCommentHub");
 app.MapHub<CommentLessonHub>("/commentLessonHub");
-app.MapHub<NotificationHub>("/hubs/notification");
 app.MapHub<LikeCommentHub>("/hubs/likeComment");
+
+app.MapControllers();
 
 
 app.Run();

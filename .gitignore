@@ -14,7 +14,7 @@
 *.db-shm
 *.db-wal
 *.v2
-*.json
+#*.json
 
 # User-specific files
 *.rsuser
@@ -100,7 +100,7 @@ docker-compose.override.yml
 *.db-shm
 *.db-wal
 *.v2
-*.json
+#*.json
 
 # User-specific files
 *.rsuser
@@ -193,6 +193,9 @@ var/
 wheels/
 share/python-wheels/
 *.egg-info/
+
+# But allow frontend lib folder
+!SkillUp_FE/src/lib/
 .installed.cfg
 *.egg
 MANIFEST

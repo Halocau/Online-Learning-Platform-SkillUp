@@ -43,7 +43,11 @@ export default function PaymentResult() {
 
         // Gọi API để update transaction status thành Failed
         try {
-          await paymentAPI.cancelCoursePayment(orderCode);
+          if (paymentType === "cart") {
+            await paymentAPI.cancelCoursePayment(orderCode);
+          } else {
+            await paymentAPI.cancelCoursePayment(orderCode);
+          }
         } catch (error) {
           console.error("Error cancelling payment:", error);
         }
@@ -51,6 +55,10 @@ export default function PaymentResult() {
         return;
       }
 
+      // PayOS có thể redirect với status=PAID thay vì status=success
+      // Code sẽ verify payment bất kể status parameter (trừ khi là cancel)
+      // Vì PayOS đã redirect về đây nghĩa là thanh toán đã được xử lý
+      
       try {
         let success = false;
 
