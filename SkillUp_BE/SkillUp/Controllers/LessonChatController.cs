@@ -11,7 +11,7 @@ namespace SkillUp.Controllers
     [Route("api/lessons/{lessonId:guid}/chat")]
     [ApiController]
     [Authorize]
-    public class LessonChatController : ControllerBase
+    public class LessonChatController : ControllerBase 
     {
         private readonly ILessonChatService _lessonChatService;
         private readonly ILessonRepository _lessonRepository;
