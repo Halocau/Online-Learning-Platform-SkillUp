@@ -166,12 +166,20 @@ export default function ManageQuestionBank() {
 
 
     // Tìm kiếm phía client
+    const removeVietnameseTones = (str) => {
+        return str
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    };
+
     const displayed = useMemo(() => {
         if (!search.trim()) return questionBanks;
-        const q = search.trim().toLowerCase();
+        const q = removeVietnameseTones(search.trim().toLowerCase());
+
         return questionBanks.filter((t) => {
             const title = (t.title || '').toLowerCase();
-            return title.includes(q);
+            return removeVietnameseTones(title).includes(q);
         });
     }, [questionBanks, search]);
 
@@ -255,18 +263,13 @@ export default function ManageQuestionBank() {
     }
 
     const handleImport = async (file) => {
-        // Your import handler logic
-        console.log("Selected Excel file:", file);
         try {
             await uploadQuizExcel(file);
-            console.log("Nhập câu hỏi thành công!");
             toast.success('Nhập câu hỏi thành công từ file Excel.');
             setImportOpen(false);
             fetchQuestionBank(selectedSectionId);
         } catch (err) {
-            console.log("Nhập thất bại!");
-            console.log(err);
-            toast.error('Nhập câu hỏi thất bại từ file Excel.');
+            toast.error('Nhập câu hỏi thất bại từ file Excel. Vui lòng kiểm tra lại thông tin trong file excel');
         }
     };
     const uploadQuizExcel = async (file) => {
@@ -288,7 +291,7 @@ export default function ManageQuestionBank() {
 
     const clearFilters = () => setFilteredInfo({});
     const clearAll = () => { setFilteredInfo({}); setSortedInfo({}); setSearch(''); };
-    const refresh = () => setRefreshKey((k) => k + 1);
+    const refresh = () => fetchQuestionBank(selectedSectionId);
 
     const columns = [
         {
@@ -452,7 +455,7 @@ export default function ManageQuestionBank() {
                     </div>
 
                     <Space wrap>
-                        <Button onClick={() => setSortedInfo({ columnKey: 'createdAt', order: 'descend' })}>
+                        <Button onClick={() => setSortedInfo({ columnKey: 'updatedAt', order: 'descend' })}>
                             Sắp xếp mới nhất
                         </Button>
                         <Button icon={<ReloadOutlined />} onClick={refresh}>
