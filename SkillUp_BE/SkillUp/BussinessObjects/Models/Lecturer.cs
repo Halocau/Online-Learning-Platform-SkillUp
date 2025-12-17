@@ -19,6 +19,8 @@ public partial class Lecturer
 
     public string? ReceiverName { get; set; }
 
+    public double? Percentage { get; set; }
+
     public virtual Account Account { get; set; } = null!;
 
     public virtual ICollection<Course> Courses { get; set; } = new List<Course>();
