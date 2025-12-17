@@ -86,19 +86,23 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
             if (questionData.questionImage instanceof File) {
                 mainImageUrl = await uploadImage(questionData.questionImage);
             }
-            const processedAnswers = await Promise.all(questionData.answers.map(async (ans) => {
-                let finalAnswerUrl = ans.imageUrl; // Default to whatever is there (null or existing string)
+            const processedAnswers = await Promise.all(
+                questionData.answers
+                    .filter((ans) => ans.isActive !== false) // Filter out deleted answers
+                    .map(async (ans) => {
+                        let finalAnswerUrl = ans.imageUrl; // Default to whatever is there (null or existing string)
 
-                if (ans.imageFile instanceof File) {
-                    finalAnswerUrl = await uploadImage(ans.imageFile);
-                }
+                        if (ans.imageFile instanceof File) {
+                            finalAnswerUrl = await uploadImage(ans.imageFile);
+                        }
 
-                return {
-                    answerName: ans.answerName,
-                    isCorrect: ans.isCorrect,
-                    imageUrl: finalAnswerUrl // The string URL (or null)
-                };
-            }));
+                        return {
+                            answerName: ans.answerName,
+                            isCorrect: ans.isCorrect,
+                            imageUrl: finalAnswerUrl // The string URL (or null)
+                        };
+                    })
+            );
 
             const payload = {
                 ...questionData,
@@ -150,9 +154,8 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
         const updatedData = {
             ...questionData,
             answers: questionData.answers.map((ans) =>
-                ans.answerId === answerId ? { ...ans, isActive: false } : ans
+                ans.answerId === answerId ? { ...ans, answerName:'', isCorrect: false, imageFile: null, previewUrl: null, imageUrl: null, isActive: false } : ans
             ),
-
         };
 
         // Update local state

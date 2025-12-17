@@ -32,9 +32,7 @@ const QuestionBankExcelModal = ({ open, onClose, onImport }) => {
             footer={null}
             title="Nhập câu hỏi từ Excel"
         >
-            <div className="flex flex-col gap-3"> {/* Giảm gap một chút để cân đối */}
-
-                {/* Tiêu đề và Nút Tải file mẫu */}
+            <div className="flex flex-col gap-3">
                 <p className="text-sm font-medium text-gray-700">
                     Tạo câu hỏi bằng file mẫu:
                 </p>
@@ -49,14 +47,12 @@ const QuestionBankExcelModal = ({ open, onClose, onImport }) => {
                     </Button>
                 </Popconfirm>
 
-                {/* Dải ngăn cách với "hoặc" */}
-                <div className="flex items-center my-1"> {/* Thêm my-1 để tạo khoảng cách */}
+                <div className="flex items-center my-1">
                     <div className="flex-grow border-t border-gray-300"></div>
                     <span className="mx-4 text-gray-500 text-sm">hoặc</span>
                     <div className="flex-grow border-t border-gray-300"></div>
                 </div>
 
-                {/* Tiêu đề và Nút Upload Excel */}
                 <p className="text-sm font-medium text-gray-700">
                     Nhập câu hỏi từ file Excel đã có:
                 </p>
@@ -66,8 +62,7 @@ const QuestionBankExcelModal = ({ open, onClose, onImport }) => {
                     </Button>
                 </Upload>
 
-                {/* Note */}
-                <p className="text-sm text-gray-500 pt-2"> {/* Thêm padding top để tách khỏi nút */}
+                <p className="text-sm text-gray-500 pt-2">
                     <b>Lưu ý:</b> Các câu hỏi sẽ được thêm vào chương hiện tại.
                 </p>
 

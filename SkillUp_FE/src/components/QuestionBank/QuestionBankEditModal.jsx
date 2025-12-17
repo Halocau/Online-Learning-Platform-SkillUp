@@ -151,7 +151,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
     const updatedData = {
       ...questionData,
       answers: questionData.answers.map((ans) =>
-        ans.answerId === answerId ? { ...ans, isActive: false } : ans
+        ans.answerId === answerId ? { ...ans, answerName:'', isCorrect: false, isActive: false } : ans
       ),
 
     };
