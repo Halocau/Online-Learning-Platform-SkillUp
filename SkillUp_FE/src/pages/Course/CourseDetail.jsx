@@ -26,7 +26,7 @@ export default function CourseDetail() {
   const [error, setError] = useState(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [checkingEnrollment, setCheckingEnrollment] = useState(true);
-
+  const { isStudent, isLecturer, userRole } = useUserRole();
   // Report modal states
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState("");

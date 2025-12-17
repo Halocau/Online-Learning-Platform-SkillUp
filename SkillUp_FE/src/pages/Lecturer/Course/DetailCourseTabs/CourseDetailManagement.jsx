@@ -31,7 +31,9 @@ function CourseDetailManagement() {
     curriculum: false,
     pricing: false,
   });
-
+  const isCoursePublished = () => {
+    return course?.status === "Public";
+  };
   const tabs = [
     {
       id: "landing",
@@ -430,7 +432,14 @@ function CourseDetailManagement() {
                     /{tabs.filter((tab) => tab.id !== "voucher").length} bước
                   </span>
                 </div>
-                {progress === 100 && (
+
+                {isCoursePublished() && (
+                  <div className="mt-3 p-2 bg-blue-100 border border-blue-200 rounded-lg text-xs text-blue-700 font-medium text-center">
+                    ✓ Khóa học đã được xuất bản
+                  </div>
+                )}
+
+                {!isCoursePublished() && progress === 100 && (
                   <div className="mt-3 p-2 bg-green-100 border border-green-200 rounded-lg text-xs text-green-700 font-medium text-center">
                     ✓ Tất cả đã hoàn thành! Có thể đề xuất khóa học
                   </div>
@@ -439,39 +448,41 @@ function CourseDetailManagement() {
             </div>
 
             {/* Submit Button */}
-            <button
-              onClick={handleSubmitForPreview}
-              disabled={progress < 100 || submitting}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all duration-200 mt-2 ${
-                progress === 100
-                  ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 text-green-800 cursor-pointer"
-                  : "bg-[#e3f6f5]/40 border border-[#272343]/10 text-[#2d334a]/60 cursor-not-allowed opacity-60"
-              }`}
-            >
-              <div
-                className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 ${
+            {!isCoursePublished() && (
+              <button
+                onClick={handleSubmitForPreview}
+                disabled={progress < 100 || submitting}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all duration-200 mt-2 ${
                   progress === 100
-                    ? "bg-green-500 text-white"
-                    : "bg-[#e3f6f5] text-[#2d334a]/60"
+                    ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 border border-green-200 text-green-800 cursor-pointer"
+                    : "bg-[#e3f6f5]/40 border border-[#272343]/10 text-[#2d334a]/60 cursor-not-allowed opacity-60"
                 }`}
               >
-                {submitting ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-semibold tracking-tight">
-                  {submitting ? "Đang gửi..." : "Đề xuất khóa học"}
-                </span>
-                {progress < 100 && (
-                  <p className="text-xs text-[#2d334a]/60 mt-0.5">
-                    Hoàn thành {100 - progress}% để đề xuất
-                  </p>
-                )}
-              </div>
-            </button>
+                <div
+                  className={`flex items-center justify-center w-7 h-7 rounded-full flex-shrink-0 ${
+                    progress === 100
+                      ? "bg-green-500 text-white"
+                      : "bg-[#e3f6f5] text-[#2d334a]/60"
+                  }`}
+                >
+                  {submitting ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold tracking-tight">
+                    {submitting ? "Đang gửi..." : "Đề xuất khóa học"}
+                  </span>
+                  {progress < 100 && (
+                    <p className="text-xs text-[#2d334a]/60 mt-0.5">
+                      Hoàn thành {100 - progress}% để đề xuất
+                    </p>
+                  )}
+                </div>
+              </button>
+            )}
           </div>
         </div>
 

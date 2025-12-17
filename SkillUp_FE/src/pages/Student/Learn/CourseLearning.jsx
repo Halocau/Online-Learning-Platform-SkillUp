@@ -43,7 +43,7 @@ const CourseLearning = () => {
 
   // Track lesson view khi vào lesson
   useEffect(() => {
-    if (lessonId && currentItem?. kind === "Lesson") {
+    if (lessonId && currentItem?.kind === "Lesson") {
       trackLessonView(lessonId);
     }
   }, [lessonId, currentItem]);
@@ -51,41 +51,37 @@ const CourseLearning = () => {
   const checkUserRating = async () => {
     try {
       const response = await ratingAPI.getCourseRatings(courseId);
-      
+
       // Handle different response structures
       let ratings = [];
-      
-      if (response?. data?.data) {
+
+      if (response?.data?.data) {
         // If response has nested data structure
-        ratings = Array.isArray(response.data. data) ? response.data.data : [];
-      } else if (response?. data) {
+        ratings = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (response?.data) {
         // If response. data is the array
         ratings = Array.isArray(response.data) ? response.data : [];
       } else if (Array.isArray(response)) {
         // If response itself is the array
         ratings = response;
       }
-  
-      console.log("Ratings response:", response); // Debug log
-      console.log("Parsed ratings array:", ratings); // Debug log
-  
+
       const currentUserId = localStorage.getItem("userId");
-  
-      if (! currentUserId) {
+
+      if (!currentUserId) {
         console.warn("No userId found in localStorage");
         setUserRating(null);
         return;
       }
-  
+
       // Find the user's rating
       const existingRating = ratings.find(
         (r) =>
-          r.userId === currentUserId || 
+          r.userId === currentUserId ||
           r.userId === parseInt(currentUserId) ||
           String(r.userId) === String(currentUserId)
       );
-  
-      console.log("Found user rating:", existingRating); // Debug log
+
       setUserRating(existingRating || null);
     } catch (error) {
       console.error("Error checking user rating:", error);
@@ -104,11 +100,11 @@ const CourseLearning = () => {
       const hasRating =
         course.ratingId !== null && course.ratingId !== undefined;
       setHasShownCompletionModal(hasRating);
-      
+
       // Extract completed items from API response
       const completed = new Set();
       course.sections.forEach((section) => {
-        section.items?. forEach((item) => {
+        section.items?.forEach((item) => {
           if (item.isCompleted === true) {
             completed.add(item.id);
           }
@@ -191,7 +187,7 @@ const CourseLearning = () => {
       if (idx > 0) {
         const prevItem = items[idx - 1];
         navigate(
-          `/student/learn/${courseId}/section/${currentSection.id}/lesson/${prevItem. id}`
+          `/student/learn/${courseId}/section/${currentSection.id}/lesson/${prevItem.id}`
         );
       } else {
         const secIdx = courseData.sections.findIndex(
@@ -201,7 +197,7 @@ const CourseLearning = () => {
           const prevSec = courseData.sections[secIdx - 1];
           const lastItem = prevSec.items[prevSec.items.length - 1];
           navigate(
-            `/student/learn/${courseId}/section/${prevSec. id}/lesson/${lastItem.id}`
+            `/student/learn/${courseId}/section/${prevSec.id}/lesson/${lastItem.id}`
           );
         }
       }
@@ -213,15 +209,15 @@ const CourseLearning = () => {
     if (!currentSection || !currentItem) return false;
     const idx = currentSection.items.findIndex((i) => i.id === currentItem.id);
     return (
-      idx < currentSection.items. length - 1 ||
-      courseData.sections. findIndex((s) => s.id === currentSection.id) <
+      idx < currentSection.items.length - 1 ||
+      courseData.sections.findIndex((s) => s.id === currentSection.id) <
         courseData.sections.length - 1
     );
   };
 
   const hasPrev = () => {
     if (!currentSection || !currentItem) return false;
-    const idx = currentSection.items.findIndex((i) => i.id === currentItem. id);
+    const idx = currentSection.items.findIndex((i) => i.id === currentItem.id);
     return (
       idx > 0 ||
       courseData.sections.findIndex((s) => s.id === currentSection.id) > 0
@@ -244,35 +240,38 @@ const CourseLearning = () => {
   );
 
   // NEW: Function to check course completion after data refresh
-  const checkCourseCompletionAfterRefresh = useCallback((refreshedCourseData) => {
-    if (!refreshedCourseData || hasShownCompletionModal) return;
+  const checkCourseCompletionAfterRefresh = useCallback(
+    (refreshedCourseData) => {
+      if (!refreshedCourseData || hasShownCompletionModal) return;
 
-    // Count completed items from refreshed data
-    const completed = new Set();
-    refreshedCourseData.sections.forEach((section) => {
-      section.items?.forEach((item) => {
-        if (item.isCompleted === true) {
-          completed.add(item.id);
-        }
+      // Count completed items from refreshed data
+      const completed = new Set();
+      refreshedCourseData.sections.forEach((section) => {
+        section.items?.forEach((item) => {
+          if (item.isCompleted === true) {
+            completed.add(item.id);
+          }
+        });
       });
-    });
 
-    const total = refreshedCourseData.sections.reduce(
-      (a, s) => a + (s.items?.length || 0),
-      0
-    );
+      const total = refreshedCourseData.sections.reduce(
+        (a, s) => a + (s.items?.length || 0),
+        0
+      );
 
-    const isComplete = completed.size >= total && total > 0;
+      const isComplete = completed.size >= total && total > 0;
 
-    if (isComplete) {
-      setHasShownCompletionModal(true);
-      setShowCompletionPage(true);
+      if (isComplete) {
+        setHasShownCompletionModal(true);
+        setShowCompletionPage(true);
 
-      setTimeout(() => {
-        navigate(`/student/learn/${courseId}/complete`, { replace: true });
-      }, 300);
-    }
-  }, [hasShownCompletionModal, courseId, navigate]);
+        setTimeout(() => {
+          navigate(`/student/learn/${courseId}/complete`, { replace: true });
+        }, 300);
+      }
+    },
+    [hasShownCompletionModal, courseId, navigate]
+  );
 
   const handleItemComplete = async (itemId) => {
     try {
@@ -283,7 +282,7 @@ const CourseLearning = () => {
 
       const willBeComplete = checkIfCourseWillBeComplete(newCompletedItems);
 
-      if (willBeComplete && ! hasShownCompletionModal) {
+      if (willBeComplete && !hasShownCompletionModal) {
         setHasShownCompletionModal(true);
         setShowCompletionPage(true);
 
@@ -321,7 +320,7 @@ const CourseLearning = () => {
     try {
       const response = await courseAPI.getCourseLearningDetail(courseId);
       const refreshedCourse = response.data.data[0];
-      
+
       // Update course data
       setCourseData(refreshedCourse);
 
@@ -330,7 +329,7 @@ const CourseLearning = () => {
       refreshedCourse.sections.forEach((section) => {
         section.items?.forEach((item) => {
           if (item.isCompleted === true) {
-            completed. add(item.id);
+            completed.add(item.id);
           }
         });
       });
@@ -347,7 +346,7 @@ const CourseLearning = () => {
   const handleRatingSubmit = async (data) => {
     try {
       await ratingAPI.createRating({
-        courseId:  data.courseId,
+        courseId: data.courseId,
         star: data.star,
         contents: data.contents,
       });
@@ -388,7 +387,7 @@ const CourseLearning = () => {
       </div>
     );
 
-  const isOverview = ! sectionId && !lessonId;
+  const isOverview = !sectionId && !lessonId;
   const isSectionDetail = sectionId && !lessonId;
   const isLessonView = sectionId && lessonId;
   const isCompletionPage = location.pathname.includes("/complete");
