@@ -75,6 +75,7 @@ function Header() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("user");
+      localStorage.removeItem("userId");
       clearGuestCart();
       setUser(null);
       setShowDropdown(false);

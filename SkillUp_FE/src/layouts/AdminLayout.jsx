@@ -19,6 +19,7 @@ export default function AdminLayout() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("userId");
     navigate("/login");
   };
 

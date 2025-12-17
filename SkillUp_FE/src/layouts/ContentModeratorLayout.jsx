@@ -22,6 +22,7 @@ export default function ModeratorLayout() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("userId");
     navigate("/login");
   };
 

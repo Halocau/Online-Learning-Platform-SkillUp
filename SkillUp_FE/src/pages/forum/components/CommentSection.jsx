@@ -1,5 +1,4 @@
 // Đường dẫn: src/pages/forum/components/CommentSection.jsx
-// (Hãy copy và dán toàn bộ code này để thay thế file cũ)
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Spin, Empty, Divider, Button } from "antd";

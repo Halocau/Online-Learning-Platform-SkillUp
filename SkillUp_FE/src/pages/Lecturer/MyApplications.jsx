@@ -239,6 +239,17 @@ function MyApplications() {
                           Xem CV
                         </Button>
                       )}
+
+                      {/* {app.status === "Pending" && (
+                        <Button
+                          onClick={() =>
+                            navigate(`/lecturer/application/${app.id}/edit`)
+                          }
+                          className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold"
+                        >
+                          Chỉnh sửa
+                        </Button>
+                      )} */}
                     </div>
                   </CardContent>
                 </Card>

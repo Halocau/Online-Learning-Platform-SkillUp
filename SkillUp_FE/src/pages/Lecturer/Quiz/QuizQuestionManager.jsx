@@ -183,7 +183,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
         setQuestions((prev) => [...prev, newQuestion]);
         setAddingMode(null);
 
-        toast.success("Câu hỏi đã được thêm!");
 
         try {
           if (onUpdate) {
@@ -224,7 +223,6 @@ function QuizQuestionManager({ quiz, courseId, sectionId, onUpdate }) {
       if (result !== null) {
         await loadQuestions();
         setAddingMode(null);
-        toast.success("Câu hỏi đã được thêm từ ngân hàng!");
 
         try {
           if (onUpdate) {

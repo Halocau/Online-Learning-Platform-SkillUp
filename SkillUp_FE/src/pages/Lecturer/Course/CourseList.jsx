@@ -123,7 +123,7 @@ function CourseList({
 
           if (response.data.code === 200) {
             toast.success("Khóa học đã được ẩn thành công");
-            setDeletingId(null); // ✅ RESET deletingId BEFORE refresh
+            setDeletingId(null);
             setTimeout(() => {
               onRefresh();
             }, 500);
@@ -157,7 +157,7 @@ function CourseList({
 
           if (response.data.code === 200) {
             toast.success("Khóa học đã được mở lại thành công!");
-            setDeletingId(null); // ✅ RESET deletingId BEFORE refresh
+            setDeletingId(null);
             setTimeout(() => {
               onRefresh();
             }, 500);

@@ -5,7 +5,6 @@ import StudentDashboard from "@/pages/Student/StudentDashboard.jsx";
 import CourseLearning from "@/pages/Student/Learn/CourseLearning.jsx";
 import QuizTakingPage from "@/pages/Student/Learn/components/Quiz/QuizTaking.jsx";
 
-
 const StudentRoutes = () => {
   return (
     <Routes>
@@ -30,7 +29,10 @@ const StudentRoutes = () => {
           path="learn/:courseId/section/:sectionId/lesson/:lessonId"
           element={<CourseLearning />}
         />
-
+        <Route
+          path="/learn/:courseId/complete"
+          element={<CourseLearning />}
+        />
         <Route path="quiz/:quizId/take" element={<QuizTakingPage />} />
       </Route>
     </Routes>

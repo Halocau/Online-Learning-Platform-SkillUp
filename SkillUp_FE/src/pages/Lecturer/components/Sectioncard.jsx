@@ -54,9 +54,14 @@ function SectionCard({
   setEditingQuizId,
   courseId,
   onUpdate,
+  validation,
 }) {
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={`overflow-hidden ${
+        validation && !validation.isValid ? "border-2 border-red-300" : ""
+      }`}
+    >
       {/* Section Header */}
       {editingSectionId === section.id ? (
         <div className="p-4 bg-yellow-50 border-b">
@@ -98,18 +103,52 @@ function SectionCard({
         </div>
       ) : (
         <div
-          className="flex items-center gap-3 p-4 bg-gray-50 cursor-pointer hover:bg-gray-100"
+          className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 ${
+            validation && !validation.isValid ? "bg-red-50" : "bg-gray-50"
+          }`}
           onClick={onToggle}
         >
-          <span className="flex items-center justify-center w-8 h-8 bg-[#FFD54F]/20 text-gray-900 rounded-full font-semibold text-sm">
+          <span
+            className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
+              validation && !validation.isValid
+                ? "bg-red-200 text-red-900"
+                : "bg-[#FFD54F]/20 text-gray-900"
+            }`}
+          >
             {section.orders || index + 1}
           </span>
 
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">{section.title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">{section.title}</h3>
+              {validation && !validation.isValid && (
+                <span className="flex items-center gap-1 text-xs px-2 py-1 bg-red-200 text-red-900 rounded-full font-semibold">
+                  <X className="w-3 h-3" />
+                  Chưa hoàn thành
+                </span>
+              )}
+              {validation && validation.isValid && (
+                <span className="flex items-center gap-1 text-xs px-2 py-1 bg-green-200 text-green-900 rounded-full font-semibold">
+                  <Check className="w-3 h-3" />
+                  Hoàn thành
+                </span>
+              )}
+            </div>
             <p className="text-xs text-gray-500 mt-0.5">
               {section.items?.length || 0} mục
             </p>
+
+            {validation &&
+              !validation.isValid &&
+              validation.errors.length > 0 && (
+                <div className="mt-2 text-xs text-red-700 space-y-1">
+                  {validation.errors.map((error, idx) => (
+                    <div key={idx} className="flex items-start gap-1">
+                      <span>{error}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
           </div>
 
           <div className="flex items-center gap-2">

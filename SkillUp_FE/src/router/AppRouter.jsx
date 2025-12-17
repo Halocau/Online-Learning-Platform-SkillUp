@@ -1,3 +1,4 @@
+// src/routes/AppRouter.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Auth/Login.jsx";
 import Register from "../pages/Auth/Register.jsx";
@@ -45,7 +46,7 @@ function AppRouter() {
         <Route path="/payment/result" element={<PaymentResult />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* Profile - accessible by all authenticated users */}
+        
         <Route
           path="/profile"
           element={
@@ -63,32 +64,21 @@ function AppRouter() {
           }
         />
 
-        {/* Public pages - Allow Students and Lecturers */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute
-              allowedRoles={["Student", "Lecturer"]}
-              allowLecturerAccess={true}
-            >
-              <MainLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
-          <Route path="/forum/*" element={<ForumRoutes />} />
-          <Route path="/news" element={<NewsList />} />
-          <Route path="/news/:id" element={<NewsDetail />} />
-          <Route path="/course/:courseId" element={<CourseDetail />} />
-          <Route path="/courses/:categoryId" element={<CoursesByCategory />} />
+          <Route path="forum/*" element={<ForumRoutes />} />
+          <Route path="news" element={<NewsList />} />
+          <Route path="news/:id" element={<NewsDetail />} />
+          <Route path="course/:courseId" element={<CourseDetail />} />
+          <Route path="courses/:categoryId" element={<CoursesByCategory />} />
           <Route
-            path="/lecturer-info/:accountId"
+            path="lecturer-info/:accountId"
             element={<LecturerProfile />}
           />
 
-          {/* Student-only routes */}
+          {/* Student-only routes (protected individually) */}
           <Route
-            path="/cart"
+            path="cart"
             element={
               <ProtectedRoute allowedRoles={["Student"]}>
                 <MyCart />
@@ -96,7 +86,7 @@ function AppRouter() {
             }
           />
           <Route
-            path="/my-courses"
+            path="my-courses"
             element={
               <ProtectedRoute allowedRoles={["Student"]}>
                 <MyCourses />
@@ -104,7 +94,7 @@ function AppRouter() {
             }
           />
           <Route
-            path="/purchase-history"
+            path="purchase-history"
             element={
               <ProtectedRoute allowedRoles={["Student"]}>
                 <PurchaseHistory />
@@ -113,7 +103,7 @@ function AppRouter() {
           />
         </Route>
 
-        {/* Tickets - accessible by Students and Lecturers */}
+        {/* Tickets - protected (Students & Lecturers) */}
         <Route
           path="/ticket"
           element={
@@ -131,7 +121,6 @@ function AppRouter() {
           }
         />
 
-        {/* Role-specific dashboards */}
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/contentmod/*" element={<ContentModeratorRoutes />} />
         <Route path="/sysmod/*" element={<SystemModeratorRoutes />} />

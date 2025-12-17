@@ -23,7 +23,6 @@ function ManageCourses() {
       const response = await courseAPI.getCoursesOfLecturer();
       if (response.data.code === 200) {
         setCourses(response.data.data || []);
-        toast.success("Đã tải danh sách khóa học");
       } else {
         toast.error(response.data.message || "Lỗi khi tải khóa học");
       }
