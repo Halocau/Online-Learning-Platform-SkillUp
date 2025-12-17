@@ -19,7 +19,8 @@ export const handlePostLogin = async (userId, user = null) => {
 };
 
 export const checkLecturerProfileCompletion = async (user) => {
-  // Only check for Lecturers
+  return null;
+
   if (!user) {
     return null;
   }

@@ -156,13 +156,14 @@ function LecturerSidebar({ isOpen, onToggle, isPending = false }) {
           />
         </nav>
 
-        {/* Footer - Logout - This stays at the bottom */}
+        {/* Footer */}
         <div className="border-t p-3 flex-shrink-0">
           <button
             onClick={() => {
               localStorage.removeItem("accessToken");
               localStorage.removeItem("refreshToken");
               localStorage.removeItem("user");
+              localStorage.removeItem("userId");
               window.location.href = "/login";
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 ${

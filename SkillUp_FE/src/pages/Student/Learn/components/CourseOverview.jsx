@@ -22,7 +22,7 @@ const CourseOverview = ({
   userRating,
   onOpenRatingModal,
   onDeleteRating,
-  hasRatingId, // New prop to check if user already rated
+  hasRatingId,
 }) => {
   const navigate = useNavigate();
 
@@ -64,9 +64,9 @@ const CourseOverview = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
-      {/* Hero Section */}
+ 
       <div className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-white via-[#FFD54F]/5 to-white">
-        {/* Decorative glow */}
+       
         <div className="pointer-events-none absolute right-10 top-10 -z-10 h-[10rem] w-[20rem] rounded-full bg-[#FFD54F]/20 blur-3xl"></div>
 
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6">
@@ -234,7 +234,7 @@ const CourseOverview = ({
             className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6"
           >
             {hasRatingId ? (
-              // User already rated - Show information message
+              
               <div className="flex items-center justify-center gap-3 p-4">
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-green-600" />
@@ -249,7 +249,7 @@ const CourseOverview = ({
                 </div>
               </div>
             ) : userRating ? (
-              // Show existing rating with edit/delete options
+             
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -264,25 +264,6 @@ const CourseOverview = ({
                         Cảm ơn bạn đã đánh giá khóa học này
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={onOpenRatingModal}
-                      className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <span className="text-sm font-medium">Chỉnh sửa</span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={onDeleteRating}
-                      className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <span className="text-sm font-medium">Xóa</span>
-                    </motion.button>
                   </div>
                 </div>
 
@@ -305,15 +286,15 @@ const CourseOverview = ({
                 </div>
               </div>
             ) : (
-              // Prompt to add rating
+              
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-[#FFD54F] flex items-center justify-center">
-                    <MessageSquare className="w-6 h-6 text-gray-900" />
+                    <Star className="w-6 h-6 text-gray-900" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Đánh giá khóa học này
+                      Đánh giá khóa học
                     </h3>
                     <p className="text-sm text-gray-600">
                       Chia sẻ trải nghiệm của bạn với học viên khác

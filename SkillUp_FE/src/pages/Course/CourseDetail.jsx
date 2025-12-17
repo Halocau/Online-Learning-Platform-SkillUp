@@ -31,7 +31,6 @@ export default function CourseDetail() {
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [isReporting, setIsReporting] = useState(false);
-  const { isStudent, isLecturer, userRole } = useUserRole();
   useEffect(() => {
     window.scrollTo(0, 0);
 
@@ -246,13 +245,11 @@ export default function CourseDetail() {
           </div>
 
           <div className="hidden lg:block">
-            {isStudent && (
-              <CourseEnrollmentCard
-                course={course}
-                isEnrolled={isEnrolled}
-                checkingEnrollment={checkingEnrollment}
-              />
-            )}
+            <CourseEnrollmentCard
+              course={course}
+              isEnrolled={isEnrolled}
+              checkingEnrollment={checkingEnrollment}
+            />
           </div>
         </div>
       </div>
