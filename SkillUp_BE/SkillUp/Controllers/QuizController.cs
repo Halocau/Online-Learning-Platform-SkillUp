@@ -14,6 +14,7 @@ namespace SkillUp.Controllers
     {
         private readonly IQuizService _quizService;
         private readonly ICurrentUserService _currentUserService;
+       
 
         public QuizController(IQuizService quizService, ICurrentUserService currentUserService)
         {

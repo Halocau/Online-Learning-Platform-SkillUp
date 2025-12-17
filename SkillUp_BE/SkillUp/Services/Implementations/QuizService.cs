@@ -23,7 +23,8 @@ namespace SkillUp.Services.Implementations
         private readonly IQuestionBankRepository _questionBankRepository;
         private readonly IStudentProgressRepository _studentProgressRepository;
         private readonly IEnrollmentRepository _enrollmentRepository;
-        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository, IAnswerBankRepository answerBankRepository, IQuizAnswerSubmissionRepository quizAnswerSubmissionRepository, IStudentSelectedAnswersRepository studentSelectedAnswersRepository, IQuestionBankRepository questionBankRepository, IStudentProgressRepository studentProgressRepository, IEnrollmentRepository enrollmentRepository)
+        private readonly INotifyService _notifierService;
+        public QuizService(IQuizRepository quizRepository, ILecturerRepository lecturerRepository, ISectionRepository sectionRepository, IQuizSubmissionRepository quizSubmissionRepository, IStudentRepository studentRepository, IAnswerBankRepository answerBankRepository, IQuizAnswerSubmissionRepository quizAnswerSubmissionRepository, IStudentSelectedAnswersRepository studentSelectedAnswersRepository, IQuestionBankRepository questionBankRepository, IStudentProgressRepository studentProgressRepository, IEnrollmentRepository enrollmentRepository , INotifyService notifyService)
         {
             _quizRepository = quizRepository;
             _lecturerRepository = lecturerRepository;
@@ -36,6 +37,7 @@ namespace SkillUp.Services.Implementations
             _questionBankRepository = questionBankRepository;
             _studentProgressRepository = studentProgressRepository;
             _enrollmentRepository = enrollmentRepository;
+            _notifierService = notifyService;
         }
 
         public async Task<Guid> CreateQuizAsync(CreateQuizDTO dto, Guid accId)
@@ -83,6 +85,18 @@ namespace SkillUp.Services.Implementations
             if (!success)
             {
                 throw new Exception("Lỗi: Không thể lưu bài quiz vào cơ sở dữ liệu.");
+            }
+            try
+            {
+                var courseId = section.Course.Id;
+                string notiTitle = "Bài tập mới";
+                string notiMessage = $"Khóa học '{section.Course.Title}' vừa có thêm bài tập mới: {quiz.Title}";
+              
+                await _notifierService.SendCourseUpdateNotificationAsync(courseId, notiTitle, notiMessage);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"Error sending notification: {ex.Message}");
             }
             return quiz.Id;
         }
