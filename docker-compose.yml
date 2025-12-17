@@ -52,10 +52,10 @@ services:
       - LANGUAGE=${LANGUAGE:-vi}
       - MAX_FILE_MB=${MAX_FILE_MB:-2048}
       # Gemini API Keys
-      - GEMINI_API_KEY_1=AIzaSyCYYA2-PUr7Zc0hIkbGCjnyP_cUMdoEoOs
-      - GEMINI_API_KEY_2=AIzaSyDWSMwvvOBuj1j-3f8tPf7tWsIgTKyJsoI
-      - GEMINI_API_KEY_3=AIzaSyAzw2jriR-d-BAq7_IIOfweDIa5JPEnYOA
-      - GEMINI_API_KEY_4=AIzaSyD6AqEtM4u8NQ2L2r5HpWphoPsIIJoTdVY
+      - GEMINI_API_KEY_1=AIzaSyBFWgNH0tCQBmQsA969O45_pampeROMADM
+      - GEMINI_API_KEY_2=AIzaSyClN2i3eT0WIxwmUDFhGKRdj8--Di4Lz7s
+      - GEMINI_API_KEY_3=AIzaSyADYKYLUgXSh-G7-sBGQTWtjmTDT6z5rHE
+      - GEMINI_API_KEY_4=AIzaSyADYKYLUgXSh-G7-sBGQTWtjmTDT6z5rHE
       - GEMINI_API_KEY_5=AIzaSyDWSMwvvOBuj1j-3f8tPf7tWsIgTKyJsoI
       - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
       # AI Correction Settings
