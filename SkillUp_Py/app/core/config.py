@@ -28,9 +28,7 @@ VAD_MIN_SIL_MS = int(get_env("VAD_MIN_SIL_MS", "300"))
 BEAM_SIZE      = int(get_env("BEAM_SIZE", "7"))  # Tăng từ 5 → 7 để tăng độ chính xác
 BEST_OF        = int(get_env("BEST_OF", "7"))    # Tăng từ 5 → 7 để tăng độ chính xác
 TEMPERATURE    = float(get_env("TEMPERATURE", "0.0"))
-# Normalize language code to 2-letter format (e.g., "en_US:" -> "en", "vi" -> "vi")
-_language_raw = get_env("LANGUAGE", "vi")
-LANGUAGE = _language_raw.split(":")[0].split("_")[0].lower() if _language_raw else "vi"
+LANGUAGE       = get_env("LANGUAGE", "vi")
 MAX_FILE_MB    = int(get_env("MAX_FILE_MB", "2048"))
 # Prompt mặc định (sẽ được override bởi get_optimized_prompt trong vietnamese.py)
 INITIAL_PROMPT = get_env(

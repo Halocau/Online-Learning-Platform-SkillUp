@@ -13,12 +13,6 @@ def transcribe_with_confidence(
     context: str = "education"
 ) -> Tuple[List[Dict[str, Any]], dict]:
     """Enhanced transcription with confidence scores and Vietnamese optimization"""
-    # Normalize language code to 2-letter format (e.g., "en_US:" -> "en", "vi" -> "vi")
-    if language:
-        language = language.split(":")[0].split("_")[0].lower()
-    else:
-        language = "vi"
-    
     prompt = get_optimized_prompt(context)
     
     logger.info(
