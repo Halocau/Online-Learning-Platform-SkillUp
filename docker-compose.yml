@@ -49,7 +49,7 @@ services:
       - TEMPERATURE=${TEMPERATURE:-0.0}
       - USE_DENOISE=${USE_DENOISE:-1}
       - VAD_MIN_SIL_MS=${VAD_MIN_SIL_MS:-300}
-      - LANGUAGE=${LANGUAGE:-vi}
+      - LANGUAGE=vi
       - MAX_FILE_MB=${MAX_FILE_MB:-2048}
       # Gemini API Keys
       - GEMINI_API_KEY_1=AIzaSyBFWgNH0tCQBmQsA969O45_pampeROMADM

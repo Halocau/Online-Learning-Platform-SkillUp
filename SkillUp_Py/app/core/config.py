@@ -28,7 +28,40 @@ VAD_MIN_SIL_MS = int(get_env("VAD_MIN_SIL_MS", "300"))
 BEAM_SIZE      = int(get_env("BEAM_SIZE", "7"))  # Tăng từ 5 → 7 để tăng độ chính xác
 BEST_OF        = int(get_env("BEST_OF", "7"))    # Tăng từ 5 → 7 để tăng độ chính xác
 TEMPERATURE    = float(get_env("TEMPERATURE", "0.0"))
-LANGUAGE       = get_env("LANGUAGE", "vi")
+
+# Normalize language code: Whisper chỉ chấp nhận 2 ký tự (en, vi, zh, etc.)
+# Không chấp nhận locale format (en_US, en_US:, etc.)
+def normalize_language_code(lang: str) -> str:
+    """Normalize language code to 2 characters (Whisper format)"""
+    if not lang:
+        return "vi"  # Default to Vietnamese
+    
+    # Remove locale suffix (en_US -> en, vi_VN -> vi)
+    lang = lang.strip().split("_")[0].split(":")[0].split("-")[0]
+    
+    # Only take first 2 characters
+    lang = lang[:2].lower()
+    
+    # Validate: Whisper accepts these codes
+    valid_codes = {
+        "af", "am", "ar", "as", "az", "ba", "be", "bg", "bn", "bo", "br", "bs",
+        "ca", "cs", "cy", "da", "de", "el", "en", "es", "et", "eu", "fa", "fi",
+        "fo", "fr", "gl", "gu", "ha", "haw", "he", "hi", "hr", "ht", "hu", "hy",
+        "id", "is", "it", "ja", "jw", "ka", "kk", "km", "kn", "ko", "la", "lb",
+        "ln", "lo", "lt", "lv", "mg", "mi", "mk", "ml", "mn", "mr", "ms", "mt",
+        "my", "ne", "nl", "nn", "no", "oc", "pa", "pl", "ps", "pt", "ro", "ru",
+        "sa", "sd", "si", "sk", "sl", "sn", "so", "sq", "sr", "su", "sv", "sw",
+        "ta", "te", "tg", "th", "tk", "tl", "tr", "tt", "uk", "ur", "uz", "vi",
+        "yi", "yo", "zh", "yue"
+    }
+    
+    if lang in valid_codes:
+        return lang
+    
+    # Fallback to Vietnamese if invalid
+    return "vi"
+
+LANGUAGE       = normalize_language_code(get_env("LANGUAGE", "vi"))
 MAX_FILE_MB    = int(get_env("MAX_FILE_MB", "2048"))
 # Prompt mặc định (sẽ được override bởi get_optimized_prompt trong vietnamese.py)
 INITIAL_PROMPT = get_env(
