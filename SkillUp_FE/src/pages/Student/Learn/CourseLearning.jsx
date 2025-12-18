@@ -306,7 +306,16 @@ const CourseLearning = () => {
       });
     }
   };
+  const isCourseActuallyComplete = useCallback(() => {
+    if (!courseData) return false;
 
+    const total = courseData.sections.reduce(
+      (acc, section) => acc + (section.items?.length || 0),
+      0
+    );
+
+    return completedItems.size >= total && total > 0;
+  }, [courseData, completedItems]);
   const calculateProgress = () => {
     const total = courseData.sections.reduce(
       (a, s) => a + (s.items?.length || 0),
@@ -315,16 +324,13 @@ const CourseLearning = () => {
     return total > 0 ? (completedItems.size / total) * 100 : 0;
   };
 
-  // FIXED: Check for course completion after quiz is completed
   const handleQuizComplete = async () => {
     try {
       const response = await courseAPI.getCourseLearningDetail(courseId);
       const refreshedCourse = response.data.data[0];
 
-      // Update course data
       setCourseData(refreshedCourse);
 
-      // Update completed items
       const completed = new Set();
       refreshedCourse.sections.forEach((section) => {
         section.items?.forEach((item) => {
@@ -335,7 +341,6 @@ const CourseLearning = () => {
       });
       setCompletedItems(completed);
 
-      // Check if course is now complete
       checkCourseCompletionAfterRefresh(refreshedCourse);
     } catch (error) {
       console.error("Error refreshing course after quiz:", error);
@@ -356,7 +361,7 @@ const CourseLearning = () => {
 
       await Promise.all([checkUserRating(), fetchCourseDetail()]);
 
-      setTimeout(() => { }, 1000);
+      setTimeout(() => {}, 1000);
     } catch (error) {
       console.error("Error submitting rating:", error);
       toast.error("Không thể gửi đánh giá. Vui lòng thử lại.");
@@ -400,6 +405,16 @@ const CourseLearning = () => {
     ) : null;
 
   if (isCompletionPage) {
+    if (!isCourseActuallyComplete()) {
+      navigate(`/student/learn/${courseId}`, { replace: true });
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+          <Loader2 className="w-12 h-12 text-[#FFD54F] animate-spin mb-4" />
+          <p className="text-gray-600 font-medium">Đang chuyển hướng... </p>
+        </div>
+      );
+    }
+
     return (
       <div className="animate-fadeIn">
         <CourseCompletionPage
