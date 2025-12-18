@@ -163,7 +163,7 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   const handleAddAnswer = () => {
     const newAnswer = {
       answerId: crypto.randomUUID(),
-      answerName: "Đáp án mới",
+      answerName: "",
       isCorrect: false,
       isActive: true
     };

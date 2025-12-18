@@ -19,10 +19,6 @@ public partial class Transaction
 
     public DateTime CreatedAt { get; set; }
 
-    public double? Percentage { get; set; }
-
-    public decimal? LecturerIncome { get; set; }
-
     public virtual Account Account { get; set; } = null!;
 
     public virtual ICollection<TransactionDetail> TransactionDetails { get; set; } = new List<TransactionDetail>();
