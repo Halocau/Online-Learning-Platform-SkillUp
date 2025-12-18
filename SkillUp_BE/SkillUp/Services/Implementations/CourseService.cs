@@ -689,9 +689,9 @@ namespace SkillUp.Services.Implementations
                             .Where(a => a.IsActive)
                             .Select(a => new AssetCourseDetailDto
                             {
-                                Url = a.Url ?? "default-url",
-                                Content = a.Contents ?? "No content",
-                                FileUrl = a.FileUrl ?? "default-file-url"
+                                Url = a.Url ?? null,
+                                Content = a.Contents ??null,
+                                FileUrl = a.FileUrl ?? null
                             })
                             .ToList() ?? new List<AssetCourseDetailDto>(),
                         CreatedAt = l.CreatedAt,
@@ -820,9 +820,9 @@ namespace SkillUp.Services.Implementations
                             .Where(a => a.IsActive)
                             .Select(a => new AssetCourseDetailDto
                             {
-                                Url = a.Url ?? "default-url",
-                                Content = a.Contents ?? "No content",
-                                FileUrl = a.FileUrl ?? "default-file-url"
+                                Url = a.Url ?? null,
+                                Content = a.Contents ?? null,
+                                FileUrl = a.FileUrl ?? null
                             })
                             .ToList() ?? new List<AssetCourseDetailDto>(),
                         CreatedAt = l.CreatedAt,
