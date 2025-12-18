@@ -936,7 +936,6 @@ public partial class SkillUpContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.LecturerIncome).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
             entity.Property(e => e.Status).HasMaxLength(20);
 
@@ -951,6 +950,7 @@ public partial class SkillUpContext : DbContext
             entity.ToTable("TransactionDetail");
 
             entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.LecturerIncome).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.Course).WithMany(p => p.TransactionDetails)
