@@ -6,7 +6,7 @@ import { Toaster } from 'sonner'
 import App from './App.jsx'
 import './App.css'
 
-const GOOGLE_CLIENT_ID = "650445110591-seugnrenqq24dsieb4vb3fbtrar7rura.apps.googleusercontent.com"
+const GOOGLE_CLIENT_ID = "184639190577-7em5iq5it6gcqmdblf266mqguq0a1fkj.apps.googleusercontent.com"
 
 createRoot(document.getElementById('root')).render(
   <>

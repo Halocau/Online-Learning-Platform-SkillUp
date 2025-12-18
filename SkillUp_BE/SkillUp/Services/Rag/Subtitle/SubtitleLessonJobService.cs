@@ -61,25 +61,41 @@ namespace SkillUp.Services.Rag.Subtitle
                 return CreateResult(lessonId, courseId, false, "Lesson does not have an active video asset.");
 
             // Skip if subtitle already exists (unless forced)
-            if (!force && await CheckAndSkipIfExistsAsync(lessonId, videoAsset.Url, courseId, ct))
+            // Check both: SubtitleText in Asset AND Qdrant index
+            if (!force && await CheckAndSkipIfExistsAsync(lessonId, videoAsset, courseId, ct))
                 return CreateResult(lessonId, courseId, true, "Subtitle already exists. Skipped generation.", videoAsset.Url);
 
             return await GenerateAsync(lesson, videoAsset, courseId, ct);
         }
 
-        private async Task<bool> CheckAndSkipIfExistsAsync(Guid lessonId, string videoUrl, Guid courseId, CancellationToken ct)
+        private async Task<bool> CheckAndSkipIfExistsAsync(Guid lessonId, Asset videoAsset, Guid courseId, CancellationToken ct)
         {
             try
             {
+                // Check 1: SubtitleText đã có trong Asset chưa?
+                if (!string.IsNullOrWhiteSpace(videoAsset.SubtitleText))
+                {
+                    _logger.LogInformation(
+                        "Lesson {LessonId} already has SubtitleText in Asset. Skipping generation.",
+                        lessonId);
+                    return true;
+                }
+
+                // Check 2: Subtitle đã được index vào Qdrant chưa?
                 if (await _subtitleService.HasSubtitlesAsync(lessonId, ct))
                 {
-                    _logger.LogInformation("Lesson {LessonId} already has subtitle indexed. Skipping generation.", lessonId);
+                    _logger.LogInformation(
+                        "Lesson {LessonId} already has subtitle indexed in Qdrant. Skipping generation.",
+                        lessonId);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to check existing subtitle for lesson {LessonId}. Proceeding with generation.", lessonId);
+                _logger.LogWarning(
+                    ex,
+                    "Failed to check existing subtitle for lesson {LessonId}. Proceeding with generation.",
+                    lessonId);
             }
             return false;
         }
@@ -188,9 +204,9 @@ namespace SkillUp.Services.Rag.Subtitle
                     return;
                 }
 
-                var notificationTitle = "Phụ đề đã được tạo tự động";
+                var notificationTitle = "Phụ đề đã được tạo tự động thành công";
                 var notificationMessage = $"Phụ đề cho bài học \"{lesson.Title}\" đã được tạo thành công. Bạn có thể xem và chỉnh sửa phụ đề trong trang quản lý khóa học.";
-                var hyperlink = $"/lecturer/courses/{courseId}/detail?tab=curriculum";
+                var hyperlink = $"/lecturer/courses/{courseId}";
 
                 var accountId = course.Lecturer.AccountId;
                 await _notifyService.CreateNotificationAsync(
