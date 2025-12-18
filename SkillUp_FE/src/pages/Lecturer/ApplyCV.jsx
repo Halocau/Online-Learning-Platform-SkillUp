@@ -250,7 +250,6 @@ function ApplyCV() {
                 >
                   Xem đơn ứng tuyển của tôi
                 </Button>
-               
               </div>
             </CardContent>
           </Card>

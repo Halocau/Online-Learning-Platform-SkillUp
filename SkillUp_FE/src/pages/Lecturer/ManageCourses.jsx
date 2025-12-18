@@ -29,7 +29,6 @@ function ManageCourses() {
     } catch (error) {
       if (error.response?.status === 404) {
         setCourses([]);
-        toast.info("Bạn chưa có khóa học nào");
       } else {
         toast.error("Lỗi khi tải danh sách khóa học");
       }

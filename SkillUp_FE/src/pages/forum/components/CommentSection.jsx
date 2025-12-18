@@ -1,5 +1,3 @@
-// Đường dẫn: src/pages/forum/components/CommentSection.jsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import { Spin, Empty, Divider, Button } from "antd";
 import { MessageCircle, RefreshCw } from "lucide-react";
@@ -12,7 +10,7 @@ import commentApi from "@/api/commentAPI";
 import ReplyForm from "./ReplyForm.jsx";
 import signalRService from "./SignalRService.jsx";
 
-// --- Chuyển hàm helper ra ngoài để dùng chung ---
+
 const findCommentById = (list, id) => {
   if (!list || !Array.isArray(list)) return null;
   for (const c of list) {
@@ -442,7 +440,7 @@ export default function CommentSection({ postId }) {
       });
       toast.success("Báo cáo thành công");
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Lỗi khi báo cáo");
+      toast.error(err?.response?.data?.message || "Nội dung cần ít nhất 10 ký tự");
     } finally {
       setReportModalVisible(false);
       setReportCommentId(null);
@@ -462,7 +460,6 @@ export default function CommentSection({ postId }) {
     setEditingId(null);
   };
 
-  // --- HÀM RENDER ĐỆ QUY ---
   const renderComment = (
     comment,
     isReply = false,
@@ -523,7 +520,7 @@ export default function CommentSection({ postId }) {
     );
   };
 
-  // --- 4. JSX ---
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
       <div className="flex items-center justify-between mb-6">

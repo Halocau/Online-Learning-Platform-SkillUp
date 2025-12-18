@@ -28,7 +28,7 @@ import { Spin } from "antd";
 export default function CoursePendingTab({ courses, fetchCourses }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState("Khóa học đã được xem xét.");
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -53,6 +53,12 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, itemsPerPage]);
+
+  React.useEffect(() => {
+    if (selectedCourse) {
+      setFeedback("Khóa học đã được xem xét.");
+    }
+  }, [selectedCourse]);
 
   const handleReview = async (isApproved) => {
     if (!isApproved && !feedback.trim()) {
@@ -181,7 +187,7 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phản hồi (Bắt buộc nếu từ chối)
+                    Phản hồi
                   </label>
                   <Textarea
                     value={feedback}
@@ -190,6 +196,9 @@ export default function CoursePendingTab({ courses, fetchCourses }) {
                     rows={6}
                     className="w-full"
                   />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Bạn có thể chỉnh sửa phản hồi này trước khi gửi
+                  </p>
                 </div>
 
                 <div className="flex gap-3 pt-4">
