@@ -16,11 +16,13 @@ namespace SkillUp.Services.Common
         private readonly string _apiKey;
         private readonly string _checksumKey;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
 
-        public PayOSService(SkillUpContext context, IConfiguration config, HttpClient httpClient = null)
+        public PayOSService(SkillUpContext context, IConfiguration config, IEmailService emailService, HttpClient httpClient = null)
         {
             _context = context;
             _config = config;
+            _emailService = emailService;
             _clientId = config["PayOS:ClientId"] ?? throw new ArgumentNullException("PayOS:ClientId");
             _apiKey = config["PayOS:ApiKey"] ?? throw new ArgumentNullException("PayOS:ApiKey");
             _checksumKey = config["PayOS:ChecksumKey"] ?? throw new ArgumentNullException("PayOS:ChecksumKey");
@@ -98,6 +100,10 @@ namespace SkillUp.Services.Common
                 await EnrollStudentAndCreateTransactionDetailAsync(student.Id, courseId.Value, transaction.Id);
 
                     await _context.SaveChangesAsync();
+
+                    // Gửi email xác nhận mua khóa học
+                    await SendPurchaseEmailAsync(student, courseId.Value, transaction);
+
                     return true;
             }
             catch (Exception ex)
@@ -407,6 +413,17 @@ namespace SkillUp.Services.Common
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Clear cart after successful payment and enrollment
+                if (cart != null && cart.CartItems != null && cart.CartItems.Any())
+                {
+                    _context.CartItems.RemoveRange(cart.CartItems);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Gửi email xác nhận mua khóa học (nhiều khóa học)
+                await SendCartPurchaseEmailAsync(student, courseIds, transaction, courseFinalPrices);
+
                 return true;
             }
             catch (Exception ex)
@@ -508,6 +525,10 @@ namespace SkillUp.Services.Common
                 await _context.SaveChangesAsync();
             }
 
+            // Gửi email xác nhận mua khóa học miễn phí (nhiều khóa học)
+            var freeCourseIds = request.Items.Select(i => i.CourseId).ToList();
+            await SendCartPurchaseEmailAsync(student, freeCourseIds, transaction, null);
+
             return new CartPaymentResponseDto
             {
                 Success = true,
@@ -545,6 +566,9 @@ namespace SkillUp.Services.Common
 
             // Create transaction detail
             await CreateTransactionDetailAsync(transaction.Id, course.Id, 0);
+
+            // Gửi email xác nhận mua khóa học miễn phí
+            await SendPurchaseEmailAsync(student, course.Id, transaction);
 
             return new CoursePaymentResponseDto
             {
@@ -773,6 +797,74 @@ namespace SkillUp.Services.Common
             using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
             return BitConverter.ToString(hmac.ComputeHash(Encoding.UTF8.GetBytes(raw)))
                 .Replace("-", "").ToLower();
+        }
+
+        private async Task SendPurchaseEmailAsync(Student student, Guid courseId, Transaction transaction)
+        {
+            try
+            {
+                var account = await _context.Accounts.FindAsync(student.AccountId);
+                if (account == null || string.IsNullOrEmpty(account.Email)) return;
+
+                var course = await _context.Courses.FindAsync(courseId);
+                if (course == null) return;
+
+                var courses = new List<(string CourseName, Guid CourseId, decimal Price, string ImageUrl)>
+                {
+                    (course.Title, course.Id, transaction.Amount, course.Image)
+                };
+
+                await _emailService.SendCoursePurchaseEmailAsync(
+                    account.Email,
+                    account.Fullname ?? "Học viên",
+                    courses,
+                    transaction.Amount,
+                    transaction.PaymentMethod ?? "PayOS"
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PayOS] ERROR sending purchase email: {ex.Message}");
+                // Không throw exception để không ảnh hưởng đến quá trình thanh toán
+            }
+        }
+
+        private async Task SendCartPurchaseEmailAsync(Student student, List<Guid> courseIds, Transaction transaction, Dictionary<Guid, decimal>? courseFinalPrices)
+        {
+            try
+            {
+                var account = await _context.Accounts.FindAsync(student.AccountId);
+                if (account == null || string.IsNullOrEmpty(account.Email)) return;
+
+                var courses = await _context.Courses
+                    .Where(c => courseIds.Contains(c.Id))
+                    .ToListAsync();
+
+                if (!courses.Any()) return;
+
+                var courseList = courses.Select(c =>
+                {
+                    var finalPrice = courseFinalPrices?.ContainsKey(c.Id) == true
+                        ? courseFinalPrices[c.Id]
+                        : c.Price;
+                    return (c.Title, c.Id, finalPrice, c.Image);
+                }).ToList();
+
+                var totalAmount = courseList.Sum(c => c.Item3);
+
+                await _emailService.SendCoursePurchaseEmailAsync(
+                    account.Email,
+                    account.Fullname ?? "Học viên",
+                    courseList,
+                    totalAmount,
+                    transaction.PaymentMethod ?? "PayOS"
+                );
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[PayOS] ERROR sending cart purchase email: {ex.Message}");
+                // Không throw exception để không ảnh hưởng đến quá trình thanh toán
+            }
         }
 
         #endregion

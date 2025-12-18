@@ -5,6 +5,7 @@ using SkillUp.BussinessObjects.DTOs.Quiz;
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Repositories.Interfaces;
 using SkillUp.Services.Implementations;
+using SkillUp.Services.Interfaces;
 using System;
 using System.Threading.Tasks;
 
@@ -24,6 +25,7 @@ public class QuizServiceTest
     private Mock<IQuestionBankRepository> _mockQuestionBankRepo;
     private Mock<IStudentProgressRepository> _mockStudentProgressRepo;
     private Mock<IEnrollmentRepository> _mockEnrollmentRepo;
+    private Mock<INotifyService> _mockNotifyService;
 
     private QuizService _service;
 
@@ -41,6 +43,7 @@ public class QuizServiceTest
         _mockQuestionBankRepo = new Mock<IQuestionBankRepository>();
         _mockStudentProgressRepo = new Mock<IStudentProgressRepository>();
         _mockEnrollmentRepo = new Mock<IEnrollmentRepository>();
+        _mockNotifyService = new Mock<INotifyService>();
 
         _service = new QuizService(
             _mockQuizRepo.Object,
@@ -53,7 +56,8 @@ public class QuizServiceTest
             _mockStudentSelectedAnswersRepo.Object,
             _mockQuestionBankRepo.Object,
             _mockStudentProgressRepo.Object,
-            _mockEnrollmentRepo.Object
+            _mockEnrollmentRepo.Object,
+            _mockNotifyService.Object
         );
     }
 

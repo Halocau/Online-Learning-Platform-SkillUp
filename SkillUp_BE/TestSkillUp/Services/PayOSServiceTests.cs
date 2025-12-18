@@ -7,6 +7,7 @@ using SkillUp.BussinessObjects.DTOs.PayOS; // Adjust namespace
 using SkillUp.BussinessObjects.Models;
 using SkillUp.Services.Common;
 using SkillUp.Services.Implementations;
+using SkillUp.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +29,7 @@ namespace TestSkillUp.Services
 		private Mock<IConfiguration> _mockConfig;
 		private Mock<HttpMessageHandler> _mockHttpMessageHandler;
 		private HttpClient _httpClient;
+		private Mock<IEmailService> _mockEmailService;
 		private PayOSService _service;
 
 		[SetUp]
@@ -50,8 +52,11 @@ namespace TestSkillUp.Services
 			_mockHttpMessageHandler = new Mock<HttpMessageHandler>();
 			_httpClient = new HttpClient(_mockHttpMessageHandler.Object);
 
-			// 4. Initialize Service (Injecting HttpClient)
-			_service = new PayOSService(_context, _mockConfig.Object, _httpClient);
+			// 4. Setup EmailService Mock
+			_mockEmailService = new Mock<IEmailService>();
+
+			// 5. Initialize Service (Injecting HttpClient and EmailService)
+			_service = new PayOSService(_context, _mockConfig.Object, _mockEmailService.Object, _httpClient);
 		}
 
 		[TearDown]
@@ -264,9 +269,11 @@ namespace TestSkillUp.Services
 			var enrollment = await _context.Enrollments.FirstOrDefaultAsync(e => e.StudentId == ctx.studentId && e.CourseId == ctx.courseId);
 			Assert.IsNotNull(enrollment, "Student should be enrolled");
 
-			// Verify CartItem Price Update (Logic from your service: updates price based on Voucher in desc)
-			var cartItem = await _context.CartItems.FirstOrDefaultAsync(ci => ci.CourseId == ctx.courseId);
-			Assert.That(cartItem.Price, Is.EqualTo(400000), "CartItem Price should be updated to FinalPrice from Voucher info");
+            // After successful payment and enrollment, cart should be cleared
+            var remainingCartItems = await _context.CartItems
+                .Where(ci => ci.CourseId == ctx.courseId)
+                .ToListAsync();
+            Assert.That(remainingCartItems.Count, Is.EqualTo(0), "Cart items should be cleared after successful payment");
 		}
 
 		#endregion

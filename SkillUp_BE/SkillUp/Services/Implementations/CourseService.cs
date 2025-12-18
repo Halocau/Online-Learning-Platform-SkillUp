@@ -663,7 +663,7 @@ namespace SkillUp.Services.Implementations
                 subCategoryId = course.SubCategoryId,
                 CategoryName = course.SubCategory?.Category?.Name ?? "",
                 SubCategoryName = course.SubCategory?.Name ?? "",
-                IsAiSupport = (bool)course.IsAiSupport,
+                IsAiSupport = course.IsAiSupport ?? false,
                 Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
                 {
                     AccountId = course.Lecturer.AccountId,

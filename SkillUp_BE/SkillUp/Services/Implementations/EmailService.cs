@@ -538,5 +538,116 @@ namespace SkillUp.Services.Implementations
 
 			return await SendEmailCoreAsync(message);
 		}
+
+		public async Task<bool> SendCoursePurchaseEmailAsync(string toEmail, string fullname, List<(string CourseName, Guid CourseId, decimal Price, string ImageUrl)> courses, decimal totalAmount, string paymentMethod)
+		{
+			var message = new MimeMessage();
+			message.From.Add(new MailboxAddress("SkillUp Platform", _fromEmail));
+			message.To.Add(new MailboxAddress(fullname, toEmail));
+			message.Subject = $"Xác nhận mua khóa học thành công - SkillUp";
+
+			var courseListHtml = string.Join("", courses.Select((course, index) => $@"
+                <tr style='border-bottom: 1px solid #e0e0e0;'>
+                    <td style='padding: 15px; text-align: center; vertical-align: middle;'>{index + 1}</td>
+                    <td style='padding: 15px;'>
+                        <div style='display: flex; align-items: center; gap: 15px;'>
+                            <img src='{course.ImageUrl}' 
+                                 alt='{course.CourseName}' 
+                                 style='width: 80px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0;' />
+                            <div>
+                                <a href='{_frontendUrl}/course/{course.CourseId}' 
+                                   style='color: #4CAF50; text-decoration: none; font-weight: bold; font-size: 16px; display: block; margin-bottom: 5px;'>
+                                     {course.CourseName}
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td style='padding: 15px; text-align: right; vertical-align: middle; font-weight: bold;'>{course.Price:N0} đ</td>
+                </tr>"));
+
+			var bodyBuilder = new BodyBuilder
+			{
+				HtmlBody = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f7f6;'>
+                    <div style='max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);'>
+                        <!-- Header -->
+                        <div style='background-color: #4CAF50; padding: 30px; text-align: center;'>
+                            <h1 style='color: #ffffff; margin: 0; font-size: 32px; font-weight: bold;'>SkillUp</h1>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div style='padding: 40px 30px;'>
+                            <h2 style='color: #333; margin-top: 0; font-size: 24px;'>Xin chào {fullname},</h2>
+                            <p style='color: #555; font-size: 16px; margin-bottom: 30px;'>
+                                Cảm ơn bạn đã mua khóa học tại SkillUp! Chúng tôi xác nhận giao dịch của bạn đã được xử lý thành công.
+                            </p>
+                            
+                            <!-- Course List -->
+                            <div style='background-color: #f9f9f9; border-radius: 8px; padding: 20px; margin: 30px 0;'>
+                                <h3 style='color: #333; margin-top: 0; margin-bottom: 20px; font-size: 18px;'>Chi tiết đơn hàng:</h3>
+                                <table style='width: 100%; border-collapse: collapse;'>
+                                    <thead>
+                                        <tr style='background-color: #4CAF50; color: #ffffff;'>
+                                            <th style='padding: 12px; text-align: center; width: 50px;'>STT</th>
+                                            <th style='padding: 12px; text-align: left;'>Tên khóa học</th>
+                                            <th style='padding: 12px; text-align: right; width: 120px;'>Giá</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {courseListHtml}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style='background-color: #f0f0f0; font-weight: bold;'>
+                                            <td colspan='2' style='padding: 15px; text-align: right;'>Tổng cộng:</td>
+                                            <td style='padding: 15px; text-align: right; color: #4CAF50; font-size: 18px;'>{totalAmount:N0} đ</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            
+                            <!-- Payment Info -->
+                            <div style='background-color: #e8f5e9; border-left: 4px solid #4CAF50; padding: 15px; margin: 20px 0;'>
+                                <p style='margin: 0; color: #555;'>
+                                    <strong>Phương thức thanh toán:</strong> {paymentMethod}<br>
+                                    <strong>Thời gian:</strong> {DateTime.Now:dd/MM/yyyy HH:mm:ss}
+                                </p>
+                            </div>
+                            
+                            <!-- Action Button -->
+                            <div style='text-align: center; margin: 30px 0;'>
+                                <a href='{_frontendUrl}/my-courses' 
+                                   style='display: inline-block; background-color: #4CAF50; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;'>
+                                    Xem khóa học của tôi
+                                </a>
+                            </div>
+                            
+                            <!-- Info -->
+                            <div style='background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;'>
+                                <p style='margin: 0; color: #856404; font-size: 14px;'>
+                                    <strong>Lưu ý:</strong> Bạn có thể bắt đầu học ngay bây giờ. Truy cập vào khóa học để xem nội dung và bắt đầu hành trình học tập của bạn.
+                                </p>
+                            </div>
+                            
+                            <p style='color: #666; font-size: 14px; margin-top: 30px;'>
+                                Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email: <a href='mailto:{_fromEmail}' style='color: #4CAF50;'>{_fromEmail}</a>
+                            </p>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style='background-color: #f4f7f6; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;'>
+                            <p style='margin: 0; color: #999; font-size: 12px;'>
+                                Email này được gửi tự động, vui lòng không trả lời.<br>
+                                © 2025 SkillUp Platform. All rights reserved.
+                            </p>
+                        </div>
+                    </div>
+                </body>
+                </html>"
+			};
+			message.Body = bodyBuilder.ToMessageBody();
+
+			return await SendEmailCoreAsync(message);
+		}
 	}
 }
