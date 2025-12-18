@@ -250,13 +250,7 @@ function ApplyCV() {
                 >
                   Xem đơn ứng tuyển của tôi
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/lecturer/dashboard")}
-                  className="border-[#272343]/10 text-[#272343] hover:bg-[#fff8e1] rounded-full px-8 py-2"
-                >
-                  Về bảng điều khiển
-                </Button>
+               
               </div>
             </CardContent>
           </Card>

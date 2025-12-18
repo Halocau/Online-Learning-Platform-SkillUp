@@ -15,9 +15,13 @@ public partial class Transaction
 
     public string Status { get; set; } = null!;
 
-    public string PaymentMethod { get; set; } = null!;
+    public string? PaymentMethod { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public double? Percentage { get; set; }
+
+    public decimal? LecturerIncome { get; set; }
 
     public virtual Account Account { get; set; } = null!;
 
