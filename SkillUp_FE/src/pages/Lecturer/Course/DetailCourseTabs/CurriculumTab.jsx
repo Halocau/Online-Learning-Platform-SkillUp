@@ -379,6 +379,11 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   // Lesson handlers
   const handleSaveLesson = async (sectionId) => {
+    if (loading) {
+      // Ngăn chặn click liên tục
+      return;
+    }
+
     if (!lessonForm.title.trim()) {
       toast.error("Vui lòng nhập tên bài học");
       return;
@@ -529,6 +534,11 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const handleUpdateLesson = async (lessonId) => {
+    // Ngăn chặn click liên tục
+    if (loading) {
+      return;
+    }
+
     if (!lessonForm.title.trim()) {
       toast.error("Vui lòng nhập tên bài học");
       return;
@@ -920,6 +930,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
         onAddSectionClick={handleAddSectionClick}
         onUpdate={onUpdate}
         validation={validation}
+        courseIsAiSupport={course?.isAiSupport ?? false}
       />
     </div>
   );
@@ -1051,6 +1062,7 @@ function SectionsList(props) {
     onAddSectionClick,
     onUpdate,
     validation,
+    courseIsAiSupport = false,
   } = props;
 
   if (!sections.length) {
@@ -1224,6 +1236,7 @@ function SectionsList(props) {
                         validation={validation.sectionValidations[section.id]}
                         courseId={courseId}
                         onUpdate={onUpdate}
+                        courseIsAiSupport={courseIsAiSupport}
                       />
                     </div>
                   )}

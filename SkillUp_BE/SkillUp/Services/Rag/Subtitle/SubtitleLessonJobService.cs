@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Microsoft.Extensions.Logging;
 using SkillUp.BussinessObjects.DTOs.Subtitle;
 using SkillUp.BussinessObjects.Models;
@@ -15,19 +15,25 @@ namespace SkillUp.Services.Rag.Subtitle
         private readonly ISubtitleService _subtitleService;
         private readonly IQdrantService _qdrantService;
         private readonly ILogger<SubtitleLessonJobService> _logger;
+        private readonly INotifyService _notifyService;
+        private readonly ICourseRepository _courseRepository;
 
         public SubtitleLessonJobService(
             ILessonRepository lessonRepository,
             GenSubService genSubService,
             ISubtitleService subtitleService,
             IQdrantService qdrantService,
-            ILogger<SubtitleLessonJobService> logger)
+            ILogger<SubtitleLessonJobService> logger,
+            INotifyService notifyService,
+            ICourseRepository courseRepository)
         {
             _lessonRepository = lessonRepository;
             _genSubService = genSubService;
             _subtitleService = subtitleService;
             _qdrantService = qdrantService;
             _logger = logger;
+            _notifyService = notifyService;
+            _courseRepository = courseRepository;
         }
 
         public async Task<SubtitleGenerationJobResult> GenerateForLessonAsync(
@@ -106,7 +112,7 @@ namespace SkillUp.Services.Rag.Subtitle
                     genSubDuration.TotalMilliseconds);
 
                 // Extract subtitle text
-                var subtitleText = subtitlePayload.TextContent 
+                var subtitleText = subtitlePayload.TextContent
                     ?? Encoding.UTF8.GetString(subtitlePayload.Data ?? Array.Empty<byte>());
 
                 if (string.IsNullOrWhiteSpace(subtitleText))
@@ -116,9 +122,19 @@ namespace SkillUp.Services.Rag.Subtitle
                 }
 
                 _logger.LogInformation(
-                    "Subtitle text received for lesson {LessonId} ({TextLength} chars). Starting Qdrant indexing...",
+                    "Subtitle text received for lesson {LessonId} ({TextLength} chars). Saving to Asset and starting Qdrant indexing...",
                     lesson.Id,
                     subtitleText.Length);
+
+                // Save Subtitle to Asset (for teacher review/editing)
+                videoAsset.SubtitleText = subtitleText;
+                videoAsset.IsSubtitleConfirmed = false; // AI generated, not yet confirmed by teacher
+                _lessonRepository.UpdateAsset(videoAsset);
+                await _lessonRepository.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "Subtitle saved to Asset for lesson {LessonId}. Starting Qdrant indexing...",
+                    lesson.Id);
 
                 // Index to Qdrant
                 var indexStart = DateTime.Now;
@@ -141,6 +157,9 @@ namespace SkillUp.Services.Rag.Subtitle
                     indexDuration.TotalMilliseconds,
                     (genSubDuration + indexDuration).TotalMilliseconds);
 
+                // Gửi notification cho giảng viên
+                await SendSubtitleNotificationAsync(lesson, courseId, ct);
+
                 return CreateResult(lesson.Id, courseId, true, "Subtitle generated and indexed.", videoAsset.Url, genSubDuration, indexResult);
             }
             catch (Exception ex)
@@ -151,6 +170,48 @@ namespace SkillUp.Services.Rag.Subtitle
                     lesson.Id,
                     videoAsset.Url);
                 return CreateResult(lesson.Id, courseId, false, ex.Message, videoAsset.Url);
+            }
+        }
+
+        private async Task SendSubtitleNotificationAsync(
+            Lesson lesson,
+            Guid courseId,
+            CancellationToken ct)
+        {
+            try
+            {
+                // Sử dụng GetCourseWithDetailsAsync để load đầy đủ Lecturer và Account
+                var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
+                if (course?.Lecturer == null)
+                {
+                    _logger.LogWarning("Cannot send notification: Course {CourseId} or Lecturer not found", courseId);
+                    return;
+                }
+
+                var notificationTitle = "Phụ đề đã được tạo tự động";
+                var notificationMessage = $"Phụ đề cho bài học \"{lesson.Title}\" đã được tạo thành công. Bạn có thể xem và chỉnh sửa phụ đề trong trang quản lý khóa học.";
+                var hyperlink = $"/lecturer/courses/{courseId}/detail?tab=curriculum";
+
+                var accountId = course.Lecturer.AccountId;
+                await _notifyService.CreateNotificationAsync(
+                    accountId,
+                    notificationTitle,
+                    notificationMessage,
+                    hyperlink);
+
+                _logger.LogInformation(
+                    "Notification sent successfully to lecturer AccountId={AccountId} for lesson {LessonId} (Title: {LessonTitle})",
+                    accountId,
+                    lesson.Id,
+                    lesson.Title);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to send notification for lesson {LessonId} subtitle",
+                    lesson.Id);
+                // Không throw exception để không ảnh hưởng đến quá trình tạo subtitle
             }
         }
 

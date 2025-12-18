@@ -55,12 +55,12 @@ function SectionCard({
   courseId,
   onUpdate,
   validation,
+  courseIsAiSupport = false,
 }) {
   return (
     <Card
-      className={`overflow-hidden ${
-        validation && !validation.isValid ? "border-2 border-red-300" : ""
-      }`}
+      className={`overflow-hidden ${validation && !validation.isValid ? "border-2 border-red-300" : ""
+        }`}
     >
       {/* Section Header */}
       {editingSectionId === section.id ? (
@@ -103,17 +103,15 @@ function SectionCard({
         </div>
       ) : (
         <div
-          className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 ${
-            validation && !validation.isValid ? "bg-red-50" : "bg-gray-50"
-          }`}
+          className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 ${validation && !validation.isValid ? "bg-red-50" : "bg-gray-50"
+            }`}
           onClick={onToggle}
         >
           <span
-            className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${
-              validation && !validation.isValid
-                ? "bg-red-200 text-red-900"
-                : "bg-[#FFD54F]/20 text-gray-900"
-            }`}
+            className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm ${validation && !validation.isValid
+              ? "bg-red-200 text-red-900"
+              : "bg-[#FFD54F]/20 text-gray-900"
+              }`}
           >
             {section.orders || index + 1}
           </span>
@@ -253,6 +251,7 @@ function SectionCard({
                               courseId={courseId}
                               sectionId={section.id}
                               onRefreshCourse={onUpdate}
+                              courseIsAiSupport={courseIsAiSupport}
                             />
                           </div>
                         )}

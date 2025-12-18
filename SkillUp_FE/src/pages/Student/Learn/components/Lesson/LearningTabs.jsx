@@ -1,10 +1,13 @@
-import { useState } from "react";
-import { MessageSquare, FileText, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MessageSquare, FileText, Download, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils.js";
 import CommentSection from "./CommentSection.jsx";
+import { getLessonSubtitle } from "@/api/subtitleAPI";
 
 const LearningTabs = ({ lessonId, item, description }) => {
   const [activeTab, setActiveTab] = useState("discussion");
+  const [subtitle, setSubtitle] = useState(null);
+  const [loadingSubtitle, setLoadingSubtitle] = useState(false);
 
   // Get PDF assets from the lesson item (handles both url and fileUrl)
   const pdfAssets =
@@ -12,6 +15,27 @@ const LearningTabs = ({ lessonId, item, description }) => {
       (asset) =>
         asset.type === "PDF" || asset.url?.endsWith(".pdf") || asset.fileUrl // Also check for fileUrl property
     ) || [];
+
+  // Load subtitle khi tab summary được mở
+  useEffect(() => {
+    if (activeTab === "summary" && lessonId && !subtitle && !loadingSubtitle) {
+      loadSubtitle();
+    }
+  }, [activeTab, lessonId]);
+
+  const loadSubtitle = async () => {
+    try {
+      setLoadingSubtitle(true);
+      const data = await getLessonSubtitle(lessonId);
+      if (data?.subtitleText) {
+        setSubtitle(data.subtitleText);
+      }
+    } catch (error) {
+      console.error("Error loading subtitle:", error);
+    } finally {
+      setLoadingSubtitle(false);
+    }
+  };
 
   const tabs = [
     {
@@ -68,7 +92,23 @@ const LearningTabs = ({ lessonId, item, description }) => {
         {/* Summary Tab */}
         {activeTab === "summary" && (
           <div className="prose max-w-none">
-            {description ? (
+            {loadingSubtitle ? (
+              <div className="text-center py-12 text-gray-500">
+                <Loader2 className="w-12 h-12 mx-auto mb-3 text-gray-400 animate-spin" />
+                <p>Đang tải nội dung...</p>
+              </div>
+            ) : subtitle ? (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Nội dung phụ đề video
+                </h3>
+                <div className="text-gray-700 leading-relaxed space-y-3 bg-gray-50 border border-gray-200 rounded-lg p-6">
+                  <div className="whitespace-pre-line font-mono text-sm">
+                    {subtitle}
+                  </div>
+                </div>
+              </>
+            ) : description ? (
               <>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
                   Tóm tắt bài học

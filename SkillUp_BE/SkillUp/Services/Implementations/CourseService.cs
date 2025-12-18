@@ -196,21 +196,25 @@ namespace SkillUp.Services.Implementations
                 course.SubCategoryId = request.SubCategoryId.Value;
             }
 
-            var previouslyEnabled = course.IsAiSupport ?? false;
-            var shouldTriggerSubtitleJob = false;
+            var wasAiEnabledBefore = course.IsAiSupport ?? false;
+            var needsToGenerateSubtitles = false;
 
             if (request.IsAiSupport.HasValue)
             {
-                course.IsAiSupport = request.IsAiSupport.Value;
-                shouldTriggerSubtitleJob = !previouslyEnabled && course.IsAiSupport == true;
+                var newAiSupportValue = request.IsAiSupport.Value;
+                
+                if (!wasAiEnabledBefore && newAiSupportValue)
+                {
+                    needsToGenerateSubtitles = true;
+                }
+
+                course.IsAiSupport = newAiSupportValue;
             }
 
             course.UpdatedAt = DateTime.Now;
-
             _courseRepository.UpdateCourse(course);
             await _courseRepository.SaveChangesAsync();
 
-            if (shouldTriggerSubtitleJob)
             {
                 await _aiSupportBackgroundJobService.TriggerCourseSubtitleJobAsync(course.Id);
             }

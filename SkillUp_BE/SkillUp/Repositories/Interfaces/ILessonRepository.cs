@@ -12,6 +12,7 @@ namespace SkillUp.Repositories.Interfaces
         Task<IEnumerable<Lesson>> GetLessonsBySectionIdAsync(Guid sectionId);
         Task AddLessonAsync(Lesson lesson);
         void UpdateLesson(Lesson lesson);
+        void UpdateAsset(Asset asset);
         Task<bool> SaveChangesAsync();
         Task<bool> DeleteLessonAsync(Guid id);
 

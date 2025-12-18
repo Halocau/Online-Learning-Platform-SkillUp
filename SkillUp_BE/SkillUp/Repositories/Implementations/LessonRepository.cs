@@ -67,6 +67,11 @@ namespace SkillUp.Repositories.Implementations
             _context.Lessons.Update(lesson);
         }
 
+        public void UpdateAsset(Asset asset)
+        {
+            _context.Assets.Update(asset);
+        }
+
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;

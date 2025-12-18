@@ -83,6 +83,15 @@ const LessonChat = ({ lessonId }) => {
                 <textarea
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
+                    onKeyDown={(e) => {
+                        // Enter để gửi, Shift+Enter để xuống dòng
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            if (question.trim() && !loading) {
+                                handleSend(e);
+                            }
+                        }
+                    }}
                     rows={3}
                     placeholder="Ví dụ: Video này nói về khái niệm nào?"
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm"
