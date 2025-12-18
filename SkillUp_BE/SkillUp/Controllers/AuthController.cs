@@ -58,12 +58,12 @@ namespace SkillUp.Controllers
 						data = new List<object> { result }
 					});
 				}
-				catch (Exception)
+				catch (Exception ex)
 				{
 					return Unauthorized(new APIReturn
 					{
 						code = 401,
-						message = "Tài khoản chưa được kích hoạt",
+						message = ex.Message,
 						data = new List<object>()
 					});
 				}
