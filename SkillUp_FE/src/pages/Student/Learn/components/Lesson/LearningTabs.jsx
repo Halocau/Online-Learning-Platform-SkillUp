@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { MessageSquare, FileText, Download } from "lucide-react";
 import { cn } from "@/lib/utils.js";
-import CommentSection from "./CommentSection.jsx";
+import CommentSection from "./CommentSection";
 
-const LearningTabs = ({ lessonId, item, description }) => {
+const LearningTabs = ({ lessonId, item, description, showSummary = true }) => {
   const [activeTab, setActiveTab] = useState("discussion");
 
-  // Get PDF assets from the lesson item (handles both url and fileUrl)
   const pdfAssets =
     item?.assets?.filter(
       (asset) =>
-        asset.type === "PDF" || asset.url?.endsWith(".pdf") || asset.fileUrl // Also check for fileUrl property
+        asset.type === "PDF" || asset.url?.endsWith(". pdf") || asset.fileUrl
     ) || [];
 
   const tabs = [
@@ -19,12 +18,15 @@ const LearningTabs = ({ lessonId, item, description }) => {
       label: "Thảo luận",
       icon: MessageSquare,
     },
-    {
-      id: "summary",
-      label: "Tóm tắt nội dung",
-      icon: FileText,
-    },
-
+    ...(showSummary
+      ? [
+          {
+            id: "summary",
+            label: "Tóm tắt nội dung",
+            icon: FileText,
+          },
+        ]
+      : []),
     {
       id: "downloads",
       label: "Tài liệu tải xuống",
@@ -65,8 +67,8 @@ const LearningTabs = ({ lessonId, item, description }) => {
       <div className="p-6">
         {/* Discussion Tab */}
         {activeTab === "discussion" && <CommentSection lessonId={lessonId} />}
-        {/* Summary Tab */}
-        {activeTab === "summary" && (
+
+        {activeTab === "summary" && showSummary && (
           <div className="prose max-w-none">
             {description ? (
               <>
@@ -100,7 +102,6 @@ const LearningTabs = ({ lessonId, item, description }) => {
                   Tài liệu có sẵn
                 </h3>
                 {pdfAssets.map((asset, index) => {
-                  // Handle both url and fileUrl properties
                   const downloadUrl = asset.fileUrl || asset.url;
 
                   return (
@@ -110,7 +111,7 @@ const LearningTabs = ({ lessonId, item, description }) => {
                       download
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition-colors group"
+                      className="flex items-center gap-3 p-4 bg-blue-50 hover: bg-blue-100 text-blue-700 rounded-lg border border-blue-200 transition-colors group"
                     >
                       <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
                         <Download className="w-5 h-5" />
