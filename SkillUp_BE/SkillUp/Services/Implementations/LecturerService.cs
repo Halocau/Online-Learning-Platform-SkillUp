@@ -208,5 +208,17 @@ namespace SkillUp.Services.Implementations
             await _repository.UpdateAsync(lecturer);
             return await _repository.SaveChangesAsync();
         }
-    }
+
+        public async Task<bool> UpdateLecturerPercentAsync(Guid lecturerId, double percent)
+        {
+            var lecturer = await _lecturerRepository.GetLecturerByIdAsync(lecturerId);
+            if (lecturer == null)
+            {
+                return false; // Lecturer không tồn tại
+            }
+            lecturer.Percentage = percent;
+            await _lecturerRepository.UpdateAsync(lecturer);
+            return await _lecturerRepository.SaveChangesAsync();
+		}
+	}
 }
