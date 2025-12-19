@@ -13,8 +13,6 @@ namespace SkillUp.Services.Implementations
         private readonly ILecturerDashRepository _lecturerDashRepository;
         private readonly SkillUpContext _context;
 
-        private const decimal LECTURER_REVENUE_SHARE = 0.6m;
-
         public LecturerDashboardService(ILecturerDashRepository lecturerDashRepository, SkillUpContext context)
         {
             _lecturerDashRepository = lecturerDashRepository;
@@ -37,7 +35,7 @@ namespace SkillUp.Services.Implementations
 
             var totalStudents = await _lecturerDashRepository.CountTotalStudentsAsync(lecturer.Id);
 
-            var grossRevenue = await _lecturerDashRepository.CalculateTotalRevenueAsync(lecturer.Id, startOfMonth);
+            var currentMonthNetEarnings = await _lecturerDashRepository.CalculateTotalRevenueAsync(lecturer.Id, startOfMonth);
 
             var recentCoursesEntities = await _lecturerDashRepository.GetRecentActiveCoursesAsync(lecturer.Id, 10);
 
@@ -52,13 +50,11 @@ namespace SkillUp.Services.Implementations
                     .Count(l => l.IsActive)
             }).ToList();
 
-            var netRevenue = grossRevenue * LECTURER_REVENUE_SHARE;
-
             return new LecturerDashboardDto
             {
                 TotalCourses = totalCourses,
                 TotalStudents = totalStudents,
-                CurrentMonthEarnings = netRevenue,
+                CurrentMonthEarnings = currentMonthNetEarnings,
                 Courses = courseDtos
             };
         }
@@ -71,21 +67,15 @@ namespace SkillUp.Services.Implementations
                 throw new Exception("Tài khoản này chưa được đăng ký thông tin Giảng viên.");
             }
 
-            var lifetimeGross = await _lecturerDashRepository.CalculateLifetimeRevenueAsync(lecturer.Id, courseId);
+            var lifetimeNetEarnings = await _lecturerDashRepository.CalculateLifetimeRevenueAsync(lecturer.Id, courseId);
 
             var chartData = await _lecturerDashRepository.GetRevenueChartAsync(lecturer.Id, year, courseId);
 
             var courseBreakdown = await _lecturerDashRepository.GetCourseRevenueBreakdownAsync(lecturer.Id);
 
-            chartData.ForEach(x => x.Revenue = x.Revenue * LECTURER_REVENUE_SHARE);
-
-            courseBreakdown.ForEach(x => x.TotalRevenue = x.TotalRevenue * LECTURER_REVENUE_SHARE);
-
-            var netLifetime = lifetimeGross * LECTURER_REVENUE_SHARE;
-
             return new RevenueReportDto
             {
-                TotalLifetimeEarnings = netLifetime,
+                TotalLifetimeEarnings = lifetimeNetEarnings,
                 RevenueChart = chartData,
                 CourseRevenues = courseBreakdown
             };
