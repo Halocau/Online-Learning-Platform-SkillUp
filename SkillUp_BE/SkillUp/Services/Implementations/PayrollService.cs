@@ -24,7 +24,6 @@ namespace SkillUp.Services.Implementations
 				else
 				{
 					record.PlatformFee = 0;
-					record.LecturerIncome = 0;
 				}
 			}
 

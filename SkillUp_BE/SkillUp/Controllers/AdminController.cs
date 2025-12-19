@@ -47,20 +47,20 @@ namespace SkillUp.Controllers
         }
 
 		[HttpGet("monthly-payroll-report")]
-		//[Authorize]
+		[Authorize]
 		public async Task<IActionResult> GetMonthlyReport([FromQuery] int month, [FromQuery] int year)
 		{
 			try
 			{
-				//if (_currentUserService.RoleId != 1)
-				//{
-				//	return Unauthorized(new APIReturn
-				//	{
-				//		code = 401,
-				//		message = "Bạn không phải là Admin!",
-				//		data = new List<object>()
-				//	});
-				//}
+				if (_currentUserService.RoleId != 1)
+				{
+					return Unauthorized(new APIReturn
+					{
+						code = 401,
+						message = "Bạn không phải là Admin!",
+						data = new List<object>()
+					});
+				}
 
 				if (month < 1 || month > 12)
 					return BadRequest(new APIReturn

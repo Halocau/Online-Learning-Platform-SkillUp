@@ -40,6 +40,24 @@ namespace SkillUp.Repositories.Implementations
 									 td.Transaction.CreatedAt.Month == month &&
 									 td.Transaction.CreatedAt.Year == year)
 						.Sum(td => (double?)td.LecturerIncome) ?? 0,
+
+					PayrollDetails = l.Courses
+					.SelectMany(c => c.TransactionDetails)
+						.Where(td => td.Transaction.Status == "Success" &&
+									 td.Transaction.CreatedAt.Month == month &&
+									 td.Transaction.CreatedAt.Year == year)
+						.Select(td => new LecturerPayrollDetailsDto
+						{
+							TransactionDetailId = td.Id,
+							CourseId = td.CourseId,
+							CourseTitle = td.Course.Title,
+							CoursePrice = td.Price,
+							Image = td.Course.Image,
+							BuyerEmail = td.Transaction.Account.Email,
+							Percentage = td.Percentage,
+							TransactionDate = td.Transaction.CreatedAt
+						})
+						.ToList()
 				})
 				.ToListAsync();
 		}
