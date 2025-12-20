@@ -45,7 +45,7 @@ const LearningTabs = ({ lessonId, item, description }) => {
     },
     {
       id: "summary",
-      label: "Tóm tắt nội dung",
+      label: "Nội dung",
       icon: FileText,
     },
 

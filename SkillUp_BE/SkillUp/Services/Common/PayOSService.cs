@@ -386,14 +386,6 @@ namespace SkillUp.Services.Common
 
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
-
-            // Lưu voucher info vào TransactionDetail nếu có
-            foreach (var item in request.Items.Where(i => !string.IsNullOrEmpty(i.VoucherCode)))
-            {
-                // Voucher info sẽ được lưu trong TransactionDetail hoặc có thể tạo bảng riêng sau
-                // Hiện tại chỉ lưu trong TransactionDetail với Price đã được discount
-            }
-
             return transaction;
         }
 
@@ -511,9 +503,6 @@ namespace SkillUp.Services.Common
                     // Update CartItem Price với final price từ TransactionDetail
                     cartItem.Price = detail.Price;
                     courseFinalPrices[detail.CourseId] = detail.Price;
-
-                    // Tìm voucher nếu có (có thể cần lưu voucherId trong TransactionDetail sau này)
-                    // Hiện tại chỉ update price
                 }
             }
 

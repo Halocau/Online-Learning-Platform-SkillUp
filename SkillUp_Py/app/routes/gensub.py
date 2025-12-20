@@ -441,10 +441,6 @@ async def _process_transcription(
     size: int,
     mime_type: str | None
 ):
-    """
-    Async wrapper để xử lý transcription sau khi đã có video file.
-    Chạy CPU-bound work trong thread pool để không block event loop.
-    """
     # Tự động set các giá trị mặc định
     context = "education"
     mode = "file"
@@ -632,22 +628,14 @@ async def gensub(
 
 @router.post(
     "/gensub-url",
-    summary="Tạo phụ đề từ video URL → tạo phụ đề tiếng Việt chất lượng cao"
+    summary="Generate subtitles from video URL"
 )
 async def gensub_url(
-    video_url: str = Query(..., alias="videoUrl", description="URL video HTTP/HTTPS (vd: http://server/video.mp4)"),
-    fmt: str = Query("text", pattern="^(vtt|srt|text)$", description="Định dạng phụ đề: vtt, srt hoặc text (mặc định: text)"),
-    model_name: str | None = Query(None, description="Tùy chọn: Override model (vd: large-v3, medium, small)"),
-    ai_correct: bool = Query(False, description="Bật AI correction với Gemini (cần GEMINI_API_KEY)"),
+    video_url: str = Query(..., alias="videoUrl", description="Video URL (HTTP/HTTPS)"),
+    fmt: str = Query("text", pattern="^(vtt|srt|text)$", description="Subtitle format: vtt, srt or text (default: text)"),
+    model_name: str | None = Query(None, description="Optional: Override model (e.g., large-v3, medium, small)"),
+    ai_correct: bool = Query(False, description="Enable AI correction with Gemini (requires GEMINI_API_KEY)"),
 ):
-    """
-    API tạo phụ đề từ video URL.
-    
-    Tự động xử lý:
-    - Denoise: Tự động bật/tắt dựa trên chất lượng audio
-    - Channel: Tự động chọn channel tốt nhất (left/right/mix)
-    - Context: Tự động tối ưu cho tiếng Việt
-    """
     raw_filename = Path(urlparse(video_url).path).name or "remote_video.mp4"
     start_time = time.time()
     dest_stem = secure_stem(raw_filename)

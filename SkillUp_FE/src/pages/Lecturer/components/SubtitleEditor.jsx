@@ -17,6 +17,7 @@ function SubtitleEditor({ lessonId, lessonTitle, isOpen, onClose, onSuccess }) {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
+    const [isConfirmed, setIsConfirmed] = useState(false);
 
     useEffect(() => {
         if (isOpen && lessonId) {
@@ -32,10 +33,12 @@ function SubtitleEditor({ lessonId, lessonTitle, isOpen, onClose, onSuccess }) {
             if (data) {
                 setSubtitle(data.subtitleText || "");
                 setOriginalSubtitle(data.subtitleText || "");
+                setIsConfirmed(data.isConfirmed || false);
                 setHasChanges(false);
             } else {
                 setSubtitle("");
                 setOriginalSubtitle("");
+                setIsConfirmed(false);
                 setHasChanges(false);
                 toast.info("Bài học này chưa có phụ đề");
             }
@@ -62,9 +65,13 @@ function SubtitleEditor({ lessonId, lessonTitle, isOpen, onClose, onSuccess }) {
         try {
             setSaving(true);
             await updateLessonSubtitle(lessonId, subtitle);
-            setOriginalSubtitle(subtitle);
-            setHasChanges(false);
-            toast.success("Cập nhật phụ đề thành công!");
+            // Reload lại data để cập nhật isConfirmed từ server
+            await loadSubtitle();
+            toast.success(
+                hasChanges
+                    ? "Cập nhật phụ đề thành công!"
+                    : "Đã xác nhận phụ đề!"
+            );
             if (onSuccess) {
                 onSuccess();
             }
@@ -97,11 +104,26 @@ function SubtitleEditor({ lessonId, lessonTitle, isOpen, onClose, onSuccess }) {
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
-                    <div className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-blue-500" />
-                        <DialogTitle className="text-xl font-bold">
-                            Chỉnh sửa phụ đề
-                        </DialogTitle>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-500" />
+                            <DialogTitle className="text-xl font-bold">
+                                Chỉnh sửa phụ đề
+                            </DialogTitle>
+                        </div>
+                        {subtitle && (
+                            <div className="flex items-center gap-2">
+                                {isConfirmed ? (
+                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 border border-green-300">
+                                        ✓ Đã kiểm duyệt
+                                    </span>
+                                ) : (
+                                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-300">
+                                        🤖 Chờ kiểm duyệt
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <DialogDescription>
                         {lessonTitle && (
@@ -181,7 +203,7 @@ function SubtitleEditor({ lessonId, lessonTitle, isOpen, onClose, onSuccess }) {
                         <Button
                             type="button"
                             onClick={handleSave}
-                            disabled={saving || !hasChanges || !subtitle.trim()}
+                            disabled={saving || !subtitle.trim()}
                             className="bg-blue-600 hover:bg-blue-700"
                         >
                             {saving ? (
@@ -192,7 +214,7 @@ function SubtitleEditor({ lessonId, lessonTitle, isOpen, onClose, onSuccess }) {
                             ) : (
                                 <>
                                     <Save className="w-4 h-4 mr-2" />
-                                    Lưu thay đổi
+                                    {hasChanges ? "Lưu thay đổi" : "Xác nhận"}
                                 </>
                             )}
                         </Button>

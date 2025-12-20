@@ -194,22 +194,17 @@ namespace SkillUp.Services.Rag.Embedding
         }
 
 
-        /// <summary>
-        /// Parse embedding vector từ JSON response của Gemini API.
-        /// Hỗ trợ cả format "embedding" (single) và "embeddings" (array).
-        /// </summary>
+
         private static float[] ParseEmbedding(string payload)
         {
             using var doc = JsonDocument.Parse(payload);
             var root = doc.RootElement;
 
-            // Format 1: Single embedding object
             if (root.TryGetProperty("embedding", out var embedding))
             {
                 return ExtractValues(embedding);
             }
 
-            // Format 2: Array of embeddings (lấy phần tử đầu tiên)
             if (root.TryGetProperty("embeddings", out var embeddingsArray)
                 && embeddingsArray.ValueKind == JsonValueKind.Array
                 && embeddingsArray.GetArrayLength() > 0)
@@ -220,9 +215,6 @@ namespace SkillUp.Services.Rag.Embedding
             throw new JsonException("Gemini response missing embedding values.");
         }
 
-        /// <summary>
-        /// Trích xuất mảng float từ JsonElement chứa embedding values.
-        /// </summary>
         private static float[] ExtractValues(JsonElement embeddingElement)
         {
             if (!embeddingElement.TryGetProperty("values", out var valuesElement)

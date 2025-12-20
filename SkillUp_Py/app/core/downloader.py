@@ -25,11 +25,7 @@ def download_remote_video(
     max_file_mb: int | None = None,
     timeout: float | None = None,
 ) -> int:
-    """
-    Download a remote video to dest_path with size & host validation.
 
-    Returns total bytes downloaded. Raises HTTPException on failure.
-    """
     parsed = urlparse(video_url or "")
     if parsed.scheme not in {"http", "https"}:
         raise HTTPException(400, "Chỉ hỗ trợ URL HTTP/HTTPS")
