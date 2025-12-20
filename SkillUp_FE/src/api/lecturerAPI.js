@@ -43,6 +43,19 @@ export const lecturerAPI = {
       throw error;
     }
   },
+
+  updateLecturerPercentage: async (lecturerId, percent) => {
+  try {
+    // Note: The percent is added after a '?' in the URL
+    const response = await axiosInstance.put(
+      `${API_BASE_URL}/Update-Lecturer-Percent/${lecturerId}?percent=${percent}`
+    );
+    return response;
+  } catch (error) {
+    console.error("Error updating lecturer percentage:", error);
+    throw error;
+  }
+},
 };
 export const isLecturerProfileComplete = (lecturerData) => {
   if (!lecturerData) return false;

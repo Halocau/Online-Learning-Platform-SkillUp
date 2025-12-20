@@ -24,6 +24,7 @@ namespace SkillUp.Repositories.Implementations
 					ReceiverName = l.ReceiverName,
 					BankNumber = l.BankNumber,
 					BankName = l.BankName,
+					CurrentPercentage = l.Percentage,
 
 					// Calculate Total Revenue for specific month/year
 					TotalRevenue = l.Courses
@@ -31,7 +32,32 @@ namespace SkillUp.Repositories.Implementations
 						.Where(td => td.Transaction.Status == "Success" &&
 									 td.Transaction.CreatedAt.Month == month &&
 									 td.Transaction.CreatedAt.Year == year)
-						.Sum(td => (decimal?)td.Price) ?? 0
+						.Sum(td => (double?)td.Price) ?? 0,
+
+					LecturerIncome = l.Courses
+						.SelectMany(c => c.TransactionDetails)
+						.Where(td => td.Transaction.Status == "Success" &&
+									 td.Transaction.CreatedAt.Month == month &&
+									 td.Transaction.CreatedAt.Year == year)
+						.Sum(td => (double?)td.LecturerIncome) ?? 0,
+
+					PayrollDetails = l.Courses
+					.SelectMany(c => c.TransactionDetails)
+						.Where(td => td.Transaction.Status == "Success" &&
+									 td.Transaction.CreatedAt.Month == month &&
+									 td.Transaction.CreatedAt.Year == year)
+						.Select(td => new LecturerPayrollDetailsDto
+						{
+							TransactionDetailId = td.Id,
+							CourseId = td.CourseId,
+							CourseTitle = td.Course.Title,
+							CoursePrice = td.Price,
+							Image = td.Course.Image,
+							BuyerEmail = td.Transaction.Account.Email,
+							Percentage = td.Percentage,
+							TransactionDate = td.Transaction.CreatedAt
+						})
+						.ToList()
 				})
 				.ToListAsync();
 		}
