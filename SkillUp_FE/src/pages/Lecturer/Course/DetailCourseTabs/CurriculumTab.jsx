@@ -424,7 +424,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
       if (!lessonId) {
         console.error("❌ Full API response:", JSON.stringify(result, null, 2));
-        toast.warning("Bài học đã được tạo. Đang làm mới dữ liệu...");
+        //toast.warning("Bài học đã được tạo. Đang làm mới dữ liệu...");
         await onUpdate({ showSuccess: false });
         setAddingItemToSection(null);
         setLessonForm({
@@ -676,7 +676,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
       if (!quizId) {
         console.error("❌ Full API response:", JSON.stringify(result, null, 2));
-        toast.warning("Quiz đã được tạo. Đang làm mới dữ liệu...");
+       // toast.warning("Quiz đã được tạo. Đang làm mới dữ liệu...");
         await onUpdate({ showSuccess: false });
         setAddingItemToSection(null);
         setQuizForm({
