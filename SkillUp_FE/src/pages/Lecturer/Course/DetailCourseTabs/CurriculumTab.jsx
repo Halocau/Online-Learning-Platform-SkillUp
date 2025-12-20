@@ -87,14 +87,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
   };
 
   const getCourseValidation = () => {
-    if (!displayCourse?.sections || displayCourse.sections.length === 0) {
-      return {
-        isValid: false,
-        errors: ["Khóa học phải có ít nhất một chương"],
-        sectionValidations: {},
-      };
-    }
-
     const sectionValidations = {};
     let allValid = true;
     const globalErrors = [];
@@ -107,7 +99,6 @@ function CurriculumTab({ course, courseId, onUpdate }) {
       }
     });
 
-    // Check if at least one section has content
     const hasAnyContent = displayCourse.sections.some(
       (section) => section.items && section.items.length > 0
     );
@@ -285,10 +276,10 @@ function CurriculumTab({ course, courseId, onUpdate }) {
           newCourse.sections = newCourse.sections.map((section) =>
             section.id === sectionId
               ? {
-                ...section,
-                title: sectionForm.title,
-                description: sectionForm.description,
-              }
+                  ...section,
+                  title: sectionForm.title,
+                  description: sectionForm.description,
+                }
               : section
           );
           return newCourse;
@@ -515,7 +506,7 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
     const pdfUrl =
       lesson.assets?.[0]?.fileUrl &&
-        lesson.assets[0].fileUrl !== "default-file-url"
+      lesson.assets[0].fileUrl !== "default-file-url"
         ? lesson.assets[0].fileUrl
         : null;
 
@@ -568,12 +559,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === lessonId
                 ? {
-                  ...item,
-                  title: lessonForm.title,
-                  description: lessonForm.description,
-                  isFree: lessonForm.isFree,
-                  orders: lessonForm.lessonOrder,
-                }
+                    ...item,
+                    title: lessonForm.title,
+                    description: lessonForm.description,
+                    isFree: lessonForm.isFree,
+                    orders: lessonForm.lessonOrder,
+                  }
                 : item
             ),
           }));
@@ -791,12 +782,12 @@ function CurriculumTab({ course, courseId, onUpdate }) {
             items: section.items?.map((item) =>
               item.id === quizId
                 ? {
-                  ...item,
-                  title: quizForm.title,
-                  description: quizForm.description,
-                  passPercent,
-                  timer,
-                }
+                    ...item,
+                    title: quizForm.title,
+                    description: quizForm.description,
+                    passPercent,
+                    timer,
+                  }
                 : item
             ),
           }));
@@ -855,8 +846,8 @@ function CurriculumTab({ course, courseId, onUpdate }) {
 
   const sortedSections = displayCourse?.sections
     ? [...displayCourse.sections].sort(
-      (a, b) => (a.orders || 0) - (b.orders || 0)
-    )
+        (a, b) => (a.orders || 0) - (b.orders || 0)
+      )
     : [];
 
   return (

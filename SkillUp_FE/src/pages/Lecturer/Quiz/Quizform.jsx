@@ -6,23 +6,35 @@ function QuizForm({ quizForm, setQuizForm, onSave, onCancel, loading }) {
   return (
     <div className="p-3 bg-orange-50 border-2 border-orange-200 rounded-lg">
       <div className="space-y-2">
-        <input
-          type="text"
-          value={quizForm.title}
-          onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
-          placeholder="Tên quiz"
-          className="w-full px-3 py-2 border rounded-lg text-sm"
-          autoFocus
-        />
-        <textarea
-          value={quizForm.description}
-          onChange={(e) =>
-            setQuizForm({ ...quizForm, description: e.target.value })
-          }
-          placeholder="Mô tả quiz"
-          rows="2"
-          className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-        />
+        <div>
+          <input
+            type="text"
+            value={quizForm.title}
+            onChange={(e) => setQuizForm({ ...quizForm, title: e.target.value })}
+            placeholder="Tên quiz"
+            className="w-full px-3 py-2 border rounded-lg text-sm"
+            autoFocus
+            maxLength="255"
+          />
+          <div className={`text-right text-sm ${quizForm.title.length === 255 ? 'text-red-500' : 'text-gray-500'}`}>
+            {quizForm.title.length}/255
+          </div>
+        </div>
+        <div>
+          <textarea
+            value={quizForm.description}
+            onChange={(e) =>
+              setQuizForm({ ...quizForm, description: e.target.value })
+            }
+            placeholder="Mô tả quiz"
+            rows="2"
+            className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
+            maxLength="255"
+          />
+          <div className={`text-right text-sm ${quizForm.description.length === 255 ? 'text-red-500' : 'text-gray-500'}`}>
+            {quizForm.description.length}/255
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-xs text-gray-600">Điểm đạt (%)</label>
@@ -59,7 +71,7 @@ function QuizForm({ quizForm, setQuizForm, onSave, onCancel, loading }) {
         <div className="flex gap-2">
           <Button
             onClick={onSave}
-            disabled={loading || !quizForm.title.trim()}
+            disabled={loading || !quizForm.title.trim() || quizForm.title.length === 255 || quizForm.description.length === 255}
             size="sm"
             className="bg-orange-600 hover:bg-orange-700 text-white font-semibold"
           >
