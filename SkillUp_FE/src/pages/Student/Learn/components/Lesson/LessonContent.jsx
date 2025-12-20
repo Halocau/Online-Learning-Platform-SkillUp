@@ -5,17 +5,15 @@ import {
   AlertCircle,
   Check,
 } from "lucide-react";
-import { cn } from "@/lib/utils.js";
+
 import { useState } from "react";
 import VideoPlayer from "./VideoPlayer.jsx";
 import TextLesson from "./TextLesson.jsx";
 
-import CommentSection from "./CommentSection.jsx";
-
-import LearningTabs from "./LearningTabs.jsx";
 import QuizView from "../Quiz/QuizView.jsx";
 import LessonChat from "../LessonChat.jsx";
-
+import LearningTabs from "./LearningTabs.jsx";
+import { cn } from "@/lib/utils.js";
 
 const LessonContent = ({
   item,
@@ -55,9 +53,8 @@ const LessonContent = ({
       (asset) => asset.type === "PDF" || asset.url?.endsWith(".pdf")
     ) || [];
   const showLessonChat =
-    isAiSupportEnabled &&
-    item.kind === "Lesson" &&
-    item.lessonType === "Video";
+    isAiSupportEnabled && item.kind === "Lesson" && item.lessonType === "Video";
+
   // Handle quiz completion
   const handleQuizCompletion = async (passed) => {
     if (passed && !isCompleted) {
@@ -71,7 +68,7 @@ const LessonContent = ({
 
   return (
     <div className="w-full bg-gray-50 min-h-full">
-      {/* Minimal Title Section */}
+      {/* Title Section */}
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-start justify-between gap-4">
@@ -83,7 +80,7 @@ const LessonContent = ({
                 <span className="text-gray-300">•</span>
                 <span
                   className={cn(
-                    "px-2. 5 py-0.5 rounded-full text-xs font-medium",
+                    "px-2.5 py-0.5 rounded-full text-xs font-medium",
                     item.kind === "Lesson"
                       ? item.lessonType === "Video"
                         ? "bg-blue-100 text-blue-700"
@@ -164,14 +161,14 @@ const LessonContent = ({
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Mark Complete Button - Only for Video Lessons */}
+            {/* Mark Complete Button */}
             {item.kind === "Lesson" &&
               item.lessonType === "Video" &&
               !isCompleted && (
                 <button
                   onClick={handleMarkComplete}
                   disabled={marking}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                  className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled: cursor-not-allowed shadow-md hover:shadow-lg"
                 >
                   {marking ? (
                     <>
@@ -203,13 +200,26 @@ const LessonContent = ({
           </div>
         )}
 
-        {/* Learning Tabs - Only for Video Lessons */}
+        {/* Learning Tabs */}
         {item.kind === "Lesson" && item.lessonType === "Video" && (
           <div className="mt-8">
             <LearningTabs
               lessonId={lessonId}
               item={item}
               description={item.description}
+              showSummary={true}
+            />
+          </div>
+        )}
+
+        {/* Learning Tabs */}
+        {item.kind === "Lesson" && item.lessonType === "Text" && (
+          <div className="mt-8">
+            <LearningTabs
+              lessonId={lessonId}
+              item={item}
+              description={item.description}
+              showSummary={false}
             />
           </div>
         )}

@@ -6,7 +6,8 @@ import { axiosInstance } from "@/config/api";
 import { toast } from "react-toastify";
 import { courseAPI } from "@/api/courseAPI";
 
-const MIN_PAID_PRICE = 2000;
+const MIN_PAID_PRICE = 10000;
+const MAX_PAID_PRICE = 150000000;
 
 function PricingTab({ course, courseId, onUpdate }) {
   const [priceType, setPriceType] = useState("notset");
@@ -85,6 +86,10 @@ function PricingTab({ course, courseId, onUpdate }) {
         return;
       }
 
+      if (priceType === "paid" && finalPrice > MAX_PAID_PRICE) {
+        return;
+      }
+
       const response = await axiosInstance.put(
         `/Course/Set-Price/${courseId}`,
         { price: finalPrice }
@@ -116,6 +121,24 @@ function PricingTab({ course, courseId, onUpdate }) {
     fetchCoursePrice();
   };
 
+  const handlePriceChange = (value) => {
+    const numValue = Number(value);
+    if (value === "" || value === null) {
+      setPrice("");
+      return;
+    }
+    if (numValue > MAX_PAID_PRICE) {
+      setPrice(MAX_PAID_PRICE);
+      toast.warning(
+        `Giá khóa học không được vượt quá ${MAX_PAID_PRICE.toLocaleString(
+          "vi-VN"
+        )}đ`
+      );
+      return;
+    }
+    setPrice(numValue);
+  };
+
   const formatPrice = (value) => {
     // treat sentinel -1 as "not priced"
     if (value === -1) return "Chưa được định giá";
@@ -128,6 +151,14 @@ function PricingTab({ course, courseId, onUpdate }) {
     const newPrice =
       priceType === "free" ? 0 : priceType === "paid" ? price : -1;
     return newPrice !== currentPrice;
+  };
+
+  const isPriceValid = () => {
+    if (priceType === "free") return true;
+    if (priceType === "paid") {
+      return price && price >= MIN_PAID_PRICE && price <= MAX_PAID_PRICE;
+    }
+    return false;
   };
 
   if (!course && !courseId) {
@@ -218,8 +249,9 @@ function PricingTab({ course, courseId, onUpdate }) {
               <p className="font-medium mb-1">Lưu ý về giá khóa học:</p>
               <ul className="list-disc list-inside space-y-1 text-xs">
                 <li>
-                  Khóa học trả phí phải có giá tối thiểu{" "}
-                  {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ
+                  Khóa học trả phí phải có giá từ{" "}
+                  {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ đến{" "}
+                  {MAX_PAID_PRICE.toLocaleString("vi-VN")}đ
                 </li>
                 <li>
                   Khóa học trả phí nên có giá trị rõ ràng và nội dung chất lượng
@@ -285,7 +317,8 @@ function PricingTab({ course, courseId, onUpdate }) {
                   <div>
                     <p className="font-semibold text-gray-900">Trả phí</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      Tối thiểu {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ
+                      {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ -{" "}
+                      {MAX_PAID_PRICE.toLocaleString("vi-VN")}đ
                     </p>
                   </div>
                 </div>
@@ -309,20 +342,21 @@ function PricingTab({ course, courseId, onUpdate }) {
               <div className="relative">
                 <input
                   type="number"
-                  placeholder={`Nhập giá khóa học (tối thiểu ${MIN_PAID_PRICE.toLocaleString(
+                  placeholder={`Nhập giá khóa học (${MIN_PAID_PRICE.toLocaleString(
                     "vi-VN"
-                  )}đ)`}
+                  )}đ - ${MAX_PAID_PRICE.toLocaleString("vi-VN")}đ)`}
                   value={price || ""}
-                  onChange={(e) => setPrice(Number(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus: ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                  onChange={(e) => handlePriceChange(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                   min={MIN_PAID_PRICE}
+                  max={MAX_PAID_PRICE}
                   step="1000"
                 />
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                   đ
                 </div>
               </div>
-              {price >= MIN_PAID_PRICE && (
+              {price >= MIN_PAID_PRICE && price <= MAX_PAID_PRICE && (
                 <p className="text-sm text-gray-500 mt-2">
                   Giá hiển thị:{" "}
                   <span className="font-semibold text-gray-700">
@@ -336,6 +370,12 @@ function PricingTab({ course, courseId, onUpdate }) {
                   {MIN_PAID_PRICE.toLocaleString("vi-VN")}đ cho khóa học trả phí
                 </p>
               )}
+              {priceType === "paid" && price > MAX_PAID_PRICE && (
+                <p className="text-sm text-red-500 mt-2">
+                  Giá khóa học không được vượt quá{" "}
+                  {MAX_PAID_PRICE.toLocaleString("vi-VN")}đ
+                </p>
+              )}
             </div>
           )}
 
@@ -346,18 +386,19 @@ function PricingTab({ course, courseId, onUpdate }) {
                 Gợi ý mức giá phổ biến:
               </p>
               <div className="flex flex-wrap gap-2">
-                {[50000, 99000, 199000, 299000, 499000, 999000].map(
-                  (suggestedPrice) => (
-                    <button
-                      key={suggestedPrice}
-                      type="button"
-                      onClick={() => setPrice(suggestedPrice)}
-                      className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all"
-                    >
-                      {formatPrice(suggestedPrice)}
-                    </button>
-                  )
-                )}
+                {[
+                  50000, 99000, 199000, 299000, 499000, 999000, 1999000,
+                  4990000,
+                ].map((suggestedPrice) => (
+                  <button
+                    key={suggestedPrice}
+                    type="button"
+                    onClick={() => setPrice(suggestedPrice)}
+                    className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all"
+                  >
+                    {formatPrice(suggestedPrice)}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -375,10 +416,7 @@ function PricingTab({ course, courseId, onUpdate }) {
           <Button
             onClick={handleSavePrice}
             disabled={
-              loading ||
-              refreshing ||
-              priceType === "notset" ||
-              (priceType === "paid" && (!price || price < MIN_PAID_PRICE))
+              loading || refreshing || priceType === "notset" || !isPriceValid()
             }
             className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3"
           >

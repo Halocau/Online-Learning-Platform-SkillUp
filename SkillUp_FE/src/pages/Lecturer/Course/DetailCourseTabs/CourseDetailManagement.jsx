@@ -322,21 +322,6 @@ function CourseDetailManagement() {
             </div>
           </div>
         </div>
-
-        {/* Progress Bar for Mobile */}
-        <div className="md:hidden px-6 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-[#e3f6f5] rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-[#FFD54F] to-[#F4C430] h-2 rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <span className="text-xs font-semibold text-[#FFD54F] min-w-[40px] text-right">
-              {progress}%
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Main Layout */}

@@ -94,14 +94,7 @@ function CourseCardLecture({
           <div className="flex-1 p-5 md:p-6 flex flex-col justify-between relative">
             {/* Action Buttons - Top Right */}
             <div className="absolute top-4 right-4 flex gap-2 bg-white rounded-lg p-1. 5 shadow-md border border-gray-200">
-              {/* 
-                BUTTON LOGIC BY STATUS:
-                - Draft: Edit only
-                - Public: Edit + Hide (delete)
-                - Unpublish: Edit + Reopen
-                - Pending: Preview only
-              */}
-
+            
               {/* Edit Button */}
               {(isDraft || isPublic || isUnpublish) && onEdit && (
                 <button

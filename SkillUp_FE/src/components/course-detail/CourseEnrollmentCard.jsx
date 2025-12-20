@@ -92,12 +92,6 @@ export default function CourseEnrollmentCard({ course, isEnrolled, checkingEnrol
                 </div>
               )}
             </div>
-            {discount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#FFD54F]/15 px-3 py-1 text-xs font-medium tracking-tight text-[#272343]">
-                <Percent className="h-3.5 w-3.5 text-[#272343]" />
-                Giảm {discount}% hôm nay
-              </span>
-            )}
           </div>
 
 

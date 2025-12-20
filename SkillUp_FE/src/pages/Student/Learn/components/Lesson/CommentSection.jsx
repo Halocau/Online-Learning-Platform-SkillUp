@@ -12,6 +12,8 @@ import { commentLessonApi } from "@/api/commentLesson";
 import { jwtDecode } from "jwt-decode";
 import CommentModals from "@/pages/forum/components/CommentModal";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatTimeAgo } from "@/utils/formatTimeAgo";
+
 
 const CommentSection = ({ lessonId }) => {
   const [comments, setComments] = useState([]);
@@ -32,26 +34,6 @@ const CommentSection = ({ lessonId }) => {
 
   const commentsTopRef = useRef(null);
 
-  const getRelativeTime = (dateString) => {
-    const now = new Date();
-    const past = new Date(dateString);
-    const diffInSeconds = Math.floor((now - past) / 1000);
-
-    if (diffInSeconds < 60) return "vừa xong";
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} giờ trước`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} ngày trước`;
-    const diffInWeeks = Math.floor(diffInDays / 7);
-    if (diffInWeeks < 4) return `${diffInWeeks} tuần trước`;
-    const diffInMonths = Math.floor(diffInDays / 30);
-    if (diffInMonths < 12) return `${diffInMonths} tháng trước`;
-    const diffInYears = Math.floor(diffInDays / 365);
-    return `${diffInYears} năm trước`;
-  };
-
   useEffect(() => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -69,7 +51,7 @@ const CommentSection = ({ lessonId }) => {
   }, [lessonId]);
 
   const loadComments = async () => {
-    const data = await commentLessonApi.getByLesson(lessonId);
+    const data = await commentLessonApi. getByLesson(lessonId);
     const roots = data.filter((c) => !c.parentCommentId);
     const replies = data.filter((c) => c.parentCommentId);
     const sortedRoots = roots.sort(
@@ -78,14 +60,14 @@ const CommentSection = ({ lessonId }) => {
     const grouped = sortedRoots.map((c) => ({
       ...c,
       replies: replies
-        .filter((r) => r.parentCommentId === c.id)
+        .filter((r) => r.parentCommentId === c. id)
         .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
     }));
     setComments(grouped);
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+    if (! newComment.trim()) return;
     await commentLessonApi.create({
       lessonId,
       contents: newComment,
@@ -112,12 +94,11 @@ const CommentSection = ({ lessonId }) => {
   };
 
   const handleLike = async (id) => {
-    // Find current like count before update
     let currentLikeCount = 0;
     const findComment = (comments, targetId) => {
       for (const c of comments) {
         if (c.id === targetId) return c;
-        if (c.replies?.length > 0) {
+        if (c. replies?. length > 0) {
           const found = c.replies.find(r => r.id === targetId);
           if (found) return found;
         }
@@ -132,7 +113,6 @@ const CommentSection = ({ lessonId }) => {
 
     const wasLiked = likedComments.has(id);
     
-    // Optimistic update for liked state
     setLikedComments(prev => {
       const newSet = new Set(prev);
       if (wasLiked) {
@@ -143,16 +123,14 @@ const CommentSection = ({ lessonId }) => {
       return newSet;
     });
 
-    // Calculate new count based on current state
     const newCount = wasLiked ? Math.max(0, currentLikeCount - 1) : currentLikeCount + 1;
 
-    // Update comment counts optimistically
     setComments(prevComments => 
       prevComments.map(c => {
         if (c.id === id) {
           return { ...c, likeCount: newCount };
         }
-        if (c.replies?.length > 0) {
+        if (c.replies?. length > 0) {
           return {
             ...c,
             replies: c.replies.map(r => 
@@ -168,10 +146,8 @@ const CommentSection = ({ lessonId }) => {
 
     try {
       await commentLessonApi.toggleLike(id);
-      // Don't reload - keep optimistic update
     } catch (err) {
       console.error("Error toggling like:", err);
-      // Rollback on error
       setLikedComments(prev => {
         const newSet = new Set(prev);
         if (wasLiked) {
@@ -182,18 +158,17 @@ const CommentSection = ({ lessonId }) => {
         return newSet;
       });
       
-      // Rollback count
       setComments(prevComments => 
         prevComments.map(c => {
           if (c.id === id) {
             return { ...c, likeCount: currentLikeCount };
           }
-          if (c.replies?.length > 0) {
+          if (c.replies?. length > 0) {
             return {
               ...c,
               replies: c.replies.map(r => 
-                r.id === id 
-                  ? { ...r, likeCount: currentLikeCount }
+                r. id === id 
+                  ?  { ...r, likeCount: currentLikeCount }
                   : r
               )
             };
@@ -219,7 +194,7 @@ const CommentSection = ({ lessonId }) => {
   };
 
   const startEditing = (comment) => {
-    setEditingId(comment.id);
+    setEditingId(comment. id);
     setEditText(comment.contents);
   };
 
@@ -239,7 +214,7 @@ const CommentSection = ({ lessonId }) => {
   };
 
   const handleReportConfirm = async () => {
-    if (commentToReport && reportReason.trim()) {
+    if (commentToReport && reportReason. trim()) {
       await commentLessonApi.report({
         commentLessonId: commentToReport,
         reason: reportReason,
@@ -288,10 +263,10 @@ const CommentSection = ({ lessonId }) => {
       <div className="space-y-8">
         <AnimatePresence>
           {comments.map((c) => (
-            <motion.div
+            <motion. div
               key={c.id}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={{ opacity:  1, y: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
@@ -300,14 +275,14 @@ const CommentSection = ({ lessonId }) => {
                   <div className="flex items-center justify-between">
                     <div className="font-semibold">{c.accountName}</div>
                     <span className="text-xs text-gray-500">
-                      {getRelativeTime(c.createdAt)}
+                      {formatTimeAgo(c.createdAt)}
                     </span>
                   </div>
 
                   {editingId === c.id ? (
                     <textarea
                       value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
+                      onChange={(e) => setEditText(e.target. value)}
                       className="w-full border mt-2 p-2 rounded focus:ring-2 focus:ring-yellow-400"
                     />
                   ) : (
@@ -339,7 +314,7 @@ const CommentSection = ({ lessonId }) => {
                         <motion.span
                           key={c.likeCount}
                           initial={{ scale: 1.3, color: "#eab308" }}
-                          animate={{ scale: 1, color: likedComments.has(c.id) ? "#eab308" : undefined }}
+                          animate={{ scale: 1, color: likedComments.has(c. id) ? "#eab308" : undefined }}
                           transition={{ duration: 0.2 }}
                         >
                           {c.likeCount}
@@ -381,7 +356,7 @@ const CommentSection = ({ lessonId }) => {
                       </motion.button>
                     )}
 
-                    {!isOwner(c) && (
+                    {! isOwner(c) && (
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -419,15 +394,15 @@ const CommentSection = ({ lessonId }) => {
 
                   <AnimatePresence>
                     {replyingTo === c.id && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
+                      <motion. div
+                        initial={{ opacity:  0, height: 0 }}
+                        animate={{ opacity:  1, height: "auto" }}
+                        exit={{ opacity:  0, height: 0 }}
                         className="mt-3 flex gap-2"
                       >
                         <input
                           value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
+                          onChange={(e) => setReplyText(e. target.value)}
                           className="flex-1 border rounded p-2 focus:ring-2 focus:ring-yellow-400"
                           placeholder={`Trả lời ${c.accountName}...`}
                         />
@@ -447,7 +422,7 @@ const CommentSection = ({ lessonId }) => {
                     )}
                   </AnimatePresence>
 
-                  {c.replies?.length > 0 && (
+                  {c.replies?. length > 0 && (
                     <div className="mt-4 pl-6 border-l space-y-3">
                       <AnimatePresence>
                         {c.replies.map((r) => (
@@ -466,15 +441,15 @@ const CommentSection = ({ lessonId }) => {
                                 </span>
                               </div>
                               <span className="text-xs text-gray-500">
-                                {getRelativeTime(r.createdAt)}
+                                {formatTimeAgo(r.createdAt)}
                               </span>
                             </div>
 
-                            {editingId === r.id ? (
+                            {editingId === r.id ?  (
                               <textarea
                                 value={editText}
                                 onChange={(e) => setEditText(e.target.value)}
-                                className="w-full border mt-2 p-2 rounded focus:ring-2 focus:ring-yellow-400"
+                                className="w-full border mt-2 p-2 rounded focus: ring-2 focus:ring-yellow-400"
                               />
                             ) : (
                               <p className="text-gray-700 mt-1">{r.contents}</p>
@@ -487,7 +462,7 @@ const CommentSection = ({ lessonId }) => {
                                 className={`flex items-center gap-1 transition-colors ${
                                   likedComments.has(r.id)
                                     ? "text-yellow-500"
-                                    : "hover:text-yellow-500"
+                                    : "hover: text-yellow-500"
                                 }`}
                               >
                                 <motion.div
@@ -498,17 +473,17 @@ const CommentSection = ({ lessonId }) => {
                                 >
                                   <ThumbsUp
                                     size={14}
-                                    fill={likedComments.has(r.id) ? "currentColor" : "none"}
+                                    fill={likedComments.has(r. id) ? "currentColor" : "none"}
                                   />
                                 </motion.div>
                                 <AnimatePresence mode="wait">
                                   <motion.span
                                     key={r.likeCount}
-                                    initial={{ scale: 1.3, color: "#eab308" }}
+                                    initial={{ scale:  1.3, color: "#eab308" }}
                                     animate={{ scale: 1, color: likedComments.has(r.id) ? "#eab308" : undefined }}
                                     transition={{ duration: 0.2 }}
                                   >
-                                    {r.likeCount}
+                                    {r. likeCount}
                                   </motion.span>
                                 </AnimatePresence>
                               </motion.button>
@@ -521,18 +496,18 @@ const CommentSection = ({ lessonId }) => {
                                   className="flex items-center gap-1 hover:text-green-600 transition-colors"
                                 >
                                   <Edit size={14} /> Sửa
-                                </motion.button>
+                                </motion. button>
                               )}
 
                               {isOwner(r) && (
-                                <motion.button
+                                <motion. button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => openDeleteModal(r.id)}
+                                  onClick={() => openDeleteModal(r. id)}
                                   className="flex items-center gap-1 hover:text-red-600 transition-colors"
                                 >
                                   <Trash2 size={14} /> Xóa
-                                </motion.button>
+                                </motion. button>
                               )}
 
                               {!isOwner(r) && (
@@ -551,7 +526,7 @@ const CommentSection = ({ lessonId }) => {
                               {editingId === r.id && (
                                 <motion.div
                                   initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: "auto" }}
+                                  animate={{ opacity:  1, height: "auto" }}
                                   exit={{ opacity: 0, height: 0 }}
                                   className="mt-3 flex gap-2"
                                 >
@@ -563,7 +538,7 @@ const CommentSection = ({ lessonId }) => {
                                   </button>
                                   <button
                                     onClick={() => setEditingId(null)}
-                                    className="px-3 py-1 bg-gray-300 rounded text-sm hover:bg-gray-400 transition-colors"
+                                    className="px-3 py-1 bg-gray-300 rounded text-sm hover: bg-gray-400 transition-colors"
                                   >
                                     Hủy
                                   </button>

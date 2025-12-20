@@ -9,6 +9,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   CalendarIcon,
   BanknotesIcon,
   UserIcon,
@@ -21,6 +28,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CheckIcon,
+  EyeIcon,
+  XMarkIcon,
+  ShoppingCartIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
 import { Spin } from "antd";
 import { adminAPI } from "@/api/adminAPI";
@@ -41,15 +52,19 @@ export default function AdminSalaryReport() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Sorting
-  const [sortBy, setSortBy] = useState("lecturerIncome"); // default sort by net income
-  const [sortOrder, setSortOrder] = useState("desc"); // desc = highest first
+  const [sortBy, setSortBy] = useState("lecturerIncome");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   // Filtering
-  const [filterStatus, setFilterStatus] = useState("all"); // all, withIncome, noIncome, noBankInfo
+  const [filterStatus, setFilterStatus] = useState("all");
 
   // Platform fee editing
   const [editingPercentages, setEditingPercentages] = useState({});
   const [updatingLecturer, setUpdatingLecturer] = useState(null);
+
+  // Payroll Details Modal
+  const [selectedLecturerDetails, setSelectedLecturerDetails] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const years = Array.from({ length: 6 }, (_, i) => currentDate.year() - i);
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -61,7 +76,6 @@ export default function AdminSalaryReport() {
     fetchSalaryReport();
   }, [selectedMonth, selectedYear]);
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterStatus, sortBy, sortOrder]);
@@ -96,11 +110,9 @@ export default function AdminSalaryReport() {
     }
   };
 
-  // Filter data
   const filteredData = useMemo(() => {
     let data = [...salaryData];
 
-    // Search filter
     if (searchTerm) {
       data = data.filter(
         (item) =>
@@ -110,7 +122,6 @@ export default function AdminSalaryReport() {
       );
     }
 
-    // Status filter
     if (filterStatus !== "all") {
       if (filterStatus === "withIncome") {
         data = data.filter((item) => item.totalRevenue > 0);
@@ -130,7 +141,6 @@ export default function AdminSalaryReport() {
     return data;
   }, [salaryData, searchTerm, filterStatus]);
 
-  // Sort data
   const sortedData = useMemo(() => {
     let data = [...filteredData];
 
@@ -138,13 +148,11 @@ export default function AdminSalaryReport() {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
 
-      // Handle string comparisons
       if (typeof aValue === "string") {
         aValue = aValue?.toLowerCase() || "";
         bValue = bValue?.toLowerCase() || "";
       }
 
-      // Handle null/undefined
       if (aValue == null) aValue = sortOrder === "asc" ? Infinity : -Infinity;
       if (bValue == null) bValue = sortOrder === "asc" ? Infinity : -Infinity;
 
@@ -158,13 +166,11 @@ export default function AdminSalaryReport() {
     return data;
   }, [filteredData, sortBy, sortOrder]);
 
-  // Pagination
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedData = sortedData.slice(startIndex, endIndex);
 
-  // Calculate totals (from filtered data)
   const totals = useMemo(
     () =>
       sortedData.reduce(
@@ -197,7 +203,6 @@ export default function AdminSalaryReport() {
       setSortOrder("desc");
     }
   };
-
   const exportToCSV = () => {
     const headers = [
       "STT",
@@ -238,6 +243,10 @@ export default function AdminSalaryReport() {
 
     toast.success("Xuất báo cáo thành công!");
   };
+  const handleViewDetails = (lecturer) => {
+    setSelectedLecturerDetails(lecturer);
+    setIsDetailsModalOpen(true);
+  };
 
   const SortButton = ({ column, label }) => (
     <button
@@ -254,19 +263,21 @@ export default function AdminSalaryReport() {
   );
 
   const handlePercentageChange = (lecturerId, value) => {
-    // Only allow numbers between 0-100
     const numValue = parseFloat(value);
-    if (value === "" || (!isNaN(numValue) && numValue >= 0 && numValue <= 100)) {
-      setEditingPercentages(prev => ({
+    if (
+      value === "" ||
+      (!isNaN(numValue) && numValue >= 0 && numValue <= 100)
+    ) {
+      setEditingPercentages((prev) => ({
         ...prev,
-        [lecturerId]: value
+        [lecturerId]: value,
       }));
     }
   };
 
   const handleUpdatePercentage = async (lecturerId, currentPercentage) => {
     const newPercentage = editingPercentages[lecturerId];
-    
+
     if (!newPercentage || newPercentage === "") {
       toast.warning("Vui lòng nhập phần trăm hợp lệ");
       return;
@@ -278,7 +289,6 @@ export default function AdminSalaryReport() {
       return;
     }
 
-    // If no change, don't update
     if (numPercentage === currentPercentage) {
       toast.info("Không có thay đổi");
       return;
@@ -289,26 +299,24 @@ export default function AdminSalaryReport() {
       setUpdatingLecturer(lecturerId);
       await lecturerAPI.updateLecturerPercentage(lecturerId, numPercentage);
       toast.success("Cập nhật phần trăm thành công!");
-      
-      // Clear the editing state for this lecturer
-      setEditingPercentages(prev => {
+
+      setEditingPercentages((prev) => {
         const newState = { ...prev };
         delete newState[lecturerId];
         return newState;
       });
-      
-      // Refresh the data
+
       await fetchSalaryReport();
     } catch (error) {
       console.error("Error updating percentage:", error);
-      toast.error(error.response?.data?.message || "Lỗi khi cập nhật phần trăm");
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật phần trăm"
+      );
     } finally {
       setUpdatingLecturer(null);
       setLoading(false);
     }
   };
-
-  
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -364,32 +372,19 @@ export default function AdminSalaryReport() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* <Button
+            <Button
               onClick={exportToCSV}
               disabled={sortedData.length === 0}
               className="bg-green-600 hover:bg-green-700"
             >
               <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
               Xuất Excel
-            </Button> */}
+            </Button>
           </div>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-blue-100 text-sm font-medium">
-                Tổng doanh thu
-              </p>
-              <ChartBarIcon className="w-8 h-8 text-blue-200" />
-            </div>
-            <p className="text-3xl font-bold">
-              {formatCurrency(totals.totalRevenue)}
-            </p>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
             <div className="flex items-center justify-between mb-2">
               <p className="text-orange-100 text-sm font-medium">
@@ -430,7 +425,6 @@ export default function AdminSalaryReport() {
         {/* Search and Filter Bar */}
         <div className="bg-white p-4 rounded-xl shadow-sm space-y-4">
           <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
             <div className="flex-1 relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
@@ -442,7 +436,6 @@ export default function AdminSalaryReport() {
               />
             </div>
 
-            {/* Filter Status */}
             <div className="w-full lg:w-56">
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger>
@@ -463,7 +456,6 @@ export default function AdminSalaryReport() {
               </Select>
             </div>
 
-            {/* Items per page */}
             <div className="w-full lg:w-40">
               <Select
                 value={itemsPerPage.toString()}
@@ -497,7 +489,7 @@ export default function AdminSalaryReport() {
                   setSearchTerm("");
                   setFilterStatus("all");
                 }}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-blue-600 hover: text-blue-700 font-medium"
               >
                 Xóa bộ lọc
               </button>
@@ -545,13 +537,13 @@ export default function AdminSalaryReport() {
                         />
                       </th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <SortButton
-                          column="platformFee"
-                          label="Phí nền tảng"
-                        />
+                        <SortButton column="platformFee" label="Phí nền tảng" />
                       </th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <SortButton column="lecturerIncome" label="Thu nhập ròng" />
+                        <SortButton
+                          column="lecturerIncome"
+                          label="Thu nhập ròng"
+                        />
                       </th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Thao tác
@@ -570,19 +562,22 @@ export default function AdminSalaryReport() {
                           {startIndex + index + 1}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleViewDetails(item)}
+                            className="flex items-center gap-3 hover:opacity-80 transition text-left"
+                          >
                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                               <UserIcon className="w-5 h-5 text-blue-600" />
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-900">
+                              <p className="font-semibold text-gray-900 hover:text-blue-600 transition">
                                 {item.lecturerName}
                               </p>
                               <p className="text-xs text-gray-500">
                                 ID: {item.lecturerId.slice(0, 8)}...
                               </p>
                             </div>
-                          </div>
+                          </button>
                         </td>
                         <td className="px-6 py-4">
                           {item.receiverName &&
@@ -641,14 +636,31 @@ export default function AdminSalaryReport() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewDetails(item)}
+                              className="h-8 px-3"
+                            >
+                              <EyeIcon className="w-4 h-4 mr-1" />
+                              Chi tiết
+                            </Button>
                             <div className="relative">
                               <input
                                 type="number"
                                 min="0"
                                 max="100"
                                 step="0.1"
-                                value={editingPercentages[item.lecturerId] ?? (item.currentPercentage || 40)}
-                                onChange={(e) => handlePercentageChange(item.lecturerId, e.target.value)}
+                                value={
+                                  editingPercentages[item.lecturerId] ??
+                                  (item.currentPercentage || 40)
+                                }
+                                onChange={(e) =>
+                                  handlePercentageChange(
+                                    item.lecturerId,
+                                    e.target.value
+                                  )
+                                }
                                 className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
                                 placeholder="%"
                               />
@@ -658,7 +670,12 @@ export default function AdminSalaryReport() {
                             </div>
                             <Button
                               size="sm"
-                              onClick={() => handleUpdatePercentage(item.lecturerId, item.currentPercentage || 40)}
+                              onClick={() =>
+                                handleUpdatePercentage(
+                                  item.lecturerId,
+                                  item.currentPercentage || 40
+                                )
+                              }
                               disabled={updatingLecturer === item.lecturerId}
                               className="bg-blue-600 hover:bg-blue-700 h-8 px-3"
                             >
@@ -771,6 +788,192 @@ export default function AdminSalaryReport() {
           </>
         )}
       </div>
+
+      {/* Payroll Details Modal */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <UserIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <div>{selectedLecturerDetails?.lecturerName}</div>
+                <div className="text-sm text-gray-500 font-normal">
+                  Chi tiết giao dịch tháng {selectedMonth}/{selectedYear}
+                </div>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedLecturerDetails && (
+            <div className="space-y-6">
+              {/* Summary Section */}
+              <div className="grid grid-cols-1 md: grid-cols-3 gap-4">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <p className="text-sm text-blue-600 font-medium mb-1">
+                    Tổng doanh thu
+                  </p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {formatCurrency(selectedLecturerDetails.totalRevenue)}
+                  </p>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-4">
+                  <p className="text-sm text-orange-600 font-medium mb-1">
+                    Phí nền tảng
+                  </p>
+                  <p className="text-2xl font-bold text-orange-700">
+                    {formatCurrency(selectedLecturerDetails.platformFee)}
+                  </p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-4">
+                  <p className="text-sm text-green-600 font-medium mb-1">
+                    Thu nhập ròng
+                  </p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {formatCurrency(selectedLecturerDetails.lecturerIncome)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Transactions List */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <ShoppingCartIcon className="w-5 h-5" />
+                  Danh sách giao dịch (
+                  {selectedLecturerDetails.payrollDetails?.length || 0})
+                </h3>
+
+                {selectedLecturerDetails.payrollDetails &&
+                selectedLecturerDetails.payrollDetails.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedLecturerDetails.payrollDetails.map(
+                      (detail, index) => (
+                        <div
+                          key={detail.transactionDetailId}
+                          className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+                        >
+                          <div className="flex gap-4">
+                            {/* Course Image */}
+                            <div className="flex-shrink-0">
+                              <img
+                                src={detail.image}
+                                alt={detail.courseTitle}
+                                className="w-24 h-24 object-cover rounded-lg"
+                              />
+                            </div>
+
+                            {/* Details */}
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <h4 className="font-semibold text-gray-900">
+                                    {detail.courseTitle}
+                                  </h4>
+                                  <p className="text-sm text-gray-500">
+                                    ID: {detail.courseId.slice(0, 8)}...
+                                  </p>
+                                </div>
+                                <span className="text-lg font-bold text-blue-600">
+                                  {formatCurrency(detail.coursePrice)}
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                                <div className="flex items-center gap-2 text-gray-600">
+                                  <UserIcon className="w-4 h-4" />
+                                  <span>Người mua: {detail.buyerEmail}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-gray-600">
+                                  <ClockIcon className="w-4 h-4" />
+                                  <span>
+                                    {dayjs(detail.transactionDate).format(
+                                      "DD/MM/YYYY HH:mm"
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-600">
+                                    Phí nền tảng:
+                                  </span>
+                                  <span
+                                    className={`font-semibold px-2 py-1 rounded ${
+                                      detail.percentage === 0
+                                        ? "bg-green-100 text-green-700"
+                                        : detail.percentage >= 50
+                                        ? "bg-red-100 text-red-700"
+                                        : "bg-orange-100 text-orange-700"
+                                    }`}
+                                  >
+                                    {detail.percentage}%
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Calculation breakdown */}
+                              <div className="bg-gray-50 rounded p-3 text-sm space-y-1">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">
+                                    Giá khóa học:
+                                  </span>
+                                  <span className="font-medium">
+                                    {formatCurrency(detail.coursePrice)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">
+                                    Phí nền tảng ({detail.percentage}%):
+                                  </span>
+                                  <span className="font-medium text-orange-600">
+                                    -
+                                    {formatCurrency(
+                                      (detail.coursePrice * detail.percentage) /
+                                        100
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between pt-2 border-t border-gray-200">
+                                  <span className="text-gray-900 font-semibold">
+                                    Thu nhập giảng viên:
+                                  </span>
+                                  <span className="font-bold text-green-600">
+                                    {formatCurrency(
+                                      (detail.coursePrice *
+                                        (100 - detail.percentage)) /
+                                        100
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <ShoppingCartIcon className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-gray-500">
+                      Không có giao dịch nào trong tháng này
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setIsDetailsModalOpen(false)}
+            >
+              <XMarkIcon className="w-4 h-4 mr-2" />
+              Đóng
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
