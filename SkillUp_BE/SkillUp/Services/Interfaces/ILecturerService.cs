@@ -22,5 +22,8 @@ namespace SkillUp.Services.Interfaces
                 //Task<LecturerProfileResponse> GetLecturerProfileAsync(Guid lecturerId);
                 Task<LecturerProfileDto?> GetProfileByAccountIdAsync(Guid accountId);
                 Task<bool> UpdateLecturerProfileAsync(Guid accountId, UpdateLecturerProfileDto request);
-        }
+
+                Task<bool> UpdateLecturerPercentAsync(Guid lecturerId, double percent);
+
+		}
 }
