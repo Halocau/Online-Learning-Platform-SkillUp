@@ -47,7 +47,7 @@ namespace SkillUp.Repositories.Implementations
                 .Where(td => courseIds.Contains(td.CourseId)
                              && (td.Transaction.Status == "Success")
                              && td.Transaction.CreatedAt >= fromDate)
-                .SumAsync(td => td.Price);
+                .SumAsync(td => td.LecturerIncome ?? 0);
         }
 
         public async Task<List<Course>> GetRecentActiveCoursesAsync(Guid lecturerId, int take)
@@ -71,7 +71,7 @@ namespace SkillUp.Repositories.Implementations
                 .Include(td => td.Transaction)
                 .Where(td => td.CourseId == courseId
                              && (td.Transaction.Status == "Success"))
-                .SumAsync(td => td.Price);
+                .SumAsync(td => td.LecturerIncome ?? 0);
         }
         public async Task<decimal> CalculateLifetimeRevenueAsync(Guid lecturerId, Guid? courseId)
         {
@@ -90,7 +90,7 @@ namespace SkillUp.Repositories.Implementations
                 query = query.Where(td => lecturerCourseIds.Contains(td.CourseId));
             }
 
-            return await query.SumAsync(td => td.Price);
+            return await query.SumAsync(td => td.LecturerIncome ?? 0);
         }
 
         public async Task<List<RevenueChartDto>> GetRevenueChartAsync(Guid lecturerId, int? year, Guid? courseId)
@@ -118,7 +118,7 @@ namespace SkillUp.Repositories.Implementations
                 {
                     OrderIndex = g.Key,
                     Label = $"T{g.Key}",
-                    Revenue = g.Sum(td => td.Price)
+                    Revenue = g.Sum(td => td.LecturerIncome ?? 0)
                 })
                 .OrderBy(x => x.OrderIndex)
                 .ToListAsync();
@@ -135,7 +135,7 @@ namespace SkillUp.Repositories.Implementations
                     Image = c.Image,
                     TotalRevenue = _context.TransactionDetails
                         .Where(td => td.CourseId == c.Id && td.Transaction.Status == "Success")
-                        .Sum(td => td.Price),
+                        .Sum(td => td.LecturerIncome ?? 0),
                     TotalSales = _context.TransactionDetails
                         .Count(td => td.CourseId == c.Id && td.Transaction.Status == "Success")
                 })
