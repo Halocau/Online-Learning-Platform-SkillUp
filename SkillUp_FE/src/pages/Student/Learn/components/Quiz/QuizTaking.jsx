@@ -243,15 +243,7 @@ const QuizTakingPage = () => {
             </div>
           </div>
 
-          {/* Navigation buttons */}
-          <div className="space-y-2 mb-6">
-            <button
-              onClick={() => fetchQuizQuestions()}
-              className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 hover:bg-[#e3f6f5] text-[#272343] rounded-lg font-medium transition-colors"
-            >
-              🔄 Tải lại
-            </button>
-          </div>
+      
 
           {/* Submit and Save buttons */}
           <div className="space-y-2 mb-6">
@@ -264,10 +256,7 @@ const QuizTakingPage = () => {
               Nộp bài
             </button>
 
-            <button className="w-full px-4 py-2.5 bg-[#fffffe] border-2 border-[#272343]/40 text-[#272343] hover:bg-[#e3f6f5] rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-              <Save className="w-4 h-4" />
-              Lưu bài làm
-            </button>
+            
           </div>
 
           {/* Notes dropdown */}

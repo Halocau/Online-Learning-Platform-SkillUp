@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
-const TextLesson = ({ content, onComplete, isCompleted }) => {
+
+const TextLesson = ({ content, onComplete, isCompleted, lessonId }) => {
   const [readTime, setReadTime] = useState(0);
   const [marking, setMarking] = useState(false);
 
@@ -30,14 +31,14 @@ const TextLesson = ({ content, onComplete, isCompleted }) => {
       />
 
       {/* Complete Button at Bottom */}
-      {!isCompleted && (
+      {! isCompleted && (
         <div className="mt-12 pt-6 border-t border-gray-200 flex justify-center">
           <button
             onClick={handleMarkComplete}
             disabled={marking}
-            className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover: bg-[#FFC107] text-gray-900 font-medium rounded-lg transition-all transform hover:scale-105 disabled: opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            {marking ? (
+            {marking ?  (
               <>
                 <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
                 Đang xử lý...

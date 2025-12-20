@@ -31,7 +31,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value.slice(0, 255),
     }));
   };
 
@@ -102,7 +102,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
       const response = await courseAPI.createDraftCourse(form);
 
       if (response.data.code === 200) {
-        toast.success("Khóa học đã được tạo thành công ✅");
+        toast.success("Khóa học đã được tạo thành công");
 
         // Reset form
         setFormData({
@@ -165,7 +165,11 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               onChange={handleInputChange}
               placeholder="VD: React Advanced Patterns"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all"
+              maxLength="255"
             />
+            <div className={`text-right text-sm ${formData.title.length === 255 ? 'text-red-500' : 'text-gray-500'}`}>
+              {formData.title.length}/255
+            </div>
           </div>
 
           {/* Description */}
@@ -180,7 +184,11 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               placeholder="Mô tả chi tiết về khóa học..."
               rows="4"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-all"
+              maxLength="255"
             />
+            <div className={`text-right text-sm ${formData.description.length === 255 ? 'text-red-500' : 'text-gray-500'}`}>
+              {formData.description.length}/255
+            </div>
           </div>
 
           {/* Category Selection - Now showing both dropdowns */}
@@ -225,12 +233,18 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
                     }
                   }}
                 />
-                <div className={`w-11 h-6 rounded-full relative transition-colors duration-300 ease-in-out ${formData.isAiSupport ? 'bg-yellow-400' : 'bg-gray-200'
-                  }`}>
-                  <div className={`absolute top-[2px] h-5 w-5 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out ${formData.isAiSupport
-                    ? 'translate-x-5 left-[2px] shadow-lg'
-                    : 'translate-x-0 left-[2px]'
-                    }`} />
+                <div
+                  className={`w-11 h-6 rounded-full relative transition-colors duration-300 ease-in-out ${
+                    formData.isAiSupport ? "bg-yellow-400" : "bg-gray-200"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-[2px] h-5 w-5 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out ${
+                      formData.isAiSupport
+                        ? "translate-x-5 left-[2px] shadow-lg"
+                        : "translate-x-0 left-[2px]"
+                    }`}
+                  />
                 </div>
               </label>
             </div>
@@ -281,10 +295,10 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
           <div className="flex gap-4 pt-4 border-t border-gray-200">
             <Button
               type="submit"
-              disabled={creating}
+              disabled={creating || !formData.title.trim() || !formData.description.trim() || formData.title.length === 255 || formData.description.length === 255}
               className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold transition-all transform hover:scale-105"
             >
-              {creating ? "⏳ Đang tạo..." : "✅ Tạo khóa học"}
+              {creating ? "⏳ Đang tạo..." : "Tạo khóa học"}
             </Button>
             <Button
               type="button"
@@ -292,7 +306,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               variant="outline"
               className="flex-1 transition-all"
             >
-              ❌ Hủy
+              Hủy
             </Button>
           </div>
         </form>

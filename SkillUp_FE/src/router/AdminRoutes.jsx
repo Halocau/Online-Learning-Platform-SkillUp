@@ -6,7 +6,6 @@ import ProtectedRoute from "./ProtectedRoute.jsx";
 
 import ModeratorManage from "../pages/admin/ModeratorManage.jsx";
 import AdminSalaryReport from "@/pages/admin/AdminSalaryReport.jsx";
-import AdminDashboard from "@/pages/admin/AdminDashboard.jsx";
 import AdminNotification from "@/pages/admin/AdminNotification.jsx";
 
 const AdminRoutes = () => {
@@ -20,10 +19,10 @@ const AdminRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route index element={<AdminDashboard />} />
+        <Route index element={<AdminSalaryReport />} />
         <Route path="moderators" element={<ModeratorManage />} />
-        <Route path="salary-report" element={<AdminSalaryReport />} />
         <Route path="notifications" element={<AdminNotification />} />
+        <Route path="salary-report" element={<AdminSalaryReport />} />
         {/* Other admin routes */}
       </Route>
     </Routes>

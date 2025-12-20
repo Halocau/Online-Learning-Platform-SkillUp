@@ -1,4 +1,4 @@
-// src/pages/Lecturer/tabs/components/LessonForm. jsx
+// src/pages/Lecturer/tabs/components/LessonForm.jsx
 import { useRef } from "react";
 import { Check, X, Upload, FileDown, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,25 +31,37 @@ function LessonForm({
   return (
     <div className="p-3 bg-[#FFD54F]/10 border-2 border-[#FFD54F]/30 rounded-lg">
       <div className="space-y-2">
-        <input
-          type="text"
-          value={lessonForm.title}
-          onChange={(e) =>
-            setLessonForm({ ...lessonForm, title: e.target.value })
-          }
-          placeholder="Tên bài học"
-          className="w-full px-3 py-2 border rounded-lg text-sm"
-          autoFocus
-        />
-        <textarea
-          value={lessonForm.description}
-          onChange={(e) =>
-            setLessonForm({ ...lessonForm, description: e.target.value })
-          }
-          placeholder="Mô tả bài học"
-          rows="2"
-          className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
-        />
+        <div>
+          <input
+            type="text"
+            value={lessonForm.title}
+            onChange={(e) =>
+              setLessonForm({ ...lessonForm, title: e.target.value })
+            }
+            placeholder="Tên bài học"
+            className="w-full px-3 py-2 border rounded-lg text-sm"
+            autoFocus
+            maxLength="255"
+          />
+          <div className={`text-right text-sm ${lessonForm.title.length === 255 ? 'text-red-500' : 'text-gray-500'}`}>
+            {lessonForm.title.length}/255
+          </div>
+        </div>
+        <div>
+          <textarea
+            value={lessonForm.description}
+            onChange={(e) =>
+              setLessonForm({ ...lessonForm, description: e.target.value })
+            }
+            placeholder="Mô tả bài học"
+            rows="2"
+            className="w-full px-3 py-2 border rounded-lg text-sm resize-none"
+            maxLength="255"
+          />
+          <div className={`text-right text-sm ${lessonForm.description.length === 255 ? 'text-red-500' : 'text-gray-500'}`}>
+            {lessonForm.description.length}/255
+          </div>
+        </div>
         <div className="flex gap-3">
           <select
             value={lessonForm.type}
@@ -160,25 +172,25 @@ function LessonForm({
           {/* Show existing PDF info in edit mode */}
           {isEditMode && lessonForm.existingPdfUrl && !lessonForm.pdfFile && (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-green-900 mb-1">
-                    Tài liệu PDF hiện tại:
-                  </p>
-                  <p className="text-sm text-green-700 truncate">
-                    {lessonForm.existingPdfUrl.split("/").pop()}
-                  </p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-green-900 mb-1">
+                      Tài liệu PDF hiện tại:
+                    </p>
+                    <p className="text-sm text-green-700 truncate">
+                      {lessonForm.existingPdfUrl.split("/").pop()}
+                    </p>
+                  </div>
+                  <a
+                    href={lessonForm.existingPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 p-1 text-green-600 hover:text-green-800"
+                    title="Xem PDF"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
                 </div>
-                <a
-                  href={lessonForm.existingPdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-shrink-0 p-1 text-green-600 hover:text-green-800"
-                  title="Xem PDF"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </div>
             </div>
           )}
 
@@ -215,7 +227,7 @@ function LessonForm({
         <div className="flex gap-2">
           <Button
             onClick={onSave}
-            disabled={loading || !lessonForm.title.trim()}
+            disabled={loading || !lessonForm.title.trim() || lessonForm.title.length === 255 || lessonForm.description.length === 255}
             size="sm"
             className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
