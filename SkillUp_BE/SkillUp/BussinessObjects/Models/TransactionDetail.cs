@@ -13,6 +13,10 @@ public partial class TransactionDetail
 
     public decimal Price { get; set; }
 
+    public double? Percentage { get; set; }
+
+    public decimal? LecturerIncome { get; set; }
+
     public virtual Course Course { get; set; } = null!;
 
     public virtual Transaction Transaction { get; set; } = null!;

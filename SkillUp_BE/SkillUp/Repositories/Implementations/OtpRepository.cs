@@ -20,7 +20,7 @@ namespace SkillUp.Repositories.Implementations
                 .FirstOrDefaultAsync(o =>
                     o.Account.Email == email &&
                     o.OtpLink == token &&
-                    o.OtpExpiry > DateTime.UtcNow);
+                    o.OtpExpiry > DateTime.Now);
         }
 
         public async Task<Otp?> GetByAccountIdAsync(Guid accountId)

@@ -11,6 +11,7 @@ import {
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import CategorySelector from "./components/CategorySelector";
+import AiTermsDialog from "./components/AiTermsDialog";
 
 function CreateCourseForm({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
 
   const [creating, setCreating] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [showAiTermsDialog, setShowAiTermsDialog] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -208,22 +210,32 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
               <label className="inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="sr-only peer"
+                  className="sr-only"
                   checked={formData.isAiSupport}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      isAiSupport: e.target.checked,
-                    }))
-                  }
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      // Khi bật → Hiện popup điều khoản
+                      setShowAiTermsDialog(true);
+                    } else {
+                      // Khi tắt → Tắt ngay
+                      setFormData((prev) => ({
+                        ...prev,
+                        isAiSupport: false,
+                      }));
+                    }
+                  }}
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-yellow-400 relative transition-colors">
-                  <div className="absolute top-[2px] left-[2px] h-5 w-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+                <div className={`w-11 h-6 rounded-full relative transition-colors duration-300 ease-in-out ${formData.isAiSupport ? 'bg-yellow-400' : 'bg-gray-200'
+                  }`}>
+                  <div className={`absolute top-[2px] h-5 w-5 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out ${formData.isAiSupport
+                    ? 'translate-x-5 left-[2px] shadow-lg'
+                    : 'translate-x-0 left-[2px]'
+                    }`} />
                 </div>
               </label>
             </div>
             {formData.isAiSupport && (
-              <div className="text-xs text-green-600 flex items-center gap-2">
+              <div className="text-xs text-green-600 flex items-center gap-2 animate-in fade-in slide-in-from-top duration-300">
                 ✅ Phụ đề sẽ được tạo ngay sau khi bạn tải video lên.
               </div>
             )}
@@ -285,6 +297,19 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
           </div>
         </form>
       </CardContent>
+
+      {/* AI Terms Dialog */}
+      <AiTermsDialog
+        open={showAiTermsDialog}
+        onClose={() => setShowAiTermsDialog(false)}
+        onAccept={() => {
+          setFormData((prev) => ({
+            ...prev,
+            isAiSupport: true,
+          }));
+          setShowAiTermsDialog(false);
+        }}
+      />
     </Card>
   );
 }

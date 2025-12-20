@@ -45,12 +45,54 @@ namespace SkillUp.Services.Implementations
                 return null;
             }
 
-
-            if (string.Equals(account.Status, "InActive"))
+            if (string.Equals(account.Status, "InActive", StringComparison.OrdinalIgnoreCase))
             {
-                throw new Exception("Tài khoản chưa được kích hoạt !");
+                var existingOtp = await _otpRepository.GetByAccountIdAsync(account.Id);
+
+                if (existingOtp == null || existingOtp.OtpExpiry <= DateTime.Now)
+                {
+                    var newVerifyToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+                    var newTokenExpiry = DateTime.Now.AddHours(24);
+
+                    if (existingOtp != null)
+                    {
+                        existingOtp.OtpLink = newVerifyToken;
+                        existingOtp.OtpExpiry = newTokenExpiry;
+                        existingOtp.IsUsed = false;
+                        existingOtp.UsedAt = null;
+                        await _otpRepository.UpdateAsync(existingOtp);
+                    }
+                    else
+                    {
+                        var otp = new Otp
+                        {
+                            Id = Guid.NewGuid(),
+                            AccountId = account.Id,
+                            OtpLink = newVerifyToken,
+                            OtpExpiry = newTokenExpiry,
+                            IsUsed = false,
+                            UsedAt = null
+                        };
+                        await _otpRepository.AddAsync(otp);
+                    }
+
+                    await _otpRepository.SaveChangesAsync();
+
+                    // Gửi lại email xác minh
+                    await _emailService.SendVerifyEmailAsync(
+                        account.Email,
+                        newVerifyToken,
+                        account.Fullname ?? account.Email
+                    );
+
+                    throw new Exception("Tài khoản chưa được kích hoạt. Link xác minh mới đã được gửi tới email của bạn.");
+                }
+
+                // OTP vẫn còn hạn -> chỉ báo lỗi chưa kích hoạt, không gửi lại
+                throw new Exception("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để xác minh tài khoản.");
             }
-            if (string.Equals(account.Status, "Banned"))
+
+            if (string.Equals(account.Status, "Banned", StringComparison.OrdinalIgnoreCase))
             {
                 throw new Exception("Tài khoản của bạn đã bị cấm !");
             }
@@ -510,6 +552,11 @@ namespace SkillUp.Services.Implementations
         {
             var accessToken = GenerateAccessToken(account);
             var refreshToken = GenerateRefreshToken();
+          
+            // Chỉ cho phép một refresh token đang hoạt động cho mỗi tài khoản
+            await _refreshTokenRepository.RevokeAllUserTokensAsync(account.Id);
+            await _refreshTokenRepository.SaveChangesAsync();
+
             await CreateRefreshTokenEntityAsync(account.Id, refreshToken);
 
             return new TokenDto { AccessToken = accessToken, RefreshToken = refreshToken };

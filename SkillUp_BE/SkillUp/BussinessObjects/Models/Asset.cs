@@ -17,5 +17,9 @@ public partial class Asset
 
     public string? FileUrl { get; set; }
 
+    public string? SubtitleText { get; set; }
+
+    public bool? IsSubtitleConfirmed { get; set; }
+
     public virtual Lesson Lesson { get; set; } = null!;
 }

@@ -179,6 +179,10 @@ namespace SkillUp.Services.Implementations
             }
             else if (dto.Type == "Text")
             {
+                if (string.IsNullOrEmpty(dto.Content))
+                {
+                    throw new ValidationException("Nội dung không được để trống.");
+                }
                 // Lưu content vào database
                 asset.Contents = dto.Content;
             }

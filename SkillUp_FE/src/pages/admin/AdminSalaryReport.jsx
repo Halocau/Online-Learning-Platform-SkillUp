@@ -20,9 +20,11 @@ import {
   ArrowsUpDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
 import { Spin } from "antd";
 import { adminAPI } from "@/api/adminAPI";
+import { lecturerAPI } from "@/api/lecturerAPI";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
 
@@ -39,11 +41,15 @@ export default function AdminSalaryReport() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Sorting
-  const [sortBy, setSortBy] = useState("netIncome"); // default sort by net income
+  const [sortBy, setSortBy] = useState("lecturerIncome"); // default sort by net income
   const [sortOrder, setSortOrder] = useState("desc"); // desc = highest first
 
   // Filtering
   const [filterStatus, setFilterStatus] = useState("all"); // all, withIncome, noIncome, noBankInfo
+
+  // Platform fee editing
+  const [editingPercentages, setEditingPercentages] = useState({});
+  const [updatingLecturer, setUpdatingLecturer] = useState(null);
 
   const years = Array.from({ length: 6 }, (_, i) => currentDate.year() - i);
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -165,9 +171,9 @@ export default function AdminSalaryReport() {
         (acc, item) => ({
           totalRevenue: acc.totalRevenue + (item.totalRevenue || 0),
           platformFee: acc.platformFee + (item.platformFee || 0),
-          netIncome: acc.netIncome + (item.netIncome || 0),
+          lecturerIncome: acc.lecturerIncome + (item.lecturerIncome || 0),
         }),
-        { totalRevenue: 0, platformFee: 0, netIncome: 0 }
+        { totalRevenue: 0, platformFee: 0, lecturerIncome: 0 }
       ),
     [sortedData]
   );
@@ -215,11 +221,11 @@ export default function AdminSalaryReport() {
           item.bankNumber || "Chưa cập nhật",
           item.totalRevenue || 0,
           item.platformFee || 0,
-          item.netIncome || 0,
+          item.lecturerIncome || 0,
         ].join(",")
       ),
       "",
-      `Tổng cộng,,,,${totals.totalRevenue},${totals.platformFee},${totals.netIncome}`,
+      `Tổng cộng,,,,${totals.totalRevenue},${totals.platformFee},${totals.lecturerIncome}`,
     ].join("\n");
 
     const blob = new Blob(["\ufeff" + csvContent], {
@@ -246,6 +252,63 @@ export default function AdminSalaryReport() {
       />
     </button>
   );
+
+  const handlePercentageChange = (lecturerId, value) => {
+    // Only allow numbers between 0-100
+    const numValue = parseFloat(value);
+    if (value === "" || (!isNaN(numValue) && numValue >= 0 && numValue <= 100)) {
+      setEditingPercentages(prev => ({
+        ...prev,
+        [lecturerId]: value
+      }));
+    }
+  };
+
+  const handleUpdatePercentage = async (lecturerId, currentPercentage) => {
+    const newPercentage = editingPercentages[lecturerId];
+    
+    if (!newPercentage || newPercentage === "") {
+      toast.warning("Vui lòng nhập phần trăm hợp lệ");
+      return;
+    }
+
+    const numPercentage = parseFloat(newPercentage);
+    if (isNaN(numPercentage) || numPercentage < 0 || numPercentage > 100) {
+      toast.error("Phần trăm phải từ 0 đến 100");
+      return;
+    }
+
+    // If no change, don't update
+    if (numPercentage === currentPercentage) {
+      toast.info("Không có thay đổi");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setUpdatingLecturer(lecturerId);
+      await lecturerAPI.updateLecturerPercentage(lecturerId, numPercentage);
+      toast.success("Cập nhật phần trăm thành công!");
+      
+      // Clear the editing state for this lecturer
+      setEditingPercentages(prev => {
+        const newState = { ...prev };
+        delete newState[lecturerId];
+        return newState;
+      });
+      
+      // Refresh the data
+      await fetchSalaryReport();
+    } catch (error) {
+      console.error("Error updating percentage:", error);
+      toast.error(error.response?.data?.message || "Lỗi khi cập nhật phần trăm");
+    } finally {
+      setUpdatingLecturer(null);
+      setLoading(false);
+    }
+  };
+
+  
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -330,7 +393,7 @@ export default function AdminSalaryReport() {
           <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white">
             <div className="flex items-center justify-between mb-2">
               <p className="text-orange-100 text-sm font-medium">
-                Phí nền tảng (40%)
+                Phí nền tảng
               </p>
               <BanknotesIcon className="w-8 h-8 text-orange-200" />
             </div>
@@ -347,7 +410,7 @@ export default function AdminSalaryReport() {
               <BanknotesIcon className="w-8 h-8 text-green-200" />
             </div>
             <p className="text-3xl font-bold">
-              {formatCurrency(totals.netIncome)}
+              {formatCurrency(totals.lecturerIncome)}
             </p>
           </div>
 
@@ -484,11 +547,14 @@ export default function AdminSalaryReport() {
                       <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         <SortButton
                           column="platformFee"
-                          label="Phí nền tảng (40%)"
+                          label="Phí nền tảng"
                         />
                       </th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        <SortButton column="netIncome" label="Thu nhập ròng" />
+                        <SortButton column="lecturerIncome" label="Thu nhập ròng" />
+                      </th>
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Thao tác
                       </th>
                     </tr>
                   </thead>
@@ -556,20 +622,56 @@ export default function AdminSalaryReport() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <span className="text-orange-600 font-semibold">
-                            {formatCurrency(item.platformFee)}
-                          </span>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="text-orange-600 font-semibold">
+                              {formatCurrency(item.platformFee)}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <span
                             className={`font-bold text-lg ${
-                              item.netIncome > 0
+                              item.lecturerIncome > 0
                                 ? "text-green-600"
                                 : "text-gray-400"
                             }`}
                           >
-                            {formatCurrency(item.netIncome)}
+                            {formatCurrency(item.lecturerIncome)}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="relative">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.1"
+                                value={editingPercentages[item.lecturerId] ?? (item.currentPercentage || 40)}
+                                onChange={(e) => handlePercentageChange(item.lecturerId, e.target.value)}
+                                className="w-20 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
+                                placeholder="%"
+                              />
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 pointer-events-none">
+                                %
+                              </span>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdatePercentage(item.lecturerId, item.currentPercentage || 40)}
+                              disabled={updatingLecturer === item.lecturerId}
+                              className="bg-blue-600 hover:bg-blue-700 h-8 px-3"
+                            >
+                              {updatingLecturer === item.lecturerId ? (
+                                <Spin size="small" className="text-white" />
+                              ) : (
+                                <>
+                                  <CheckIcon className="w-4 h-4 mr-1" />
+                                  Lưu
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -594,9 +696,10 @@ export default function AdminSalaryReport() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <span className="font-bold text-xl text-green-600">
-                          {formatCurrency(totals.netIncome)}
+                          {formatCurrency(totals.lecturerIncome)}
                         </span>
                       </td>
+                      <td className="px-6 py-4"></td>
                     </tr>
                   </tfoot>
                 </table>

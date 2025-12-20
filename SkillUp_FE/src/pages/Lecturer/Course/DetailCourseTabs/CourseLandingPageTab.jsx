@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { courseAPI } from "@/api/courseAPI";
 import { toast } from "react-toastify";
 import CategorySelector from "../../components/CategorySelector";
+import AiTermsDialog from "../../components/AiTermsDialog";
 
 
 function CourseLandingPageTab({ course, courseId, onUpdate }) {
@@ -14,11 +15,13 @@ function CourseLandingPageTab({ course, courseId, onUpdate }) {
     categoryId: 0,
     subCategoryId: undefined,
     image: null,
+    isAiSupport: false,
   });
 
   const [updating, setUpdating] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [removeCurrentImage, setRemoveCurrentImage] = useState(false);
+  const [showAiTermsDialog, setShowAiTermsDialog] = useState(false);
 
   useEffect(() => {
     if (course) {
@@ -28,6 +31,7 @@ function CourseLandingPageTab({ course, courseId, onUpdate }) {
         categoryId: course.categoryId || 0,
         subCategoryId: course.subCategoryId || undefined,
         image: null,
+        isAiSupport: course.isAiSupport ?? false,
       });
       setPreviewImage(course.image || null);
       setRemoveCurrentImage(false);
@@ -99,6 +103,8 @@ function CourseLandingPageTab({ course, courseId, onUpdate }) {
         form.append("image", formData.image);
       }
 
+      form.append("IsAiSupport", formData.isAiSupport ? "true" : "false");
+
       const response = await courseAPI.updateCourse(courseId, form);
       if (response.data.code === 200) {
         toast.success("Cập nhật thành công");
@@ -160,6 +166,52 @@ function CourseLandingPageTab({ course, courseId, onUpdate }) {
                 categoryName={course?.categoryName}
                 subCategoryName={course?.subCategoryName}
               />
+            </div>
+
+            {/* AI Support Toggle */}
+            <div className="p-4 border border-blue-100 rounded-lg bg-white shadow-sm space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-900">
+                    AI hỗ trợ học viên
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Bật tùy chọn này để hệ thống tự động tạo phụ đề và chatbot tư
+                    vấn cho từng bài học video.
+                  </p>
+                </div>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={formData.isAiSupport}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        // Khi bật → Hiện popup điều khoản
+                        setShowAiTermsDialog(true);
+                      } else {
+                        // Khi tắt → Tắt ngay
+                        setFormData((prev) => ({
+                          ...prev,
+                          isAiSupport: false,
+                        }));
+                      }
+                    }}
+                  />
+                  <div className={`w-11 h-6 rounded-full relative transition-colors duration-300 ease-in-out ${formData.isAiSupport ? 'bg-yellow-400' : 'bg-gray-200'
+                    }`}>
+                    <div className={`absolute top-[2px] h-5 w-5 bg-white rounded-full shadow-md transition-all duration-300 ease-in-out ${formData.isAiSupport
+                      ? 'translate-x-5 left-[2px] shadow-lg'
+                      : 'translate-x-0 left-[2px]'
+                      }`} />
+                  </div>
+                </label>
+              </div>
+              {formData.isAiSupport && (
+                <div className="text-xs text-green-600 flex items-center gap-2 animate-in fade-in slide-in-from-top duration-300">
+                  ✅ Phụ đề sẽ được tạo ngay sau khi bạn tải video lên.
+                </div>
+              )}
             </div>
 
             {/* Image */}
@@ -228,6 +280,20 @@ function CourseLandingPageTab({ course, courseId, onUpdate }) {
           </form>
         </CardContent>
       </Card>
+
+      {/* AI Terms Dialog */}
+      <AiTermsDialog
+        open={showAiTermsDialog}
+        onClose={() => setShowAiTermsDialog(false)}
+        onAccept={() => {
+          setFormData((prev) => ({
+            ...prev,
+            isAiSupport: true,
+          }));
+          setShowAiTermsDialog(false);
+          toast.success("Đã kích hoạt AI hỗ trợ học viên ✅");
+        }}
+      />
     </div>
   );
 }

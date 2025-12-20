@@ -1,6 +1,6 @@
 // src/pages/Lecturer/tabs/components/LessonForm. jsx
-import { useRef, useEffect } from "react";
-import { Check, X, Upload, FileDown, ExternalLink } from "lucide-react";
+import { useRef } from "react";
+import { Check, X, Upload, FileDown, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RichTextEditor from "@/components/Editor/RichText";
 
@@ -124,8 +124,8 @@ function LessonForm({
                 {lessonForm.videoFile
                   ? lessonForm.videoFile.name
                   : hasExistingVideo
-                  ? "Tải lên video mới (tùy chọn)"
-                  : "Chọn video"}
+                    ? "Tải lên video mới (tùy chọn)"
+                    : "Chọn video"}
               </span>
               <input
                 type="file"
@@ -188,8 +188,8 @@ function LessonForm({
               {lessonForm.pdfFile
                 ? lessonForm.pdfFile.name
                 : isEditMode && lessonForm.existingPdfUrl
-                ? "Tải lên PDF mới (tùy chọn)"
-                : "Tài liệu PDF (tùy chọn)"}
+                  ? "Tải lên PDF mới (tùy chọn)"
+                  : "Tài liệu PDF (tùy chọn)"}
             </span>
             <input
               type="file"
@@ -217,12 +217,27 @@ function LessonForm({
             onClick={onSave}
             disabled={loading || !lessonForm.title.trim()}
             size="sm"
-            className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold"
+            className="bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Check className="w-4 h-4 mr-1" />
-            {isEditMode ? "Cập nhật bài học" : "Thêm bài học"}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                {isEditMode ? "Đang cập nhật..." : "Đang thêm..."}
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4 mr-1" />
+                {isEditMode ? "Cập nhật bài học" : "Thêm bài học"}
+              </>
+            )}
           </Button>
-          <Button onClick={onCancel} variant="outline" size="sm">
+          <Button
+            onClick={onCancel}
+            variant="outline"
+            size="sm"
+            disabled={loading}
+            className="disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <X className="w-4 h-4 mr-1" />
             Hủy
           </Button>

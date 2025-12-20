@@ -196,21 +196,25 @@ namespace SkillUp.Services.Implementations
                 course.SubCategoryId = request.SubCategoryId.Value;
             }
 
-            var previouslyEnabled = course.IsAiSupport ?? false;
-            var shouldTriggerSubtitleJob = false;
+            var wasAiEnabledBefore = course.IsAiSupport ?? false;
+            var needsToGenerateSubtitles = false;
 
             if (request.IsAiSupport.HasValue)
             {
-                course.IsAiSupport = request.IsAiSupport.Value;
-                shouldTriggerSubtitleJob = !previouslyEnabled && course.IsAiSupport == true;
+                var newAiSupportValue = request.IsAiSupport.Value;
+                
+                if (!wasAiEnabledBefore && newAiSupportValue)
+                {
+                    needsToGenerateSubtitles = true;
+                }
+
+                course.IsAiSupport = newAiSupportValue;
             }
 
             course.UpdatedAt = DateTime.Now;
-
             _courseRepository.UpdateCourse(course);
             await _courseRepository.SaveChangesAsync();
 
-            if (shouldTriggerSubtitleJob)
             {
                 await _aiSupportBackgroundJobService.TriggerCourseSubtitleJobAsync(course.Id);
             }
@@ -659,6 +663,7 @@ namespace SkillUp.Services.Implementations
                 subCategoryId = course.SubCategoryId,
                 CategoryName = course.SubCategory?.Category?.Name ?? "",
                 SubCategoryName = course.SubCategory?.Name ?? "",
+                IsAiSupport = course.IsAiSupport ?? false,
                 Lecturer = course.Lecturer != null ? new LecturerCourseDetailDto
                 {
                     AccountId = course.Lecturer.AccountId,
@@ -688,9 +693,9 @@ namespace SkillUp.Services.Implementations
                             .Where(a => a.IsActive)
                             .Select(a => new AssetCourseDetailDto
                             {
-                                Url = a.Url ?? "default-url",
-                                Content = a.Contents ?? "No content",
-                                FileUrl = a.FileUrl ?? "default-file-url"
+                                Url = a.Url ?? null,
+                                Content = a.Contents ??null,
+                                FileUrl = a.FileUrl ?? null
                             })
                             .ToList() ?? new List<AssetCourseDetailDto>(),
                         CreatedAt = l.CreatedAt,
@@ -819,9 +824,9 @@ namespace SkillUp.Services.Implementations
                             .Where(a => a.IsActive)
                             .Select(a => new AssetCourseDetailDto
                             {
-                                Url = a.Url ?? "default-url",
-                                Content = a.Contents ?? "No content",
-                                FileUrl = a.FileUrl ?? "default-file-url"
+                                Url = a.Url ?? null,
+                                Content = a.Contents ?? null,
+                                FileUrl = a.FileUrl ?? null
                             })
                             .ToList() ?? new List<AssetCourseDetailDto>(),
                         CreatedAt = l.CreatedAt,

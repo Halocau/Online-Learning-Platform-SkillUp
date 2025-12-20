@@ -15,7 +15,7 @@ public partial class Transaction
 
     public string Status { get; set; } = null!;
 
-    public string PaymentMethod { get; set; } = null!;
+    public string? PaymentMethod { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

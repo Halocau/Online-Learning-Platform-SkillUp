@@ -165,7 +165,7 @@ const QuestionBankCreateModal = ({ open, onClose, onCreate, sectionId }) => {
     const handleAddAnswer = () => {
         const newAnswer = {
             answerId: crypto.randomUUID(),
-            answerName: "Đáp án mới",
+            answerName: "",
             isCorrect: false,
             isActive: true
         };

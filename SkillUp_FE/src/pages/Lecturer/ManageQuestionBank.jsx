@@ -56,7 +56,7 @@ export default function ManageQuestionBank() {
             console.log('')
             console.error('Fetch courses failed:', err);
             setCourseId(null);
-            toast.info('Bạn chưa có khoá học nào');
+            //toast.info('Bạn chưa có khoá học nào');
         } finally {
             setLoading(false);
         }
