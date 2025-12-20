@@ -10,6 +10,21 @@ namespace SkillUp.Services.Common
 {
     public class PayOSService : IPayOSService
     {
+        #region Constants
+
+        private const string PAYOS_API_BASE_URL = "https://api-merchant.payos.vn/v2/payment-requests";
+        private const string STATUS_SUCCESS = "Success";
+        private const string STATUS_PENDING = "Pending";
+        private const string STATUS_FAILED = "Failed";
+        private const string PAYMENT_METHOD_PAYOS = "PayOS";
+        private const string PAYMENT_METHOD_FREE = "Free";
+        private const string PAYOS_STATUS_PAID = "PAID";
+        private const string PAYOS_CODE_SUCCESS = "00";
+
+        #endregion
+
+        #region Fields
+
         private readonly SkillUpContext _context;
         private readonly HttpClient _httpClient;
         private readonly string _clientId;
@@ -17,6 +32,10 @@ namespace SkillUp.Services.Common
         private readonly string _checksumKey;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
+
+        #endregion
+
+        #region Constructor
 
         public PayOSService(SkillUpContext context, IConfiguration config, IEmailService emailService, HttpClient httpClient = null)
         {
@@ -27,51 +46,58 @@ namespace SkillUp.Services.Common
             _apiKey = config["PayOS:ApiKey"] ?? throw new ArgumentNullException("PayOS:ApiKey");
             _checksumKey = config["PayOS:ChecksumKey"] ?? throw new ArgumentNullException("PayOS:ChecksumKey");
 
-			_httpClient = httpClient ?? new HttpClient();
+            _httpClient = httpClient ?? new HttpClient();
+            SetupHttpClientHeaders();
+        }
 
-			// Ensure headers are added safely
-			if (!_httpClient.DefaultRequestHeaders.Contains("x-client-id"))
-				_httpClient.DefaultRequestHeaders.Add("x-client-id", _clientId);
+        private void SetupHttpClientHeaders()
+        {
+            if (!_httpClient.DefaultRequestHeaders.Contains("x-client-id"))
+            {
+                _httpClient.DefaultRequestHeaders.Add("x-client-id", _clientId);
+            }
 
-			if (!_httpClient.DefaultRequestHeaders.Contains("x-api-key"))
-				_httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
-		}
+            if (!_httpClient.DefaultRequestHeaders.Contains("x-api-key"))
+            {
+                _httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
+            }
+        }
+
+        #endregion
+
+        #region Public Methods
 
         public async Task<CoursePaymentResponseDto> CreateCoursePaymentAsync(Guid accountId, CoursePaymentRequestDto request)
         {
             try
             {
-                // Validate course
-                var course = await _context.Courses
-                    .FirstOrDefaultAsync(c => c.Id == request.CourseId && c.IsActive);
-
+                var course = await ValidateAndGetCourseAsync(request.CourseId);
                 if (course == null)
+                {
                     return ErrorResponse("Khóa học không tồn tại hoặc không khả dụng");
+                }
 
-                // Get student
-                var student = await _context.Students
-                    .FirstOrDefaultAsync(s => s.AccountId == accountId);
-
+                var student = await GetStudentByAccountIdAsync(accountId);
                 if (student == null)
+                {
                     return ErrorResponse("Không tìm thấy thông tin học viên");
+                }
 
-                // Check if already enrolled
-                var existingEnrollment = await _context.Enrollments
-                    .FirstOrDefaultAsync(e => e.StudentId == student.Id && e.CourseId == request.CourseId);
-
-                if (existingEnrollment != null)
+                if (await IsStudentEnrolledAsync(student.Id, request.CourseId))
+                {
                     return ErrorResponse("Bạn đã đăng ký khóa học này rồi");
+                }
 
-                // Handle free course
                 if (course.Price == 0)
+                {
                     return await EnrollFreeCourseAsync(accountId, student, course);
+                }
 
-                // Create paid course payment
                 return await CreatePaidCoursePaymentAsync(accountId, course);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR: {ex.Message}");
+                LogError("CreateCoursePaymentAsync", ex);
                 return ErrorResponse($"Lỗi: {ex.Message}");
             }
         }
@@ -81,34 +107,44 @@ namespace SkillUp.Services.Common
             try
             {
                 var transaction = await FindTransactionByOrderCodeAsync(orderCode);
-                if (transaction == null) return false;
+                if (transaction == null)
+                {
+                    return false;
+                }
 
-                if (transaction.Status == "Success") return true;
+                if (transaction.Status == STATUS_SUCCESS)
+                {
+                    return true;
+                }
 
-                if (!await VerifyPaymentWithPayOSAsync(orderCode)) return false;
+                if (!await VerifyPaymentWithPayOSAsync(orderCode))
+                {
+                    return false;
+                }
 
-                    transaction.Status = "Success";
+                transaction.Status = STATUS_SUCCESS;
 
-                    var student = await _context.Students
-                        .FirstOrDefaultAsync(s => s.AccountId == transaction.AccountId);
+                var student = await GetStudentByAccountIdAsync(transaction.AccountId);
+                if (student == null)
+                {
+                    return false;
+                }
 
-                if (student == null) return false;
-
-                var courseId = ExtractCourseIdFromDescription(transaction.Description);
-                if (!courseId.HasValue) return false;
+                var courseId = await GetCourseIdFromTransactionAsync(transaction.Id);
+                if (!courseId.HasValue)
+                {
+                    return false;
+                }
 
                 await EnrollStudentAndCreateTransactionDetailAsync(student.Id, courseId.Value, transaction.Id);
+                await _context.SaveChangesAsync();
 
-                    await _context.SaveChangesAsync();
-
-                    // Gửi email xác nhận mua khóa học
-                    await SendPurchaseEmailAsync(student, courseId.Value, transaction);
-
-                    return true;
+                await SendPurchaseEmailAsync(student, courseId.Value, transaction);
+                return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR in VerifyPaymentAndEnrollAsync: {ex.Message}");
+                LogError("VerifyPaymentAndEnrollAsync", ex);
                 return false;
             }
         }
@@ -121,7 +157,9 @@ namespace SkillUp.Services.Common
                 var signature = payload.GetProperty("signature").GetString();
 
                 if (ComputeSignature(dataRaw, _checksumKey) != signature)
+                {
                     return false;
+                }
 
                 var data = JsonDocument.Parse(dataRaw).RootElement;
                 var orderCode = data.GetProperty("orderCode").GetString();
@@ -130,7 +168,7 @@ namespace SkillUp.Services.Common
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR in ProcessPaymentWebhookAsync: {ex.Message}");
+                LogError("ProcessPaymentWebhookAsync", ex);
                 return false;
             }
         }
@@ -140,27 +178,29 @@ namespace SkillUp.Services.Common
             try
             {
                 var transaction = await FindTransactionByOrderCodeAsync(orderCode);
-                if (transaction == null || transaction.Status != "Pending")
+                if (transaction == null || transaction.Status != STATUS_PENDING)
+                {
                     return false;
+                }
 
-                    transaction.Status = "Failed";
-                    await _context.SaveChangesAsync();
-                    return true;
+                transaction.Status = STATUS_FAILED;
+                await _context.SaveChangesAsync();
+                return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR in CancelPaymentAsync: {ex.Message}");
+                LogError("CancelPaymentAsync", ex);
                 return false;
             }
         }
 
         public async Task<List<CourseEnrollmentDto>> GetUserEnrollmentsAsync(Guid accountId)
         {
-            var student = await _context.Students
-                .FirstOrDefaultAsync(s => s.AccountId == accountId);
-
+            var student = await GetStudentByAccountIdAsync(accountId);
             if (student == null)
+            {
                 return new List<CourseEnrollmentDto>();
+            }
 
             return await _context.Enrollments
                 .Include(e => e.Course)
@@ -181,86 +221,222 @@ namespace SkillUp.Services.Common
             try
             {
                 if (request.Items == null || !request.Items.Any())
+                {
                     return CartErrorResponse("Giỏ hàng trống");
+                }
 
-                // Get student
-                var student = await _context.Students
-                    .FirstOrDefaultAsync(s => s.AccountId == accountId);
-
+                var student = await GetStudentByAccountIdAsync(accountId);
                 if (student == null)
+                {
                     return CartErrorResponse("Không tìm thấy thông tin học viên");
+                }
 
-                // Validate courses
                 var courseIds = request.Items.Select(i => i.CourseId).ToList();
-                var courses = await _context.Courses
-                    .Where(c => courseIds.Contains(c.Id) && c.IsActive)
-                    .ToListAsync();
-
-                if (courses.Count != courseIds.Count)
+                var courses = await ValidateCoursesAsync(courseIds);
+                if (courses == null)
+                {
                     return CartErrorResponse("Một số khóa học không tồn tại hoặc không khả dụng");
+                }
 
-                // Check if already enrolled
-                var existingEnrollments = await _context.Enrollments
-                    .Where(e => e.StudentId == student.Id && courseIds.Contains(e.CourseId))
-                    .Select(e => e.CourseId)
-                    .ToListAsync();
-
-                if (existingEnrollments.Any())
+                if (await HasExistingEnrollmentsAsync(student.Id, courseIds))
+                {
                     return CartErrorResponse("Bạn đã đăng ký một số khóa học trong giỏ hàng");
+                }
 
-                // Handle free cart (total amount = 0)
                 if (request.TotalAmount == 0)
+                {
                     return await EnrollFreeCartAsync(accountId, student, request, courses);
+                }
 
-                // Create transaction
                 var orderCode = GenerateOrderCode(accountId);
-                var courseNames = string.Join(", ", courses.Select(c => c.Title));
-                var transaction = new Transaction
-                {
-                    Id = Guid.NewGuid(),
-                    AccountId = accountId,
-                    Amount = request.TotalAmount,
-                    Description = $"OrderCode:{orderCode}|CartPayment|CourseIds:{string.Join(",", courseIds)}|CourseNames:{courseNames}",
-                    Status = "Pending",
-                    PaymentMethod = "PayOS",
-                    CreatedAt = DateTime.Now
-                };
+                var transaction = await CreateCartTransactionAsync(accountId, request, courseIds, courses, orderCode);
+                await CreateCartTransactionDetailsAsync(transaction.Id, request.Items, courses);
 
-                // Store voucher info in transaction description for later use
-                var voucherInfo = string.Join("|", request.Items
-                    .Where(i => !string.IsNullOrEmpty(i.VoucherCode))
-                    .Select(i => $"Voucher:{i.CourseId}:{i.VoucherCode}:{i.FinalPrice}"));
+                var payosResponse = await CallPayOSApiAsync(orderCode, request.TotalAmount, isCart: true);
                 
-                if (!string.IsNullOrEmpty(voucherInfo))
+                if (!payosResponse.Success)
                 {
-                    transaction.Description += $"|{voucherInfo}";
+                    await RollbackTransactionAsync(transaction.Id);
+                    return CartErrorResponse(payosResponse.ErrorMessage);
                 }
 
-                _context.Transactions.Add(transaction);
+                return new CartPaymentResponseDto
+                {
+                    Success = true,
+                    CheckoutUrl = payosResponse.CheckoutUrl,
+                    OrderCode = orderCode.ToString(),
+                    Message = "Tạo thanh toán thành công"
+                };
+            }
+            catch (Exception ex)
+            {
+                LogError("CreateCartPaymentAsync", ex);
+                return CartErrorResponse($"Lỗi: {ex.Message}");
+            }
+        }
+
+        public async Task<bool> VerifyCartPaymentAndEnrollAsync(string orderCode)
+        {
+            try
+            {
+                var transaction = await FindTransactionByOrderCodeAsync(orderCode);
+                if (transaction == null)
+                {
+                    return false;
+                }
+
+                if (transaction.Status == STATUS_SUCCESS)
+                {
+                    return true;
+                }
+
+                if (!await VerifyPaymentWithPayOSAsync(orderCode))
+                {
+                    return false;
+                }
+
+                transaction.Status = STATUS_SUCCESS;
+
+                var student = await GetStudentByAccountIdAsync(transaction.AccountId);
+                if (student == null)
+                {
+                    return false;
+                }
+
+                var courseIds = await GetCourseIdsFromTransactionAsync(transaction.Id);
+                if (!courseIds.Any())
+                {
+                    return false;
+                }
+
+                var courseFinalPrices = await UpdateCartItemsWithVoucherInfoAsync(student.Id, transaction.Id);
+                await EnrollStudentInCoursesAsync(student.Id, courseIds, transaction.Id, courseFinalPrices);
+                await ClearCartAsync(student.Id);
+
+                await SendCartPurchaseEmailAsync(student, courseIds, transaction, courseFinalPrices);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("VerifyCartPaymentAndEnrollAsync", ex);
+                return false;
+            }
+        }
+
+        #endregion
+
+        #region Private Helper Methods
+
+        #region Private Helper Methods
+
+        #region Validation Helpers
+
+        private async Task<Course?> ValidateAndGetCourseAsync(Guid courseId)
+        {
+            return await _context.Courses
+                .FirstOrDefaultAsync(c => c.Id == courseId && c.IsActive);
+        }
+
+        private async Task<List<Course>?> ValidateCoursesAsync(List<Guid> courseIds)
+        {
+            var courses = await _context.Courses
+                .Where(c => courseIds.Contains(c.Id) && c.IsActive)
+                .ToListAsync();
+
+            return courses.Count == courseIds.Count ? courses : null;
+        }
+
+        private async Task<Student?> GetStudentByAccountIdAsync(Guid accountId)
+        {
+            return await _context.Students
+                .FirstOrDefaultAsync(s => s.AccountId == accountId);
+        }
+
+        private async Task<bool> IsStudentEnrolledAsync(Guid studentId, Guid courseId)
+        {
+            return await _context.Enrollments
+                .AnyAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+        }
+
+        private async Task<bool> HasExistingEnrollmentsAsync(Guid studentId, List<Guid> courseIds)
+        {
+            return await _context.Enrollments
+                .AnyAsync(e => e.StudentId == studentId && courseIds.Contains(e.CourseId));
+        }
+
+        #endregion
+
+        #region Transaction Helpers
+
+        private async Task<Transaction> CreateCartTransactionAsync(Guid accountId, CartPaymentRequestDto request, List<Guid> courseIds, List<Course> courses, long orderCode)
+        {
+            // Chỉ lưu OrderCode trong Description, courseIds sẽ lấy từ TransactionDetails
+            var description = $"OrderCode:{orderCode}";
+
+            var transaction = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                AccountId = accountId,
+                Amount = request.TotalAmount,
+                Description = description,
+                Status = STATUS_PENDING,
+                PaymentMethod = PAYMENT_METHOD_PAYOS,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Transactions.Add(transaction);
+            await _context.SaveChangesAsync();
+
+            // Lưu voucher info vào TransactionDetail nếu có
+            foreach (var item in request.Items.Where(i => !string.IsNullOrEmpty(i.VoucherCode)))
+            {
+                // Voucher info sẽ được lưu trong TransactionDetail hoặc có thể tạo bảng riêng sau
+                // Hiện tại chỉ lưu trong TransactionDetail với Price đã được discount
+            }
+
+            return transaction;
+        }
+
+        private async Task CreateCartTransactionDetailsAsync(Guid transactionId, List<CartPaymentItemDto> items, List<Course> courses)
+        {
+            foreach (var item in items)
+            {
+                var course = courses.FirstOrDefault(c => c.Id == item.CourseId);
+                if (course != null)
+                {
+                    await CreateTransactionDetailAsync(transactionId, item.CourseId, item.FinalPrice);
+                }
+            }
+        }
+
+        private async Task RollbackTransactionAsync(Guid transactionId)
+        {
+            var transaction = await _context.Transactions.FindAsync(transactionId);
+            if (transaction != null)
+            {
+                _context.Transactions.Remove(transaction);
                 await _context.SaveChangesAsync();
+            }
+        }
 
-                // DO NOT update CartItems here - only update after payment success
-                // This prevents CartItem.Price from being changed if user cancels payment
+        #endregion
 
-                // Create transaction details
-                foreach (var item in request.Items)
-                {
-                    var course = courses.FirstOrDefault(c => c.Id == item.CourseId);
-                    if (course != null)
-                    {
-                        await CreateTransactionDetailAsync(transaction.Id, item.CourseId, item.FinalPrice);
-                    }
-                }
+        #region PayOS API Helpers
 
-                // Call PayOS API
+        private async Task<(bool Success, string? CheckoutUrl, string? ErrorMessage)> CallPayOSApiAsync(long orderCode, decimal amount, bool isCart = false)
+        {
+            try
+            {
                 var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:5173";
+                var typeParam = isCart ? "&type=cart" : "";
+                
                 var paymentRequest = new
                 {
                     orderCode,
-                    amount = (int)request.TotalAmount,
+                    amount = (int)amount,
                     description = "",
-                    cancelUrl = $"{frontendUrl}/payment/result?status=cancel&orderCode={orderCode}&type=cart",
-                    returnUrl = $"{frontendUrl}/payment/result?status=success&orderCode={orderCode}&type=cart"
+                    cancelUrl = $"{frontendUrl}/payment/result?status=cancel&orderCode={orderCode}{typeParam}",
+                    returnUrl = $"{frontendUrl}/payment/result?status=success&orderCode={orderCode}{typeParam}"
                 };
 
                 var signature = ComputeSignature(
@@ -278,162 +454,106 @@ namespace SkillUp.Services.Common
                 };
 
                 var response = await _httpClient.PostAsync(
-                    "https://api-merchant.payos.vn/v2/payment-requests",
+                    PAYOS_API_BASE_URL,
                     new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
 
                 var responseText = await response.Content.ReadAsStringAsync();
                 var payosResponse = JsonSerializer.Deserialize<JsonElement>(responseText);
 
-                // Check for errors
-                if (payosResponse.TryGetProperty("code", out var code) && code.GetString() != "00")
+                if (payosResponse.TryGetProperty("code", out var code) && code.GetString() != PAYOS_CODE_SUCCESS)
                 {
                     var desc = payosResponse.TryGetProperty("desc", out var descProp)
                         ? descProp.GetString()
                         : "Unknown error";
-
-                    _context.Transactions.Remove(transaction);
-                    await _context.SaveChangesAsync();
-
-                    return CartErrorResponse($"Lỗi PayOS: {desc}");
+                    return (false, null, $"Lỗi PayOS: {desc}");
                 }
 
-                // Get checkout URL
                 if (payosResponse.TryGetProperty("data", out var data) &&
                     data.TryGetProperty("checkoutUrl", out var checkoutUrl))
                 {
-                    return new CartPaymentResponseDto
-                    {
-                        Success = true,
-                        CheckoutUrl = checkoutUrl.GetString(),
-                        OrderCode = orderCode.ToString(),
-                        Message = "Tạo thanh toán thành công"
-                    };
+                    return (true, checkoutUrl.GetString(), null);
                 }
 
-                // No checkout URL
-                _context.Transactions.Remove(transaction);
-                await _context.SaveChangesAsync();
-
-                return CartErrorResponse($"Không thể lấy link thanh toán. Response: {responseText}");
+                return (false, null, $"Không thể lấy link thanh toán. Response: {responseText}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR in CreateCartPaymentAsync: {ex.Message}");
-                return CartErrorResponse($"Lỗi: {ex.Message}");
+                return (false, null, $"Lỗi: {ex.Message}");
             }
         }
 
-        public async Task<bool> VerifyCartPaymentAndEnrollAsync(string orderCode)
+        #endregion
+
+        #region Cart Helpers
+
+        private async Task<Dictionary<Guid, decimal>> UpdateCartItemsWithVoucherInfoAsync(Guid studentId, Guid transactionId)
         {
-            try
+            var courseFinalPrices = new Dictionary<Guid, decimal>();
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                .FirstOrDefaultAsync(c => c.StudentId == studentId);
+
+            if (cart == null)
             {
-                var transaction = await FindTransactionByOrderCodeAsync(orderCode);
-                if (transaction == null) return false;
-
-                if (transaction.Status == "Success") return true;
-
-                if (!await VerifyPaymentWithPayOSAsync(orderCode)) return false;
-
-                transaction.Status = "Success";
-
-                var student = await _context.Students
-                    .FirstOrDefaultAsync(s => s.AccountId == transaction.AccountId);
-
-                if (student == null) return false;
-
-                // Extract course IDs from description
-                var courseIds = ExtractCourseIdsFromDescription(transaction.Description);
-                if (!courseIds.Any()) return false;
-
-                // Update CartItems with final price and voucher info AFTER payment success
-                var cart = await _context.Carts
-                    .Include(c => c.CartItems)
-                    .FirstOrDefaultAsync(c => c.StudentId == student.Id);
-
-                // Extract voucher info from transaction description once
-                var voucherInfoParts = transaction.Description?.Split('|')
-                    .Where(p => p.StartsWith("Voucher:"))
-                    .ToList() ?? new List<string>();
-
-                // Get final prices from voucher info for both CartItem update and TransactionDetail
-                var courseFinalPrices = new Dictionary<Guid, decimal>();
-
-                if (cart != null)
-                {
-                    foreach (var voucherInfo in voucherInfoParts)
-                    {
-                        // Format: Voucher:{CourseId}:{VoucherCode}:{FinalPrice}
-                        var parts = voucherInfo.Replace("Voucher:", "").Split(':');
-                        if (parts.Length >= 3 && Guid.TryParse(parts[0], out var courseId))
-                        {
-                            var cartItem = cart.CartItems?.FirstOrDefault(ci => ci.CourseId == courseId);
-                            if (cartItem != null)
-                            {
-                                // Update CartItem Price with final price (after discount)
-                                if (decimal.TryParse(parts[2], out var finalPrice))
-                                {
-                                    cartItem.Price = finalPrice;
-                                    courseFinalPrices[courseId] = finalPrice;
-                                }
-
-                                // Find and set voucher ID
-                                if (parts.Length >= 2 && !string.IsNullOrEmpty(parts[1]))
-                                {
-                                    var voucher = await _context.Vouchers
-                                        .FirstOrDefaultAsync(v => v.CouponCode == parts[1] && v.CourseId == courseId);
-                                    if (voucher != null)
-                                    {
-                                        cartItem.VoucherId = voucher.Id;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    await _context.SaveChangesAsync();
-                }
-
-                // Enroll student in all courses and create transaction details with final prices
-                // Extract final prices for courses that don't have vouchers (if any)
-                foreach (var voucherInfo in voucherInfoParts)
-                {
-                    var parts = voucherInfo.Replace("Voucher:", "").Split(':');
-                    if (parts.Length >= 3 && Guid.TryParse(parts[0], out var courseId))
-                    {
-                        if (!courseFinalPrices.ContainsKey(courseId) && decimal.TryParse(parts[2], out var finalPrice))
-                        {
-                            courseFinalPrices[courseId] = finalPrice;
-                        }
-                    }
-                }
-
-                foreach (var courseId in courseIds)
-                {
-                    await EnrollStudentAndCreateTransactionDetailAsync(student.Id, courseId, transaction.Id, 
-                        courseFinalPrices.ContainsKey(courseId) ? courseFinalPrices[courseId] : null);
-                }
-
-                await _context.SaveChangesAsync();
-
-                // Clear cart after successful payment and enrollment
-                if (cart != null && cart.CartItems != null && cart.CartItems.Any())
-                {
-                    _context.CartItems.RemoveRange(cart.CartItems);
-                    await _context.SaveChangesAsync();
-                }
-
-                // Gửi email xác nhận mua khóa học (nhiều khóa học)
-                await SendCartPurchaseEmailAsync(student, courseIds, transaction, courseFinalPrices);
-
-                return true;
+                return courseFinalPrices;
             }
-            catch (Exception ex)
+
+            // Lấy voucher info từ TransactionDetails (Price đã được discount)
+            var transactionDetails = await _context.TransactionDetails
+                .Where(td => td.TransactionId == transactionId)
+                .ToListAsync();
+
+            foreach (var detail in transactionDetails)
             {
-                Console.WriteLine($"[PayOS] ERROR in VerifyCartPaymentAndEnrollAsync: {ex.Message}");
-                return false;
+                var cartItem = cart.CartItems?.FirstOrDefault(ci => ci.CourseId == detail.CourseId);
+                if (cartItem != null)
+                {
+                    // Update CartItem Price với final price từ TransactionDetail
+                    cartItem.Price = detail.Price;
+                    courseFinalPrices[detail.CourseId] = detail.Price;
+
+                    // Tìm voucher nếu có (có thể cần lưu voucherId trong TransactionDetail sau này)
+                    // Hiện tại chỉ update price
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return courseFinalPrices;
+        }
+
+        private async Task EnrollStudentInCoursesAsync(Guid studentId, List<Guid> courseIds, Guid transactionId, Dictionary<Guid, decimal> courseFinalPrices)
+        {
+            foreach (var courseId in courseIds)
+            {
+                decimal? finalPrice = courseFinalPrices.TryGetValue(courseId, out var price) ? price : null;
+                await EnrollStudentAndCreateTransactionDetailAsync(studentId, courseId, transactionId, finalPrice);
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task ClearCartAsync(Guid studentId)
+        {
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                .FirstOrDefaultAsync(c => c.StudentId == studentId);
+
+            if (cart != null && cart.CartItems != null && cart.CartItems.Any())
+            {
+                _context.CartItems.RemoveRange(cart.CartItems);
+                await _context.SaveChangesAsync();
             }
         }
 
-        #region Private Helper Methods
+        #endregion
+
+        #region Utility Helpers
+
+        private void LogError(string methodName, Exception ex)
+        {
+            Console.WriteLine($"[PayOS] ERROR in {methodName}: {ex.Message}");
+        }
+
+        #endregion
 
         private async Task<CartPaymentResponseDto> EnrollFreeCartAsync(Guid accountId, Student student, CartPaymentRequestDto request, List<Course> courses)
         {
@@ -500,9 +620,9 @@ namespace SkillUp.Services.Common
                 Id = Guid.NewGuid(),
                 AccountId = accountId,
                 Amount = 0,
-                Description = $"Free Cart Enrollment|CourseIds:{string.Join(",", courseIds)}|CourseNames:{courseNames}",
-                Status = "Success",
-                PaymentMethod = "Free",
+                Description = "Free Cart Enrollment",
+                Status = STATUS_SUCCESS,
+                PaymentMethod = PAYMENT_METHOD_FREE,
                 CreatedAt = DateTime.Now
             };
             _context.Transactions.Add(transaction);
@@ -556,9 +676,9 @@ namespace SkillUp.Services.Common
                 Id = Guid.NewGuid(),
                 AccountId = accountId,
                 Amount = 0,
-                Description = $"Free Course Enrollment|CourseId:{course.Id}|CourseName:{course.Title}",
-                Status = "Success",
-                PaymentMethod = "Free",
+                Description = "Free Course Enrollment",
+                Status = STATUS_SUCCESS,
+                PaymentMethod = PAYMENT_METHOD_FREE,
                 CreatedAt = DateTime.Now
             };
             _context.Transactions.Add(transaction);
@@ -586,81 +706,32 @@ namespace SkillUp.Services.Common
                 Id = Guid.NewGuid(),
                 AccountId = accountId,
                 Amount = course.Price,
-                Description = $"OrderCode:{orderCode}|CourseId:{course.Id}|CourseName:{course.Title}",
-                Status = "Pending",
-                PaymentMethod = "PayOS",
+                Description = $"OrderCode:{orderCode}",
+                Status = STATUS_PENDING,
+                PaymentMethod = PAYMENT_METHOD_PAYOS,
                 CreatedAt = DateTime.Now
             };
 
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
 
-            // Create transaction detail
             await CreateTransactionDetailAsync(transaction.Id, course.Id, course.Price);
 
-            // Call PayOS API
-            var frontendUrl = _config["FrontendUrl"] ?? "http://localhost:5173";
-            var paymentRequest = new
+            var payosResponse = await CallPayOSApiAsync(orderCode, course.Price, isCart: false);
+            
+            if (!payosResponse.Success)
             {
-                orderCode,
-                amount = (int)course.Price,
-                description = "",
-                cancelUrl = $"{frontendUrl}/payment/result?status=cancel&orderCode={orderCode}",
-                returnUrl = $"{frontendUrl}/payment/result?status=success&orderCode={orderCode}"
-            };
-
-            var signature = ComputeSignature(
-                $"amount={paymentRequest.amount}&cancelUrl={paymentRequest.cancelUrl}&description={paymentRequest.description}&orderCode={paymentRequest.orderCode}&returnUrl={paymentRequest.returnUrl}",
-                _checksumKey);
-
-            var payload = new
-            {
-                paymentRequest.orderCode,
-                paymentRequest.amount,
-                paymentRequest.description,
-                paymentRequest.cancelUrl,
-                paymentRequest.returnUrl,
-                signature
-            };
-
-            var response = await _httpClient.PostAsync(
-                "https://api-merchant.payos.vn/v2/payment-requests",
-                new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
-
-            var responseText = await response.Content.ReadAsStringAsync();
-            var payosResponse = JsonSerializer.Deserialize<JsonElement>(responseText);
-
-            // Check for errors
-            if (payosResponse.TryGetProperty("code", out var code) && code.GetString() != "00")
-            {
-                var desc = payosResponse.TryGetProperty("desc", out var descProp)
-                    ? descProp.GetString()
-                    : "Unknown error";
-
-                _context.Transactions.Remove(transaction);
-                await _context.SaveChangesAsync();
-
-                return ErrorResponse($"Lỗi PayOS: {desc}");
+                await RollbackTransactionAsync(transaction.Id);
+                return ErrorResponse(payosResponse.ErrorMessage ?? "Lỗi không xác định");
             }
 
-            // Get checkout URL
-            if (payosResponse.TryGetProperty("data", out var data) &&
-                data.TryGetProperty("checkoutUrl", out var checkoutUrl))
+            return new CoursePaymentResponseDto
             {
-                return new CoursePaymentResponseDto
-                {
-                    Success = true,
-                    CheckoutUrl = checkoutUrl.GetString(),
-                    OrderCode = orderCode.ToString(),
-                    Message = "Tạo thanh toán thành công"
-                };
-            }
-
-            // No checkout URL
-            _context.Transactions.Remove(transaction);
-            await _context.SaveChangesAsync();
-
-            return ErrorResponse($"Không thể lấy link thanh toán. Response: {responseText}");
+                Success = true,
+                CheckoutUrl = payosResponse.CheckoutUrl ?? "",
+                OrderCode = orderCode.ToString(),
+                Message = "Tạo thanh toán thành công"
+            };
         }
 
         private async Task CreateTransactionDetailAsync(Guid transactionId, Guid courseId, decimal price)
@@ -670,21 +741,48 @@ namespace SkillUp.Services.Common
                 var existing = await _context.TransactionDetails
                     .FirstOrDefaultAsync(td => td.TransactionId == transactionId && td.CourseId == courseId);
 
+                // Lấy Course với Lecturer để lấy Percentage
+                var course = await _context.Courses
+                    .Include(c => c.Lecturer)
+                    .FirstOrDefaultAsync(c => c.Id == courseId);
+
+                if (course == null)
+                {
+                    return;
+                }
+
+                var percentage = course.Lecturer?.Percentage ?? 0;
+
+                var lecturerIncome = percentage > 0 
+                    ? (decimal?)(price * (decimal)percentage / 100) 
+                    : 0;
+
                 if (existing == null)
                 {
+                    // Tạo mới TransactionDetail
                     _context.TransactionDetails.Add(new TransactionDetail
                     {
                         Id = Guid.NewGuid(),
                         TransactionId = transactionId,
                         CourseId = courseId,
-                        Price = price
+                        Price = price,
+                        Percentage = percentage > 0 ? percentage : 0,
+                        LecturerIncome = lecturerIncome
                     });
-                    await _context.SaveChangesAsync();
                 }
+                else
+                {
+                    // Update TransactionDetail nếu đã tồn tại (trường hợp có discount)
+                    existing.Price = price;
+                    existing.Percentage = percentage > 0 ? percentage : 0;
+                    existing.LecturerIncome = lecturerIncome;
+                }
+
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR creating TransactionDetail: {ex.Message}");
+                LogError("CreateTransactionDetailAsync", ex);
             }
         }
 
@@ -694,7 +792,10 @@ namespace SkillUp.Services.Common
                 .FirstOrDefaultAsync(e => e.StudentId == studentId && e.CourseId == courseId);
 
             var course = await _context.Courses.FindAsync(courseId);
-            if (course == null) return;
+            if (course == null)
+            {
+                return;
+            }
 
             if (existingEnrollment == null)
             {
@@ -708,7 +809,6 @@ namespace SkillUp.Services.Common
                 course.EnrollmentCount++;
             }
 
-            // Use final price (after discount) if provided, otherwise use course price
             var priceToUse = finalPrice ?? course.Price;
             await CreateTransactionDetailAsync(transactionId, courseId, priceToUse);
         }
@@ -721,50 +821,29 @@ namespace SkillUp.Services.Common
 
         private async Task<bool> VerifyPaymentWithPayOSAsync(string orderCode)
         {
-            var response = await _httpClient.GetAsync($"https://api-merchant.payos.vn/v2/payment-requests/{orderCode}");
+            var response = await _httpClient.GetAsync($"{PAYOS_API_BASE_URL}/{orderCode}");
             var responseText = await response.Content.ReadAsStringAsync();
             var payosResponse = JsonSerializer.Deserialize<JsonElement>(responseText);
 
             return payosResponse.TryGetProperty("data", out var data) &&
                    data.TryGetProperty("status", out var status) &&
-                   status.GetString() == "PAID";
+                   status.GetString() == PAYOS_STATUS_PAID;
         }
 
-        private Guid? ExtractCourseIdFromDescription(string? description)
+        private async Task<Guid?> GetCourseIdFromTransactionAsync(Guid transactionId)
         {
-            if (string.IsNullOrEmpty(description)) return null;
+            var transactionDetail = await _context.TransactionDetails
+                .FirstOrDefaultAsync(td => td.TransactionId == transactionId);
 
-            var descParts = description.Split('|');
-            var courseIdPart = descParts.FirstOrDefault(p => p.StartsWith("CourseId:"));
-
-            if (courseIdPart != null && Guid.TryParse(courseIdPart.Replace("CourseId:", ""), out var courseId))
-                return courseId;
-
-            return null;
+            return transactionDetail?.CourseId;
         }
 
-        private List<Guid> ExtractCourseIdsFromDescription(string? description)
+        private async Task<List<Guid>> GetCourseIdsFromTransactionAsync(Guid transactionId)
         {
-            var courseIds = new List<Guid>();
-            if (string.IsNullOrEmpty(description)) return courseIds;
-
-            var descParts = description.Split('|');
-            var courseIdsPart = descParts.FirstOrDefault(p => p.StartsWith("CourseIds:"));
-
-            if (courseIdsPart != null)
-            {
-                var idsString = courseIdsPart.Replace("CourseIds:", "");
-                var ids = idsString.Split(',');
-                foreach (var id in ids)
-                {
-                    if (Guid.TryParse(id.Trim(), out var courseId))
-                    {
-                        courseIds.Add(courseId);
-                    }
-                }
-            }
-
-            return courseIds;
+            return await _context.TransactionDetails
+                .Where(td => td.TransactionId == transactionId)
+                .Select(td => td.CourseId)
+                .ToListAsync();
         }
 
         private CartPaymentResponseDto CartErrorResponse(string message)
@@ -804,10 +883,16 @@ namespace SkillUp.Services.Common
             try
             {
                 var account = await _context.Accounts.FindAsync(student.AccountId);
-                if (account == null || string.IsNullOrEmpty(account.Email)) return;
+                if (account == null || string.IsNullOrEmpty(account.Email))
+                {
+                    return;
+                }
 
                 var course = await _context.Courses.FindAsync(courseId);
-                if (course == null) return;
+                if (course == null)
+                {
+                    return;
+                }
 
                 var courses = new List<(string CourseName, Guid CourseId, decimal Price, string ImageUrl)>
                 {
@@ -819,12 +904,12 @@ namespace SkillUp.Services.Common
                     account.Fullname ?? "Học viên",
                     courses,
                     transaction.Amount,
-                    transaction.PaymentMethod ?? "PayOS"
+                    transaction.PaymentMethod ?? PAYMENT_METHOD_PAYOS
                 );
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR sending purchase email: {ex.Message}");
+                LogError("SendPurchaseEmailAsync", ex);
                 // Không throw exception để không ảnh hưởng đến quá trình thanh toán
             }
         }
@@ -834,13 +919,19 @@ namespace SkillUp.Services.Common
             try
             {
                 var account = await _context.Accounts.FindAsync(student.AccountId);
-                if (account == null || string.IsNullOrEmpty(account.Email)) return;
+                if (account == null || string.IsNullOrEmpty(account.Email))
+                {
+                    return;
+                }
 
                 var courses = await _context.Courses
                     .Where(c => courseIds.Contains(c.Id))
                     .ToListAsync();
 
-                if (!courses.Any()) return;
+                if (!courses.Any())
+                {
+                    return;
+                }
 
                 var courseList = courses.Select(c =>
                 {
@@ -857,15 +948,17 @@ namespace SkillUp.Services.Common
                     account.Fullname ?? "Học viên",
                     courseList,
                     totalAmount,
-                    transaction.PaymentMethod ?? "PayOS"
+                    transaction.PaymentMethod ?? PAYMENT_METHOD_PAYOS
                 );
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[PayOS] ERROR sending cart purchase email: {ex.Message}");
+                LogError("SendCartPurchaseEmailAsync", ex);
                 // Không throw exception để không ảnh hưởng đến quá trình thanh toán
             }
         }
+
+        #endregion
 
         #endregion
     }
