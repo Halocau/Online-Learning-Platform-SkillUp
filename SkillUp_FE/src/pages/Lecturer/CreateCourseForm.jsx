@@ -100,7 +100,7 @@ function CreateCourseForm({ isOpen, onClose, onSuccess }) {
       const response = await courseAPI.createDraftCourse(form);
 
       if (response.data.code === 200) {
-        toast.success("Khóa học đã được tạo thành công ✅");
+        toast.success("Khóa học đã được tạo thành công");
 
         // Reset form
         setFormData({
