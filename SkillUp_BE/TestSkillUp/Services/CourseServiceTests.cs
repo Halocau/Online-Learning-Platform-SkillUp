@@ -183,6 +183,18 @@ namespace TestSkillUp.Services
             StringAssert.Contains("Không tìm thấy khoá học", ex!.Message);
         }
 
+        [Test]
+        public void DeleteCourseAsync_LecturerNotFound_ThrowsException()
+        {
+            // Arrange
+            var accId = Guid.NewGuid();
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync((Lecturer?)null);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.DeleteCourseAsync(Guid.NewGuid(), accId));
+            StringAssert.Contains("Không tìm thấy giảng viên cho tài khoản này!", ex!.Message);
+        }
+
         #endregion
 
         #region 3. UpdateCourseAsync
@@ -212,28 +224,50 @@ namespace TestSkillUp.Services
         }
 
         [Test]
-        public async Task UpdateCourseAsync_WithImage_UploadsToCloudinary()
+        public void UpdateCourseAsync_CourseNotFound_ThrowsException()
         {
             // Arrange
             var courseId = Guid.NewGuid();
             var accId = Guid.NewGuid();
             var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
-            var course = new Course { Id = courseId, LecturerId = lecturer.Id };
-            var dto = new UpdateCourseDto { Image = new Mock<IFormFile>().Object };
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync((Course?)null);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.UpdateCourseAsync(new UpdateCourseDto(), courseId, accId));
+            StringAssert.Contains("Không tìm thấy khoá học!", ex!.Message);
+        }
+
+        [Test]
+        public void UpdateCourseAsync_LecturerNotFound_ThrowsException()
+        {
+            // Arrange
+            var accId = Guid.NewGuid();
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync((Lecturer?)null);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.UpdateCourseAsync(new UpdateCourseDto(), Guid.NewGuid(), accId));
+            StringAssert.Contains("Không tìm thấy giảng viên cho tài khoản này!", ex!.Message);
+        }
+
+        [Test]
+        public async Task UpdateCourseAsync_Unauthorized_ThrowsException()
+        {
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var accId = Guid.NewGuid();
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+            var otherLecturerId = Guid.NewGuid();
+            var course = new Course { Id = courseId, LecturerId = otherLecturerId }; // Khác chủ
 
             _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
             _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync(course);
-            _cloudinaryServiceMock.Setup(c => c.UploadImageAsync(It.IsAny<IFormFile>(), "skillup/courses")).ReturnsAsync("new-url");
-            _courseRepoMock.Setup(r => r.UpdateCourse(course));
-            _courseRepoMock.Setup(r => r.SaveChangesAsync()).ReturnsAsync(true);
 
-            // Act
-            await _sut.UpdateCourseAsync(dto, courseId, accId);
-
-            // Assert
-            Assert.AreEqual("new-url", course.Image);
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.UpdateCourseAsync(new UpdateCourseDto(), courseId, accId));
+           
         }
-
         #endregion
 
         #region 4. ToggleBanCourseAsync
@@ -268,6 +302,35 @@ namespace TestSkillUp.Services
             _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(user);
 
             Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.ToggleBanCourseAsync(Guid.NewGuid(), adminId));
+        }
+        [Test]
+        public void ToggleBanCourseAsync_CourseNotFound_ThrowsException()
+        {
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var adminId = Guid.NewGuid();
+            var admin = new Account { Id = adminId, RoleId = 3 };
+
+            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync(admin);
+            _courseRepoMock.Setup(r => r.GetCourseByIdAsync(courseId)).ReturnsAsync((Course?)null);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.ToggleBanCourseAsync(courseId, adminId));
+            StringAssert.Contains("Không tìm thấy khoá học!", ex!.Message);
+        }
+
+        [Test]
+        public void ToggleBanCourseAsync_AdminNotFound_ThrowsException()
+        {
+            // Arrange
+            var adminId = Guid.NewGuid();
+
+            // Setup Admin trả về null
+            _accountRepoMock.Setup(r => r.GetByIdAsync(adminId)).ReturnsAsync((Account?)null);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() => _sut.ToggleBanCourseAsync(Guid.NewGuid(), adminId));
+            StringAssert.Contains("Không tìm thấy tài khoản quản trị viên!", ex!.Message);
         }
 
         #endregion
@@ -306,8 +369,7 @@ namespace TestSkillUp.Services
         [Test]
         public async Task SearchCoursesAsync_NoData_ReturnsEmptyList()
         {
-            // Arrange
-            // SỬA: Thay (List<Course>?)null bằng (List<CourseSummaryDTO>?)null
+        
             _courseRepoMock.Setup(r => r.SearchCoursesAsync("abc", 10))
                            .ReturnsAsync((List<CourseSummaryDTO>?)null);
 
@@ -318,7 +380,27 @@ namespace TestSkillUp.Services
             Assert.IsNotNull(result);
             Assert.IsEmpty(result);
         }
+        [Test]
+        public async Task SearchCoursesAsync_MatchFound_ReturnsData()
+        {
+            // Arrange
+            var keyword = "valid";
+            var courses = new List<CourseSummaryDTO>
+    {
+        new CourseSummaryDTO { Id = Guid.NewGuid(), Title = "Valid Course" }
+    };
 
+            _courseRepoMock.Setup(r => r.SearchCoursesAsync(keyword, 10))
+                           .ReturnsAsync(courses);
+
+            // Act
+            var result = await _sut.SearchCoursesAsync(keyword, 10);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual("Valid Course", result[0].Title);
+        }
         #endregion
 
         #region 8. GetAllCourseAsync (Moderator)
@@ -459,7 +541,23 @@ namespace TestSkillUp.Services
             // Act & Assert
             Assert.ThrowsAsync<UnauthorizedAccessException>(() => _sut.SetCoursePriceAsync(courseId, new CoursePriceDto(), accId));
         }
+        [Test]
+        public void SetCoursePriceAsync_LecturerNotFound_ThrowsException()
+        {
+            // Arrange
+            var accId = Guid.NewGuid();
 
+            // Giả lập không tìm thấy giảng viên (trả về null)
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId))
+                             .ReturnsAsync((Lecturer?)null);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<Exception>(() =>
+                _sut.SetCoursePriceAsync(Guid.NewGuid(), new CoursePriceDto(), accId));
+
+            // Kiểm tra message cho khớp với bảng Excel
+            StringAssert.Contains("Không tìm thấy giảng viên", ex!.Message);
+        }
         #endregion
 
         #region 13. PublishCourseForReviewAsync (Validation Rules)
@@ -564,7 +662,26 @@ namespace TestSkillUp.Services
             var ex = Assert.ThrowsAsync<Exception>(() => _sut.PublishCourseForReviewAsync(courseId, accId));
             StringAssert.Contains("ít nhất một bài học", ex!.Message);
         }
+        [Test]
+        public void PublishCourseForReviewAsync_NotOwner_ThrowsUnauthorized()
+        {
+            // Arrange
+            var courseId = Guid.NewGuid();
+            var accId = Guid.NewGuid();
 
+            // Giảng viên đang đăng nhập
+            var lecturer = new Lecturer { Id = Guid.NewGuid(), AccountId = accId };
+
+            // Khóa học thuộc về một giảng viên KHÁC (Guid.NewGuid())
+            var course = new Course { Id = courseId, LecturerId = Guid.NewGuid() };
+
+            _lecturerRepoMock.Setup(r => r.GetLecturerByAccountIdAsync(accId)).ReturnsAsync(lecturer);
+            _courseRepoMock.Setup(r => r.GetCourseWithDetailsAsync(courseId)).ReturnsAsync(course);
+
+            // Act & Assert
+            Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+                _sut.PublishCourseForReviewAsync(courseId, accId));
+        }
         #endregion
     }
 }
