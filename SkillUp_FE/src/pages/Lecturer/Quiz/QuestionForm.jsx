@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { uploadQuestionImage } from "@/api/questionAPI";
 import RichTextEditor from "@/components/Editor/RichText";
 import { extractCleanText } from "@/utils/htmlUtils";
+import { toast } from "react-toastify";
 
 function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
   const titleEditorRef = useRef(null);
@@ -251,29 +252,29 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
       : questionData.title;
 
     if (!editorContent.trim() && !questionData.title.trim()) {
-      alert("Vui lòng nhập câu hỏi");
+      toast.warning("Vui lòng nhập câu hỏi");
       return;
     }
 
     // Validate title character limit
     if (isTitleOverLimit) {
-      alert("Câu hỏi vượt quá giới hạn 255 ký tự");
+      toast.warning("Câu hỏi vượt quá giới hạn 255 ký tự");
       return;
     }
 
     // Validate answer character limits
     if (isAnyAnswerOverLimit) {
-      alert("Một hoặc nhiều câu trả lời vượt quá giới hạn 255 ký tự");
+      toast.warning("Một hoặc nhiều câu trả lời vượt quá giới hạn 255 ký tự");
       return;
     }
 
     if (questionData.answers.some((a) => !a.answerName.trim())) {
-      alert("Vui lòng điền đầy đủ các đáp án");
+      toast.warning("Vui lòng điền đầy đủ các đáp án");
       return;
     }
 
     if (!questionData.answers.some((a) => a.isCorrect)) {
-      alert("Vui lòng chọn ít nhất một đáp án đúng");
+      toast.warning("Vui lòng chọn ít nhất một đáp án đúng");
       return;
     }
 
@@ -281,7 +282,7 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
       (a) => a.isCorrect
     ).length;
     if (questionData.type === "SingleChoice" && correctAnswersCount > 1) {
-      alert("Câu hỏi một đáp án chỉ được chọn 1 đáp án đúng");
+      toast.warning("Câu hỏi một đáp án chỉ được chọn 1 đáp án đúng");
       return;
     }
 

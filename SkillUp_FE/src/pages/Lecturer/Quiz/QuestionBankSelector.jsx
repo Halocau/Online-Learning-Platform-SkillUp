@@ -1,6 +1,4 @@
 // src/pages/Lecturer/components/QuestionBankSelector.jsx
-// DRAWER VERSION - Opens from LEFT with improved quick tools
-
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/config/api";
 import {
