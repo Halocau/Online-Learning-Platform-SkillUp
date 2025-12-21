@@ -14,18 +14,29 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import VideoPreviewModal from "./VideoPreviewModal";
+import TextPreviewModal from "./TextPreviewModal";
 
 export default function CourseCurriculumSection({ sections }) {
   const [previewLesson, setPreviewLesson] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isTextPreviewOpen, setIsTextPreviewOpen] = useState(false);
 
   const handlePreview = (lesson) => {
     setPreviewLesson(lesson);
-    setIsPreviewOpen(true);
+    if (lesson.lessonType === "Video") {
+      setIsPreviewOpen(true);
+    } else if (lesson.lessonType === "Text") {
+      setIsTextPreviewOpen(true);
+    }
   };
 
   const handleClosePreview = () => {
     setIsPreviewOpen(false);
+    setTimeout(() => setPreviewLesson(null), 300);
+  };
+
+  const handleCloseTextPreview = () => {
+    setIsTextPreviewOpen(false);
     setTimeout(() => setPreviewLesson(null), 300);
   };
 
@@ -93,6 +104,13 @@ export default function CourseCurriculumSection({ sections }) {
       <VideoPreviewModal
         isOpen={isPreviewOpen}
         onClose={handleClosePreview}
+        lesson={previewLesson}
+        sections={sections}
+      />
+
+      <TextPreviewModal
+        isOpen={isTextPreviewOpen}
+        onClose={handleCloseTextPreview}
         lesson={previewLesson}
         sections={sections}
       />
@@ -172,9 +190,9 @@ function SectionAccordion({ section, index, onPreview }) {
 
 function LessonItem({ lesson, onPreview }) {
   const isVideo = lesson.lessonType === "Video";
+  const isText = lesson.lessonType === "Text";
   const isFree = lesson.isFree;
-  const canPreview = isFree && isVideo;
-
+  const canPreview = isFree && (isVideo || isText);
 
   return (
     <li className="flex items-center justify-between gap-2 py-2 hover:text-[#272343] transition-colors">
@@ -232,31 +250,6 @@ function QuizItem({ quiz }) {
       </div>
 
       <div className="flex items-center gap-3 flex-shrink-0">
-        {/* Timer */}
-        {quiz.timer && (
-          <div className="flex items-center gap-1 text-xs text-[#6b7280]">
-            <Clock className="w-3 h-3" />
-            <span>{quiz.timer} phút</span>
-          </div>
-        )}
-
-        {/* Pass Percent */}
-        {quiz.passPercent && (
-          <div className="flex items-center gap-1 text-xs text-[#6b7280]">
-            <Target className="w-3 h-3" />
-            <span>{quiz.passPercent}%</span>
-          </div>
-        )}
-
-        {/* Quiz Action Button */}
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-auto py-1 px-2 text-xs border-[#3b82f6] text-[#3b82f6] hover:bg-[#3b82f6] hover:text-white rounded-md font-medium"
-        >
-          Kiểm tra
-        </Button>
-
         {/* Lock Icon */}
         <Lock className="w-3 h-3 text-[#9ca3af]" />
       </div>
