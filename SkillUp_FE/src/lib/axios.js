@@ -138,6 +138,14 @@ const handleLogout = () => {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
+  localStorage.removeItem('userId');
+  
+  // Clear guest cart khi logout
+  try {
+    localStorage.removeItem('skillup_guest_cart');
+  } catch (error) {
+    console.error('Error clearing guest cart:', error);
+  }
 
   // Redirect về trang login
   window.location.href = '/login';

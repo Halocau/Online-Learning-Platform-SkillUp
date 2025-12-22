@@ -16,7 +16,7 @@ function Header() {
     return cachedUser ? JSON.parse(cachedUser) : null;
   });
   const navigate = useNavigate();
-  const { cartCount } = useCart();
+  const { cartCount, fetchCartCount } = useCart();
   const accessToken = localStorage.getItem("accessToken");
   const isAuthenticated = !!accessToken;
 
@@ -79,6 +79,8 @@ function Header() {
       clearGuestCart();
       setUser(null);
       setShowDropdown(false);
+      // Reset cart count về 0
+      await fetchCartCount();
       toast.success("Đăng xuất thành công!");
       navigate("/");
     }
