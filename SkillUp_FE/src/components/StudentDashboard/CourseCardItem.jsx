@@ -11,19 +11,19 @@ const CourseCardItem = memo(({ course, index }) => {
     const handleLearnClick = useCallback(async (e) => {
         e.preventDefault();
         setLoading(true);
-        
+
         try {
             // Gọi API lấy vị trí học tiếp
             const response = await courseAPI.getResumeItem(course.id);
-            
+
             if (response.data?.code === 200 && response.data?.data?.[0]) {
                 const resumeData = response.data.data[0];
-                const { itemId, type } = resumeData;
-                
+                const { itemId } = resumeData;
+
                 // Lấy thông tin course detail để tìm sectionId
                 const courseDetail = await courseAPI.getCourseDetail(course.id);
                 const courseData = courseDetail.data.data[0];
-                
+
                 // Tìm section chứa item này
                 let sectionId = null;
                 for (const section of courseData.sections) {
@@ -33,7 +33,7 @@ const CourseCardItem = memo(({ course, index }) => {
                         break;
                     }
                 }
-                
+
                 if (sectionId) {
                     navigate(`/student/learn/${course.id}/section/${sectionId}/lesson/${itemId}`);
                 } else {
@@ -93,12 +93,7 @@ const CourseCardItem = memo(({ course, index }) => {
                         </div>
                     )}
                     <div className="flex items-center justify-between text-xs mt-auto">
-                        <span className="text-gray-500">
-                            {course.completedItems !== undefined && course.totalItems !== undefined 
-                                ? `${course.completedItems}/${course.totalItems} bài học`
-                                : `${course.enrollmentCount || 0} học viên`
-                            }
-                        </span>
+                        <span className="text-gray-500">&nbsp;</span>
                         <Button
                             variant="ghost"
                             size="sm"

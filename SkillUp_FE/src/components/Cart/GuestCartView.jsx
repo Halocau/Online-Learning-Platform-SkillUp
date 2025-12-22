@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getGuestCart, removeFromGuestCart } from '@/utils/guestCart';
 import { axiosInstance } from '@/config/api';
 import { List, Button, Empty, Typography, Row, Col, Image, Space, Alert, Spin } from 'antd';
+import { useCart } from '@/context/CartContext';
 
 const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -14,6 +15,7 @@ export const GuestCartView = () => {
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(true);
     const [coursesData, setCoursesData] = useState({});
+    const { fetchCartCount } = useCart();
 
     useEffect(() => {
         loadGuestCart();
@@ -23,7 +25,7 @@ export const GuestCartView = () => {
         setLoading(true);
         const guestCart = getGuestCart();
         setCart(guestCart);
-        
+
         // Fetch thông tin chi tiết các khóa học
         const coursesInfo = {};
         for (const item of guestCart) {
@@ -40,8 +42,9 @@ export const GuestCartView = () => {
         setLoading(false);
     };
 
-    const handleRemoveItem = (courseId) => {
+    const handleRemoveItem = async (courseId) => {
         removeFromGuestCart(courseId);
+        await fetchCartCount(); // cập nhật badge/cartCount ở header
         loadGuestCart();
     };
 
@@ -75,7 +78,7 @@ export const GuestCartView = () => {
                 message="Bạn đang xem giỏ hàng với tư cách khách"
                 description={
                     <span>
-                        Vui lòng <a onClick={handleLogin} style={{ cursor: 'pointer', fontWeight: 'bold' }}>đăng nhập</a> để tiếp tục mua hàng. 
+                        Vui lòng <a onClick={handleLogin} style={{ cursor: 'pointer', fontWeight: 'bold' }}>đăng nhập</a> để tiếp tục mua hàng.
                         Các sản phẩm trong giỏ hàng sẽ được tự động chuyển sang tài khoản của bạn.
                     </span>
                 }
@@ -97,75 +100,75 @@ export const GuestCartView = () => {
                         renderItem={(item) => {
                             const courseInfo = coursesData[item.courseId];
                             return (
-                            <List.Item key={item.courseId} style={{ padding: '16px 0' }}>
-                                <Row gutter={[16, 16]} wrap={false}>
-                                    {/* Image */}
-                                    <Col flex="120px">
-                                        {courseInfo?.image ? (
-                                            <Image
-                                                src={courseInfo.image}
-                                                alt={courseInfo.title}
-                                                preview={false}
-                                                style={{
+                                <List.Item key={item.courseId} style={{ padding: '16px 0' }}>
+                                    <Row gutter={[16, 16]} wrap={false}>
+                                        {/* Image */}
+                                        <Col flex="120px">
+                                            {courseInfo?.image ? (
+                                                <Image
+                                                    src={courseInfo.image}
+                                                    alt={courseInfo.title}
+                                                    preview={false}
+                                                    style={{
+                                                        width: '120px',
+                                                        height: '70px',
+                                                        objectFit: 'cover',
+                                                        border: '1px solid #d9d9d9'
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div style={{
                                                     width: '120px',
                                                     height: '70px',
-                                                    objectFit: 'cover',
+                                                    backgroundColor: '#f0f0f0',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
                                                     border: '1px solid #d9d9d9'
-                                                }}
-                                            />
-                                        ) : (
-                                            <div style={{
-                                                width: '120px',
-                                                height: '70px',
-                                                backgroundColor: '#f0f0f0',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                border: '1px solid #d9d9d9'
-                                            }}>
-                                                <Typography.Text type="secondary">Khóa học</Typography.Text>
-                                            </div>
-                                        )}
-                                    </Col>
-
-                                    {/* Thông tin */}
-                                    <Col flex="auto" style={{ minWidth: '200px' }}>
-                                        <Space direction="vertical" size="small">
-                                            <Typography.Title level={5} style={{ margin: 0, fontWeight: 700 }}>
-                                                {courseInfo?.title || `Khóa học #${item.courseId}`}
-                                            </Typography.Title>
-                                            {courseInfo?.lecturerName && (
-                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                                                    Giáo viên: {courseInfo.lecturerName}
-                                                </Typography.Text>
+                                                }}>
+                                                    <Typography.Text type="secondary">Khóa học</Typography.Text>
+                                                </div>
                                             )}
-                                            <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-                                                Thêm vào: {new Date(item.addedAt).toLocaleDateString('vi-VN')}
-                                            </Typography.Text>
-                                        </Space>
-                                    </Col>
+                                        </Col>
 
-                                    {/* Nút xóa */}
-                                    <Col flex="150px" style={{ textAlign: 'right' }}>
-                                        <Button
-                                            type="link"
-                                            danger
-                                            onClick={() => handleRemoveItem(item.courseId)}
-                                            style={{ padding: '4px 0', height: 'auto' }}
-                                        >
-                                            Xóa
-                                        </Button>
-                                    </Col>
+                                        {/* Thông tin */}
+                                        <Col flex="auto" style={{ minWidth: '200px' }}>
+                                            <Space direction="vertical" size="small">
+                                                <Typography.Title level={5} style={{ margin: 0, fontWeight: 700 }}>
+                                                    {courseInfo?.title || `Khóa học #${item.courseId}`}
+                                                </Typography.Title>
+                                                {courseInfo?.lecturerName && (
+                                                    <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                                                        Giáo viên: {courseInfo.lecturerName}
+                                                    </Typography.Text>
+                                                )}
+                                                <Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+                                                    Thêm vào: {new Date(item.addedAt).toLocaleDateString('vi-VN')}
+                                                </Typography.Text>
+                                            </Space>
+                                        </Col>
 
-                                    {/* Giá */}
-                                    <Col flex="120px" style={{ textAlign: 'right' }}>
-                                        <Typography.Title level={4} style={{ margin: 0, color: '#FCCD04', whiteSpace: 'nowrap' }}>
-                                            {formatPrice(item.price)}
-                                        </Typography.Title>
-                                    </Col>
-                                </Row>
-                            </List.Item>
-                        );
+                                        {/* Nút xóa */}
+                                        <Col flex="150px" style={{ textAlign: 'right' }}>
+                                            <Button
+                                                type="link"
+                                                danger
+                                                onClick={() => handleRemoveItem(item.courseId)}
+                                                style={{ padding: '4px 0', height: 'auto' }}
+                                            >
+                                                Xóa
+                                            </Button>
+                                        </Col>
+
+                                        {/* Giá */}
+                                        <Col flex="120px" style={{ textAlign: 'right' }}>
+                                            <Typography.Title level={4} style={{ margin: 0, color: '#FCCD04', whiteSpace: 'nowrap' }}>
+                                                {formatPrice(item.price)}
+                                            </Typography.Title>
+                                        </Col>
+                                    </Row>
+                                </List.Item>
+                            );
                         }}
                     />
                 </Col>

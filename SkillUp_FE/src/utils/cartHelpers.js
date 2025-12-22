@@ -83,8 +83,6 @@ const checkEnrollment = async (courseId) => {
  */
 export const addToCartUnified = async (courseId, price, user = null) => {
     try {
-        console.log('🔧 addToCartUnified called with:', { courseId, price, user }); // DEBUG
-
         if (!user || !user.userId) {
             // Guest user - add to localStorage
             addToGuestCart(courseId, price); // Luôn return true (check trùng ở bên trong)
