@@ -78,18 +78,16 @@ export default function CourseDetail() {
 
         if (response.data?.code === 200) {
           const enrolledCourses = response.data?.data?.[0] || [];
-          const targetId = courseId.toString().toLowerCase();
-
-          const alreadyEnrolled = enrolledCourses.some((enrollment) => {
-            const candidateId =
+          const enrolled = enrolledCourses.some((enrollment) => {
+            const enrolledId =
               enrollment.courseId || enrollment.id || enrollment.course?.id;
 
             return (
-              candidateId && candidateId.toString().toLowerCase() === targetId
+              enrolledId && enrolledId.toString().toLowerCase() === courseId.toString().toLowerCase()
             );
           });
 
-          setIsEnrolled(alreadyEnrolled);
+          setIsEnrolled(enrolled);
         } else {
           setIsEnrolled(false);
         }
@@ -244,7 +242,7 @@ export default function CourseDetail() {
             />
           </div>
 
-          <div className="hidden lg:block">
+          <div className="hidden lg:block sticky top-6 self-start">
             <CourseEnrollmentCard
               course={course}
               isEnrolled={isEnrolled}

@@ -1,5 +1,5 @@
 // src/components/course-detail/CourseEnrollmentCard.jsx
-import { ShoppingCart, Play, Percent, Coins } from "lucide-react";
+import { ShoppingCart, Play, Percent, Coins, Bot } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -58,12 +58,11 @@ export default function CourseEnrollmentCard({ course, isEnrolled, checkingEnrol
     }
   };
 
-  const originalPrice = course.price > 0 ? Math.round(course.price * 1.5) : 0;
-  const discount = course.price > 0 ? Math.round(((originalPrice - course.price) / originalPrice) * 100) : 0;
+  
   const showLearnNow = isEnrolled && !checkingEnrollment;
 
   return (
-    <div className="sticky top-6 w-full lg:max-w-sm">
+    <div className="sticky top-24 w-full lg:max-w-sm z-10">
       <div className="rounded-2xl border border-[#272343]/15 bg-[#fffffe]/90 shadow-sm backdrop-blur overflow-hidden">
         {/* Video preview placeholder */}
         <div className="relative overflow-hidden rounded-t-2xl bg-gradient-to-tr from-[#FFD54F] via-[#ffecb3] to-[#e3f6f5]">
@@ -86,14 +85,15 @@ export default function CourseEnrollmentCard({ course, isEnrolled, checkingEnrol
               <div className="text-xl font-semibold tracking-tight text-[#272343]">
                 {course.price === 0 ? "Miễn phí" : `${course.price.toLocaleString()}đ`}
               </div>
-              {course.price > 0 && originalPrice > course.price && (
-                <div className="text-xs text-[#6b7280] line-through">
-                  {originalPrice.toLocaleString()}đ
-                </div>
-              )}
             </div>
           </div>
 
+          {course.isAiSupport && (
+            <div className="flex items-center gap-2 text-sm text-[#272343] bg-blue-50 p-2 rounded-md">
+              <Bot className="w-4 h-4 text-blue-500" />
+              <span className="font-medium">Hỗ trợ AI: Phụ đề tự động & Chatbot hỗ trợ học tập</span>
+            </div>
+          )}
 
           <button
             onClick={showLearnNow ? handleLearnNow : handleBuyNow}

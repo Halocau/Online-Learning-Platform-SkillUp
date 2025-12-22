@@ -131,7 +131,7 @@ function NotificationBell() {
       });
 
       if (!showDropdownRef.current) {
-        toast.info(normalized.title || "Bạn có thông báo mới");
+        toast.success(normalized.title || "Bạn có thông báo mới");
       }
     },
     [fetchNotifications]

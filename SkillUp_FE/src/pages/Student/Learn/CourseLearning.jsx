@@ -239,7 +239,7 @@ const CourseLearning = () => {
     [courseData]
   );
 
-  // NEW: Function to check course completion after data refresh
+  // Function to check course completion after data refresh
   const checkCourseCompletionAfterRefresh = useCallback(
     (refreshedCourseData) => {
       if (!refreshedCourseData || hasShownCompletionModal) return;

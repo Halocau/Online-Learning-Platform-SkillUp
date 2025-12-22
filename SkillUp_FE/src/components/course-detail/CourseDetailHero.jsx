@@ -1,7 +1,8 @@
 // src/components/course-detail/CourseDetailHero.jsx
-import { Users, Globe, BookOpen, Calendar } from "lucide-react";
+import { Users, Globe, BookOpen, Calendar, Bot } from "lucide-react";
 import StarRating from "@/components/ui/StarRating";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 export default function CourseDetailHero({ course }) {
   return (
@@ -23,6 +24,13 @@ export default function CourseDetailHero({ course }) {
               {course.description ||
                 "Làm chủ kiến thức, tối ưu trải nghiệm người dùng và sẵn sàng đi làm."}
             </p>
+
+            {course.isAiSupport && (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 font-medium px-3 py-1.5 text-sm flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                Hỗ trợ AI: Phụ đề tự động & Chatbot hỗ trợ học tập
+              </Badge>
+            )}
 
             <div className="flex flex-wrap items-center gap-4 text-sm text-[#2d334a]">
               <div className="flex items-center gap-2">

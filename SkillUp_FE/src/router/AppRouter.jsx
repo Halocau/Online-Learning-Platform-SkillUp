@@ -80,9 +80,9 @@ function AppRouter() {
           <Route
             path="cart"
             element={
-              <ProtectedRoute allowedRoles={["Student"]}>
+              
                 <MyCart />
-              </ProtectedRoute>
+             
             }
           />
           <Route
