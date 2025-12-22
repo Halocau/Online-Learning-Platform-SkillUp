@@ -217,17 +217,7 @@ function MyApplications() {
                       </div>
                     )}
 
-                    {app.rejectionReason && (
-                      <div className="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                        <p className="text-sm font-semibold text-red-900 mb-2">
-                          Lý do từ chối:
-                        </p>
-                        <p className="text-sm text-red-800">
-                          {app.rejectionReason}
-                        </p>
-                      </div>
-                    )}
-
+              
                     <div className="flex gap-3 pt-6 border-t">
                       {app.cvUrl && (
                         <Button
