@@ -150,6 +150,29 @@ const LessonContent = ({
           </div>
         )}
 
+        {/* Mark Complete Button - Moved above navigation for consistency */}
+        {item.kind === "Lesson" && !isCompleted && (
+          <div className="mt-8 flex algin-left">
+            <button
+              onClick={handleMarkComplete}
+              disabled={marking}
+              className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-md hover:shadow-lg"
+            >
+              {marking ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <Check className="w-5 h-5" />
+                  Đánh dấu hoàn thành
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
           <button
@@ -160,38 +183,13 @@ const LessonContent = ({
             <ChevronLeft className="w-5 h-5" /> Bài trước
           </button>
 
-          <div className="flex items-center gap-3">
-            {/* Mark Complete Button */}
-            {item.kind === "Lesson" &&
-              item.lessonType === "Video" &&
-              !isCompleted && (
-                <button
-                  onClick={handleMarkComplete}
-                  disabled={marking}
-                  className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled: cursor-not-allowed shadow-md hover:shadow-lg"
-                >
-                  {marking ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Đang xử lý...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-5 h-5" />
-                      Đánh dấu hoàn thành
-                    </>
-                  )}
-                </button>
-              )}
-
-            <button
-              onClick={onNext}
-              disabled={!hasNext}
-              className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-            >
-              Tiếp theo <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={onNext}
+            disabled={!hasNext}
+            className="flex items-center gap-2 px-6 py-3 bg-[#FFD54F] hover:bg-[#FFC107] text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+          >
+            Tiếp theo <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
 
         {showLessonChat && (
