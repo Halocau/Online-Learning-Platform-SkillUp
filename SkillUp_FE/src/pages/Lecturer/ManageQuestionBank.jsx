@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Table, Button, Space, Tag, Input, Segmented, Tooltip, Select } from 'antd';
+import { Table, Button, Space, Tag, Input, Segmented, Tooltip, Select, Popconfirm } from 'antd';
 import { ReloadOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { axiosInstance, API_ENDPOINTS, API_BASE_URL } from '@/config/api';
@@ -213,9 +213,6 @@ export default function ManageQuestionBank() {
     };
 
     const handleDelete = async (questionId) => {
-        const confirmDelete = window.confirm("Bạn có chắc chắn muốn xoá câu hỏi này?");
-        if (!confirmDelete) return;  // User cancelled
-
         try {
             const url = API_ENDPOINTS.QUESTION_BANK_DELETE.replace('{questionBankId}', questionId);
             const response = await axiosInstance.delete(url, {
@@ -354,12 +351,20 @@ export default function ManageQuestionBank() {
                         />
                     </Tooltip>
                     <Tooltip title="Xoá">
-                        <Button
-                            size="small"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => { handleDelete(record.id); }}
-                        />
+                        <Popconfirm
+                            title="Xác nhận xóa"
+                            description="Bạn có chắc chắn muốn xoá câu hỏi này?"
+                            onConfirm={() => handleDelete(record.id)}
+                            okText="Xóa"
+                            cancelText="Hủy"
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Button
+                                size="small"
+                                danger
+                                icon={<DeleteOutlined />}
+                            />
+                        </Popconfirm>
                     </Tooltip>
                 </Space>
             ),
