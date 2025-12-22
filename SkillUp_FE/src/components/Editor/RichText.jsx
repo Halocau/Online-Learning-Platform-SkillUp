@@ -30,6 +30,7 @@ import {
 
 import "ckeditor5/ckeditor5.css";
 import "./RichTextEditor.css";
+import { extractCleanText } from "@/utils/htmlUtils";
 
 function RichTextEditor({
   value = "",
@@ -40,10 +41,13 @@ function RichTextEditor({
   maxHeight = 600,
   disabled = false,
   className = "",
+  maxChars,
 }) {
   const editorRef = useRef(null);
+  const previousDataRef = useRef(value);
 
   useEffect(() => {
+    previousDataRef.current = value;
     if (editorRef.current && value !== editorRef.current.getData()) {
       editorRef.current.setData(value);
     }
@@ -181,6 +185,18 @@ function RichTextEditor({
 
   const handleChange = (event, editor) => {
     const data = editor.getData();
+    if (maxChars) {
+      const cleanText = extractCleanText(data);
+      if (cleanText.length > maxChars) {
+        setTimeout(() => {
+          if (editorRef.current) {
+            editorRef.current.setData(previousDataRef.current);
+          }
+        }, 0);
+        return;
+      }
+    }
+    previousDataRef.current = data;
     if (onChange) {
       onChange(data);
     }

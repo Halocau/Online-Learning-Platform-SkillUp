@@ -62,7 +62,8 @@ namespace SkillUp.Services.Implementations
                 Id = Guid.NewGuid(),
                 AccountId = createDto.AccountId,
                 Title = createDto.Title,
-                Profession = createDto.Profession
+                Profession = createDto.Profession,
+                Percentage = 40 
             };
 
             await _lecturerRepository.AddAsync(lecturer);

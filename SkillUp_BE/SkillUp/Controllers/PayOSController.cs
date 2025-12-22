@@ -20,9 +20,6 @@ namespace SkillUp.Controllers
             _currentUserService = currentUserService;
         }
 
-        /// <summary>
-        /// Tạo thanh toán khóa học qua PayOS
-        /// </summary>
         [HttpPost("create-course-payment")]
         [Authorize]
         public async Task<IActionResult> CreateCoursePayment([FromBody] CoursePaymentRequestDto request)

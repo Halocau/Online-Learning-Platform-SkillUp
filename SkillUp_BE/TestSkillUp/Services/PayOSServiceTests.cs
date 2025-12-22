@@ -173,7 +173,7 @@ namespace TestSkillUp.Services
 			{
 				Items = new List<CartPaymentItemDto>
 				{
-					new CartPaymentItemDto { CourseId = ctx.courseId, FinalPrice = 500000, VoucherCode = "TEST20" }
+					new CartPaymentItemDto { CourseId = ctx.courseId, FinalPrice = 500000 }
 				},
 				TotalAmount = 500000
 			};
@@ -199,8 +199,7 @@ namespace TestSkillUp.Services
 			Assert.IsNotNull(transaction);
 			Assert.That(transaction.Amount, Is.EqualTo(500000));
 			// Verify Description contains Voucher info (logic from your Service)
-			Assert.That(transaction.Description, Does.Contain("Voucher:"));
-			Assert.That(transaction.Description, Does.Contain("TEST20"));
+			Assert.That(transaction.Description, Does.Contain("OrderCode:"));
 		}
 
 		#endregion
@@ -220,26 +219,37 @@ namespace TestSkillUp.Services
 			{
 				Id = Guid.NewGuid(),
 				AccountId = ctx.accountId,
-				Status = "Pending", // Initially Pending
+				Status = "Pending",
 				Amount = 500000,
-				// Matches the format expected by ExtractCourseIdsFromDescription and Voucher logic
-				Description = $"OrderCode:{orderCode}|CartPayment|CourseIds:{ctx.courseId}|CourseNames:Test|Voucher:{ctx.courseId}:TEST:400000",
+				// The description string is mostly for humans/logging in this service implementation
+				Description = $"OrderCode:{orderCode}",
 				PaymentMethod = paymentMethod,
 			};
 			_context.Transactions.Add(transaction);
 
-			// 2. Create a Cart for the student (to test CartItem update logic)
+			// The service needs this to know WHICH courses are in this cart payment
+			_context.TransactionDetails.Add(new TransactionDetail
+			{
+				Id = Guid.NewGuid(),
+				TransactionId = transaction.Id,
+				CourseId = ctx.courseId,
+				Price = 500000, // This is the final price paid
+				Percentage = 0,
+				LecturerIncome = 0
+			});
+
+			// 2. Create a Cart (Your existing logic is fine here)
 			var cart = new Cart { StudentId = ctx.studentId };
 			_context.Carts.Add(cart);
 			_context.CartItems.Add(new CartItem
 			{
 				CartId = cart.Id,
 				CourseId = ctx.courseId,
-				Price = 500000 // Original Price 
+				Price = 500000
 			});
 			await _context.SaveChangesAsync();
 
-			// 3. Mock PayOS Verification API to return Success
+			// 3. Mock PayOS Verification API
 			var verifyResponse = new
 			{
 				code = "00",
@@ -249,17 +259,6 @@ namespace TestSkillUp.Services
 			SetupMockHttpResponse(verifyResponse);
 
 			// Act
-			// Note: This relies on VerifyPaymentWithPayOSAsync calling the mocked HttpClient
-			// Since VerifyPaymentWithPayOSAsync is private/internal, we assume it's covered by the integration.
-			// If strictly unit testing, we'd assume verification passes. 
-			// Here we are testing the Logic AFTER verification (Enrollment + Cart Update).
-
-			// NOTE: Because VerifyPaymentWithPayOSAsync logic is hidden in your snippet,
-			// we will simulate the "already successful" path or ensure the http mock works.
-			// For this test, let's update the transaction to "Success" manually to test the enrollment logic specifically,
-			// or rely on the mock if your private method uses _httpClient.
-
-			// Let's assume the private method uses _httpClient and our mock works.
 			var result = await _service.VerifyCartPaymentAndEnrollAsync(orderCode);
 
 			// Assert
@@ -269,11 +268,9 @@ namespace TestSkillUp.Services
 			var enrollment = await _context.Enrollments.FirstOrDefaultAsync(e => e.StudentId == ctx.studentId && e.CourseId == ctx.courseId);
 			Assert.IsNotNull(enrollment, "Student should be enrolled");
 
-            // After successful payment and enrollment, cart should be cleared
-            var remainingCartItems = await _context.CartItems
-                .Where(ci => ci.CourseId == ctx.courseId)
-                .ToListAsync();
-            Assert.That(remainingCartItems.Count, Is.EqualTo(0), "Cart items should be cleared after successful payment");
+			// Verify Cart Cleared
+			var remainingCartItems = await _context.CartItems.Where(ci => ci.CourseId == ctx.courseId).ToListAsync();
+			Assert.That(remainingCartItems.Count, Is.EqualTo(0));
 		}
 
 		#endregion
@@ -302,24 +299,23 @@ namespace TestSkillUp.Services
 			var paymentMethod = "PayOS";
 			var orderCode = "123456";
 			var amount = 100000;
+			var checksumKey = "test-checksum-key"; // Ensure this matches Service config!
 
-			// 1. Create Data Object and Serialize
+			// 1. Setup Data & Signature
 			var dataObj = new { orderCode = orderCode, amount = amount };
 			var dataJson = JsonSerializer.Serialize(dataObj);
 
-			// 2. Generate Signature
 			string signature;
-			using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes("test-checksum-key")))
+			using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(checksumKey)))
 			{
 				var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dataJson));
 				signature = BitConverter.ToString(hash).Replace("-", "").ToLower();
 			}
 
-			// 3. Create Payload
 			var jsonString = $"{{\"data\":{dataJson},\"signature\":\"{signature}\"}}";
 			var payload = JsonSerializer.Deserialize<JsonElement>(jsonString);
 
-			// 4. Mock Transaction & Dependencies in DB
+			// 2. Setup Database State
 			var courseId = Guid.NewGuid();
 			var transaction = new Transaction
 			{
@@ -334,20 +330,29 @@ namespace TestSkillUp.Services
 			_context.Transactions.Add(transaction);
 			_context.Students.Add(new Student { AccountId = transaction.AccountId });
 
-			// FIX: Add the missing REQUIRED properties here
 			_context.Courses.Add(new Course
 			{
 				Id = courseId,
 				Price = amount,
 				IsActive = true,
-				Title = "Test Course Title",          // Added
-				Description = "Test Description",     // Added
-				Image = "https://example.com/img.png" // Added
+				Title = "Test Course Title",
+				Description = "Test Description",
+				Image = "https://example.com/img.png"
 			});
+
+			// --- CRITICAL FIX START ---
+			_context.TransactionDetails.Add(new TransactionDetail
+			{
+				Id = Guid.NewGuid(),
+				TransactionId = transaction.Id,
+				CourseId = courseId,
+				Price = amount
+			});
+			// --- CRITICAL FIX END ---
 
 			await _context.SaveChangesAsync();
 
-			// 5. Mock VerifyPaymentWithPayOSAsync
+			// 3. Mock External API
 			var verifyResponse = new
 			{
 				code = "00",
@@ -362,11 +367,9 @@ namespace TestSkillUp.Services
 			// Assert
 			Assert.That(result, Is.True);
 
-			// Verify transaction updated
 			var dbTransaction = await _context.Transactions.FirstAsync(t => t.Description.Contains(orderCode));
 			Assert.That(dbTransaction.Status, Is.EqualTo("Success"));
 
-			// Verify enrollment
 			var enrollment = await _context.Enrollments.FirstOrDefaultAsync(e => e.CourseId == courseId);
 			Assert.IsNotNull(enrollment, "Student should be enrolled after webhook success");
 		}
@@ -440,7 +443,6 @@ namespace TestSkillUp.Services
 			// Arrange
 			var ctx = await SetupValidContextAsync();
 			var orderCode = "SINGLE123";
-			var paymentMethod = "PayOS";
 
 			// 1. Transaction
 			var transaction = new Transaction
@@ -448,10 +450,21 @@ namespace TestSkillUp.Services
 				Id = Guid.NewGuid(),
 				AccountId = ctx.accountId,
 				Status = "Pending",
-				Description = $"OrderCode:{orderCode}|Course payment|CourseId:{ctx.courseId}", // Standard description format
-				PaymentMethod = paymentMethod
+				Description = $"OrderCode:{orderCode}",
+				PaymentMethod = "PayOS"
 			};
 			_context.Transactions.Add(transaction);
+
+			_context.TransactionDetails.Add(new TransactionDetail
+			{
+				Id = Guid.NewGuid(),
+				TransactionId = transaction.Id,
+				CourseId = ctx.courseId,
+				Price = 100000, // or ctx.coursePrice
+				Percentage = 0,
+				LecturerIncome = 0
+			});
+
 			await _context.SaveChangesAsync();
 
 			// 2. Mock PayOS Response

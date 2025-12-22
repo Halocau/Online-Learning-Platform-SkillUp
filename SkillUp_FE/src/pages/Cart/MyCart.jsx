@@ -5,6 +5,7 @@ import CartItem from '@/components/Cart/CartItem';
 import PriceSummary from '@/components/Cart/PriceSummary';
 import { voucherAPI } from '@/api/voucherAPI';
 import { paymentAPI } from '@/api/paymentAPI';
+import { useCart } from '@/context/CartContext';
 import {
     List,
     Spin,
@@ -45,6 +46,7 @@ function MyCart() {
     }, []);
 
     const accountId = user?.userId;
+    const { fetchCartCount } = useCart();
 
     const [cart, setCart] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -163,6 +165,21 @@ function MyCart() {
         }
     }, [accountId, fetchCart]);
 
+    // Đồng bộ lại số lượng cart trên header mỗi khi vào trang giỏ hàng
+    useEffect(() => {
+        if (!accountId) return;
+
+        const syncCartCount = async () => {
+            try {
+                await fetchCartCount();
+            } catch (error) {
+                console.error("Error syncing cart count on cart page mount:", error);
+            }
+        };
+
+        syncCartCount();
+    }, [accountId, fetchCartCount]);
+
     useEffect(() => {
         if (cart?.cartItems?.length) {
             fetchAllCourseVouchers(cart.cartItems);
@@ -185,6 +202,13 @@ function MyCart() {
                 cartItems: prevCart.cartItems.filter(item => item.id !== cartItemId),
             }));
 
+            // Cập nhật lại số lượng cart global
+            try {
+                await fetchCartCount();
+            } catch (error) {
+                console.error("Error refreshing cart count after removing item:", error);
+            }
+
             if (courseId) {
                 setCourseVouchers(prev => {
                     const newState = { ...prev };
@@ -198,7 +222,7 @@ function MyCart() {
             console.error("Lỗi khi xóa item:", err);
             message.error("Lỗi khi xóa khóa học. Vui lòng thử lại.");
         }
-    }, [cart]);
+    }, [cart, fetchCartCount]);
 
     // Calculate totals
     const totalPrice = useMemo(() => {
@@ -396,6 +420,13 @@ function MyCart() {
                     message.success(responseMessage || 'Đăng ký khóa học thành công!');
                     // Refresh cart to show empty state
                     fetchCart();
+
+                    // Đồng bộ lại số lượng cart trên header
+                    try {
+                        await fetchCartCount();
+                    } catch (error) {
+                        console.error("Error refreshing cart count after free cart checkout:", error);
+                    }
                 } else if (checkoutUrl) {
                     // Redirect to PayOS checkout
                     window.location.href = checkoutUrl;
@@ -409,7 +440,7 @@ function MyCart() {
             console.error('Error during checkout:', error);
             message.error(error.response?.data?.message || error.message || 'Không thể tạo thanh toán. Vui lòng thử lại.');
         }
-    }, [cart, finalPrice, totalDiscount, courseVouchers, fetchCart]);
+    }, [cart, finalPrice, totalDiscount, courseVouchers, fetchCart, fetchCartCount]);
 
     // Early returns
     if (!accountId) {

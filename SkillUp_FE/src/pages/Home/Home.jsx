@@ -8,6 +8,7 @@ import HeroCarousel from "./components/HeroCarousel";
 import PopularCoursesSection from "./components/PopularCoursesSection";
 import NewestCoursesSection from "./components/NewestCourse";
 import TestimonialsSection from "./components/TestimonialsSection";
+import { useCart } from "@/context/CartContext";
 
 const API_URL = `${API_BASE_URL}/HomePage/GetAllHomePage`;
 
@@ -15,6 +16,7 @@ export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { fetchCartCount } = useCart();
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -34,7 +36,18 @@ export default function Home() {
       }
     };
     fetchHomeData();
-  }, []);
+
+    // Đồng bộ lại số lượng cart trên header mỗi khi vào Home
+    const syncCartCount = async () => {
+      try {
+        await fetchCartCount();
+      } catch (err) {
+        console.error("Error syncing cart count on home mount:", err);
+      }
+    };
+
+    syncCartCount();
+  }, [fetchCartCount]);
 
   if (loading) return <HomeSkeleton />;
   if (error)

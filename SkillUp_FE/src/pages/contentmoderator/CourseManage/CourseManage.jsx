@@ -29,7 +29,7 @@ export default function CourseManagement() {
       const reportResponse = await getGroupedCourseReports();
       setReports(reportResponse.data || []);
     } catch (error) {
-      toast.error("Không thể tải dữ liệu");
+      //toast.error("Không thể tải dữ liệu");
       console.error(error);
     } finally {
       setLoading(false);

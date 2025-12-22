@@ -24,14 +24,22 @@ export default function AdminLayout() {
   };
 
   const menuItems = [
-    { label: "Bảng điều khiển", icon: <LayoutDashboard />, path: "/admin/" },
+    {
+      label: "Báo cáo tài chính",
+      icon: <BarChart3 />,
+      path: "/admin/salary-report",
+    },
     {
       label: "Quản lý quản trị viên",
       icon: <Users />,
       path: "/admin/moderators",
     },
-    { label: "Báo cáo tài chính", icon: <BarChart3 />, path: "/admin/salary-report" },
-    { label: "Thông báo hệ thống", icon: <Bell />, path: "/admin/notifications" },
+
+    {
+      label: "Thông báo hệ thống",
+      icon: <Bell />,
+      path: "/admin/notifications",
+    },
   ];
 
   return (

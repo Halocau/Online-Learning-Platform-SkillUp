@@ -468,14 +468,7 @@ function ApplyCV() {
 
                 {/* Submit Button */}
                 <div className="flex gap-4 pt-4 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate("/")}
-                    className="flex-1"
-                  >
-                    Hủy
-                  </Button>
+                 
                   <Button
                     type="submit"
                     disabled={loading}

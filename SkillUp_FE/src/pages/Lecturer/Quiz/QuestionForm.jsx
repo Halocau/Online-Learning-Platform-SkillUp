@@ -13,10 +13,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { uploadQuestionImage } from "@/api/questionAPI";
 import RichTextEditor from "@/components/Editor/RichText";
 import { extractCleanText } from "@/utils/htmlUtils";
+import { toast } from "react-toastify";
 
 function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
   const titleEditorRef = useRef(null);
   const answerEditorRefs = useRef([]);
+
+  // Helper function to get character count from HTML string
+  const getCharacterCount = (htmlString) => {
+    if (!htmlString) return 0;
+    const tempElement = document.createElement("div");
+    tempElement.innerHTML = htmlString;
+    const text = tempElement.textContent || tempElement.innerText || "";
+    return text.length;
+  };
 
   // Lazy state initialization - initialize FROM initialData on first render
   const [questionData, setQuestionData] = useState(() => {
@@ -83,6 +93,15 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
   const [uploadingAnswerImage, setUploadingAnswerImage] = useState({});
 
   const [activeAnswerEditor, setActiveAnswerEditor] = useState(null);
+
+  // Calculate character counts
+  const titleCharCount = getCharacterCount(questionData.title);
+  const isTitleOverLimit = titleCharCount > 255;
+  
+  const answerCharCounts = questionData.answers.map(ans => 
+    getCharacterCount(ans.answerName)
+  );
+  const isAnyAnswerOverLimit = answerCharCounts.some(count => count > 255);
 
   // Only use useEffect for setting editor content
   useEffect(() => {
@@ -233,17 +252,29 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
       : questionData.title;
 
     if (!editorContent.trim() && !questionData.title.trim()) {
-      alert("Vui lòng nhập câu hỏi");
+      toast.warning("Vui lòng nhập câu hỏi");
+      return;
+    }
+
+    // Validate title character limit
+    if (isTitleOverLimit) {
+      toast.warning("Câu hỏi vượt quá giới hạn 255 ký tự");
+      return;
+    }
+
+    // Validate answer character limits
+    if (isAnyAnswerOverLimit) {
+      toast.warning("Một hoặc nhiều câu trả lời vượt quá giới hạn 255 ký tự");
       return;
     }
 
     if (questionData.answers.some((a) => !a.answerName.trim())) {
-      alert("Vui lòng điền đầy đủ các đáp án");
+      toast.warning("Vui lòng điền đầy đủ các đáp án");
       return;
     }
 
     if (!questionData.answers.some((a) => a.isCorrect)) {
-      alert("Vui lòng chọn ít nhất một đáp án đúng");
+      toast.warning("Vui lòng chọn ít nhất một đáp án đúng");
       return;
     }
 
@@ -251,7 +282,7 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
       (a) => a.isCorrect
     ).length;
     if (questionData.type === "SingleChoice" && correctAnswersCount > 1) {
-      alert("Câu hỏi một đáp án chỉ được chọn 1 đáp án đúng");
+      toast.warning("Câu hỏi một đáp án chỉ được chọn 1 đáp án đúng");
       return;
     }
 
@@ -322,7 +353,12 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
           <label className="block text-sm font-medium mb-2 text-[#272343]">
             Câu hỏi <span className="text-red-500">*</span>
           </label>
-          <div className="border border-[#272343]/15 rounded-lg overflow-hidden">
+          <div 
+            className="border rounded-lg overflow-hidden"
+            style={{ 
+              borderColor: isTitleOverLimit ? '#ef4444' : 'rgba(39, 35, 67, 0.15)'
+            }}
+          >
             <RichTextEditor
               value={questionData.title}
               onChange={(data) =>
@@ -343,6 +379,10 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
               minHeight={250}
               maxHeight={500}
             />
+          </div>
+          <div className="text-xs mt-1" style={{ color: isTitleOverLimit ? '#ef4444' : '#6b7280' }}>
+            {titleCharCount} / 255
+            {isTitleOverLimit && <span className="ml-1">(Quá giới hạn ký tự)</span>}
           </div>
         </div>
 
@@ -456,134 +496,150 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
             Đáp án <span className="text-red-500">*</span>
           </label>
           <div className="space-y-3">
-            {questionData.answers.map((answer, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-start gap-2">
-                  <input
-                    type={isSingle ? "radio" : "checkbox"}
-                    name={
-                      isSingle ? "correct-answer" : `correct-answer-${index}`
-                    }
-                    checked={answer.isCorrect}
-                    onChange={() => handleCorrectAnswerChange(index)}
-                    className="w-4 h-4 mt-3 accent-[#FFD54F] flex-shrink-0"
-                  />
+            {questionData.answers.map((answer, index) => {
+              const charCount = answerCharCounts[index];
+              const isOverLimit = charCount > 255;
+              
+              return (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <input
+                      type={isSingle ? "radio" : "checkbox"}
+                      name={
+                        isSingle ? "correct-answer" : `correct-answer-${index}`
+                      }
+                      checked={answer.isCorrect}
+                      onChange={() => handleCorrectAnswerChange(index)}
+                      className="w-4 h-4 mt-3 accent-[#FFD54F] flex-shrink-0"
+                    />
 
-                  <div className="flex-1 space-y-2">
-                    {/* Answer Text/Editor Toggle */}
-                    <div className="flex items-center gap-2">
-                      {activeAnswerEditor === index ? (
-                        <div className="flex-1 border border-[#272343]/15 rounded-lg overflow-hidden">
-                          <RichTextEditor
-                            value={answer.answerName}
-                            onChange={(data) =>
-                              handleAnswerChange(index, "answerName", data)
-                            }
-                            onReady={(editor) => {
-                              answerEditorRefs.current[index] = editor;
-                              if (answer.answerName) {
-                                editor.setData(answer.answerName);
-                              }
-                            }}
-                            placeholder={`Đáp án ${index + 1}`}
-                            minHeight={150}
-                            maxHeight={300}
-                          />
-                        </div>
-                      ) : (
-                        <div className="relative flex-1">
-                          <input
-                            type="text"
-                            value={extractCleanText(
-                              answer.answerName || "",
-                              100
-                            )}
-                            onClick={() => toggleAnswerEditor(index)}
-                            placeholder={`Đáp án ${
-                              index + 1
-                            } (click để dùng editor)`}
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F] focus:border-transparent cursor-pointer ${
-                              answer.answerName
-                                ? "border-[#272343]/15 text-[#272343]"
-                                : "border-[#272343]/10 text-gray-400"
-                            }`}
-                            readOnly
-                          />
-                          {answer.answerName && (
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-600">
-                              ✓
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <Button
-                        onClick={() => toggleAnswerEditor(index)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-shrink-0"
-                        title={
-                          activeAnswerEditor === index
-                            ? "Đóng editor"
-                            : "Mở editor"
-                        }
-                      >
+                    <div className="flex-1 space-y-2">
+                      {/* Answer Text/Editor Toggle */}
+                      <div className="flex items-center gap-2">
                         {activeAnswerEditor === index ? (
-                          <X className="w-4 h-4" />
+                          <div className="flex-1">
+                            <div 
+                              className="border rounded-lg overflow-hidden"
+                              style={{ 
+                                borderColor: isOverLimit ? '#ef4444' : 'rgba(39, 35, 67, 0.15)'
+                              }}
+                            >
+                              <RichTextEditor
+                                value={answer.answerName}
+                                onChange={(data) =>
+                                  handleAnswerChange(index, "answerName", data)
+                                }
+                                onReady={(editor) => {
+                                  answerEditorRefs.current[index] = editor;
+                                  if (answer.answerName) {
+                                    editor.setData(answer.answerName);
+                                  }
+                                }}
+                                placeholder={`Đáp án ${index + 1}`}
+                                minHeight={150}
+                                maxHeight={300}
+                              />
+                            </div>
+                            <div className="text-xs mt-1" style={{ color: isOverLimit ? '#ef4444' : '#6b7280' }}>
+                              {charCount} / 255
+                              {isOverLimit && <span className="ml-1">(Quá giới hạn ký tự)</span>}
+                            </div>
+                          </div>
                         ) : (
-                          <ImageIcon className="w-4 h-4" />
+                          <div className="relative flex-1">
+                            <input
+                              type="text"
+                              value={extractCleanText(
+                                answer.answerName || "",
+                                100
+                              )}
+                              onClick={() => toggleAnswerEditor(index)}
+                              placeholder={`Đáp án ${
+                                index + 1
+                              } (click để dùng editor)`}
+                              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#FFD54F] focus:border-transparent cursor-pointer ${
+                                answer.answerName
+                                  ? "border-[#272343]/15 text-[#272343]"
+                                  : "border-[#272343]/10 text-gray-400"
+                              } ${isOverLimit ? 'border-red-500' : ''}`}
+                              readOnly
+                            />
+                            {answer.answerName && (
+                              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs ${isOverLimit ? 'text-red-600' : 'text-green-600'}`}>
+                                {isOverLimit ? '!' : '✓'}
+                              </span>
+                            )}
+                          </div>
                         )}
+
+                        <Button
+                          onClick={() => toggleAnswerEditor(index)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-shrink-0"
+                          title={
+                            activeAnswerEditor === index
+                              ? "Đóng editor"
+                              : "Mở editor"
+                          }
+                        >
+                          {activeAnswerEditor === index ? (
+                            <X className="w-4 h-4" />
+                          ) : (
+                            <ImageIcon className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+
+                      {/* Answer Image Upload */}
+                      <div className="ml-6">
+                        {!answerImagePreviews[index] ? (
+                          <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-[#272343]/20 rounded-lg hover:border-[#FFD54F] hover:bg-[#FFD54F]/5 cursor-pointer transition-colors text-sm">
+                            <ImageIcon className="w-4 h-4 text-[#2d334a]" />
+                            <span className="text-[#2d334a]">
+                              Thêm ảnh cho đáp án
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleAnswerImageSelect(index, e)}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="relative inline-block">
+                            <img
+                              src={answerImagePreviews[index]}
+                              alt={`Answer ${index + 1}`}
+                              className="max-h-32 object-contain rounded-lg border border-[#272343]/15"
+                            />
+                            <Button
+                              onClick={() => handleRemoveAnswerImage(index)}
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-1 right-1 bg-white/90 hover:bg-white shadow-sm"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {questionData.answers.length > 2 && (
+                      <Button
+                        onClick={() => handleRemoveAnswer(index)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-2 flex-shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
-                    </div>
-
-                    {/* Answer Image Upload */}
-                    <div className="ml-6">
-                      {!answerImagePreviews[index] ? (
-                        <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-[#272343]/20 rounded-lg hover:border-[#FFD54F] hover:bg-[#FFD54F]/5 cursor-pointer transition-colors text-sm">
-                          <ImageIcon className="w-4 h-4 text-[#2d334a]" />
-                          <span className="text-[#2d334a]">
-                            Thêm ảnh cho đáp án
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleAnswerImageSelect(index, e)}
-                            className="hidden"
-                          />
-                        </label>
-                      ) : (
-                        <div className="relative inline-block">
-                          <img
-                            src={answerImagePreviews[index]}
-                            alt={`Answer ${index + 1}`}
-                            className="max-h-32 object-contain rounded-lg border border-[#272343]/15"
-                          />
-                          <Button
-                            onClick={() => handleRemoveAnswerImage(index)}
-                            variant="ghost"
-                            size="sm"
-                            className="absolute top-1 right-1 bg-white/90 hover:bg-white shadow-sm"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
-
-                  {questionData.answers.length > 2 && (
-                    <Button
-                      onClick={() => handleRemoveAnswer(index)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-2 flex-shrink-0"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {questionData.answers.length < 7 && (
@@ -601,14 +657,19 @@ function QuestionForm({ onSave, onCancel, loading, initialData, isEditMode }) {
           <p className="text-xs text-[#2d334a] mt-2">
             Tối đa 7 đáp án
           </p>
+          {isAnyAnswerOverLimit && (
+            <p className="text-xs text-red-500 mt-1">
+              Một hoặc nhiều câu trả lời vượt quá giới hạn ký tự
+            </p>
+          )}
         </div>
 
         {/* Actions */}
         <div className="flex gap-2 pt-2 border-t border-[#272343]/10">
           <Button
             onClick={handleSubmit}
-            disabled={loading || isUploading}
-            className="bg-[#FFD54F] hover:bg-[#F4C430] text-[#272343] font-semibold"
+            disabled={loading || isUploading || isTitleOverLimit || isAnyAnswerOverLimit}
+            className="bg-[#FFD54F] hover:bg-[#F4C430] text-[#272343] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUploading ? (
               <>

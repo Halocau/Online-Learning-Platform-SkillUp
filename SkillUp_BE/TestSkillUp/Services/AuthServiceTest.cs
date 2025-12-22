@@ -86,6 +86,11 @@ namespace TestSkillUp
                 .Setup(r => r.GetByEmailWithRoleAndPermissionsAsync(account.Email))
                 .ReturnsAsync(account);
 
+            // Revoke tất cả token cũ trước khi tạo token mới
+            _iRefreshTokenRepositoryMock
+                .Setup(r => r.RevokeAllUserTokensAsync(account.Id))
+                .Returns(Task.CompletedTask);
+
             // Lưu refresh token (Add + SaveChanges) phải được gọi
             _iRefreshTokenRepositoryMock
                 .Setup(r => r.AddAsync(It.IsAny<RefreshToken>()))
@@ -167,6 +172,11 @@ namespace TestSkillUp
             _iAccountRepositoryMock
                 .Setup(r => r.GetByEmailWithRoleAndPermissionsAsync(account.Email))
                 .ReturnsAsync(account);
+
+            // Revoke tất cả token cũ trước khi tạo token mới
+            _iRefreshTokenRepositoryMock
+                .Setup(r => r.RevokeAllUserTokensAsync(account.Id))
+                .Returns(Task.CompletedTask);
 
             _iRefreshTokenRepositoryMock
                 .Setup(r => r.AddAsync(It.IsAny<RefreshToken>()))

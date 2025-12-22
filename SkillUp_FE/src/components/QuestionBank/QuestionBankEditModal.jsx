@@ -95,12 +95,21 @@ const QuestionBankEditModal = ({ open, onClose, questionBankObj, onSave }) => {
   const handleSave = async () => {
     // 1. Validation
     if (!questionData.title?.trim()) {
-      toast.error("Vui lòng nhập câu hỏi!");
+      toast.warning("Vui lòng nhập câu hỏi!");
       return;
     }
     const hasCorrectAnswer = questionData.answers.some(ans => ans.isCorrect);
     if (!hasCorrectAnswer) {
-      toast.error("Bạn phải chọn ít nhất một đáp án đúng!");
+      toast.warning("Bạn phải chọn ít nhất một đáp án đúng!");
+      return;
+    }
+
+    const hasEmptyAnswer = questionData.answers
+      .filter(ans => ans.isActive !== false)
+      .some(ans => !ans.answerName?.trim() || getCharacterCount(ans.answerName) === 0);
+    
+    if (hasEmptyAnswer) {
+      toast.warning("Vui lòng nhập nội dung cho tất cả các đáp án!");
       return;
     }
 

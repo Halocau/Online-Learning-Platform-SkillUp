@@ -205,7 +205,8 @@ namespace SkillUp.Services.Implementations
                         Id = Guid.NewGuid(),
                         AccountId = application.AccountId.Value,
                         Title = application.Title,
-                        Profession = application.Profession
+                        Profession = application.Profession,
+                        Percentage = 40 
                     };
 
                     var created = await _lecturerService.CreateLecturerAsync(newLecturer);

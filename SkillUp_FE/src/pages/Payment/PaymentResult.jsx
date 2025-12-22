@@ -8,12 +8,14 @@ import { paymentAPI } from "@/api/paymentAPI";
 import { getApiUrl } from "@/config/api";
 import { axiosInstance } from "@/config/api";
 import { toast } from "react-toastify";
+import { useCart } from "@/context/CartContext";
 
 export default function PaymentResult() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState("processing"); // processing, success, failed
   const [message, setMessage] = useState("Đang xử lý thanh toán...");
+  const { fetchCartCount } = useCart();
 
   const paymentType = useMemo(() => searchParams.get("type") || "course", [searchParams]);
   const user = useMemo(() => {
@@ -58,7 +60,7 @@ export default function PaymentResult() {
       // PayOS có thể redirect với status=PAID thay vì status=success
       // Code sẽ verify payment bất kể status parameter (trừ khi là cancel)
       // Vì PayOS đã redirect về đây nghĩa là thanh toán đã được xử lý
-      
+
       try {
         let success = false;
 
@@ -73,6 +75,13 @@ export default function PaymentResult() {
                 const apiUrl = getApiUrl('CLEAR_CART').replace('{accountId}', user.userId);
                 await axiosInstance.post(apiUrl);
                 console.log("Cart cleared successfully");
+
+                // Cập nhật lại số lượng cart trên header
+                try {
+                  await fetchCartCount();
+                } catch (fetchError) {
+                  console.error("Error refreshing cart count after payment:", fetchError);
+                }
               } catch (error) {
                 console.error("Error clearing cart:", error);
                 // Don't fail the payment if cart clearing fails
@@ -115,6 +124,7 @@ export default function PaymentResult() {
     };
 
     verifyPayment();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, navigate, paymentType, user]);
 
   const handleGoToDashboard = () => {
