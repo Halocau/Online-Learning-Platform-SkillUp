@@ -53,7 +53,16 @@ export default function TextPreviewModal({
       return a.orders - b.orders;
     });
   }, [sections]);
-
+function EmptyState() {
+  return (
+    <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+      <div className="text-center">
+        <FileText className="w-16 h-16 text-gray-300 mx-auto mb-3" />
+        <p className="text-gray-500">Không có nội dung để hiển thị</p>
+      </div>
+    </div>
+  );
+}
   useEffect(() => {
     if (!currentLesson && freeTextLessons.length > 0) {
       setCurrentLesson(freeTextLessons[0]);
