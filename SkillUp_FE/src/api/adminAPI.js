@@ -2,7 +2,7 @@ import axiosInstance from "@/lib/axios.js";
 
 const API_BASE_URL = "/Admin";
 
-export const adminAPI = {
+export const adminAPI =  {
   // Get Monthly Payroll Report
   getMonthlyPayrollReport: async (month, year) => {
     try {
