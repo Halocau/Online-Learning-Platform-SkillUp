@@ -1,7 +1,6 @@
 import re
 from pathlib import Path
 from typing import List, Dict, Any
-from .vietnamese import enhance_vietnamese_text, looks_like_prompt_leak
 
 # Pre-compile regex patterns for better performance
 _SENTENCE_SPLIT = re.compile(r'(?<=[.!?…])\s+')
@@ -17,8 +16,13 @@ def fmt_srt(sec: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 def norm(text: str) -> str:
-    """Normalize text with Vietnamese enhancement"""
-    return enhance_vietnamese_text(text)
+    """Normalize text - simple cleanup"""
+    # Chuẩn hóa khoảng trắng
+    text = _WHITESPACE.sub(' ', text.strip())
+    # Viết hoa chữ cái đầu câu
+    if text and text[0].islower():
+        text = text[0].upper() + text[1:]
+    return text
 
 def merge_segments(segs, max_gap=0.35, min_dur=1.2, confidence_threshold=0.3):
     """Merge segments with confidence-based filtering (optimized)"""
@@ -126,13 +130,13 @@ def split_long_segments(merged, max_dur=6.0, max_chars=120):
     return results
 
 def post_cleanup_caps(segs):
-    """Enhanced cleanup with Vietnamese optimization (optimized: single pass)"""
+    """Cleanup segments (optimized: single pass)"""
     cleaned = []
     for s in segs:
         t = s["text"]
-        # Combine dedupe and enhancement in one pass
+        # Dedupe và normalize
         t = dedupe_repetition(t)
-        t = enhance_vietnamese_text(t)  # Apply full Vietnamese enhancement
+        t = norm(t)  # Apply normalization
         cleaned.append({**s, "text": t})
     return cleaned
 

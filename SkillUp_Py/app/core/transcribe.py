@@ -1,6 +1,6 @@
 from typing import List, Tuple, Dict, Any
-from .config import BEAM_SIZE, BEST_OF, VAD_MIN_SIL_MS
-from .vietnamese import get_optimized_prompt
+from fastapi import HTTPException
+from .config import BEAM_SIZE, BEST_OF, VAD_MIN_SIL_MS, INITIAL_PROMPT
 from .logger import setup_logger, log_error_with_context
 import time
 
@@ -12,8 +12,9 @@ def transcribe_with_confidence(
     language: str = "vi",
     context: str = "education"
 ) -> Tuple[List[Dict[str, Any]], dict]:
-    """Enhanced transcription with confidence scores and Vietnamese optimization"""
-    prompt = get_optimized_prompt(context)
+    """Enhanced transcription with confidence scores"""
+    # Dùng prompt đơn giản từ config
+    prompt = INITIAL_PROMPT
     
     logger.info(
         f"Starting transcription",
@@ -40,7 +41,7 @@ def transcribe_with_confidence(
             beam_size=BEAM_SIZE, best_of=BEST_OF, temperature=temps,
             condition_on_previous_text=True, initial_prompt=prompt,
             compression_ratio_threshold=2.4, log_prob_threshold=-1.0, no_speech_threshold=0.08,
-            word_timestamps=True,
+            word_timestamps=False,  # SPEED: Tắt word timestamps để nhanh hơn 15-20%
         )
         segs = list(segments)
         pass1_time = time.time() - pass1_start
@@ -83,7 +84,7 @@ def transcribe_with_confidence(
             beam_size=BEAM_SIZE, best_of=BEST_OF, temperature=temps,
             condition_on_previous_text=True, initial_prompt=prompt,
             compression_ratio_threshold=2.5, log_prob_threshold=-1.2, no_speech_threshold=0.12,
-            word_timestamps=True,
+            word_timestamps=False,  # SPEED: Tắt word timestamps
         )
         segs = list(segments)
         pass2_time = time.time() - pass2_start
@@ -116,40 +117,17 @@ def transcribe_with_confidence(
             'wav_path': wav_path
         })
     
-    # Pass 3: No VAD (last resort)
-    pass3_start = time.time()
-    try:
-        logger.debug("Pass 3: Starting transcription without VAD (last resort)")
-        segments, info = model.transcribe(
-            wav_path, language=language, vad_filter=False,
-            beam_size=BEAM_SIZE, best_of=BEST_OF, temperature=temps,
-            condition_on_previous_text=True, initial_prompt=prompt,
-            compression_ratio_threshold=2.6, log_prob_threshold=-1.3, no_speech_threshold=0.15,
-            word_timestamps=True,
-        )
-        segs = list(segments)
-        pass3_time = time.time() - pass3_start
-        
-        logger.info(
-            f"Pass 3 completed",
-            extra={'extra_data': {
-                'pass': 3,
-                'segments_count': len(segs),
-                'duration_seconds': round(pass3_time, 2),
-                'detected_language': info.language,
-                'note': 'last_resort_no_vad'
-            }}
-        )
-        return _add_confidence_scores(segs), info
-    except Exception as e:
-        pass3_time = time.time() - pass3_start
-        log_error_with_context(logger, e, {
-            'pass': 3,
-            'duration_seconds': round(pass3_time, 2),
+    # SPEED: Bỏ Pass 3 (no VAD) - hiếm khi cần thiết và rất chậm
+    # Nếu cần, người dùng có thể thử lại với audio chất lượng tốt hơn
+    logger.error(
+        "All transcription passes failed",
+        extra={'extra_data': {
             'wav_path': wav_path,
-            'all_passes_failed': True
-        })
-        raise
+            'passes_attempted': 2,
+            'suggestion': 'Check audio quality or try different source'
+        }}
+    )
+    raise HTTPException(422, "Không thể nhận diện được tiếng nói từ audio. Vui lòng kiểm tra chất lượng audio.")
 
 def _add_confidence_scores(segments) -> List[Dict[str, Any]]:
     enriched = []

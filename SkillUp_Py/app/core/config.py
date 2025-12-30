@@ -24,9 +24,10 @@ DEVICE         = get_env("DEVICE", "cpu")         # "cpu" | "cuda" | "auto"
 COMPUTE_TYPE   = get_env("COMPUTE_TYPE", "int8")  # CPU:int8 | GPU:float16
 USE_DENOISE    = get_env("USE_DENOISE", "1") == "1"
 VAD_MIN_SIL_MS = int(get_env("VAD_MIN_SIL_MS", "300"))
-# Tăng mặc định để tăng độ chính xác (có thể giảm trong .env nếu cần nhanh hơn)
-BEAM_SIZE      = int(get_env("BEAM_SIZE", "7"))  # Tăng từ 5 → 7 để tăng độ chính xác
-BEST_OF        = int(get_env("BEST_OF", "7"))    # Tăng từ 5 → 7 để tăng độ chính xác
+# SPEED OPTIMIZED: Giảm beam_size và best_of để tăng tốc độ (chất lượng vẫn tốt)
+# beam_size=1 nhanh gấp ~3x so với 7, best_of=1 nhanh gấp ~7x so với 7
+BEAM_SIZE      = int(get_env("BEAM_SIZE", "1"))  # 1=nhanh nhất, 3=cân bằng, 5=chất lượng cao
+BEST_OF        = int(get_env("BEST_OF", "1"))    # 1=nhanh nhất, 3=cân bằng, 5=chất lượng cao
 TEMPERATURE    = float(get_env("TEMPERATURE", "0.0"))
 
 # Normalize language code: Whisper chỉ chấp nhận 2 ký tự (en, vi, zh, etc.)
@@ -63,7 +64,8 @@ def normalize_language_code(lang: str) -> str:
 
 LANGUAGE       = normalize_language_code(get_env("LANGUAGE", "vi"))
 MAX_FILE_MB    = int(get_env("MAX_FILE_MB", "2048"))
-# Prompt mặc định (sẽ được override bởi get_optimized_prompt trong vietnamese.py)
+
+# Initial prompt cho Whisper (tiếng Việt)
 INITIAL_PROMPT = get_env(
     "INITIAL_PROMPT",
     "Đây là nội dung tiếng Việt. Sử dụng dấu câu đúng, viết hoa đầu câu. "
@@ -76,11 +78,11 @@ AI_CORRECTION_MAX_CONCURRENT = int(get_env("AI_CORRECTION_MAX_CONCURRENT", "3"))
 AI_CORRECTION_RATE_LIMIT = int(get_env("AI_CORRECTION_RATE_LIMIT", "10"))  # Max requests per minute per key (free tier: 10)
 AI_CORRECTION_BATCH_SIZE = int(get_env("AI_CORRECTION_BATCH_SIZE", "15"))  # Batch size for correction (tăng để giảm số requests)
 
-# Parallel Processing settings
+# Parallel Processing settings (SPEED OPTIMIZED for VPS)
 PARALLEL_PROCESSING_ENABLED = get_env("PARALLEL_PROCESSING_ENABLED", "1") == "1"  # Enable/disable parallel chunk processing
-PARALLEL_CHUNK_DURATION = float(get_env("PARALLEL_CHUNK_DURATION", "60.0"))  # Mỗi chunk dài bao nhiêu giây (mặc định 60s = 1 phút)
-PARALLEL_MIN_DURATION = float(get_env("PARALLEL_MIN_DURATION", "120.0"))  # Chỉ chia chunk nếu video >= 120s (2 phút)
-PARALLEL_MAX_WORKERS = int(get_env("PARALLEL_MAX_WORKERS", "4"))  # Số worker threads tối đa
+PARALLEL_CHUNK_DURATION = float(get_env("PARALLEL_CHUNK_DURATION", "90.0"))  # Chunk lớn hơn = ít overhead (90s thay vì 60s)
+PARALLEL_MIN_DURATION = float(get_env("PARALLEL_MIN_DURATION", "180.0"))  # Chỉ parallel với video dài >= 3 phút
+PARALLEL_MAX_WORKERS = int(get_env("PARALLEL_MAX_WORKERS", "2"))  # 2 workers an toàn cho VPS (tránh over-subscription)
 
 # Audio processing constants
 AUDIO_CHUNK_SIZE_MB = int(get_env("AUDIO_CHUNK_SIZE_MB", "1"))  # Chunk size for file upload (MB)
