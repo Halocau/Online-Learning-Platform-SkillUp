@@ -22,9 +22,10 @@ services:
     depends_on:
       - mssql
     ports:
-      - "5120:5120"
+      - "5120:5120"          # BE .NET chạy trên 5120
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      # DB MỚI: SQL Server chạy trong container 'mssql'
       - ConnectionStrings__DefaultConnection=Server=mssql,1433;Database=SkillUp;User Id=sa;Password=Skillup@490;TrustServerCertificate=True;
     restart: unless-stopped
 
@@ -39,13 +40,16 @@ services:
       - ./SkillUp_Py/upload:/app/upload
       - ./SkillUp_Py/logs:/app/logs
     environment:
+      # Whisper Processing (for parallel mode only)
       - BEAM_SIZE=${BEAM_SIZE:-1}
       - BEST_OF=${BEST_OF:-1}
       - VAD_MIN_SIL_MS=${VAD_MIN_SIL_MS:-300}
+      # Parallel Processing Settings (VPS OPTIMIZED)
       - PARALLEL_PROCESSING_ENABLED=${PARALLEL_PROCESSING_ENABLED:-1}
-      - PARALLEL_CHUNK_DURATION=${PARALLEL_CHUNK_DURATION:-90.0}
-      - PARALLEL_MIN_DURATION=${PARALLEL_MIN_DURATION:-180.0}
-      - PARALLEL_MAX_WORKERS=${PARALLEL_MAX_WORKERS:-2}
+      - PARALLEL_CHUNK_DURATION=${PARALLEL_CHUNK_DURATION:-90.0}    # Chunk lớn hơn = ít overhead
+      - PARALLEL_MIN_DURATION=${PARALLEL_MIN_DURATION:-180.0}       # Chỉ parallel video >= 3 phút
+      - PARALLEL_MAX_WORKERS=${PARALLEL_MAX_WORKERS:-2}             # 2 workers an toàn cho VPS shared
+      # Allowed Remote Video Hosts
       - ALLOWED_REMOTE_VIDEO_HOSTS=api.skillup.website,222.255.214.208
     restart: unless-stopped
 
