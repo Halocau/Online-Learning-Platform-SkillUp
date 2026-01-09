@@ -40,31 +40,15 @@ services:
       - ./SkillUp_Py/upload:/app/upload
       - ./SkillUp_Py/logs:/app/logs
     environment:
-      # Whisper Model Settings
-      - WHISPER_MODEL=${WHISPER_MODEL:-small}
-      - DEVICE=${DEVICE:-cpu}
-      - COMPUTE_TYPE=${COMPUTE_TYPE:-int8}
-      - BEAM_SIZE=${BEAM_SIZE:-7}
-      - BEST_OF=${BEST_OF:-7}
-      - TEMPERATURE=${TEMPERATURE:-0.0}
-      - USE_DENOISE=${USE_DENOISE:-1}
+      # Whisper Processing (for parallel mode only)
+      - BEAM_SIZE=${BEAM_SIZE:-1}
+      - BEST_OF=${BEST_OF:-1}
       - VAD_MIN_SIL_MS=${VAD_MIN_SIL_MS:-300}
-      - LANGUAGE=vi
-      - MAX_FILE_MB=${MAX_FILE_MB:-2048}
-      # Gemini API Keys
-      - GEMINI_API_KEY_1=AIzaSyCAMbam6c2Wc3Gr1_t-MrELhvwyQlVIXFU
-      - GEMINI_API_KEY_2=AIzaSyDJ2_T5LY6tYRjsknjlmTxjx5i9rNhlTQg
-      - GEMINI_API_KEY_3=AIzaSyBIxPWXeoesO8zM_4WsgUYE7iAtxX-fokM
-      - GEMINI_API_KEY_4=AIzaSyB0hQw_p-r8lrhy5Z4lv7vFm-37knMBvXM
-      - GEMINI_API_KEY_5=AIzaSyDWSMwvvOBuj1j-3f8tPf7tWsIgTKyJsoI
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
-      # AI Correction Settings
-      - AI_CORRECTION_ENABLED=${AI_CORRECTION_ENABLED:-1}
-      - AI_CORRECTION_RATE_LIMIT=${AI_CORRECTION_RATE_LIMIT:-60}
-      - AI_CORRECTION_BATCH_SIZE=${AI_CORRECTION_BATCH_SIZE:-5}
-      # Parallel Processing Settings
-      - PARALLEL_CHUNK_DURATION=${PARALLEL_CHUNK_DURATION:-60.0}
-      - PARALLEL_MAX_WORKERS=${PARALLEL_MAX_WORKERS:-6}
+      # Parallel Processing Settings (VPS OPTIMIZED)
+      - PARALLEL_PROCESSING_ENABLED=${PARALLEL_PROCESSING_ENABLED:-1}
+      - PARALLEL_CHUNK_DURATION=${PARALLEL_CHUNK_DURATION:-90.0}    # Chunk lớn hơn = ít overhead
+      - PARALLEL_MIN_DURATION=${PARALLEL_MIN_DURATION:-180.0}       # Chỉ parallel video >= 3 phút
+      - PARALLEL_MAX_WORKERS=${PARALLEL_MAX_WORKERS:-2}             # 2 workers an toàn cho VPS shared
       # Allowed Remote Video Hosts
       - ALLOWED_REMOTE_VIDEO_HOSTS=api.skillup.website,222.255.214.208
     restart: unless-stopped
