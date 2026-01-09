@@ -40,29 +40,10 @@ services:
       - ./SkillUp_Py/upload:/app/upload
       - ./SkillUp_Py/logs:/app/logs
     environment:
-      # Whisper Model Settings (SPEED OPTIMIZED)
-      - WHISPER_MODEL=${WHISPER_MODEL:-small}
-      - DEVICE=${DEVICE:-cpu}
-      - COMPUTE_TYPE=${COMPUTE_TYPE:-int8}
-      - BEAM_SIZE=${BEAM_SIZE:-1}           # Fast mode (1=nhanh nhất, 3=cân bằng, 7=chất lượng cao)
-      - BEST_OF=${BEST_OF:-1}               # Fast mode (1=nhanh nhất, 3=cân bằng, 7=chất lượng cao)
-      - TEMPERATURE=${TEMPERATURE:-0.0}
-      - USE_DENOISE=${USE_DENOISE:-0}       # Tắt denoise mặc định để nhanh hơn
+      # Whisper Processing (for parallel mode only)
+      - BEAM_SIZE=${BEAM_SIZE:-1}
+      - BEST_OF=${BEST_OF:-1}
       - VAD_MIN_SIL_MS=${VAD_MIN_SIL_MS:-300}
-      - LANGUAGE=vi
-      - MAX_FILE_MB=${MAX_FILE_MB:-2048}
-      # Gemini API Keys
-      - GEMINI_API_KEY_1=AIzaSyCAMbam6c2Wc3Gr1_t-MrELhvwyQlVIXFU
-      - GEMINI_API_KEY_2=AIzaSyDJ2_T5LY6tYRjsknjlmTxjx5i9rNhlTQg
-      - GEMINI_API_KEY_3=AIzaSyBIxPWXeoesO8zM_4WsgUYE7iAtxX-fokM
-      - GEMINI_API_KEY_4=AIzaSyB0hQw_p-r8lrhy5Z4lv7vFm-37knMBvXM
-      - GEMINI_API_KEY_5=AIzaSyDWSMwvvOBuj1j-3f8tPf7tWsIgTKyJsoI
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
-      # AI Correction Settings
-      - AI_CORRECTION_ENABLED=${AI_CORRECTION_ENABLED:-1}
-      - AI_CORRECTION_MAX_CONCURRENT=${AI_CORRECTION_MAX_CONCURRENT:-3}
-      - AI_CORRECTION_RATE_LIMIT=${AI_CORRECTION_RATE_LIMIT:-60}
-      - AI_CORRECTION_BATCH_SIZE=${AI_CORRECTION_BATCH_SIZE:-5}
       # Parallel Processing Settings (VPS OPTIMIZED)
       - PARALLEL_PROCESSING_ENABLED=${PARALLEL_PROCESSING_ENABLED:-1}
       - PARALLEL_CHUNK_DURATION=${PARALLEL_CHUNK_DURATION:-90.0}    # Chunk lớn hơn = ít overhead
