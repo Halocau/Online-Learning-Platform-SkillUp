@@ -390,8 +390,8 @@ var app = builder.Build();
 //     app.UseSwagger();
 //     app.UseSwaggerUI();
 // }
-//app.UseSwagger();
-//app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 // Enable serving static files from wwwroot folder
 app.UseStaticFiles();
 
