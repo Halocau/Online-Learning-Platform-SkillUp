@@ -101,3 +101,8 @@ _[Ss]cripts
 *.db
 *.db-shm
 *.db-wal
+
+# Configuration files with sensitive data
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
