@@ -78,11 +78,9 @@ namespace SkillUp.Services.Common
             if (result.StatusCode == System.Net.HttpStatusCode.OK ||
                 result.StatusCode == System.Net.HttpStatusCode.Created)
             {
-                var pdfUrl = _cloudinary.Api.UrlImgUp
-                                 .ResourceType("raw")
-                                 .BuildUrl(result.PublicId);
-
-                return pdfUrl;
+                // Sử dụng SecureUrl trực tiếp để có HTTPS và content-type header phù hợp cho iframe
+                // Thay vì dùng custom URL builder có thể tạo HTTP URL và thiếu headers
+                return result.SecureUrl.ToString();
             }
 
             throw new Exception($"Upload failed: {result.Error?.Message}");
