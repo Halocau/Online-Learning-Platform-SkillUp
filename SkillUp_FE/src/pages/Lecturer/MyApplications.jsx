@@ -92,8 +92,19 @@ function MyApplications() {
     }
   };
 
+  // Chuyển HTTP sang HTTPS để tránh lỗi Mixed Content
+  const normalizeUrl = (url) => {
+    if (!url) return url;
+    // Nếu URL là HTTP từ Cloudinary, chuyển sang HTTPS
+    if (url.startsWith('http://res.cloudinary.com')) {
+      return url.replace('http://', 'https://');
+    }
+    return url;
+  };
+
   const handleViewFile = (url, type) => {
-    setViewDialog({ open: true, url, type });
+    const secureUrl = normalizeUrl(url);
+    setViewDialog({ open: true, url: secureUrl, type });
   };
 
   const closeViewDialog = () => {

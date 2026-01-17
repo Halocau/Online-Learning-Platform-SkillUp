@@ -126,13 +126,23 @@ const ModManageLectureApplication = () => {
     };
     const refresh = () => setRefreshKey((k) => k + 1);
 
+    // Chuyển HTTP sang HTTPS để tránh lỗi Mixed Content
+    const normalizeUrl = (url) => {
+        if (!url) return url;
+        // Nếu URL là HTTP từ Cloudinary, chuyển sang HTTPS
+        if (url.startsWith('http://res.cloudinary.com')) {
+            return url.replace('http://', 'https://');
+        }
+        return url;
+    };
+
     const handlePreview = (fileUrl, fileType) => {
         if (!fileUrl) return;
 
         if (fileType === 'cv') {
-            // Xem CV trong MODAL
+            // Xem CV trong MODAL - normalize URL trước
             setPreviewTitle('CV');
-            setPdfUrl(fileUrl);
+            setPdfUrl(normalizeUrl(fileUrl));
             setImageUrls([]);
             setPreviewVisible(true);
             return;
@@ -143,7 +153,7 @@ const ModManageLectureApplication = () => {
         setPdfUrl('');
         const imgs = fileUrl
             .split(',')
-            .map((s) => s.trim())
+            .map((s) => normalizeUrl(s.trim()))  // Normalize mỗi URL ảnh
             .filter(Boolean);
         setImageUrls(imgs);
         setPreviewVisible(true);
