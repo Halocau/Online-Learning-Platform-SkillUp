@@ -65,8 +65,8 @@ namespace SkillUp.Services.Common
                 File = new FileDescription(file.FileName, stream),
                 Folder = folderName,
                 UseFilename = true,
-                UniqueFilename = false,
-                Overwrite = true
+                UniqueFilename = true,   // Tạo tên file unique (thêm random suffix)
+                Overwrite = false        // Không ghi đè file cũ
             };
 
             var result = await _cloudinary.UploadAsync(uploadParams);
